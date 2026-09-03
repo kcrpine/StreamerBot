@@ -7,15 +7,15 @@ import subprocess
 
 cd = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 locale_path = os.path.join(cd, "locale")
-pot_file_path = os.path.join(locale_path, "TTMediaBot.pot")
-source_paths = [os.path.join(cd, "bot"), os.path.join(cd, "TTMediaBot.py")]
+pot_file_path = os.path.join(locale_path, "StreamerBot.pot")
+source_paths = [os.path.join(cd, "bot"), os.path.join(cd, "StreamerBot.py")]
 babel_prefix = "{} -m babel.messages.frontend".format(sys.executable)
-locale_domain = "TTMediaBot"
+locale_domain = "StreamerBot"
 
 
 def extract():
     code = subprocess.call(
-        f"{babel_prefix} extract {' '.join(source_paths)} -o {pot_file_path} --keywords=translate -c translators: --copyright-holder=TTMediaBot-team --project=TTMediaBot",
+        f"{babel_prefix} extract {' '.join(source_paths)} -o {pot_file_path} --keywords=translate -c translators: --copyright-holder=StreamerBot-team --project=StreamerBot",
         shell=True,
     )
     if code:

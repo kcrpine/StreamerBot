@@ -1,161 +1,153 @@
 #!/bin/bash
+#
+# StreamerBot one-shot installer.
+#
+# Installs git if it is missing, clones the StreamerBot repository, installs
+# Docker and the other host tools the manager needs, then hands over to
+# streamerbot.sh.
+#
+# Output is written for screen readers: plain text, no emoji, no box drawing,
+# no progress bars that rewrite their own line, and every status line starts
+# with the word OK, Warning or Error rather than relying on colour.
 
-# ================================================================= #
-# Auto Installer & Cloner - TTMediaBot
-# ================================================================= #
+set -u
 
-# Auto-elevate to root via sudo if needed
+# ---------------------------------------------------------------------------
+# Repository. Kept in sync with project.env once the clone exists; these are
+# the bootstrap values used before there is a project.env to read.
+# ---------------------------------------------------------------------------
+REPO_OWNER="kcrpine"
+REPO_NAME="StreamerBot"
+REPO_URL="https://github.com/${REPO_OWNER}/${REPO_NAME}.git"
+DIR_NAME="${REPO_NAME}"
+
+step() { echo; echo "Step $1. $2"; }
+ok() { echo "OK. $1"; }
+warn() { echo "Warning. $1"; }
+fail() { echo "Error. $1"; exit 1; }
+
 if [ "$EUID" -ne 0 ]; then
-    echo "Not running as root. Re-launching with sudo..."
+    echo "This installer needs root to install packages. Re-launching with sudo."
     exec sudo bash "$0" "$@"
 fi
 
+echo "StreamerBot installer"
+echo "This will install git and Docker if they are missing, download StreamerBot, and start the manager."
 
-REPO_URL="https://github.com/JoaoDEVWHADS/TTMediaBot.git"
+# ---------------------------------------------------------------------------
+# Package manager abstraction.
+# ---------------------------------------------------------------------------
+PKG_MANAGER=""
+detect_package_manager() {
+    for candidate in apt-get dnf yum pacman zypper apk; do
+        if command -v "$candidate" > /dev/null 2>&1; then
+            PKG_MANAGER="$candidate"
+            return 0
+        fi
+    done
+    return 1
+}
 
-# Function to detect package manager and install packages
 install_packages() {
-    local PKGS=("$@")
-    if command -v apt-get &> /dev/null; then
-        apt-get update && apt-get install -y "${PKGS[@]}"
-    elif command -v dnf &> /dev/null; then
-        dnf install -y "${PKGS[@]}"
-    elif command -v yum &> /dev/null; then
-        yum install -y "${PKGS[@]}"
-    elif command -v pacman &> /dev/null; then
-        pacman -S --noconfirm "${PKGS[@]}"
-    elif command -v zypper &> /dev/null; then
-        zypper install -y "${PKGS[@]}"
-    elif command -v apk &> /dev/null; then
-        apk add --no-cache "${PKGS[@]}"
+    [ "$#" -eq 0 ] && return 0
+    case "$PKG_MANAGER" in
+        apt-get) DEBIAN_FRONTEND=noninteractive apt-get update -qq && DEBIAN_FRONTEND=noninteractive apt-get install -y "$@" ;;
+        dnf)     dnf install -y "$@" ;;
+        yum)     yum install -y "$@" ;;
+        pacman)  pacman -Sy --noconfirm "$@" ;;
+        zypper)  zypper --non-interactive install "$@" ;;
+        apk)     apk add --no-cache "$@" ;;
+        *)       fail "No supported package manager found. Please install these by hand and run this again: $*" ;;
+    esac
+}
+
+ensure_command() {
+    # ensure_command <command> <package name>
+    local cmd="$1" pkg="$2"
+    if command -v "$cmd" > /dev/null 2>&1; then
+        ok "$cmd is already installed."
     else
-        echo "Error: Package manager not found. Please install manually: ${PKGS[*]}"
-        exit 1
+        echo "$cmd is not installed. Installing the $pkg package now."
+        install_packages "$pkg" || fail "Could not install $pkg."
+        command -v "$cmd" > /dev/null 2>&1 || fail "$pkg installed but $cmd is still not available."
+        ok "$cmd installed."
     fi
 }
 
-echo "--- Checking for Git ---"
-if ! command -v git &> /dev/null; then
-    echo "Git not found. Installing..."
-    install_packages git
+step 1 "Checking the package manager."
+detect_package_manager || fail "No supported package manager found. StreamerBot supports apt, dnf, yum, pacman, zypper and apk."
+ok "Using $PKG_MANAGER."
+
+step 2 "Checking for git."
+ensure_command git git
+
+step 3 "Downloading StreamerBot."
+if [ -d ".git" ] && git remote get-url origin 2>/dev/null | grep -qi "${REPO_NAME}"; then
+    ok "Already inside a ${REPO_NAME} checkout. Skipping the clone."
+    REPO_DIR="$(pwd)"
+elif [ -d "$DIR_NAME/.git" ]; then
+    ok "Found an existing $DIR_NAME directory. Updating it."
+    cd "$DIR_NAME" || fail "Could not enter $DIR_NAME."
+    git pull --ff-only || warn "Could not fast-forward. Leaving the existing checkout as it is."
+    REPO_DIR="$(pwd)"
 else
-    echo "Git is already installed."
+    echo "Cloning $REPO_URL"
+    git clone "$REPO_URL" "$DIR_NAME" || fail "Could not clone the repository. Check the network connection and that the repository exists."
+    cd "$DIR_NAME" || fail "Could not enter $DIR_NAME."
+    REPO_DIR="$(pwd)"
+    ok "Repository downloaded to $REPO_DIR."
 fi
 
-echo "--- Checking for unzip (ZIP extractor) ---"
-if ! command -v unzip &> /dev/null; then
-    echo "unzip not found. Installing..."
-    install_packages unzip
+step 4 "Checking the host tools StreamerBot needs."
+# jq   - streamerbot.sh edits each bot's config.json with it
+# curl - update checks and the TeamTalk SDK download
+# tar  - backup and restore
+for pair in "jq jq" "curl curl" "tar tar"; do
+    # shellcheck disable=SC2086
+    set -- $pair
+    ensure_command "$1" "$2"
+done
+
+step 5 "Checking for Docker."
+if command -v docker > /dev/null 2>&1; then
+    ok "Docker is already installed."
 else
-    echo "unzip is already installed."
+    echo "Docker is not installed. Installing it from the official Docker convenience script."
+    curl -fsSL https://get.docker.com -o /tmp/get-docker.sh || fail "Could not download the Docker installer."
+    sh /tmp/get-docker.sh || fail "The Docker installer failed. Install Docker by hand and run this again."
+    rm -f /tmp/get-docker.sh
+    command -v docker > /dev/null 2>&1 || fail "Docker installed but the docker command is still not available."
+    ok "Docker installed."
 fi
 
-# Detect if we are already inside the repository
-if [ -d ".git" ] && git remote get-url origin 2>/dev/null | grep -q "TTMediaBot"; then
-    echo "--- Already inside TTMediaBot repository. Skipping clone. ---"
-    CURRENT_IS_REPO=true
+if docker info > /dev/null 2>&1; then
+    ok "The Docker service is running."
 else
-    CURRENT_IS_REPO=false
-fi
-
-DIR_NAME="TTMediaBot"
-
-if [ "$CURRENT_IS_REPO" = false ]; then
-    if [ -d "$DIR_NAME" ]; then
-        echo "Directory '$DIR_NAME' already exists. Updating..."
-        cd "$DIR_NAME" || exit
-        git pull
+    echo "The Docker service is not running. Starting it."
+    systemctl enable --now docker > /dev/null 2>&1 || service docker start > /dev/null 2>&1 || true
+    if docker info > /dev/null 2>&1; then
+        ok "The Docker service is running."
     else
-        echo "--- Cloning Repository ---"
-        git clone "$REPO_URL"
-        if [ $? -ne 0 ]; then
-            echo "Error cloning repository. Check your internet connection."
-            exit 1
-        fi
-        cd "$DIR_NAME" || exit
+        warn "Could not start the Docker service automatically. Start it yourself, then run streamerbot.sh."
     fi
 fi
 
-# Enter directory and set permissions
-# Set permissions and ownership
-echo "--- Setting Permissions and Ownership ---"
-git config core.fileMode false 2>/dev/null
+step 6 "Setting ownership and permissions."
+REAL_USER="${SUDO_USER:-$USER}"
+git config core.fileMode false 2>/dev/null || true
+chown -R "$REAL_USER":"$REAL_USER" . 2>/dev/null || true
+chmod +x ./*.sh 2>/dev/null || true
+ok "Files now belong to $REAL_USER."
 
-REAL_USER=${SUDO_USER:-$USER}
+# The TeamTalk SDK is no longer downloaded here. It is fetched from bearware.dk
+# inside the Docker image build, using the URLs in project.env, so the host does
+# not need a TeamTalk_DLL directory at all.
 
-# Ensure permissions are correct for the current folder and everything inside
-chown -R "$REAL_USER":"$REAL_USER" .
-chmod -R 777 .
-chmod +x *.sh
-
-echo "Ownership and permissions set for user: $REAL_USER"
-
-echo "--- Checking TeamTalk_DLL ---"
-
-# ... (down near line 148 and 154) ...
-
-DLL_URL="https://github.com/JoaoDEVWHADS/TTMediaBot/releases/download/downloadttdll/TeamTalk_DLL.zip"
-ARCH=$(uname -m)
-if [[ "$ARCH" == "aarch64" || "$ARCH" =~ ^arm ]]; then
-    echo "ℹ️ ARM architecture detected ($ARCH). Using ARM DLL..."
-    DLL_URL="https://github.com/JoaoDEVWHADS/TTMediaBot/releases/download/downloadttdll/ttarm.zip"
-else
-    echo "ℹ️ x86_64/AMD64 architecture detected ($ARCH). Using x86 DLL..."
-    DLL_URL="https://github.com/JoaoDEVWHADS/TTMediaBot/releases/download/downloadttdll/TeamTalk_DLL.zip"
+step 7 "Starting the StreamerBot manager."
+if [ ! -f "./streamerbot.sh" ]; then
+    fail "streamerbot.sh was not found in $REPO_DIR. The download may be incomplete."
 fi
-DLL_FILE="TeamTalk_DLL.zip"
-
-if [ -d "TeamTalk_DLL" ] && [ -f "TeamTalk_DLL/libTeamTalk5.so" ]; then
-    echo "✅ TeamTalk_DLL folder and library already exist. Skipping download and extraction."
-else
-    if [ -f "$DLL_FILE" ]; then
-        echo "📦 TeamTalk_DLL.zip already exists. Skipping download."
-    else
-        echo "📥 Downloading TeamTalk_DLL..."
-        wget "$DLL_URL" -O "$DLL_FILE"
-        if [ $? -ne 0 ]; then
-            echo "❌ Error downloading TeamTalk_DLL."
-            exit 1
-        fi
-        echo "✅ Download complete!"
-    fi
-
-    echo "--- Extracting TeamTalk_DLL ---"
-    unzip -o "$DLL_FILE"
-    if [ $? -ne 0 ]; then
-        echo "❌ Error extracting TeamTalk_DLL."
-        exit 1
-    fi
-    echo "✅ Extraction complete!"
-
-    echo "--- Removing TeamTalk_DLL zip ---"
-    rm -f "$DLL_FILE"
-    echo "✅ ZIP file removed."
-fi
-
-if [ ! -d "TeamTalk_DLL" ]; then
-    echo "❌ ERROR: TeamTalk_DLL folder not found!"
-    exit 1
-fi
-echo "✅ TeamTalk_DLL folder is ready!"
-
-    
-    echo "--- Setting permissions for TeamTalk_DLL ---"
-    chown -R "$REAL_USER":"$REAL_USER" TeamTalk_DLL || true
-    chmod -R 777 TeamTalk_DLL
-    echo "Permissions set for TeamTalk_DLL folder."
-    
-    echo "--- Final Verification ---"
-    
-    ls -la | grep TeamTalk_DLL
-    
-    echo "Setup Complete! Starting Docker Manager..."
-        sleep 2
-
-        if [ -f "./ttbotdocker.sh" ]; then
-            chmod +x ./ttbotdocker.sh
-            exec ./ttbotdocker.sh
-        else
-            echo "ERROR: ttbotdocker.sh not found!"
-            exit 1
-        fi
+chmod +x ./streamerbot.sh
+ok "Setup complete. Starting the manager now."
+echo
+exec ./streamerbot.sh

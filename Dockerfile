@@ -1,89 +1,158 @@
-FROM python:3.10.12-slim-bullseye
+# StreamerBot runtime image.
+#
+# Debian 13 (trixie). Python comes from the distro (3.13), so everything below
+# installs into /opt/venv -- Debian 13 marks the system interpreter as
+# externally managed (PEP 668) and a bare "pip install" is refused.
+FROM debian:trixie-slim
 
-# Install system dependencies (matching install.sh)
+# Set by BuildKit. Falls back to amd64 for plain "docker build" without buildx.
+ARG TARGETARCH=amd64
+
+# Supplied by streamerbot.sh / update.sh from project.env.
+ARG TTSDK_URL_X86_64
+ARG TTSDK_URL_ARM64
+ARG GO_LIBRESPOT_VERSION=0.9.0
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    PATH=/opt/venv/bin:$PATH \
+    PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1
+
+# ---------------------------------------------------------------------------
+# System packages.
+#   libmpv2       - the vendored mpv.py ctypes binding dlopen()s libmpv.so.2
+#   pulseaudio    - the null sink every playback engine feeds
+#   libasound2-plugins + /etc/asound.conf - routes go-librespot's ALSA output
+#                   into PulseAudio
+#   xvfb          - Chrome must run headful to produce audio; it needs a display
+#   p7zip-full    - unpacks the TeamTalk SDK .7z
+# ---------------------------------------------------------------------------
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    curl \
-    gnupg \
-    git \
-    libmpv-dev \
-    p7zip-full \
-    pulseaudio \
-    ca-certificates \
-    ffmpeg \
-    procps \
-    unzip \
-    && ARCH=$(dpkg --print-architecture) \
-    && if [ "$ARCH" = "arm64" ] || [ "$ARCH" = "armhf" ]; then \
-        apt-get install -y --no-install-recommends libportaudio2; \
-       fi \
+        ca-certificates \
+        curl \
+        ffmpeg \
+        gnupg \
+        libasound2-plugins \
+        libmpv2 \
+        p7zip-full \
+        procps \
+        pulseaudio \
+        pulseaudio-utils \
+        python3 \
+        python3-venv \
+        unzip \
+        xvfb \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Node.js LTS (matching install.sh)
+# go-librespot uses the ALSA backend; send it to the default PulseAudio sink.
+RUN printf 'pcm.!default { type pulse }\nctl.!default { type pulse }\n' > /etc/asound.conf
+
+RUN python3 -m venv /opt/venv && /opt/venv/bin/pip install --no-cache-dir --upgrade pip setuptools wheel
+
+# ENV PATH is lost in login shells, which reset it from /etc/profile. Anything
+# run as "bash -l" (a debug shell, a docker exec) would otherwise get the system
+# python and none of the bot's dependencies.
+RUN printf 'PATH=/opt/venv/bin:$PATH\nexport PATH\n' > /etc/profile.d/streamerbot-venv.sh
+
+# ---------------------------------------------------------------------------
+# TeamTalk SDK. Fetched from bearware.dk at build time; the exact archive name
+# changes with every point release, so the URLs come from project.env rather
+# than being generated from a version number.
+# ---------------------------------------------------------------------------
+RUN set -eux; \
+    case "$TARGETARCH" in \
+      amd64) TTSDK_URL="$TTSDK_URL_X86_64" ;; \
+      arm64) TTSDK_URL="$TTSDK_URL_ARM64" ;; \
+      *) echo "Unsupported architecture: $TARGETARCH" >&2; exit 1 ;; \
+    esac; \
+    [ -n "$TTSDK_URL" ] || { echo "TeamTalk SDK URL not set for $TARGETARCH" >&2; exit 1; }; \
+    curl -fsSL "$TTSDK_URL" -o /tmp/ttsdk.7z; \
+    7z x -y /tmp/ttsdk.7z -o/tmp/ttsdk > /dev/null; \
+    mkdir -p /opt/teamtalk; \
+    cp -a /tmp/ttsdk/*/Library/TeamTalk_DLL/. /opt/teamtalk/; \
+    rm -rf /tmp/ttsdk /tmp/ttsdk.7z; \
+    test -f /opt/teamtalk/libTeamTalk5.so
+
+ENV LD_LIBRARY_PATH=/opt/teamtalk
+
+# ---------------------------------------------------------------------------
+# Node.js 22 for the YouTube bridge and the bgutil proof-of-origin provider.
+# ---------------------------------------------------------------------------
 RUN mkdir -p /etc/apt/keyrings \
     && curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg \
-    && echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_22.x nodistro main" | tee /etc/apt/sources.list.d/nodesource.list \
+    && echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_22.x nodistro main" > /etc/apt/sources.list.d/nodesource.list \
     && apt-get update \
-    && apt-get install -y nodejs \
+    && apt-get install -y --no-install-recommends nodejs git \
     && rm -rf /var/lib/apt/lists/*
 
-# Clone and compile the Node.js bgutil provider server
 RUN git clone --depth 1 https://github.com/Brainicism/bgutil-ytdlp-pot-provider.git /opt/bgutil-provider \
     && cd /opt/bgutil-provider/server \
     && npm ci \
     && npx tsc
 
-# Create user
-RUN useradd -ms /bin/bash ttbot
+# ---------------------------------------------------------------------------
+# Google Chrome, amd64 only.
+#
+# Only Google's own build ships the Widevine CDM, and Google publishes no
+# linux/arm64 Chrome. Chromium is not a substitute: without Widevine, Netflix,
+# Disney Plus, Apple Music and Amazon Music cannot decrypt anything. On arm64
+# the marker file below tells the browser engine to disable those four services
+# with a readable message instead of failing at playback time.
+# ---------------------------------------------------------------------------
+RUN set -eux; \
+    if [ "$TARGETARCH" = "amd64" ]; then \
+      curl -fsSL https://dl.google.com/linux/linux_signing_key.pub | gpg --dearmor -o /etc/apt/keyrings/google-chrome.gpg; \
+      echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/google-chrome.gpg] https://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google-chrome.list; \
+      apt-get update; \
+      apt-get install -y --no-install-recommends google-chrome-stable fonts-liberation libnss3 libgbm1 libxss1 libxtst6 x11-utils; \
+      rm -rf /var/lib/apt/lists/*; \
+      echo 1 > /etc/streamerbot-browser-available; \
+    else \
+      echo 0 > /etc/streamerbot-browser-available; \
+    fi
 
-# Set working directory
-WORKDIR /home/ttbot/TTMediaBot
+# ---------------------------------------------------------------------------
+# go-librespot: the Spotify Connect daemon behind the librespot engine.
+# arm64 builds exist, so Spotify works even where the browser services do not.
+# ---------------------------------------------------------------------------
+RUN set -eux; \
+    case "$TARGETARCH" in \
+      amd64) LS_ARCH=linux_x86_64 ;; \
+      arm64) LS_ARCH=linux_arm64 ;; \
+      *) echo "Unsupported architecture: $TARGETARCH" >&2; exit 1 ;; \
+    esac; \
+    curl -fsSL -o /tmp/go-librespot.tar.gz \
+      "https://github.com/devgianlu/go-librespot/releases/download/v${GO_LIBRESPOT_VERSION}/go-librespot_${LS_ARCH}.tar.gz"; \
+    tar -xzf /tmp/go-librespot.tar.gz -C /usr/local/bin go-librespot; \
+    chmod 0755 /usr/local/bin/go-librespot; \
+    rm -f /tmp/go-librespot.tar.gz; \
+    test -x /usr/local/bin/go-librespot
 
-# Add current directory to LD_LIBRARY_PATH so libTeamTalk5.so is found
-# Add current directory to LD_LIBRARY_PATH so libTeamTalk5.so is found
-ENV LD_LIBRARY_PATH=/home/ttbot/TTMediaBot:/home/ttbot/TTMediaBot/TeamTalk_DLL:$LD_LIBRARY_PATH
+RUN useradd -ms /bin/bash streamer
+WORKDIR /home/streamer/StreamerBot
 
-# Copy requirements
+# Python dependencies in their own cacheable layer.
 COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Install Python dependencies (Cacheable)
-RUN pip install --no-cache-dir --upgrade pip \
-    && pip install --no-cache-dir -r requirements.txt \
-    && pip install --no-cache-dir "httpx[http2]>=0.28.1"
-
-# Keep the moving YouTube.js main branch in its own Docker cache layer.
-# Rebuilds reuse it; menu option 7 removes the layer and fetches main again.
+# The YouTube bridge tracks youtubei.js main, so keep npm in its own layer that
+# a cache clean can drop without rebuilding everything above it.
 COPY youtube_bridge/package.json youtube_bridge/package.json
 RUN npm install --prefix youtube_bridge --omit=dev
 
-# Build argument to bust cache for core code and frequently-changing tools
+# Everything below rebuilds on every image build.
 ARG CACHEBUST=1
+RUN pip install --no-cache-dir -U -r requirements.txt
 
-# Re-copy requirements just in case we need it below the cache line
-COPY requirements.txt .
-
-# Refresh Python dependencies on every build
-RUN pip install --no-cache-dir -U pip setuptools wheel \
-    && pip install --no-cache-dir -U -r requirements.txt \
-    && pip install --no-cache-dir "httpx[http2]>=0.28.1"
-
-# Copy project files
 COPY . .
 
-# Make entrypoint executable
-RUN chmod +x entrypoint.sh
-
-# Adjust permissions (matching install.sh)
-RUN chown -R ttbot:ttbot /home/ttbot/TTMediaBot \
+RUN chmod +x entrypoint.sh run_bot.sh youtube_services.sh \
+    && chown -R streamer:streamer /home/streamer/StreamerBot \
     && chmod -R 775 .
 
-# Switch to user
-USER ttbot
+USER streamer
 
-# Run additional tools (as per original Dockerfile and README context)
-# Run additional tools (as per original Dockerfile and README context)
-# Run additional tools (as per original Dockerfile and README context)
 RUN python tools/compile_locales.py
 
-# Command to run the bot via entrypoint
 ENTRYPOINT ["./entrypoint.sh"]
-CMD ["./TTMediaBot.sh", "-c", "data/config.json", "--cache", "data/TTMediaBotCache.dat", "--log", "data/TTMediaBot.log"]
+CMD ["./run_bot.sh", "-c", "data/config.json", "--cache", "data/StreamerBotCache.dat", "--log", "data/StreamerBot.log"]

@@ -25,7 +25,7 @@ class Translator:
         if locale in self.get_locales() or locale == "en":
             self._locale = locale
             self.translation = gettext.translation(
-                "TTMediaBot",
+                "StreamerBot",
                 os.path.join(app_vars.directory, "locale"),
                 languages=[locale],
                 fallback=True,

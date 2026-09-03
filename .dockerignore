@@ -13,7 +13,7 @@ data/
 venv/
 .env
 Dockerfile
-ttbotdocker.sh
+streamerbot.sh
 update.sh
 masc.sh
 README.md
@@ -23,3 +23,6 @@ temp/
 tmp/
 *.log
 *.bak
+backups/
+*.dll
+*.7z

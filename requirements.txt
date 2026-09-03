@@ -2,7 +2,7 @@ babel
 beautifulsoup4
 patool
 portalocker
-pydantic
+pydantic>=2.0
 pyshorteners
 requests
 httpx[http2]

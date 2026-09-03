@@ -95,7 +95,7 @@ class UpdateRuntimeTests(unittest.TestCase):
         lock_harness = self._lock_harness()
         command = (
             'exec 8>"$PWD/update.lock"; flock 8; '
-            f'TTMEDIABOT_UPDATE_LOCK_HELD=true AUTO_UPDATE=true "./{lock_harness}"'
+            f'STREAMERBOT_UPDATE_LOCK_HELD=true AUTO_UPDATE=true "./{lock_harness}"'
         )
 
         result = self.sandbox.run(["-c", command])
@@ -107,7 +107,7 @@ class UpdateRuntimeTests(unittest.TestCase):
         lock_harness = self._lock_harness()
         command = (
             'exec 8>"$PWD/update.lock"; flock 8; exec 9>"$PWD/wrong.lock"; '
-            f'TTMEDIABOT_UPDATE_LOCK_HELD=true AUTO_UPDATE=true "./{lock_harness}"'
+            f'STREAMERBOT_UPDATE_LOCK_HELD=true AUTO_UPDATE=true "./{lock_harness}"'
         )
 
         result = self.sandbox.run(["-c", command])
@@ -119,7 +119,7 @@ class UpdateRuntimeTests(unittest.TestCase):
         lock_harness = self._lock_harness()
         command = (
             'exec 9>"$PWD/update.lock"; flock 9; '
-            f'TTMEDIABOT_UPDATE_LOCK_HELD=true AUTO_UPDATE=true '
+            f'STREAMERBOT_UPDATE_LOCK_HELD=true AUTO_UPDATE=true '
             f'HOLD_LOCK_AFTER_ACQUIRE=true "./{lock_harness}" & child=$!; '
             'for _ in 1 2 3 4 5 6 7 8 9 10; do '
             '[ -e "$PWD/lock-ready" ] && break; sleep 0.05; done; '

@@ -6,7 +6,7 @@ YOUTUBE_BRIDGE_PORT=${YOUTUBE_BRIDGE_PORT:-4417}
 export POT_PROVIDER_URL=${POT_PROVIDER_URL:-http://127.0.0.1:${POT_PROVIDER_PORT}/get_pot}
 export YOUTUBE_BRIDGE_HOST=${YOUTUBE_BRIDGE_HOST:-127.0.0.1}
 export YOUTUBE_BRIDGE_PORT
-export TTMEDIABOT_BOTS_ROOT=${TTMEDIABOT_BOTS_ROOT:-/bots}
+export STREAMERBOT_BOTS_ROOT=${STREAMERBOT_BOTS_ROOT:-/bots}
 
 POT_PID=""
 BRIDGE_PID=""
@@ -21,7 +21,7 @@ trap cleanup EXIT INT TERM
 node /opt/bgutil-provider/server/build/main.js --port "$POT_PROVIDER_PORT" &
 POT_PID=$!
 
-node /home/ttbot/TTMediaBot/youtube_bridge/server.mjs &
+node /home/streamer/StreamerBot/youtube_bridge/server.mjs &
 BRIDGE_PID=$!
 
 wait -n "$POT_PID" "$BRIDGE_PID"

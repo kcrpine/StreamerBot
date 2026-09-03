@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ================================================================= #
-# Automated Installation Script - TTMediaBot
+# Automated Installation Script - StreamerBot
 # Adjusted for execution from within the bot directory
 # ================================================================= #
 
@@ -75,8 +75,8 @@ python3 -m venv venv
 source venv/bin/activate
 
 # Return to bot directory to install Python requirements
-if [ -d "TTMediaBot" ]; then
-    cd TTMediaBot
+if [ -d "StreamerBot" ]; then
+    cd StreamerBot
     echo "--- Installing requirements and specific dependencies within venv ---"
     
     # Ensure pip is up to date inside venv
@@ -117,6 +117,6 @@ if [ -d "TTMediaBot" ]; then
     exec bash --rcfile <(echo "source ~/.bashrc; source ../venv/bin/activate")
 
 else
-    echo "--- Error: TTMediaBot directory not found upon return! ---"
+    echo "--- Error: StreamerBot directory not found upon return! ---"
     exit 1
 fi
