@@ -1,0 +1,227 @@
+name: Tests
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  unit-tests:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Load project constants
+        run: |
+          set -euo pipefail
+          grep -E '^[A-Z_]+=' project.env >> "$GITHUB_ENV"
+          echo "Loaded project.env"
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Install system libraries
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          # libmpv2 backs the vendored mpv.py ctypes binding; p7zip unpacks the
+          # TeamTalk SDK archive.
+          sudo apt-get install -y --no-install-recommends libmpv2 p7zip-full
+
+      - name: Install TeamTalk SDK ${{ env.TTSDK_VERSION }}
+        run: |
+          set -euo pipefail
+          curl -fsSL "$TTSDK_URL_X86_64" -o /tmp/ttsdk.7z
+          7z x -y /tmp/ttsdk.7z -o/tmp/ttsdk > /dev/null
+          sudo mkdir -p /opt/teamtalk
+          sudo cp -a /tmp/ttsdk/*/Library/TeamTalk_DLL/. /opt/teamtalk/
+          test -f /opt/teamtalk/libTeamTalk5.so
+          echo "LD_LIBRARY_PATH=/opt/teamtalk" >> "$GITHUB_ENV"
+
+      - name: Install Python dependencies
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run tests
+        id: tests
+        run: |
+          python tools/ci_test_report.py \
+            --title "Unit tests on ${{ github.sha }}" \
+            --markdown test-report.md \
+            --text test-report.txt
+
+      - name: Upload test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-test-report
+          path: |
+            test-report.md
+            test-report.txt
+          retention-days: 30
+
+  shell-checks:
+    name: Shell scripts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Syntax check every shell script
+        run: |
+          set -euo pipefail
+          status=0
+          while IFS= read -r script; do
+            if bash -n "$script"; then
+              echo "OK.      $script"
+            else
+              echo "Error.   $script failed to parse"
+              status=1
+            fi
+          done < <(find . -name '*.sh' -not -path './.git/*' | sort)
+          exit "$status"
+
+      - name: ShellCheck
+        continue-on-error: true
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends shellcheck
+          # Advisory only. These scripts predate the rewrite and a hard failure
+          # here would block unrelated work.
+          find . -name '*.sh' -not -path './.git/*' -print0 \
+            | xargs -0 shellcheck -S error -f gcc || true
+
+  docker-build:
+    name: Docker image
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Load project constants
+        run: grep -E '^[A-Z_]+=' project.env >> "$GITHUB_ENV"
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Build image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          load: true
+          tags: streamerbot:ci
+          build-args: |
+            TTSDK_URL_X86_64=${{ env.TTSDK_URL_X86_64 }}
+            TTSDK_URL_ARM64=${{ env.TTSDK_URL_ARM64 }}
+            GO_LIBRESPOT_VERSION=${{ env.GO_LIBRESPOT_VERSION }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Verify the runtime inside the image
+        run: |
+          set -euo pipefail
+          docker run --rm --entrypoint bash streamerbot:ci -c '
+            set -e
+            python -c "import TeamTalkPy"        && echo "OK. TeamTalkPy imports"
+            python -c "import mpv"               && echo "OK. libmpv binding loads"
+            python -c "import pydantic, sys; assert pydantic.VERSION.startswith(\"2\")" && echo "OK. pydantic v2"
+            test -x /usr/local/bin/go-librespot  && echo "OK. go-librespot present"
+            test -f /etc/streamerbot-browser-available && echo "OK. browser marker present"
+            google-chrome --version              && echo "OK. Chrome present"
+          '
+
+      - name: Run the suite inside the image
+        run: |
+          docker run --rm --entrypoint bash streamerbot:ci -c '
+            python tools/ci_test_report.py --title "In-image tests"
+          '
+
+  notify:
+    name: Report
+    runs-on: ubuntu-latest
+    needs: [unit-tests, shell-checks, docker-build]
+    if: always() && github.event_name == 'push'
+    env:
+      # Job-level so the email step's "if" can read it. Empty until the secret
+      # is set, which is what keeps that step inert.
+      MAIL_USERNAME: ${{ secrets.MAIL_USERNAME }}
+    steps:
+      - name: Download test report
+        if: always()
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: unit-test-report
+
+      - name: Decide outcome
+        id: outcome
+        run: |
+          set -euo pipefail
+          if [ "${{ needs.unit-tests.result }}" = "success" ] \
+             && [ "${{ needs.shell-checks.result }}" = "success" ] \
+             && [ "${{ needs.docker-build.result }}" = "success" ]; then
+            echo "failed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "failed=true" >> "$GITHUB_OUTPUT"
+          fi
+          {
+            echo "unit-tests:   ${{ needs.unit-tests.result }}"
+            echo "shell-checks: ${{ needs.shell-checks.result }}"
+            echo "docker-build: ${{ needs.docker-build.result }}"
+          } > status.txt
+          cat status.txt
+
+      - name: Build email body
+        if: steps.outcome.outputs.failed == 'true'
+        run: |
+          {
+            echo "StreamerBot CI failed."
+            echo
+            echo "Repository: ${{ github.repository }}"
+            echo "Branch:     ${{ github.ref_name }}"
+            echo "Commit:     ${{ github.sha }}"
+            echo "Message:    ${{ github.event.head_commit.message }}"
+            echo "Run:        ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            echo
+            echo "Job results"
+            echo "-----------"
+            cat status.txt
+            echo
+            if [ -f test-report.txt ]; then
+              cat test-report.txt
+            else
+              echo "No unit test report was produced. The job probably failed before the tests ran; see the run link above."
+            fi
+          } > email-body.txt
+          cat email-body.txt
+
+      # Sends only once MAIL_USERNAME / MAIL_PASSWORD / MAIL_TO are set as
+      # repository secrets. Until then this step is skipped and GitHub's own
+      # failure notification is what reaches you.
+      - name: Email the failure report
+        if: steps.outcome.outputs.failed == 'true' && env.MAIL_USERNAME != ''
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: ${{ secrets.MAIL_SERVER || 'smtp.gmail.com' }}
+          server_port: ${{ secrets.MAIL_PORT || 465 }}
+          secure: true
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          from: StreamerBot CI
+          to: ${{ secrets.MAIL_TO }}
+          subject: "StreamerBot CI failed on ${{ github.ref_name }} (${{ github.sha }})"
+          body: file://email-body.txt
+
+      - name: Fail the run if anything failed
+        if: steps.outcome.outputs.failed == 'true'
+        run: |
+          echo "One or more jobs failed. See the job summary for per-test detail."
+          exit 1
