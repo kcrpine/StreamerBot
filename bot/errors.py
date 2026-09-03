@@ -76,3 +76,36 @@ class LocaleNotFoundError(Exception):
 
 class JoinChannelError(Exception):
     pass
+
+
+class UnsupportedOperationError(Exception):
+    """The active playback engine cannot do this.
+
+    Seeking and speed control exist on mpv but not on every engine: Spotify
+    exposes no speed control, and a browser player may refuse a seek while an
+    advertisement is on screen. Commands catch this and tell the user the
+    operation is not available for the current service, rather than failing.
+    """
+
+
+class EngineUnavailableError(Exception):
+    """A playback engine cannot start at all on this host.
+
+    Raised, for example, when the browser engine is asked for on arm64, where
+    Google publishes no Chrome and there is therefore no Widevine CDM.
+    """
+
+
+class AuthenticationRequiredError(Exception):
+    """The service needs an account connected before it can be used."""
+
+
+class NotSignedInError(AuthenticationRequiredError):
+    """The user has not connected this service yet.
+
+    Carries the service name so the command layer can offer a sign-in link.
+    """
+
+    def __init__(self, service: str = "", message: str = "") -> None:
+        self.service = service
+        super().__init__(message or service)

@@ -21,3 +21,8 @@ class TrackType(Enum):
     Local = 2
     Direct = 3
     Dynamic = 4
+    # Played by an engine that is not mpv: the Spotify daemon or the browser.
+    # There is no stream URL to resolve or hand to a player, so the track's url
+    # is a stable identifier (spotify:track:..., netflix://watch/...) and the
+    # track is created already "fetched" so lazy resolution never runs.
+    External = 5

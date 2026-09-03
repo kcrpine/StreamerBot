@@ -16,6 +16,11 @@ class GeneralModel(BaseModel):
 class SoundDevicesModel(BaseModel):
     output_device: int = 0
     input_device: int = 0
+    # Preferred over the indices above when set. Indices shift whenever the set
+    # of PulseAudio devices changes, which silently points a bot at the wrong
+    # device; matching on name survives that. Substring match, case insensitive.
+    output_device_name: str = ""
+    input_device_name: str = ""
 
 
 class PlayerModel(BaseModel):

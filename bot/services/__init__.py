@@ -21,6 +21,17 @@ class Service(ABC):
     warning_message: str
     help: str
 
+    # Which playback engine handles this service's tracks. Defaults to mpv so
+    # that existing services need no changes.
+    engine: str = "mpv"
+
+    # Whether the user has to connect an account before the service works.
+    requires_auth: bool = False
+
+    # Whether the service can offer an audio description track, which is what
+    # makes the bot ask before playing a film or show.
+    supports_audio_description: bool = False
+
     def download(self, track: Track, file_path: str, video: bool = False) -> None:
         downloader.download_file(track.url, file_path)
 
