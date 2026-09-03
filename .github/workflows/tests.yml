@@ -22,7 +22,7 @@ jobs:
       - name: Load project constants
         run: |
           set -euo pipefail
-          grep -E '^[A-Z_]+=' project.env >> "$GITHUB_ENV"
+          grep -E '^[A-Z0-9_]+=' project.env >> "$GITHUB_ENV"
           echo "Loaded project.env"
 
       - uses: actions/setup-python@v5
@@ -108,7 +108,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Load project constants
-        run: grep -E '^[A-Z_]+=' project.env >> "$GITHUB_ENV"
+        run: grep -E '^[A-Z0-9_]+=' project.env >> "$GITHUB_ENV"
 
       - uses: docker/setup-buildx-action@v3
 
