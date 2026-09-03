@@ -5,10 +5,25 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BOTS_ROOT="${SCRIPT_DIR}/bots"
 CONFIG_SOURCE="config.json"
 
+# Shared project constants (repository, image name, TeamTalk SDK URLs,
+# go-librespot version, update interval).
+if [ -f "$SCRIPT_DIR/project.env" ]; then
+    # shellcheck disable=SC1091
+    . "$SCRIPT_DIR/project.env"
+fi
+
 # Configuration
-BOT_IMAGE="streamerbot"
-YOUTUBE_SERVICE_NAME="streamerbot-youtube"
+BOT_IMAGE="${STREAMERBOT_IMAGE:-streamerbot}"
+YOUTUBE_SERVICE_NAME="${STREAMERBOT_YOUTUBE_SERVICE:-streamerbot-youtube}"
 YOUTUBE_BRIDGE_URL="http://127.0.0.1:4417"
+
+# Build args every "docker build" must pass: the TeamTalk SDK is downloaded
+# from bearware.dk during the build, and go-librespot is version pinned.
+IMAGE_BUILD_ARGS=(
+    --build-arg "TTSDK_URL_X86_64=${TTSDK_URL_X86_64:-}"
+    --build-arg "TTSDK_URL_ARM64=${TTSDK_URL_ARM64:-}"
+    --build-arg "GO_LIBRESPOT_VERSION=${GO_LIBRESPOT_VERSION:-0.9.0}"
+)
 
 # Auto-elevate to root via sudo if needed
 if [ "$EUID" -ne 0 ]; then
@@ -241,7 +256,7 @@ build_image() {
     if [[ "$(docker images -q ${BOT_IMAGE} 2> /dev/null)" == "" ]]; then
         echo "Image not found. Building image..."
         CURRENT_HASH=$(git rev-parse HEAD 2>/dev/null || echo "unknown")
-        docker build --build-arg CACHEBUST=$(date +%s) --label "commit_hash=$CURRENT_HASH" -t ${BOT_IMAGE} .
+        docker build "${IMAGE_BUILD_ARGS[@]}" --build-arg CACHEBUST=$(date +%s) --label "commit_hash=$CURRENT_HASH" -t ${BOT_IMAGE} .
         if [ $? -eq 0 ]; then
              echo -e "${GREEN}Image built successfully!${NC}"
         else
@@ -275,7 +290,7 @@ force_rebuild_image() {
     
     echo -e "${YELLOW}Building new image (updating code and PIP libraries)...${NC}"
     CURRENT_HASH=$(git rev-parse HEAD 2>/dev/null || echo "unknown")
-    docker build --build-arg CACHEBUST=$(date +%s) --label "commit_hash=$CURRENT_HASH" -t ${BOT_IMAGE} .
+    docker build "${IMAGE_BUILD_ARGS[@]}" --build-arg CACHEBUST=$(date +%s) --label "commit_hash=$CURRENT_HASH" -t ${BOT_IMAGE} .
     
     if [ $? -eq 0 ]; then
          echo -e "${GREEN}Image updated successfully!${NC}"
@@ -1859,10 +1874,62 @@ manage_bots() {
 }
 
 
-# Execute update check on startup
-if [ -f "$SCRIPT_DIR/update.sh" ]; then
-    bash "$SCRIPT_DIR/update.sh"
-fi
+# ---------------------------------------------------------------------------
+# Startup: make sure we know which GitHub repository to update from, then do a
+# cheap passive update check.
+#
+# This deliberately does NOT run an update. Earlier versions ran the whole of
+# update.sh on every launch, which meant opening the manager could rebuild the
+# image and restart every bot without being asked. Now the user is only told
+# that an update exists; menu item "Check for updates" installs it.
+# ---------------------------------------------------------------------------
+ensure_project_env() {
+    local env_file="$SCRIPT_DIR/project.env"
+    [ -f "$env_file" ] || return 0
+
+    # shellcheck disable=SC1090
+    . "$env_file"
+
+    [ -n "${STREAMERBOT_REPO_OWNER:-}" ] && return 0
+
+    echo ""
+    echo "Setup. StreamerBot does not know which GitHub account to get updates from."
+    echo "Enter the GitHub username that owns your StreamerBot repository."
+    echo "Press Enter on its own to skip. Updates stay disabled until this is set."
+    echo ""
+    local owner=""
+    read -r -p "GitHub username: " owner
+    owner="$(echo "$owner" | tr -d '[:space:]')"
+
+    if [ -z "$owner" ]; then
+        echo "Warning. No username entered, so automatic updates are disabled for now."
+        echo "You can set STREAMERBOT_REPO_OWNER in project.env at any time."
+        return 0
+    fi
+
+    if sed -i "s|^STREAMERBOT_REPO_OWNER=.*|STREAMERBOT_REPO_OWNER=${owner}|" "$env_file"; then
+        STREAMERBOT_REPO_OWNER="$owner"
+        echo "OK. Updates will come from https://github.com/${owner}/${STREAMERBOT_REPO_NAME:-StreamerBot}"
+    else
+        echo "Error. Could not write to project.env. Set STREAMERBOT_REPO_OWNER by hand."
+    fi
+}
+
+check_for_updates_passive() {
+    [ -f "$SCRIPT_DIR/update.sh" ] || return 0
+    [ -n "${STREAMERBOT_REPO_OWNER:-}" ] || return 0
+
+    local notice
+    notice="$(bash "$SCRIPT_DIR/update.sh" --check-only 2>/dev/null)"
+    if [ -n "$notice" ]; then
+        echo ""
+        echo "$notice"
+        echo ""
+    fi
+}
+
+ensure_project_env
+check_for_updates_passive
 
 build_image
 if docker run --rm --entrypoint test "$BOT_IMAGE" -f /home/streamer/StreamerBot/youtube_services.sh; then
