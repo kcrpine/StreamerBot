@@ -10,6 +10,8 @@ import mpv
 
 from bot import errors
 from bot.player.enums import Mode, State, TrackType
+from bot.player.engines import PlaybackEngine
+from bot.player.engines.mpv_engine import MpvEngine
 from bot.player.track import Track
 from bot.player.queue_manager import QueueManager
 from bot.sound_devices import SoundDevice, SoundDeviceType
@@ -54,6 +56,14 @@ class Player:
         self._log_level = 5
         self._current_user_agent: Optional[str] = None
         self._current_header_fields: Optional[List[str]] = None
+
+        # Playback engines. mpv always exists; librespot and browser are added
+        # by attach_engines() once the services are known, because ServiceManager
+        # is constructed after Player.
+        self._mpv_engine = MpvEngine(self._player, self.config)
+        self._mpv_engine.on_end = self.on_engine_end
+        self.engines: Dict[str, PlaybackEngine] = {self._mpv_engine.name: self._mpv_engine}
+        self._active_engine: PlaybackEngine = self._mpv_engine
         self.track_list: List[Track] = []
         self.track: Track = Track()
         self.track_index: int = -1
@@ -95,8 +105,31 @@ class Player:
         self._cancel_prefetch()
         if self.state != State.Stopped:
             self.stop()
-        self._player.terminate()
+        for engine in self.engines.values():
+            try:
+                engine.close()
+            except Exception as e:  # noqa: BLE001 - shutdown must not raise
+                logging.warning(f"[Player] Failed to close {engine.name} engine: {e}")
         logging.debug("Player closed")
+
+    def attach_engines(self, engines: List[PlaybackEngine]) -> None:
+        """Register the non-mpv engines.
+
+        Called after ServiceManager exists, because which engines are needed
+        depends on which services are enabled. An engine that cannot start on
+        this host raises EngineUnavailableError and is simply not registered;
+        the services that wanted it then disable themselves with a readable
+        reason, the same way a failing service does today.
+        """
+        for engine in engines:
+            try:
+                engine.initialize()
+            except errors.EngineUnavailableError as e:
+                logging.warning(f"[Player] Engine {engine.name} unavailable: {e}")
+                continue
+            engine.on_end = self.on_engine_end
+            self.engines[engine.name] = engine
+            logging.debug(f"[Player] Registered {engine.name} engine")
 
     def play(
         self,
@@ -119,27 +152,71 @@ class Player:
                 self.track_index = start_track_index if start_track_index else 0
                 self.track = tracks[self.track_index]
             self._pending_playback_context = timing_context or {}
-            self._play(self.track.url)
+            self._play(self.track)
         else:
-            self._player.pause = False
-        self._player.volume = self.volume
+            self._active_engine.resume()
+        self._active_engine.set_volume(self.volume)
         self.state = State.Playing
 
     def pause(self) -> None:
         self.state = State.Paused
-        self._player.pause = True
+        self._active_engine.pause()
 
     def stop(self) -> None:
         self._cancel_prefetch()
         self.state = State.Stopped
-        self._player.stop()
+        self._active_engine.stop()
         self.track_list = []
         self.track = Track()
         self.track_index = -1
         self.is_playlist = False
 
-    def _play(self, arg: str, save_to_recents: bool = True) -> None:
+    def _engine_for(self, track: Any) -> PlaybackEngine:
+        return self.engines.get(
+            getattr(track, "engine", "mpv") or "mpv", self._mpv_engine
+        )
+
+    def _activate_engine(self, engine: PlaybackEngine) -> None:
+        """Make engine the only one producing audio.
+
+        Stopping the outgoing engine matters: the browser keeps rendering, and
+        the Spotify daemon keeps its Connect session, so neither goes quiet just
+        because we stopped asking it for audio.
+        """
+        if engine is self._active_engine:
+            return
+        previous = self._active_engine
+        try:
+            previous.stop()
+        except Exception as e:  # noqa: BLE001 - a failing handover must not kill playback
+            logging.warning(f"[Player] Failed to stop {previous.name} engine: {e}")
+        self._active_engine = engine
+        logging.debug(f"[Player] Active engine is now {engine.name}")
+
+    def _play(self, arg: Any, save_to_recents: bool = True) -> None:
+        """Start playback.
+
+        Accepts a Track, which is dispatched to the engine that owns it, or a
+        bare URL string, which always goes to mpv. The string form exists for
+        the stream-refresh retry, which already holds a freshly resolved URL and
+        must not go back through Track.url and get the expired one again.
+        """
         trace = self._start_playback_trace()
+
+        if isinstance(arg, str):
+            engine = self._mpv_engine
+            track: Optional[Track] = self.track
+            url: Optional[str] = arg
+        else:
+            track = arg
+            engine = self._engine_for(track)
+            # Resolve before recording the track as played. Touching .url is
+            # what triggers lazy resolution for a Dynamic track, and it can
+            # raise ServiceError; callers rely on that happening before any
+            # state is committed. Engines that are already producing audio have
+            # nothing to resolve.
+            url = track.url if engine is self._mpv_engine else None
+
         if save_to_recents:
             try:
                 if 0 <= self.track_index < len(self.track_list):
@@ -149,31 +226,13 @@ class Player:
                         self.cache_manager.save()
             except Exception as e:
                 logging.debug(f"[Player] Failed to save recents: {e}")
-            
-        # Apply headers dynamically if available in extra_info only when changed
-        extra_info = getattr(self.track, "extra_info", None) or {}
-        headers = extra_info.get("http_headers", {})
-        target_ua = headers.get("User-Agent") if headers else None
-        target_headers = [f"{k}: {v}" for k, v in headers.items() if k.lower() != "user-agent"] if headers else []
 
-        if target_ua and self._current_user_agent != target_ua:
-            try:
-                self._player.user_agent = target_ua
-                self._current_user_agent = target_ua
-                logging.debug(f"[Player] Dynamic User-Agent applied to MPV")
-            except Exception as e:
-                logging.debug(f"[Player] Failed to apply User-Agent to MPV: {e}")
+        self._activate_engine(engine)
+        if url is not None:
+            self._mpv_engine.play_url(url, track)
+        else:
+            engine.play(track)
 
-        if target_headers and self._current_header_fields != target_headers:
-            try:
-                self._player.http_header_fields = target_headers
-                self._current_header_fields = target_headers
-                logging.debug(f"[Player] Dynamic headers applied to MPV")
-            except Exception as e:
-                logging.debug(f"[Player] Failed to apply dynamic headers to MPV: {e}")
-                
-        self._player.pause = False
-        self._player.play(arg)
         self._log_playback_timing("mpv_play_submitted", trace)
         self._schedule_prefetch()
 
@@ -291,6 +350,15 @@ class Player:
                 random.shuffle(missing)
                 self._index_list.extend(missing)
 
+    @staticmethod
+    def _is_external(track: Track) -> bool:
+        """True for tracks an engine other than mpv will play.
+
+        There is no stream URL to warm up for these, so prefetch has nothing to
+        do and would only produce misleading timing logs.
+        """
+        return getattr(track, "engine", "mpv") != "mpv"
+
     def _prefetch_next_track(self) -> None:
         if not self._prefetch_lock.acquire(blocking=False):
             logging.info("[PlaybackTiming] next_track_prefetch_skipped reason=already_running")
@@ -300,6 +368,8 @@ class Player:
             # Se há faixa na fila, ela será a próxima — prefetch dela
             next_from_queue = self.queue.peek_next()
             if next_from_queue is not None:
+                if self._is_external(next_from_queue):
+                    return
                 if not next_from_queue._is_fetched:
                     logging.info(f"Prefetching next track from queue: {next_from_queue.name}")
                     _ = next_from_queue.url
@@ -336,6 +406,8 @@ class Player:
 
             if next_index != -1 and next_index < len(self.track_list):
                 next_track = self.track_list[next_index]
+                if self._is_external(next_track):
+                    return
                 if not next_track._is_fetched:
                     logging.info(f"Prefetching next track: {next_track.name}")
                     _ = next_track.url
@@ -365,7 +437,7 @@ class Player:
         self.track_index = 0
         self.track = next_track
         self._set_next_playback_context(started_at)
-        self._play(next_track.url)
+        self._play(next_track)
         self.state = State.Playing
         self._log_next_track_completed(started_at, "queue")
         return True
@@ -545,7 +617,7 @@ class Player:
             self.track = self.track_list[index]
             self.track_index = index if index >= 0 else len(self.track_list) + index
             try:
-                self._play(self.track.url)
+                self._play(self.track)
                 self.state = State.Playing
                 self._check_and_trigger_autoplay()
             except errors.ServiceError as e:
@@ -560,28 +632,28 @@ class Player:
     def set_volume(self, volume: int) -> None:
         volume = volume if volume <= self.config.max_volume else self.config.max_volume
         self.volume = volume
+        engine = self._active_engine
         if self.config.volume_fading:
-            n = 1 if self._player.volume < volume else -1
-            for i in range(int(self._player.volume), volume, n):
-                self._player.volume = i
-                time.sleep(self.config.volume_fading_interval)
-        else:
-            self._player.volume = volume
+            current = engine.get_volume()
+            if current is not None and int(current) != volume:
+                n = 1 if current < volume else -1
+                for i in range(int(current), volume, n):
+                    engine.set_volume(i)
+                    time.sleep(self.config.volume_fading_interval)
+        engine.set_volume(volume)
 
     def get_speed(self) -> float:
-        return self._player.speed
+        return self._active_engine.get_speed()
 
     def set_speed(self, arg: float) -> None:
-        if arg < 0.25 or arg > 4:
-            raise ValueError()
-        self._player.speed = arg
+        self._active_engine.set_speed(arg)
 
     def seek_back(self, step: Optional[float] = None) -> None:
         step = step if step else self.config.seek_step
         if step <= 0:
             raise ValueError()
         try:
-            self._player.seek(-step, reference="relative")
+            self._active_engine.seek(-step)
         except SystemError:
             self.stop()
 
@@ -590,12 +662,12 @@ class Player:
         if step <= 0:
             raise ValueError()
         try:
-            self._player.seek(step, reference="relative")
+            self._active_engine.seek(step)
         except SystemError:
             self.stop()
 
     def get_duration(self) -> float:
-        return self._player.duration
+        return self._active_engine.get_duration()
 
     """def get_position(self) -> float:
         return self._player.time_pos
@@ -606,8 +678,10 @@ class Player:
         self._player.seek(arg, reference="absolute")"""
 
     def get_output_devices(self) -> List[SoundDevice]:
+        # Output devices are an mpv concept. Every engine feeds the same
+        # PulseAudio null sink, so there is nothing per-engine to choose here.
         devices: List[SoundDevice] = []
-        for device in self._player.audio_device_list:
+        for device in self._mpv_engine.get_output_devices():
             devices.append(
                 SoundDevice(
                     device["description"], device["name"], SoundDeviceType.Output
@@ -616,7 +690,7 @@ class Player:
         return devices
 
     def set_output_device(self, id: str) -> None:
-        self._player.audio_device = id
+        self._mpv_engine.set_output_device(id)
 
     def shuffle(self, enable: bool, preserve_current: bool = False) -> None:
         if enable:
@@ -696,25 +770,51 @@ class Player:
                     f"track={self.track.name!r} error={error!r}"
                 )
         if self.state == State.Playing and self._player.idle_active:
-            if self.mode == Mode.SingleTrack or self.track.type == TrackType.Direct:
-                # Mesmo em SingleTrack/Direct, a fila tem prioridade
-                if not self.queue.is_empty:
-                    self.play_from_queue()
-                else:
-                    self.stop()
-            elif self.mode == Mode.RepeatTrack:
-                # RepeatTrack repete a atual — fila NÃO interrompe automaticamente
-                # O usuário pode usar 'qs' para pular para a fila manualmente
-                self.play_by_index(self.track_index)
+            self._advance_after_end()
+
+    def _advance_after_end(self) -> None:
+        """Decide what plays next once the current source has ended.
+
+        Shared by mpv's end-file callback and by on_engine_end, so that the
+        queue and the play modes behave identically no matter which engine was
+        producing the audio.
+        """
+        if self.mode == Mode.SingleTrack or self.track.type == TrackType.Direct:
+            # Even in SingleTrack/Direct, the queue takes priority.
+            if not self.queue.is_empty:
+                self.play_from_queue()
             else:
-                # Para todos os outros modos, a fila tem prioridade
-                if not self.queue.is_empty:
-                    self.play_from_queue()
-                else:
-                    try:
-                        self.next()
-                    except errors.NoNextTrackError:
-                        self.stop()
+                self.stop()
+        elif self.mode == Mode.RepeatTrack:
+            # RepeatTrack repeats the current track; the queue does not
+            # interrupt automatically. Use 'qs' to jump to the queue by hand.
+            self.play_by_index(self.track_index)
+        else:
+            # In every other mode the queue takes priority.
+            if not self.queue.is_empty:
+                self.play_from_queue()
+            else:
+                try:
+                    self.next()
+                except errors.NoNextTrackError:
+                    self.stop()
+
+    def on_engine_end(self, engine: PlaybackEngine, reason: str = "eof") -> None:
+        """An engine reports that its source finished on its own.
+
+        Called from the engine's own thread. Callbacks from an engine that is no
+        longer active are ignored, because switching engines stops the outgoing
+        one and that stop can arrive here after the new engine has already
+        started.
+        """
+        if engine is not self._active_engine:
+            logging.debug(
+                f"[Player] Ignoring end from inactive {engine.name} engine ({reason})"
+            )
+            return
+        if self.state != State.Playing:
+            return
+        self._advance_after_end()
 
     def on_metadata_update(self, name: str, value: Any) -> None:
         if self.state == State.Playing and (

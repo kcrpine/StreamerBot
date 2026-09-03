@@ -169,8 +169,10 @@ jobs:
              && [ "${{ needs.shell-checks.result }}" = "success" ] \
              && [ "${{ needs.docker-build.result }}" = "success" ]; then
             echo "failed=false" >> "$GITHUB_OUTPUT"
+            echo "word=passed" >> "$GITHUB_OUTPUT"
           else
             echo "failed=true" >> "$GITHUB_OUTPUT"
+            echo "word=FAILED" >> "$GITHUB_OUTPUT"
           fi
           {
             echo "unit-tests:   ${{ needs.unit-tests.result }}"
@@ -179,11 +181,12 @@ jobs:
           } > status.txt
           cat status.txt
 
+      # Written for every run, pass or fail, so that a silent CI is
+      # distinguishable from a CI that ran and was happy.
       - name: Build email body
-        if: steps.outcome.outputs.failed == 'true'
         run: |
           {
-            echo "StreamerBot CI failed."
+            echo "StreamerBot CI ${{ steps.outcome.outputs.word }}."
             echo
             echo "Repository: ${{ github.repository }}"
             echo "Branch:     ${{ github.ref_name }}"
@@ -198,16 +201,16 @@ jobs:
             if [ -f test-report.txt ]; then
               cat test-report.txt
             else
-              echo "No unit test report was produced. The job probably failed before the tests ran; see the run link above."
+              echo "No unit test report was produced. The run probably failed before the tests started; see the run link above."
             fi
           } > email-body.txt
           cat email-body.txt
 
-      # Sends only once MAIL_USERNAME / MAIL_PASSWORD / MAIL_TO are set as
-      # repository secrets. Until then this step is skipped and GitHub's own
-      # failure notification is what reaches you.
-      - name: Email the failure report
-        if: steps.outcome.outputs.failed == 'true' && env.MAIL_USERNAME != ''
+      # Sends on both success and failure, so a quiet inbox means CI did not
+      # run at all. Stays inert until MAIL_USERNAME, MAIL_PASSWORD and MAIL_TO
+      # exist as repository secrets, so no credentials live in the repository.
+      - name: Email the report
+        if: env.MAIL_USERNAME != ''
         uses: dawidd6/action-send-mail@v3
         with:
           server_address: ${{ secrets.MAIL_SERVER || 'smtp.gmail.com' }}
@@ -217,7 +220,7 @@ jobs:
           password: ${{ secrets.MAIL_PASSWORD }}
           from: StreamerBot CI
           to: ${{ secrets.MAIL_TO }}
-          subject: "StreamerBot CI failed on ${{ github.ref_name }} (${{ github.sha }})"
+          subject: "StreamerBot CI ${{ steps.outcome.outputs.word }} on ${{ github.ref_name }} (${{ github.sha }})"
           body: file://email-body.txt
 
       - name: Fail the run if anything failed

@@ -26,6 +26,7 @@ class Track:
         extra_info: Optional[Dict[str, Any]] = None,
         type: TrackType = TrackType.Default,
         extracted_at: float = 0.0,
+        engine: str = "mpv",
     ) -> None:
         self.service = service
         self.url = url
@@ -34,6 +35,10 @@ class Track:
         self.extra_info = extra_info
         self.type = type
         self.extracted_at = extracted_at or time.perf_counter()
+        # Which playback engine handles this track: "mpv", "librespot" or
+        # "browser". Read with getattr elsewhere, because tracks unpickled from
+        # a cache written before this field existed will not have it.
+        self.engine = engine
         self._lock = Lock()
         self._is_fetched = False
         self._fetch_failed = False
@@ -67,8 +72,15 @@ class Track:
         self._is_fetched = True
 
     def refresh_stream(self) -> str:
-        if self.service not in ("yt", "ytm"):
-            raise RuntimeError("Stream refresh is only supported for YouTube tracks")
+        """Re-resolve an expired stream URL and return the fresh one.
+
+        Only meaningful for engines that play a URL. Spotify and the browser
+        hold their own sessions and have nothing to refresh, and their services
+        expose no _bridge, so both conditions below reject them.
+        """
+        service: Service = get_service_by_name(self.service)
+        if getattr(service, "engine", "mpv") != "mpv" or not hasattr(service, "_bridge"):
+            raise RuntimeError("Stream refresh is not supported for this service")
 
         with self._lock:
             original = getattr(self, "_original_track", self)
@@ -79,7 +91,6 @@ class Track:
                 or original_info.get("contentId")
             )
             source_url = original._url
-            service: Service = get_service_by_name(self.service)
             service._bridge.invalidate(
                 video_id=video_id or "",
                 url="" if video_id else source_url,
@@ -157,4 +168,7 @@ class Track:
 
     def __setstate__(self, state: Dict[str, Any]):
         self.__dict__.update(state)
+        # Recents and favourites pickled before engines existed have no engine
+        # field. Everything from that era was played by mpv.
+        self.__dict__.setdefault("engine", "mpv")
         self._lock = Lock()
