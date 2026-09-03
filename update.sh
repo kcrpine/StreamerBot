@@ -16,10 +16,44 @@ if [ -f "$REAL_USER_HOME/.ssh/id_ed25519" ]; then
     export GIT_SSH_COMMAND="ssh -i $REAL_USER_HOME/.ssh/id_ed25519 -o StrictHostKeyChecking=accept-new"
 fi
 
-BOT_IMAGE="ttmediabot"
-YOUTUBE_SERVICE_NAME="ttmediabot-youtube"
+# Shared project constants. Single source of truth for the repository, the image
+# name and the pinned external binary versions.
+if [ -f "$SCRIPT_DIR/project.env" ]; then
+    # shellcheck disable=SC1091
+    . "$SCRIPT_DIR/project.env"
+fi
+
+BOT_IMAGE="${STREAMERBOT_IMAGE:-streamerbot}"
+YOUTUBE_SERVICE_NAME="${STREAMERBOT_YOUTUBE_SERVICE:-streamerbot-youtube}"
+
+# Build args every "docker build" in this project must pass: the TeamTalk SDK
+# comes from bearware.dk at build time, and go-librespot is version pinned.
+IMAGE_BUILD_ARGS=(
+    --build-arg "TTSDK_URL_X86_64=${TTSDK_URL_X86_64:-}"
+    --build-arg "TTSDK_URL_ARM64=${TTSDK_URL_ARM64:-}"
+    --build-arg "GO_LIBRESPOT_VERSION=${GO_LIBRESPOT_VERSION:-0.3.0}"
+)
 YOUTUBE_BRIDGE_URL="http://127.0.0.1:4417"
-UPDATE_LOCK_FILE="/tmp/ttmediabot_update.lock"
+UPDATE_LOCK_FILE="/tmp/streamerbot_update.lock"
+
+# ---------------------------------------------------------------------------
+# --check-only
+#
+# Handled before the lock, before any fetch, and before root elevation: this is
+# what streamerbot.sh runs at startup. It must be cheap and must never modify
+# anything. It prints one line if an update exists, and nothing otherwise.
+# ---------------------------------------------------------------------------
+if [ "${1:-}" = "--check-only" ]; then
+    cd "$SCRIPT_DIR" || exit 0
+    git rev-parse --is-inside-work-tree >/dev/null 2>&1 || exit 0
+    _branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "${STREAMERBOT_BRANCH:-main}")
+    _remote=$(timeout 5 git ls-remote origin -h "refs/heads/$_branch" 2>/dev/null | awk '{print $1}' | tr -d '[:space:]')
+    _local=$(git rev-parse HEAD 2>/dev/null | tr -d '[:space:]')
+    if [ -n "$_remote" ] && [ "$_remote" != "$_local" ]; then
+        echo "An update is available. Use Check for updates to install it."
+    fi
+    exit 0
+fi
 
 # Auto-elevate to root via sudo if needed
 if [ "$EUID" -ne 0 ]; then
@@ -28,7 +62,7 @@ if [ "$EUID" -ne 0 ]; then
 fi
 
 acquire_update_lock() {
-    if [ "${TTMEDIABOT_UPDATE_LOCK_HELD:-false}" = "true" ] \
+    if [ "${STREAMERBOT_UPDATE_LOCK_HELD:-false}" = "true" ] \
         && [ -e "/proc/$$/fd/9" ]; then
         inherited_lock_file=$(readlink -f -- "$UPDATE_LOCK_FILE" 2>/dev/null || true)
         inherited_lock_fd=$(readlink -f -- "/proc/$$/fd/9" 2>/dev/null || true)
@@ -39,7 +73,7 @@ acquire_update_lock() {
         fi
     fi
 
-    unset TTMEDIABOT_UPDATE_LOCK_HELD
+    unset STREAMERBOT_UPDATE_LOCK_HELD
 
     exec 9>"$UPDATE_LOCK_FILE"
     if [ "${AUTO_UPDATE:-false}" = "true" ]; then
@@ -55,7 +89,7 @@ acquire_update_lock() {
         fi
     fi
 
-    export TTMEDIABOT_UPDATE_LOCK_HELD=true
+    export STREAMERBOT_UPDATE_LOCK_HELD=true
 }
 
 
@@ -69,7 +103,7 @@ NC='\033[0m' # No Color
 header() {
     clear
     echo -e "${GREEN}=========================================${NC}"
-    echo -e "${GREEN}      TTMediaBot Update Utility          ${NC}"
+    echo -e "${GREEN}      StreamerBot Update Utility          ${NC}"
     echo -e "${GREEN}=========================================${NC}"
     echo ""
 }
@@ -79,14 +113,14 @@ create_shared_youtube_service() {
     docker create \
         --name "$YOUTUBE_SERVICE_NAME" \
         -p "127.0.0.1:4417:4417" \
-        --label "role=ttmediabot-infrastructure" \
+        --label "role=streamerbot-infrastructure" \
         --restart always \
-        -e "TTMEDIABOT_BOTS_ROOT=/bots" \
+        -e "STREAMERBOT_BOTS_ROOT=/bots" \
         -e "YOUTUBE_BRIDGE_HOST=0.0.0.0" \
         -v "${BOTS_ROOT}:/bots:ro" \
         --entrypoint /bin/bash \
         "$BOT_IMAGE" \
-        /home/ttbot/TTMediaBot/youtube_services.sh >/dev/null
+        /home/streamer/StreamerBot/youtube_services.sh >/dev/null
 }
 
 start_shared_youtube_service() {
@@ -111,7 +145,7 @@ start_shared_youtube_service() {
 shared_youtube_service_supported() {
     docker image inspect "$BOT_IMAGE" >/dev/null 2>&1 \
         && docker run --rm --entrypoint test "$BOT_IMAGE" \
-            -f /home/ttbot/TTMediaBot/youtube_services.sh
+            -f /home/streamer/StreamerBot/youtube_services.sh
 }
 
 reconcile_shared_youtube_service() {
@@ -156,10 +190,10 @@ recreate_bot_containers() {
                 --network host \
                 -e "TTBOT_INSTANCE=${bot_name}" \
                 -e "YOUTUBE_BRIDGE_URL=${YOUTUBE_BRIDGE_URL}" \
-                --label "role=ttmediabot" \
+                --label "role=streamerbot" \
                 --restart always \
-                -v "${d}:/home/ttbot/TTMediaBot/data" \
-                -v "${d}/cookies.txt:/home/ttbot/TTMediaBot/data/cookies.txt" \
+                -v "${d}:/home/streamer/StreamerBot/data" \
+                -v "${d}/cookies.txt:/home/streamer/StreamerBot/data/cookies.txt" \
                 "${BOT_IMAGE}" > /dev/null 2>&1
                 
             if [ $? -eq 0 ]; then
@@ -178,8 +212,8 @@ perform_image_rebuild() {
     
     # Capture NAMES of running bots to restart them later
     # We also check a persistent state file in case a previous update was interrupted after stopping bots
-    STATE_FILE="/tmp/ttmediabot_last_running.txt"
-    RUNNING_NAMES=$(docker ps --format "{{.Names}}" -f "label=role=ttmediabot")
+    STATE_FILE="/tmp/streamerbot_last_running.txt"
+    RUNNING_NAMES=$(docker ps --format "{{.Names}}" -f "label=role=streamerbot")
     
     # Signal running bots that an update has started
     if [ ! -z "$RUNNING_NAMES" ]; then
@@ -196,7 +230,7 @@ perform_image_rebuild() {
     # Build the image with a commit hash label for version tracking
     CURRENT_HASH=$(git rev-parse HEAD 2>/dev/null || echo "unknown")
     echo "Building new image with version label: $CURRENT_HASH"
-    docker build --build-arg CACHEBUST=$(date +%s) --label "commit_hash=$CURRENT_HASH" -t ${BOT_IMAGE} .
+    docker build "${IMAGE_BUILD_ARGS[@]}" --build-arg CACHEBUST=$(date +%s) --label "commit_hash=$CURRENT_HASH" -t ${BOT_IMAGE} .
     
     if [ $? -eq 0 ]; then
          echo -e "${GREEN}Image built successfully!${NC}"
@@ -301,9 +335,15 @@ update_and_fix_permissions() {
     echo ""
 
     # 2. Check for Updates (GitHub API vs Local Date)
-    REPO_OWNER="JoaoDEVWHADS"
-    REPO_NAME="TTMediaBot"
-    BRANCH="master"
+    REPO_OWNER="${STREAMERBOT_REPO_OWNER:-}"
+    REPO_NAME="${STREAMERBOT_REPO_NAME:-StreamerBot}"
+    BRANCH="${STREAMERBOT_BRANCH:-main}"
+
+    if [ -z "$REPO_OWNER" ]; then
+        echo -e "${RED}Error. STREAMERBOT_REPO_OWNER is not set in project.env, so updates cannot run.${NC}"
+        echo "Open project.env and set STREAMERBOT_REPO_OWNER to your GitHub username, or run streamerbot.sh, which will ask for it."
+        return 1 2>/dev/null || exit 1
+    fi
     
     echo -e "${YELLOW}Checking for updates...${NC}"
     
@@ -398,7 +438,7 @@ update_and_fix_permissions() {
         
         if [ -n "$LATEST_COMMIT_DATE" ] && [ "$LATEST_COMMIT_DATE" != "null" ]; then
             REMOTE_TS=$(date -d "$LATEST_COMMIT_DATE" +%s)
-            LOCAL_TS=$(stat -c %Y "$SCRIPT_DIR/ttbotdocker.sh" 2>/dev/null || echo 0)
+            LOCAL_TS=$(stat -c %Y "$SCRIPT_DIR/streamerbot.sh" 2>/dev/null || echo 0)
             
             if [ "$REMOTE_TS" -gt "$LOCAL_TS" ] || [ "$IS_FIRST_INSTALL" = "true" ]; then
                 if [ "$IS_FIRST_INSTALL" = "true" ]; then
@@ -430,7 +470,7 @@ update_and_fix_permissions() {
         if [ "$IS_FIRST_INSTALL" == "true" ]; then
             echo "This will:"
             echo "1. Clone/pull the latest repository code"
-            echo "2. Build and setup the TTMediaBot Docker image"
+            echo "2. Build and setup the StreamerBot Docker image"
             echo "3. Initialize environment and fix permissions"
         else
             echo "This will:"
@@ -447,7 +487,7 @@ update_and_fix_permissions() {
         elif [ "$IS_FIRST_INSTALL" = "true" ]; then
             echo -e "${GREEN}First installation detected. Proceeding automatically...${NC}"
             confirm_update="y"
-        elif [ "${TTMEDIABOT_UPDATE_REEXECED:-false}" = "true" ]; then
+        elif [ "${STREAMERBOT_UPDATE_REEXECED:-false}" = "true" ]; then
             echo -e "${YELLOW}Continuing update with the refreshed updater...${NC}"
             confirm_update="y"
         elif [ -z "$IMAGE_EXISTS" ]; then
@@ -525,11 +565,11 @@ update_and_fix_permissions() {
 
                 if [ "$UPDATE_PERFORMED" == "true" ]; then
                      # Update timestamp
-                     touch "$SCRIPT_DIR/ttbotdocker.sh"
+                     touch "$SCRIPT_DIR/streamerbot.sh"
                      echo -e "${GREEN}Update applied!${NC}"
-                     if [ "${TTMEDIABOT_UPDATE_REEXECED:-false}" != "true" ]; then
+                     if [ "${STREAMERBOT_UPDATE_REEXECED:-false}" != "true" ]; then
                          echo -e "${YELLOW}Reloading the updated deployment logic...${NC}"
-                         export TTMEDIABOT_UPDATE_REEXECED=true
+                         export STREAMERBOT_UPDATE_REEXECED=true
                          exec bash "$SCRIPT_DIR/update.sh" "$@"
                          reexec_status=$?
                          echo -e "${RED}Failed to reload the updated deployment logic.${NC}" >&2
@@ -542,43 +582,13 @@ update_and_fix_permissions() {
             fi
         fi
     if [ "$UPDATE_PERFORMED" == "true" ] || [ "$REBUILD_REQUIRED" == "true" ]; then
-        echo "========================================="
-        echo "--- Updating TeamTalk_DLL ---"
-        echo "========================================="
-        
-        # Always remove existing folder to force a fresh download on update
-        rm -rf TeamTalk_DLL TeamTalk_DLL.zip
-        
-        DLL_URL="https://github.com/JoaoDEVWHADS/TTMediaBot/releases/download/downloadttdll/TeamTalk_DLL.zip"
-        ARCH=$(uname -m)
-        if [[ "$ARCH" == "aarch64" || "$ARCH" =~ ^arm ]]; then
-            echo "ℹ️ ARM architecture detected ($ARCH). Using ARM DLL..."
-            DLL_URL="https://github.com/JoaoDEVWHADS/TTMediaBot/releases/download/downloadttdll/ttarm.zip"
-        else
-            echo "ℹ️ x86_64/AMD64 architecture detected ($ARCH). Using x86 DLL..."
-            DLL_URL="https://github.com/JoaoDEVWHADS/TTMediaBot/releases/download/downloadttdll/TeamTalk_DLL.zip"
-        fi
-        DLL_FILE="TeamTalk_DLL.zip"
-        
-        echo "📥 Downloading TeamTalk_DLL from $DLL_URL..."
-        if command -v wget &> /dev/null; then
-            wget "$DLL_URL" -O "$DLL_FILE"
-        else
-            curl -L "$DLL_URL" -o "$DLL_FILE"
-        fi
-        
-        if [ $? -ne 0 ]; then
-            echo "❌ Error downloading TeamTalk_DLL."
-            rm -f "$DLL_FILE"
-        else
-            echo "✅ Download complete! Extracting..."
-            unzip -o "$DLL_FILE"
-            if [ $? -ne 0 ]; then
-                echo "❌ Error extracting TeamTalk_DLL."
-            else
-                echo "✅ Extraction complete!"
-            fi
-            rm -f "$DLL_FILE"
+        # The TeamTalk SDK is no longer downloaded here. It is fetched from
+        # bearware.dk inside the Docker image build using the URLs in
+        # project.env, so the host never needs a TeamTalk_DLL directory.
+        # Remove any left over from a pre-5.22 install.
+        if [ -d "TeamTalk_DLL" ] || [ -f "TeamTalk_DLL.zip" ]; then
+            echo "Removing the old host-side TeamTalk_DLL. The SDK now ships inside the image."
+            rm -rf TeamTalk_DLL TeamTalk_DLL.zip
         fi
 
         echo ""
@@ -617,7 +627,7 @@ update_and_fix_permissions() {
 # Function: Configure Auto-Updater Service
 configure_auto_updater() {
     # Check if masked - respect user choice to disable
-    if LANG=C systemctl list-unit-files ttmediabot-updater.service 2>/dev/null | grep -q "masked"; then
+    if LANG=C systemctl list-unit-files streamerbot-updater.service 2>/dev/null | grep -q "masked"; then
         echo -e "${YELLOW}Auto-Updater is currently masked. Skipping configuration to respect manual override.${NC}"
         return
     fi
@@ -625,13 +635,13 @@ configure_auto_updater() {
     echo ""
     echo -e "${YELLOW} --- Configuring Auto-Updater Service --- ${NC}"
     
-    SERVICE_FILE="/etc/systemd/system/ttmediabot-updater.service"
+    SERVICE_FILE="/etc/systemd/system/streamerbot-updater.service"
     
     # Create the service file
     echo "Creating systemd service..."
     cat > "$SERVICE_FILE" <<EOF
 [Unit]
-Description=TTMediaBot Auto-Updater Watcher
+Description=StreamerBot Auto-Updater Watcher
 After=network.target
 
 [Service]
@@ -651,11 +661,11 @@ EOF
     # Reload systemd and enable service
     echo "Enabling and starting service..."
     systemctl daemon-reload
-    systemctl enable ttmediabot-updater.service >/dev/null 2>&1
+    systemctl enable streamerbot-updater.service >/dev/null 2>&1
     
     # Only restart if not being called by the auto-updater to avoid killing our own process
     if [ "$AUTO_UPDATE" != "true" ]; then
-        systemctl restart --no-block ttmediabot-updater.service
+        systemctl restart --no-block streamerbot-updater.service
         echo -e "${GREEN}Auto-Updater Service configured and restarting in background!${NC}"
     else
         echo -e "${GREEN}Auto-Updater Service configured (restart skipped to avoid interruption).${NC}"

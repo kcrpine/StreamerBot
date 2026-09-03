@@ -34,8 +34,8 @@ ENV/
 # config.json (Allowed)
 cookies.txt
 *.log
-TTMediaBot.log
-TTMediaBotCache.dat
+StreamerBot.log
+StreamerBotCache.dat
 fast_forensics.py
 *.mp3
 *.m4a

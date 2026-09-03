@@ -1271,7 +1271,7 @@ class DownloadListCommand(Command):
 
     def _process_normal_local(self, links: List[str], user: User) -> None:
         error_count = 0
-        dest_dir = "/home/ttbot/TTMediaBot/data/Downloads/music"
+        dest_dir = "/home/streamer/StreamerBot/data/Downloads/music"
         try:
             os.makedirs(dest_dir, exist_ok=True)
         except Exception as e:
@@ -1400,7 +1400,7 @@ class DownloadListCommand(Command):
                 temp_dir.cleanup()
                 return
 
-            dest_dir = "/home/ttbot/TTMediaBot/data/Downloads/zips"
+            dest_dir = "/home/streamer/StreamerBot/data/Downloads/zips"
             os.makedirs(dest_dir, exist_ok=True)
 
             folder_name = "Compressed_Links"

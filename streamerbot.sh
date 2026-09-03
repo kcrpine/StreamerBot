@@ -6,8 +6,8 @@ BOTS_ROOT="${SCRIPT_DIR}/bots"
 CONFIG_SOURCE="config.json"
 
 # Configuration
-BOT_IMAGE="ttmediabot"
-YOUTUBE_SERVICE_NAME="ttmediabot-youtube"
+BOT_IMAGE="streamerbot"
+YOUTUBE_SERVICE_NAME="streamerbot-youtube"
 YOUTUBE_BRIDGE_URL="http://127.0.0.1:4417"
 
 # Auto-elevate to root via sudo if needed
@@ -26,7 +26,7 @@ NC='\033[0m' # No Color
 # Function: Display Header
 header() {
     clear
-    echo -e "${GREEN}      TTMediaBot Docker Manager          ${NC}"
+    echo -e "${GREEN}      StreamerBot Docker Manager          ${NC}"
     echo ""
 }
 
@@ -126,14 +126,14 @@ create_shared_youtube_service() {
     docker create \
         --name "$YOUTUBE_SERVICE_NAME" \
         -p "127.0.0.1:4417:4417" \
-        --label "role=ttmediabot-infrastructure" \
+        --label "role=streamerbot-infrastructure" \
         --restart always \
-        -e "TTMEDIABOT_BOTS_ROOT=/bots" \
+        -e "STREAMERBOT_BOTS_ROOT=/bots" \
         -e "YOUTUBE_BRIDGE_HOST=0.0.0.0" \
         -v "${BOTS_ROOT}:/bots:ro" \
         --entrypoint /bin/bash \
         "$BOT_IMAGE" \
-        /home/ttbot/TTMediaBot/youtube_services.sh >/dev/null
+        /home/streamer/StreamerBot/youtube_services.sh >/dev/null
 }
 
 start_shared_youtube_service() {
@@ -211,10 +211,10 @@ recreate_bot_containers() {
                 --network host \
                 -e "TTBOT_INSTANCE=${bot_name}" \
                 -e "YOUTUBE_BRIDGE_URL=${YOUTUBE_BRIDGE_URL}" \
-                --label "role=ttmediabot" \
+                --label "role=streamerbot" \
                 --restart always \
-                -v "${d}:/home/ttbot/TTMediaBot/data" \
-                -v "${d}/cookies.txt:/home/ttbot/TTMediaBot/data/cookies.txt" \
+                -v "${d}:/home/streamer/StreamerBot/data" \
+                -v "${d}/cookies.txt:/home/streamer/StreamerBot/data/cookies.txt" \
                 "${BOT_IMAGE}" > /dev/null 2>&1
                 
             if [ $? -eq 0 ]; then
@@ -234,7 +234,7 @@ build_image() {
     # Check if Dockerfile exists in current directory
     if [ ! -f "Dockerfile" ]; then
         echo -e "${RED}Error: Dockerfile not found in current directory!${NC}"
-        echo "Please run this script in the folder where the TTMediaBot Dockerfile is located."
+        echo "Please run this script in the folder where the StreamerBot Dockerfile is located."
         exit 1
     fi
 
@@ -271,7 +271,7 @@ force_rebuild_image() {
     echo ""
     echo "Checking running bots..."
     # Capture NAMES of running bots to restart them later
-    RUNNING_NAMES=$(docker ps --format "{{.Names}}" -f "label=role=ttmediabot")
+    RUNNING_NAMES=$(docker ps --format "{{.Names}}" -f "label=role=streamerbot")
     
     echo -e "${YELLOW}Building new image (updating code and PIP libraries)...${NC}"
     CURRENT_HASH=$(git rev-parse HEAD 2>/dev/null || echo "unknown")
@@ -349,8 +349,8 @@ create_bot() {
     read -p "Username: " username
     read -sp "Password: " password
     echo ""
-    read -p "Bot Nickname (Default: TTMediaBot): " nickname
-    nickname=${nickname:-TTMediaBot}
+    read -p "Bot Nickname (Default: StreamerBot): " nickname
+    nickname=${nickname:-StreamerBot}
     get_cookies
     cookies_path="$RET_COOKIES"
     
@@ -545,13 +545,13 @@ create_bot() {
         echo "Copying cookies file..."
         cp "$cookies_path" "$CURRENT_BOT_DIR/cookies.txt"
         chown 1000:1000 "$CURRENT_BOT_DIR/cookies.txt"
-        COOKIES_MOUNT="-v ${CURRENT_BOT_DIR}/cookies.txt:/home/ttbot/TTMediaBot/data/cookies.txt"
+        COOKIES_MOUNT="-v ${CURRENT_BOT_DIR}/cookies.txt:/home/streamer/StreamerBot/data/cookies.txt"
         CONTAINER_COOKIE_PATH="data/cookies.txt"
     else
         echo -e "${RED}Cookies file not found! The bot will be created without specific cookies.${NC}"
         # Create empty cookies file to avoid mount errors if referenced
         touch "$CURRENT_BOT_DIR/cookies.txt"
-        COOKIES_MOUNT="-v ${CURRENT_BOT_DIR}/cookies.txt:/home/ttbot/TTMediaBot/data/cookies.txt"
+        COOKIES_MOUNT="-v ${CURRENT_BOT_DIR}/cookies.txt:/home/streamer/StreamerBot/data/cookies.txt"
         CONTAINER_COOKIE_PATH="data/cookies.txt"
     fi
     
@@ -592,9 +592,9 @@ create_bot() {
         --network host \
         -e "TTBOT_INSTANCE=${current_bot_name}" \
         -e "YOUTUBE_BRIDGE_URL=${YOUTUBE_BRIDGE_URL}" \
-        --label "role=ttmediabot" \
+        --label "role=streamerbot" \
         --restart always \
-        -v "${CURRENT_BOT_DIR}:/home/ttbot/TTMediaBot/data" \
+        -v "${CURRENT_BOT_DIR}:/home/streamer/StreamerBot/data" \
         $COOKIES_MOUNT \
         "${BOT_IMAGE}" > /dev/null 2>&1
 
@@ -610,7 +610,7 @@ create_bot() {
     echo -e "${YELLOW}Starting all bots in parallel...${NC}"
     # Start all newly created bots in parallel
     ensure_shared_youtube_service || return
-    docker start $(docker ps -a -q -f "label=role=ttmediabot" -f "status=created") 2>/dev/null
+    docker start $(docker ps -a -q -f "label=role=streamerbot" -f "status=created") 2>/dev/null
     
     echo -e "${GREEN}Creation completed! $total_bots bot(s) created and started.${NC}"
     rm -f /tmp/cookies_pasted.txt
@@ -1373,16 +1373,16 @@ duplicate_bot() {
             chown -R 1000:1000 "$CURRENT_BOT_DIR"
             
             # Create container (without starting)
-            COOKIES_MOUNT_DUP="-v ${CURRENT_BOT_DIR}/cookies.txt:/home/ttbot/TTMediaBot/data/cookies.txt"
+            COOKIES_MOUNT_DUP="-v ${CURRENT_BOT_DIR}/cookies.txt:/home/streamer/StreamerBot/data/cookies.txt"
             docker create \
                 --name "${current_bot_name}" \
                 --network host \
                 -e "TTBOT_INSTANCE=${current_bot_name}" \
                 -e "YOUTUBE_BRIDGE_URL=${YOUTUBE_BRIDGE_URL}" \
-                --label "role=ttmediabot" \
+                --label "role=streamerbot" \
                 --restart always \
-                -v "${CURRENT_BOT_DIR}:/home/ttbot/TTMediaBot/data" \
-                -v "${CURRENT_BOT_DIR}/cookies.txt:/home/ttbot/TTMediaBot/data/cookies.txt" \
+                -v "${CURRENT_BOT_DIR}:/home/streamer/StreamerBot/data" \
+                -v "${CURRENT_BOT_DIR}/cookies.txt:/home/streamer/StreamerBot/data/cookies.txt" \
                 "${BOT_IMAGE}" > /dev/null 2>&1
             
             if [ $? -eq 0 ]; then
@@ -1396,7 +1396,7 @@ duplicate_bot() {
         echo -e "${YELLOW}Starting all bots in parallel...${NC}"
         # Start all newly created bots in parallel
         ensure_shared_youtube_service || return
-        docker start $(docker ps -a -q -f "label=role=ttmediabot" -f "status=created") 2>/dev/null
+        docker start $(docker ps -a -q -f "label=role=streamerbot" -f "status=created") 2>/dev/null
         
         echo -e "${GREEN}Duplication completed! $total_bots bot(s) created and started.${NC}"
         read -p "Press Enter to continue..."
@@ -1448,11 +1448,11 @@ update_all_cookies() {
         
         # Stop all bots in parallel (fast)
         echo "Stopping bots..."
-        docker stop -t 1 $(docker ps -a -q -f "label=role=ttmediabot") 2>/dev/null
+        docker stop -t 1 $(docker ps -a -q -f "label=role=streamerbot") 2>/dev/null
         
         # Start all bots in parallel (fast)
         echo "Starting bots..."
-        docker start $(docker ps -a -q -f "label=role=ttmediabot") 2>/dev/null
+        docker start $(docker ps -a -q -f "label=role=streamerbot") 2>/dev/null
         
         echo -e "${GREEN}All bots restarted.${NC}"
     fi
@@ -1476,7 +1476,7 @@ restart_with_timer() {
     fi
     
     echo -e "${YELLOW}Stopping all bots...${NC}"
-    docker stop -t 1 $(docker ps -a -q -f "label=role=ttmediabot")
+    docker stop -t 1 $(docker ps -a -q -f "label=role=streamerbot")
     
     echo -e "${YELLOW}Waiting ${wait_time} seconds...${NC}"
     # Countdown visual
@@ -1487,7 +1487,7 @@ restart_with_timer() {
     echo ""
     
     echo -e "${YELLOW}Starting all bots...${NC}"
-    docker start $(docker ps -a -q -f "label=role=ttmediabot")
+    docker start $(docker ps -a -q -f "label=role=streamerbot")
     
     echo -e "${GREEN}Process completed.${NC}"
     read -p "Enter to return..."
@@ -1615,13 +1615,13 @@ restore_bots() {
     echo ""
     echo -e "${YELLOW}Stopping all running bots...${NC}"
     # Stop containers
-    RUNNING_BOTS=$(docker ps -q -f "label=role=ttmediabot")
+    RUNNING_BOTS=$(docker ps -q -f "label=role=streamerbot")
     if [ -n "$RUNNING_BOTS" ]; then
         docker stop -t 1 $RUNNING_BOTS >/dev/null 2>&1
     fi
     
     # Remove containers
-    ALL_BOTS=$(docker ps -a -q -f "label=role=ttmediabot")
+    ALL_BOTS=$(docker ps -a -q -f "label=role=streamerbot")
     if [ -n "$ALL_BOTS" ]; then
         echo -e "${YELLOW}Removing existing bot containers...${NC}"
         docker rm $ALL_BOTS >/dev/null 2>&1
@@ -1649,7 +1649,7 @@ restore_bots() {
         
         # Start them
         echo -e "${YELLOW}Starting restored bots...${NC}"
-        docker start $(docker ps -a -q -f "label=role=ttmediabot") >/dev/null 2>&1
+        docker start $(docker ps -a -q -f "label=role=streamerbot") >/dev/null 2>&1
         start_shared_youtube_service || {
             echo -e "${RED}Bots were restored, but the shared YouTube service failed to start.${NC}"
             read -p "Press Enter to continue..."
@@ -1747,7 +1747,7 @@ clear_youtube_bridge_cache() {
     rm -f "${SCRIPT_DIR}/youtube_bridge/bridge_cache.json" 2>/dev/null || true
     
     if docker inspect "$YOUTUBE_SERVICE_NAME" >/dev/null 2>&1; then
-        docker exec "$YOUTUBE_SERVICE_NAME" rm -f /home/ttbot/TTMediaBot/youtube_bridge/bridge_cache.json 2>/dev/null || true
+        docker exec "$YOUTUBE_SERVICE_NAME" rm -f /home/streamer/StreamerBot/youtube_bridge/bridge_cache.json 2>/dev/null || true
         echo "Restarting YouTube Bridge service to flush RAM..."
         docker restart "$YOUTUBE_SERVICE_NAME" >/dev/null 2>&1 || true
     fi
@@ -1762,9 +1762,9 @@ manage_bots() {
     header
     while true; do
         echo -e "${YELLOW} --- Manage Bots --- ${NC}"
-        echo "1. Start All (With label role=ttmediabot)"
-        echo "2. Restart All (With label role=ttmediabot)"
-        echo "3. Stop All (With label role=ttmediabot)"
+        echo "1. Start All (With label role=streamerbot)"
+        echo "2. Restart All (With label role=streamerbot)"
+        echo "3. Stop All (With label role=streamerbot)"
         echo "4. Delete Bot"
         echo "5. Bulk Delete Bots"
         echo "6. Duplicate Bot"
@@ -1788,22 +1788,22 @@ manage_bots() {
         case $opt_manage in
             1)
                 echo "Starting all bots..."
-                docker start $(docker ps -a -q -f "label=role=ttmediabot")
+                docker start $(docker ps -a -q -f "label=role=streamerbot")
                 read -p "Completed. Enter to continue..."
                 header
                 ;;
             2)
                 echo "Restarting all bots..."
                 echo "  Stopping..."
-                docker stop -t 1 $(docker ps -a -q -f "label=role=ttmediabot")
+                docker stop -t 1 $(docker ps -a -q -f "label=role=streamerbot")
                 echo "  Starting..."
-                docker start $(docker ps -a -q -f "label=role=ttmediabot")
+                docker start $(docker ps -a -q -f "label=role=streamerbot")
                 read -p "Completed. Enter to continue..."
                 header
                 ;;
             3)
                 echo "Stopping all bots..."
-                docker stop -t 1 $(docker ps -a -q -f "label=role=ttmediabot")
+                docker stop -t 1 $(docker ps -a -q -f "label=role=streamerbot")
                 read -p "Completed. Enter to continue..."
                 header
                 ;;
@@ -1865,7 +1865,7 @@ if [ -f "$SCRIPT_DIR/update.sh" ]; then
 fi
 
 build_image
-if docker run --rm --entrypoint test "$BOT_IMAGE" -f /home/ttbot/TTMediaBot/youtube_services.sh; then
+if docker run --rm --entrypoint test "$BOT_IMAGE" -f /home/streamer/StreamerBot/youtube_services.sh; then
     ensure_shared_youtube_service || exit 1
 else
     echo -e "${YELLOW}Shared YouTube service requires an image rebuild (option 3).${NC}"

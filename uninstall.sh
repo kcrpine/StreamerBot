@@ -1,12 +1,12 @@
 #!/bin/bash
 
 # ================================================================= #
-# TTMediaBot Uninstaller Submenu
+# StreamerBot Uninstaller Submenu
 # ================================================================= #
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BOTS_ROOT="${SCRIPT_DIR}/bots"
-BOT_IMAGE="ttmediabot"
+BOT_IMAGE="streamerbot"
 
 # Auto-elevate to root via sudo if needed
 if [ "$EUID" -ne 0 ]; then
@@ -22,13 +22,13 @@ NC='\033[0m' # No Color
 
 header() {
     clear
-    echo -e "${RED}        TTMediaBot Uninstaller           ${NC}"
+    echo -e "${RED}        StreamerBot Uninstaller           ${NC}"
     echo ""
 }
 
 return_to_main() {
-    if [ -f "${SCRIPT_DIR}/ttbotdocker.sh" ]; then
-        exec "${SCRIPT_DIR}/ttbotdocker.sh"
+    if [ -f "${SCRIPT_DIR}/streamerbot.sh" ]; then
+        exec "${SCRIPT_DIR}/streamerbot.sh"
     else
         exit 0
     fi
@@ -36,19 +36,19 @@ return_to_main() {
 
 # -----------------------------------------------------------------
 # OPTION 1: Standard & Safe Uninstall (RECOMMENDED)
-# Removes ONLY TTMediaBot resources (containers, image, data, updater).
+# Removes ONLY StreamerBot resources (containers, image, data, updater).
 # Preserves Docker Engine, system packages, and other Docker projects.
 # -----------------------------------------------------------------
 uninstall_bot_only() {
     header
-    echo -e "${YELLOW}--- OPTION 1: Standard TTMediaBot Uninstall (Safe & Recommended) ---${NC}"
+    echo -e "${YELLOW}--- OPTION 1: Standard StreamerBot Uninstall (Safe & Recommended) ---${NC}"
     echo ""
     echo "EXPLICIT DETAILS OF WHAT WILL BE REMOVED:"
-    echo "  1. All TTMediaBot Docker containers and shared YouTube service"
-    echo "  2. The TTMediaBot Docker image ('${BOT_IMAGE}')"
+    echo "  1. All StreamerBot Docker containers and shared YouTube service"
+    echo "  2. The StreamerBot Docker image ('${BOT_IMAGE}')"
     echo "  3. All bot configuration, log, and cookies directories ('${BOTS_ROOT}')"
-    echo "  4. The TTMediaBot auto-updater systemd service (ttmediabot-updater.service)"
-    echo "  5. TTMediaBot temporary lock and cache files (/tmp/ttmediabot_*)"
+    echo "  4. The StreamerBot auto-updater systemd service (streamerbot-updater.service)"
+    echo "  5. StreamerBot temporary lock and cache files (/tmp/streamerbot_*)"
     echo ""
     echo -e "${GREEN}SYSTEM PRESERVATION GUARANTEE:${NC}"
     echo "  - Docker Engine WILL NOT be removed or stopped."
@@ -64,14 +64,14 @@ uninstall_bot_only() {
     fi
 
     echo ""
-    echo -e "${YELLOW}[1/5] Stopping and removing TTMediaBot containers...${NC}"
+    echo -e "${YELLOW}[1/5] Stopping and removing StreamerBot containers...${NC}"
     if command -v docker &>/dev/null; then
-        docker rm -f ttmediabot-youtube 2>/dev/null
-        docker stop -t 1 $(docker ps -a -q -f "label=role=ttmediabot") 2>/dev/null
-        docker rm $(docker ps -a -q -f "label=role=ttmediabot") 2>/dev/null
+        docker rm -f streamerbot-youtube 2>/dev/null
+        docker stop -t 1 $(docker ps -a -q -f "label=role=streamerbot") 2>/dev/null
+        docker rm $(docker ps -a -q -f "label=role=streamerbot") 2>/dev/null
     fi
 
-    echo -e "${YELLOW}[2/5] Removing TTMediaBot Docker image...${NC}"
+    echo -e "${YELLOW}[2/5] Removing StreamerBot Docker image...${NC}"
     if command -v docker &>/dev/null; then
         docker rmi "$BOT_IMAGE" 2>/dev/null
     fi
@@ -84,22 +84,22 @@ uninstall_bot_only() {
 
     echo -e "${YELLOW}[4/5] Disabling auto-updater service...${NC}"
     if command -v systemctl &> /dev/null; then
-        systemctl stop ttmediabot-updater.service 2>/dev/null
-        systemctl disable ttmediabot-updater.service 2>/dev/null
-        rm -f /etc/systemd/system/ttmediabot-updater.service
+        systemctl stop streamerbot-updater.service 2>/dev/null
+        systemctl disable streamerbot-updater.service 2>/dev/null
+        rm -f /etc/systemd/system/streamerbot-updater.service
         systemctl daemon-reload 2>/dev/null
     else
-        rm -f /etc/systemd/system/ttmediabot-updater.service
+        rm -f /etc/systemd/system/streamerbot-updater.service
     fi
 
     echo -e "${YELLOW}[5/5] Cleaning temporary files...${NC}"
-    rm -f /tmp/ttmediabot_update.lock
-    rm -f /tmp/ttmediabot_last_running.txt
+    rm -f /tmp/streamerbot_update.lock
+    rm -f /tmp/streamerbot_last_running.txt
     rm -f /tmp/cookies_pasted.txt
-    rm -f /tmp/ttbot_destroy_*.sh
+    rm -f /tmp/streamerbot_destroy_*.sh
 
     echo ""
-    echo -e "${GREEN}  TTMEDIABOT UNINSTALLED SUCCESSFULLY.   ${NC}"
+    echo -e "${GREEN}  STREAMERBOT UNINSTALLED SUCCESSFULLY.   ${NC}"
     echo ""
     read -p "Press Enter to return to main menu..."
     return_to_main
@@ -120,7 +120,7 @@ uninstall_full_system() {
     echo -e "${RED}DO NOT RUN THIS OPTION ON A PRODUCTION SERVER OR A SHARED SERVER CONTAINING OTHER CRITICAL SERVICES OR CONTAINERS!${NC}"
     echo ""
     echo "EXPLICIT DETAILS OF WHAT WILL BE PURGED:"
-    echo "  1. ALL TTMediaBot containers, images, and data directories"
+    echo "  1. ALL StreamerBot containers, images, and data directories"
     echo "  2. Docker Engine daemon and ALL Docker volumes/networks"
     echo "     (WARNING: This deletes ALL OTHER Docker containers running on this server!)"
     echo "  3. System utility packages: git, curl, jq, gnupg, lsb-release"
@@ -139,9 +139,9 @@ uninstall_full_system() {
     echo ""
     echo -e "${YELLOW}[1/7] Stopping and removing ALL containers and Docker resources...${NC}"
     if command -v docker &>/dev/null; then
-        docker rm -f ttmediabot-youtube 2>/dev/null
-        docker stop -t 1 $(docker ps -a -q -f "label=role=ttmediabot") 2>/dev/null
-        docker rm $(docker ps -a -q -f "label=role=ttmediabot") 2>/dev/null
+        docker rm -f streamerbot-youtube 2>/dev/null
+        docker stop -t 1 $(docker ps -a -q -f "label=role=streamerbot") 2>/dev/null
+        docker rm $(docker ps -a -q -f "label=role=streamerbot") 2>/dev/null
         docker system prune -a -f --volumes 2>/dev/null
     fi
 
@@ -160,19 +160,19 @@ uninstall_full_system() {
 
     echo -e "${YELLOW}[4/7] Disabling auto-updater service...${NC}"
     if command -v systemctl &> /dev/null; then
-        systemctl stop ttmediabot-updater.service 2>/dev/null
-        systemctl disable ttmediabot-updater.service 2>/dev/null
-        rm -f /etc/systemd/system/ttmediabot-updater.service
+        systemctl stop streamerbot-updater.service 2>/dev/null
+        systemctl disable streamerbot-updater.service 2>/dev/null
+        rm -f /etc/systemd/system/streamerbot-updater.service
         systemctl daemon-reload 2>/dev/null
     else
-        rm -f /etc/systemd/system/ttmediabot-updater.service
+        rm -f /etc/systemd/system/streamerbot-updater.service
     fi
 
     echo -e "${YELLOW}[5/7] Cleaning temporary files...${NC}"
-    rm -f /tmp/ttmediabot_update.lock
-    rm -f /tmp/ttmediabot_last_running.txt
+    rm -f /tmp/streamerbot_update.lock
+    rm -f /tmp/streamerbot_last_running.txt
     rm -f /tmp/cookies_pasted.txt
-    rm -f /tmp/ttbot_destroy_*.sh
+    rm -f /tmp/streamerbot_destroy_*.sh
 
     echo -e "${YELLOW}[6/7] Uninstalling Docker Engine & system packages...${NC}"
     if command -v apt-get &> /dev/null; then
@@ -228,7 +228,7 @@ while true; do
     header
     echo -e "${YELLOW}Please select an uninstallation mode:${NC}"
     echo ""
-    echo -e "  ${GREEN}1. Standard Uninstall (Recommended - Removes ONLY TTMediaBot)${NC}"
+    echo -e "  ${GREEN}1. Standard Uninstall (Recommended - Removes ONLY StreamerBot)${NC}"
     echo -e "  ${RED}2. Full System Purge (DESTRUCTIVE - Removes Docker Engine & System Packages)${NC}"
     echo "  3. Return to Main Menu"
     echo "  0. Exit"

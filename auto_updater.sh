@@ -1,9 +1,35 @@
 #!/bin/bash
-# TTMediaBot Auto-Updater Watcher
-# This script polls GitHub every 20 seconds and runs update.sh if a new commit is detected.
+# StreamerBot Auto-Updater Watcher
+#
+# Two independent cadences share one loop:
+#
+#   GitHub update check  - every STREAMERBOT_UPDATE_INTERVAL seconds (default one
+#                          hour). This does NOT react to individual pushes; it
+#                          wakes on the interval and only then asks GitHub
+#                          whether the branch has moved.
+#   Health check         - every tick (60s), because recovering a dead shared
+#                          YouTube service is a self-healing feature and should
+#                          not have to wait for the hourly update window.
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
+
+# Shared project constants (repo owner, branch, image name, update interval).
+if [ -f "$SCRIPT_DIR/project.env" ]; then
+    # shellcheck disable=SC1091
+    . "$SCRIPT_DIR/project.env"
+fi
+
+TICK_SECONDS=60
+UPDATE_INTERVAL="${STREAMERBOT_UPDATE_INTERVAL:-3600}"
+case "$UPDATE_INTERVAL" in
+    ''|*[!0-9]*) UPDATE_INTERVAL=3600 ;;
+esac
+# Floor: anything more aggressive than five minutes is pointless polling.
+[ "$UPDATE_INTERVAL" -lt 300 ] && UPDATE_INTERVAL=300
+
+DEFAULT_BRANCH="${STREAMERBOT_BRANCH:-main}"
+IMAGE_NAME="${STREAMERBOT_IMAGE:-streamerbot}"
 
 # Define SUDO dynamically: use sudo if not root
 if [ "$EUID" -ne 0 ]; then
@@ -23,7 +49,10 @@ if [ -f "$REAL_USER_HOME/.ssh/id_ed25519" ]; then
     export GIT_SSH_COMMAND="ssh -i $REAL_USER_HOME/.ssh/id_ed25519 -o StrictHostKeyChecking=accept-new"
 fi
 
-echo "TTMediaBot Auto-Updater started. Checking every 20 seconds..."
+echo "StreamerBot Auto-Updater started. Checking GitHub every ${UPDATE_INTERVAL} seconds."
+
+# Force a GitHub check on the first pass, then every UPDATE_INTERVAL seconds.
+LAST_GITHUB_CHECK=0
 
 YOUTUBE_BRIDGE_URL="http://127.0.0.1:4417"
 RECOVERY_BACKOFFS=(20 40 80 160 300)
@@ -31,9 +60,9 @@ RECOVERY_FAILURES=0
 NEXT_RECOVERY_AT=0
 
 shared_youtube_service_supported() {
-    $SUDO docker image inspect ttmediabot >/dev/null 2>&1 \
-        && $SUDO docker run --rm --entrypoint test ttmediabot \
-            -f /home/ttbot/TTMediaBot/youtube_services.sh
+    $SUDO docker image inspect "$IMAGE_NAME" >/dev/null 2>&1 \
+        && $SUDO docker run --rm --entrypoint test "$IMAGE_NAME" \
+            -f /home/streamer/StreamerBot/youtube_services.sh
 }
 
 # Cleanup function
@@ -83,30 +112,35 @@ while true; do
         sleep 60
         continue
     fi
-    # Get current branch name
-    BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "master")
-    
-    # Check remote hash using ls-remote (no rate limits, no object download)
-    REMOTE_HASH=$(git ls-remote origin -h "refs/heads/$BRANCH" 2>/dev/null | awk '{print $1}' | tr -d '[:space:]')
-    LOCAL_HASH=$(git rev-parse HEAD 2>/dev/null | tr -d '[:space:]')
-    
-    # Check what version is currently running in Docker
-    RUNNING_HASH=$($SUDO docker inspect ttmediabot --format '{{ index .Config.Labels "commit_hash" }}' 2>/dev/null | tr -d '[:space:]')
-    if [ -z "$RUNNING_HASH" ] || [ "$RUNNING_HASH" = "<novalue>" ] || [ "$RUNNING_HASH" = "<noopt>" ] || [[ "$RUNNING_HASH" == *"<no"* ]]; then
-        RUNNING_HASH="none"
-    fi
-
-    # 1. Update Detection Logic
     SHOULD_UPDATE=false
     RECOVERY_ATTEMPT=false
-    
-    if [ -n "$REMOTE_HASH" ]; then
-        if is_behind_remote "$LOCAL_HASH" "$REMOTE_HASH"; then
-            echo "$(date): New version detected on GitHub ($REMOTE_HASH). Triggering update..."
-            SHOULD_UPDATE=true
-        elif [ "$LOCAL_HASH" != "$RUNNING_HASH" ]; then
-            echo "$(date): Local code ($LOCAL_HASH) does not match running image ($RUNNING_HASH). Syncing..."
-            SHOULD_UPDATE=true
+
+    # 1. Update detection. Rate limited to once per UPDATE_INTERVAL so that a
+    #    burst of pushes does not cause a burst of rebuilds.
+    NOW=$(date +%s)
+    if [ $((NOW - LAST_GITHUB_CHECK)) -ge "$UPDATE_INTERVAL" ]; then
+        LAST_GITHUB_CHECK=$NOW
+
+        BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "$DEFAULT_BRANCH")
+
+        # ls-remote does not download objects and is not rate limited.
+        REMOTE_HASH=$(git ls-remote origin -h "refs/heads/$BRANCH" 2>/dev/null | awk '{print $1}' | tr -d '[:space:]')
+        LOCAL_HASH=$(git rev-parse HEAD 2>/dev/null | tr -d '[:space:]')
+
+        # What the running image was actually built from.
+        RUNNING_HASH=$($SUDO docker inspect "$IMAGE_NAME" --format '{{ index .Config.Labels "commit_hash" }}' 2>/dev/null | tr -d '[:space:]')
+        if [ -z "$RUNNING_HASH" ] || [ "$RUNNING_HASH" = "<novalue>" ] || [ "$RUNNING_HASH" = "<noopt>" ] || [[ "$RUNNING_HASH" == *"<no"* ]]; then
+            RUNNING_HASH="none"
+        fi
+
+        if [ -n "$REMOTE_HASH" ]; then
+            if is_behind_remote "$LOCAL_HASH" "$REMOTE_HASH"; then
+                echo "$(date): New version detected on GitHub ($REMOTE_HASH). Triggering update..."
+                SHOULD_UPDATE=true
+            elif [ "$LOCAL_HASH" != "$RUNNING_HASH" ]; then
+                echo "$(date): Local code ($LOCAL_HASH) does not match running image ($RUNNING_HASH). Syncing..."
+                SHOULD_UPDATE=true
+            fi
         fi
     fi
 
@@ -151,7 +185,7 @@ while true; do
         fi
     fi
     # Interruptible sleep: runs in background so SIGTERM can stop us immediately
-    sleep 20 &
+    sleep "$TICK_SECONDS" &
     SLEEP_PID=$!
     wait "$SLEEP_PID" 2>/dev/null
     SLEEP_PID=""

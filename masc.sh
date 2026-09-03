@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# masc.sh - TTMediaBot Auto-Update Controller
+# masc.sh - StreamerBot Auto-Update Controller
 # This script manages the masking and activation of the auto-updater service.
 
 # Auto-elevate to root via sudo if needed
@@ -14,14 +14,14 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
-SERVICE_NAME="ttmediabot-updater.service"
+SERVICE_NAME="streamerbot-updater.service"
 SERVICE_PATH="/etc/systemd/system/$SERVICE_NAME"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 
 # Template to ensure we can always restore the service
 SERVICE_TEMPLATE="[Unit]
-Description=TTMediaBot Auto-Updater Watcher
+Description=StreamerBot Auto-Updater Watcher
 After=network.target
 
 [Service]
@@ -37,7 +37,7 @@ WantedBy=multi-user.target"
 header() {
     clear
     echo -e "${GREEN}=========================================${NC}"
-    echo -e "${GREEN}      TTMediaBot Auto-Update Manager     ${NC}"
+    echo -e "${GREEN}      StreamerBot Auto-Update Manager     ${NC}"
     echo -e "${GREEN}=========================================${NC}"
     echo ""
 }

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SERVICE_NAME="ttmediabot-youtube"
+SERVICE_NAME="streamerbot-youtube"
 HEALTH_URL="http://127.0.0.1:4417/health"
 
 if [ "$EUID" -ne 0 ]; then
@@ -24,7 +24,7 @@ require_service() {
         return 0
     fi
     echo -e "${RED}Shared YouTube service not found.${NC}"
-    echo "Use option 3 in ttbotdocker.sh to build and create it."
+    echo "Use option 3 in streamerbot.sh to build and create it."
     return 1
 }
 

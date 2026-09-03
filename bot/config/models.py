@@ -6,7 +6,7 @@ from pydantic import BaseModel
 class GeneralModel(BaseModel):
     language: str = "en"
     send_channel_messages: bool = True
-    cache_file_name: str = "TTMediaBotCache.dat"
+    cache_file_name: str = "StreamerBotCache.dat"
     blocked_commands: List[str] = []
     delete_uploaded_files_after: int = 300
     time_format: str = r"%H:%M"
@@ -41,7 +41,7 @@ class TeamTalkModel(BaseModel):
     tcp_port: int = 10333
     udp_port: int = 10333
     encrypted: bool = False
-    nickname: str = "TTMediaBot"
+    nickname: str = "StreamerBot"
     status: str = ""
     gender: str = "n"
     username: str = ""
@@ -82,7 +82,7 @@ class LoggerModel(BaseModel):
     level: str = "INFO"
     format: str = "%(levelname)s [%(asctime)s]: %(message)s in %(threadName)s file: %(filename)s line %(lineno)d function %(funcName)s"
     mode: Union[int, str] = "FILE"
-    file_name: str = "TTMediaBot.log"
+    file_name: str = "StreamerBot.log"
     max_file_size: int = 0
     backup_count: int = 0
 
