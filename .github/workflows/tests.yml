@@ -183,19 +183,29 @@ jobs:
 
       # Written for every run, pass or fail, so that a silent CI is
       # distinguishable from a CI that ran and was happy.
+      #
+      # Every dynamic value arrives through env rather than ${{ }} interpolation.
+      # A commit message is attacker-controlled text: interpolated directly into
+      # this script its second line onwards would be executed as shell commands,
+      # so "$(...)" in a commit message would run in CI holding the workflow
+      # token. Through env it is only ever data.
       - name: Build email body
+        env:
+          OUTCOME: ${{ steps.outcome.outputs.word }}
+          REPOSITORY: ${{ github.repository }}
+          BRANCH: ${{ github.ref_name }}
+          COMMIT: ${{ github.sha }}
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           {
-            echo "StreamerBot CI ${{ steps.outcome.outputs.word }}."
-            echo
-            echo "Repository: ${{ github.repository }}"
-            echo "Branch:     ${{ github.ref_name }}"
-            echo "Commit:     ${{ github.sha }}"
-            echo "Message:    ${{ github.event.head_commit.message }}"
-            echo "Run:        ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-            echo
-            echo "Job results"
-            echo "-----------"
+            printf 'StreamerBot CI %s.\n\n' "$OUTCOME"
+            printf 'Repository: %s\n' "$REPOSITORY"
+            printf 'Branch:     %s\n' "$BRANCH"
+            printf 'Commit:     %s\n' "$COMMIT"
+            printf 'Run:        %s\n\n' "$RUN_URL"
+            printf 'Commit message\n--------------\n%s\n\n' "$COMMIT_MESSAGE"
+            printf 'Job results\n-----------\n'
             cat status.txt
             echo
             if [ -f test-report.txt ]; then
