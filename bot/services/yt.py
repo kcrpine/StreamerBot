@@ -35,22 +35,18 @@ class YtService(_Service):
         self._max_retries = 2
 
     def initialize(self):
-        # Validate cookie file at startup
-        if self.config.cookiefile_path:
-            if os.path.isfile(self.config.cookiefile_path):
-                logging.info(f"YT Service: Cookie file found at {self.config.cookiefile_path}")
-            else:
-                logging.warning(
-                    f"YT Service: Cookie file NOT FOUND at '{self.config.cookiefile_path}'. "
-                    "YouTube may block requests. Please provide a valid cookies.txt file."
-                )
-        else:
-            logging.warning(
-                "YT Service: No cookie file configured (cookiefile_path is empty). "
-                "YouTube may block requests requiring authentication."
-            )
+        self._bridge = YouTubeBridge(client="YTMUSIC")
 
-        self._bridge = YouTubeBridge(self.config.cookiefile_path, client="YTMUSIC")
+        # Sign-in is optional. Anonymous search and playback still work, exactly
+        # as the cookie-less path always did; a signed-in session additionally
+        # unlocks age-restricted videos and the account's own recommendations.
+        if self._bridge.is_signed_in():
+            logging.info("YT Service: signed in to YouTube.")
+        else:
+            logging.info(
+                "YT Service: not signed in to YouTube. Public videos still play; "
+                "use the yl command to sign in for age-restricted content."
+            )
 
         # Run pre-warming in a background thread so the bot connects to TeamTalk immediately
         threading.Thread(target=self._pre_warm, daemon=True, name="YT_PreWarm").start()

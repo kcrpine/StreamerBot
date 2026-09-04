@@ -145,7 +145,7 @@ create_shared_youtube_service() {
         --restart always \
         -e "STREAMERBOT_BOTS_ROOT=/bots" \
         -e "YOUTUBE_BRIDGE_HOST=0.0.0.0" \
-        -v "${BOTS_ROOT}:/bots:ro" \
+        -v "${BOTS_ROOT}:/bots:rw" \
         --entrypoint /bin/bash \
         "$BOT_IMAGE" \
         /home/streamer/StreamerBot/youtube_services.sh >/dev/null
@@ -170,8 +170,38 @@ start_shared_youtube_service() {
     return 1
 }
 
+ensure_bot_data_ownership() {
+    # Every bot directory belongs to uid 1000, the container user. The shared
+    # YouTube bridge creates <bot>/youtube_auth/ to store that bot's OAuth
+    # tokens, so the directory has to be writable by that uid or sign-in fails
+    # with EACCES and the bot silently stays anonymous.
+    #
+    # Modes are deliberately tight: these directories hold credentials.
+    [ -d "$BOTS_ROOT" ] || return 0
+
+    local bot_dir
+    for bot_dir in "$BOTS_ROOT"/*; do
+        [ -d "$bot_dir" ] || continue
+        mkdir -p "$bot_dir/youtube_auth"
+        chown -R 1000:1000 "$bot_dir" 2>/dev/null || true
+        chmod 700 "$bot_dir/youtube_auth" 2>/dev/null || true
+    done
+}
+
 shared_youtube_mount_is_current() {
-    local bot_dir bot_name
+    local bot_dir bot_name mount_rw
+
+    # The bridge writes each bot's YouTube OAuth tokens to
+    # /bots/<bot>/youtube_auth/, so the mount has to be read-write. Containers
+    # created before that change mounted it read-only, and checking only that
+    # the directory is visible would let one of those survive forever: it would
+    # pass this test, then silently fail to save a single token.
+    mount_rw=$(docker inspect -f \
+        '{{range .Mounts}}{{if eq .Destination "/bots"}}{{.RW}}{{end}}{{end}}' \
+        "$YOUTUBE_SERVICE_NAME" 2>/dev/null)
+    if [ "$mount_rw" != "true" ]; then
+        return 1
+    fi
 
     for bot_dir in "$BOTS_ROOT"/*; do
         [ -d "$bot_dir" ] || continue

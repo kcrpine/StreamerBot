@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 
 class YouTubeBridge:
-    def __init__(self, cookie_file: str = "", client: str = "WEB") -> None:
+    def __init__(self, client: str = "WEB") -> None:
         self.base_url = os.getenv("YOUTUBE_BRIDGE_URL", "http://127.0.0.1:4417")
         self.bot_id = os.getenv("TTBOT_INSTANCE", "")
         self.client = client
@@ -71,6 +71,33 @@ class YouTubeBridge:
                 return True
             time.sleep(0.05)
         return self.health()
+
+    # -- OAuth device-code sign-in -----------------------------------------
+    #
+    # Replaces the cookies.txt file the operator used to re-export by hand.
+    # The bridge holds the credentials per bot under
+    # bots/<bot_id>/youtube_auth/ and refreshes them itself.
+
+    def auth_start(self) -> dict[str, Any]:
+        """Begin sign-in. Returns the URL and code the user has to enter.
+
+        The bridge answers as soon as YouTube issues the code, not when the
+        user finishes, so this returns in about a second.
+        """
+        return self._post("/auth/start", timeout=(5, 30))
+
+    def auth_status(self) -> dict[str, Any]:
+        return self._post("/auth/status", timeout=(5, 15))
+
+    def auth_signout(self) -> dict[str, Any]:
+        return self._post("/auth/signout", timeout=(5, 15))
+
+    def is_signed_in(self) -> bool:
+        """Never raises: sign-in state is informational, not load-bearing."""
+        try:
+            return bool(self.auth_status().get("signed_in"))
+        except errors.ServiceError:
+            return False
 
     def resolve(self, url: str = "", video_id: str = "") -> dict[str, Any]:
         cache_key = video_id or url
