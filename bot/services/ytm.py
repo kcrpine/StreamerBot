@@ -52,19 +52,9 @@ class YtmService(_Service):
             logging.error(f"[YTM] Background Autoplay fetch failed: {e}")
 
     def initialize(self):
-        # Validate cookie file at startup
-        cookie_path = None
-        if self.yt_config and self.yt_config.cookiefile_path:
-            cookie_path = self.yt_config.cookiefile_path
-            if os.path.isfile(cookie_path):
-                logging.info(f"YTM Service: Cookie file found at {cookie_path}")
-            else:
-                logging.warning(
-                    f"YTM Service: Cookie file NOT FOUND at '{cookie_path}'. "
-                    "YouTube may block requests."
-                )
-
-        self._bridge = YouTubeBridge(self.yt_config.cookiefile_path, client="YTMUSIC")
+        # Shares the YouTube account: the bridge keys credentials on bot_id, so
+        # signing in once with yl covers both yt and ytm for this bot.
+        self._bridge = YouTubeBridge(client="YTMUSIC")
 
         # Run pre-warming in a background thread so the bot connects to TeamTalk immediately
         threading.Thread(target=self._pre_warm, daemon=True, name="YTM_PreWarm").start()

@@ -100,6 +100,7 @@ class CommandProcessor:
             "rs": admin_commands.RestartCommand,
             "q": admin_commands.QuitCommand,
             "gcid": admin_commands.GetChannelIDCommand,
+            "yl": admin_commands.YouTubeLoginCommand,
         }
 
     def run(self):

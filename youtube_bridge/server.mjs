@@ -17,6 +17,18 @@ const USER_AGENT = process.env.YOUTUBE_BRIDGE_USER_AGENT ||
 // YouTube.js 18 requires an evaluator to decipher player signatures/nsig.
 Platform.shim.eval = async (data) => new Function(data.output)();
 
+// This process is shared infrastructure: every bot on the host resolves through
+// it. Node makes an unhandled rejection fatal, and the OAuth device flow polls
+// Google in the background long after /auth/start has returned, so a single
+// bot's abandoned or expired sign-in would otherwise take YouTube down for
+// everyone. Log and keep serving instead.
+process.on('unhandledRejection', (reason) => {
+  console.error('[youtube-bridge] Unhandled rejection (continuing):', reason?.message || reason);
+});
+process.on('uncaughtException', (error) => {
+  console.error('[youtube-bridge] Uncaught exception (continuing):', error?.stack || error);
+});
+
 const SESSION_CACHE_MAX_ENTRIES = 64;
 const sessionCache = new Map();
 let searchSessionPromise = null;
@@ -77,82 +89,85 @@ async function readBody(req) {
   return JSON.parse(Buffer.concat(chunks).toString('utf8'));
 }
 
-function getBotCookieFile(botId) {
-  if (typeof botId !== 'string' || !/^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/.test(botId)) {
+// ---------------------------------------------------------------------------
+// Per-bot OAuth credentials.
+//
+// Replaces the Netscape cookies.txt path entirely. Cookies expired every few
+// weeks and had to be re-exported from a desktop browser by hand, which is a
+// miserable thing to ask of a screen reader user. youtubei.js signs in with a
+// TV device code instead and refreshes itself indefinitely.
+//
+// bot_id is the containment boundary between bots: it is validated against a
+// strict pattern and joined under BOTS_ROOT, so one bot can never reach
+// another's tokens. Do not relax that regex.
+// ---------------------------------------------------------------------------
+const BOT_ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/;
+
+function requireBotId(botId) {
+  if (typeof botId !== 'string' || !BOT_ID_PATTERN.test(botId)) {
     throw new Error('Invalid or missing bot_id');
   }
-  return path.join(BOTS_ROOT, botId, 'cookies.txt');
+  return botId;
 }
 
-function cookieFileKey(cookieFile) {
-  if (!cookieFile) return 'anonymous';
+function getBotAuthDir(botId) {
+  return path.join(BOTS_ROOT, requireBotId(botId), 'youtube_auth');
+}
+
+function getBotCredentialsFile(botId) {
+  return path.join(getBotAuthDir(botId), 'credentials.json');
+}
+
+// Cache key changes with the credentials file, so signing in or out builds a
+// fresh session on the next request instead of serving a stale one.
+function sessionKey(botId) {
+  if (!botId) return 'anonymous';
   try {
-    const stat = statSync(cookieFile);
-    return `${cookieFile}:${stat.mtimeMs}:${stat.size}`;
+    const stat = statSync(getBotCredentialsFile(botId));
+    return `${botId}:${stat.mtimeMs}:${stat.size}`;
   } catch {
-    return `${cookieFile}:missing`;
+    return `${botId}:anonymous`;
   }
 }
 
-async function netscapeCookiesToHeader(cookieFile) {
-  if (!cookieFile) return '';
-  let text;
+async function readCredentials(botId) {
   try {
-    text = await fs.readFile(cookieFile, 'utf8');
+    return JSON.parse(await fs.readFile(getBotCredentialsFile(botId), 'utf8'));
   } catch (error) {
-    if (error?.code === 'ENOENT') return '';
-    throw error;
-  }
-
-  const cookies = new Map();
-  for (const rawLine of text.split(/\r?\n/)) {
-    let line = rawLine.trim();
-    if (!line) continue;
-    if (line.startsWith('#HttpOnly_')) line = line.slice('#HttpOnly_'.length);
-    else if (line.startsWith('#')) continue;
-
-    const parts = line.split('\t');
-    if (parts.length < 7) continue;
-    const domain = parts[0].toLowerCase().replace(/^\./, '');
-    if (domain !== 'youtube.com' && !domain.endsWith('.youtube.com')) continue;
-    const name = parts[5];
-    const value = parts.slice(6).join('\t');
-    if (name) cookies.set(name, value);
-  }
-  return Array.from(cookies, ([name, value]) => `${name}=${value}`).join('; ');
-}
-
-function pageConfigValue(page, key) {
-  const match = page.match(new RegExp(`"${key}"\\s*:\\s*"([^"]+)"`));
-  if (!match) return undefined;
-  try {
-    return JSON.parse(`"${match[1]}"`);
-  } catch {
-    return match[1];
+    if (error?.code === 'ENOENT') return null;
+    console.warn(`[youtube-bridge] Unreadable credentials for ${botId}:`, error.message);
+    return null;
   }
 }
 
-async function getWebSessionData(cookie) {
-  if (!cookie) return {};
-  const response = await fetch('https://m.youtube.com/', {
-    headers: {
-      'Cookie': cookie,
-      'User-Agent': USER_AGENT,
-      'Accept-Language': 'en-US,en;q=0.9'
+async function writeCredentials(botId, credentials) {
+  const dir = getBotAuthDir(botId);
+  await fs.mkdir(dir, { recursive: true });
+  const file = getBotCredentialsFile(botId);
+  // Written via a temp file so a crash mid-write cannot leave a truncated
+  // credentials file that silently signs the bot out.
+  const tmp = `${file}.tmp`;
+  await fs.writeFile(tmp, JSON.stringify(credentials), { mode: 0o600 });
+  await fs.rename(tmp, file);
+}
+
+async function clearCredentials(botId) {
+  await fs.rm(getBotAuthDir(botId), { recursive: true, force: true });
+}
+
+/** Attach the listener that keeps refreshed tokens on disk. */
+function persistCredentialUpdates(session, botId) {
+  session.on('update-credentials', async ({ credentials }) => {
+    try {
+      await writeCredentials(botId, credentials);
+    } catch (error) {
+      console.warn(`[youtube-bridge] Could not persist credentials for ${botId}:`, error.message);
     }
   });
-  if (!response.ok) {
-    throw new Error(`YouTube session page returned HTTP ${response.status}`);
-  }
-  const page = await response.text();
-  return {
-    dataSyncId: pageConfigValue(page, 'DATASYNC_ID'),
-    visitorData: pageConfigValue(page, 'VISITOR_DATA')
-  };
 }
 
-async function getSession(cookieFile) {
-  const key = cookieFileKey(cookieFile);
+async function getSession(botId) {
+  const key = sessionKey(botId);
   const cached = sessionCache.get(key);
   if (cached) {
     sessionCache.delete(key);
@@ -161,22 +176,31 @@ async function getSession(cookieFile) {
   }
 
   for (const cachedKey of sessionCache.keys()) {
-    if (cachedKey.startsWith(`${cookieFile}:`)) sessionCache.delete(cachedKey);
+    if (cachedKey.startsWith(`${botId}:`)) sessionCache.delete(cachedKey);
   }
 
   const contextPromise = (async () => {
-    const cookie = await netscapeCookiesToHeader(cookieFile);
-    const webSession = await getWebSessionData(cookie);
+    const credentials = botId ? await readCredentials(botId) : null;
     const session = await Innertube.create({
-      cookie: cookie || undefined,
       user_agent: USER_AGENT,
       client_type: ClientType.MWEB,
-      visitor_data: webSession.visitorData,
-      cache: new UniversalCache(true),
+      cache: new UniversalCache(true, botId ? getBotAuthDir(botId) : undefined),
       enable_session_cache: true,
       generate_session_locally: true,
       retrieve_player: true
     });
+    if (credentials) {
+      persistCredentialUpdates(session.session, botId);
+      try {
+        // Silent: with stored credentials this refreshes rather than starting
+        // a device flow.
+        await session.session.signIn(credentials);
+      } catch (error) {
+        // A revoked or corrupt grant must not take search down with it. Fall
+        // back to anonymous, which is what the cookie-less path always did.
+        console.warn(`[youtube-bridge] Sign-in failed for ${botId}, continuing anonymously:`, error.message);
+      }
+    }
     return { session };
   })().catch((error) => {
     sessionCache.delete(key);
@@ -188,6 +212,120 @@ async function getSession(cookieFile) {
     sessionCache.delete(sessionCache.keys().next().value);
   }
   return contextPromise;
+}
+
+// ---------------------------------------------------------------------------
+// Device-code sign-in.
+//
+// signIn() with no credentials does not return until the user has finished on
+// google.com/device, so /auth/start must not await it. It kicks the flow off,
+// resolves as soon as the auth-pending event carries the code, and leaves the
+// promise running in the background to complete the sign-in.
+// ---------------------------------------------------------------------------
+const pendingAuth = new Map();
+
+const AUTH_PENDING_TIMEOUT_MS = 15000;
+
+async function startAuth(body) {
+  const botId = requireBotId(body.bot_id);
+
+  const existing = pendingAuth.get(botId);
+  if (existing && existing.expires_at > Date.now()) {
+    return { ...existing.info, already_pending: true };
+  }
+
+  const inner = await Innertube.create({
+    user_agent: USER_AGENT,
+    client_type: ClientType.MWEB,
+    cache: new UniversalCache(true, getBotAuthDir(botId)),
+    generate_session_locally: true,
+    retrieve_player: false
+  });
+  const session = inner.session;
+
+  const pending = new Promise((resolve, reject) => {
+    const timer = setTimeout(
+      () => reject(new Error('YouTube did not return a device code in time')),
+      AUTH_PENDING_TIMEOUT_MS
+    );
+    session.once('auth-pending', (data) => {
+      clearTimeout(timer);
+      resolve({
+        verification_url: data.verification_url,
+        user_code: data.user_code,
+        expires_in: data.expires_in
+      });
+    });
+    session.once('auth-error', (error) => {
+      clearTimeout(timer);
+      reject(error instanceof Error ? error : new Error(String(error)));
+    });
+  });
+
+  session.once('auth', async ({ credentials }) => {
+    try {
+      await writeCredentials(botId, credentials);
+      // Drop cached anonymous sessions so the next request is signed in.
+      for (const cachedKey of [...sessionCache.keys()]) {
+        if (cachedKey.startsWith(`${botId}:`)) sessionCache.delete(cachedKey);
+      }
+      const entry = pendingAuth.get(botId);
+      if (entry) entry.status = 'authenticated';
+      console.log(`[youtube-bridge] ${botId} signed in to YouTube`);
+    } catch (error) {
+      console.error(`[youtube-bridge] Could not save credentials for ${botId}:`, error.message);
+      const entry = pendingAuth.get(botId);
+      if (entry) { entry.status = 'failed'; entry.error = error.message; }
+    }
+  });
+  persistCredentialUpdates(session, botId);
+
+  // Deliberately not awaited: it settles when the user finishes on the device
+  // page, which may be minutes from now.
+  session.signIn().catch((error) => {
+    console.warn(`[youtube-bridge] Device sign-in for ${botId} ended:`, error?.message || error);
+    const entry = pendingAuth.get(botId);
+    if (entry && entry.status === 'pending') { entry.status = 'failed'; entry.error = error?.message; }
+  });
+
+  const info = await pending;
+  pendingAuth.set(botId, {
+    info,
+    status: 'pending',
+    expires_at: Date.now() + (Number(info.expires_in) || 1800) * 1000
+  });
+  return info;
+}
+
+async function authStatus(body) {
+  const botId = requireBotId(body.bot_id);
+  const credentials = await readCredentials(botId);
+  if (credentials) {
+    pendingAuth.delete(botId);
+    return { status: 'authenticated', signed_in: true };
+  }
+  const entry = pendingAuth.get(botId);
+  if (entry && entry.expires_at > Date.now()) {
+    return {
+      status: entry.status,
+      signed_in: false,
+      error: entry.error,
+      ...entry.info
+    };
+  }
+  pendingAuth.delete(botId);
+  return { status: 'signed_out', signed_in: false };
+}
+
+async function signOut(body) {
+  const botId = requireBotId(body.bot_id);
+  pendingAuth.delete(botId);
+  await clearCredentials(botId);
+  for (const cachedKey of [...sessionCache.keys()]) {
+    if (cachedKey.startsWith(`${botId}:`)) sessionCache.delete(cachedKey);
+  }
+  console.log(`[youtube-bridge] ${botId} signed out of YouTube`);
+  return { status: 'signed_out', signed_in: false };
 }
 
 async function getSearchSession() {
@@ -388,7 +526,7 @@ async function resolveTrack(body) {
   const videoId = body.video_id || extractVideoId(body.url);
   if (!videoId) throw new Error('Invalid YouTube URL or video ID');
   const requestedClient = body.client === 'YTMUSIC' ? 'YTMUSIC' : 'MWEB';
-  const cacheKey = `${cookieFileKey(body.cookie_file)}:${requestedClient}:${videoId}`;
+  const cacheKey = `${sessionKey(body.bot_id)}:${requestedClient}:${videoId}`;
   const cached = resolveCache.get(cacheKey);
   if (cached) {
     console.log(`[youtube-bridge] resolve cache hit ${videoId} client=${requestedClient} elapsed_ms=${Math.round(performance.now() - startedAt)} cache_entries=${resolveCache.size}`);
@@ -423,7 +561,7 @@ function invalidateResolution(body) {
   const videoId = body.video_id || extractVideoId(body.url);
   if (!videoId) throw new Error('Invalid YouTube URL or video ID');
   const requestedClient = body.client === 'YTMUSIC' ? 'YTMUSIC' : 'MWEB';
-  const cacheKey = `${cookieFileKey(body.cookie_file)}:${requestedClient}:${videoId}`;
+  const cacheKey = `${sessionKey(body.bot_id)}:${requestedClient}:${videoId}`;
   resolveCache.delete(cacheKey);
   pendingResolutions.delete(cacheKey);
   console.log(`[youtube-bridge] resolve cache invalidated ${videoId} client=${requestedClient}`);
@@ -431,7 +569,7 @@ function invalidateResolution(body) {
 }
 
 async function resolveTrackUncached(body, videoId, requestedClient) {
-  const context = await getSession(body.cookie_file);
+  const context = await getSession(body.bot_id);
 
   const { info, format, client } = await resolveFormat(context, videoId, requestedClient, {
     type: 'audio',
@@ -452,7 +590,7 @@ async function resolveTrackUncached(body, videoId, requestedClient) {
 async function getInfo(body) {
   const videoId = body.video_id || extractVideoId(body.url);
   if (!videoId) throw new Error('Invalid YouTube URL or video ID');
-  const context = await getSession(body.cookie_file);
+  const context = await getSession(body.bot_id);
   const client = body.client === 'YTMUSIC' ? 'YTMUSIC' : 'MWEB';
   const poToken = await getPoToken(context.poBinding || videoId);
   const info = await getPlayableInfo(context.session, videoId, client, poToken);
@@ -463,21 +601,30 @@ async function getInfo(body) {
   };
 }
 
-async function getWebSession(cookieFile) {
-  const cookie = await netscapeCookiesToHeader(cookieFile);
-  return await Innertube.create({
-    cookie: cookie || undefined,
+async function getWebSession(botId) {
+  const credentials = botId ? await readCredentials(botId) : null;
+  const inner = await Innertube.create({
     user_agent: USER_AGENT,
     client_type: ClientType.WEB,
-    cache: new UniversalCache(true),
+    cache: new UniversalCache(true, botId ? getBotAuthDir(botId) : undefined),
     enable_session_cache: true,
     generate_session_locally: true,
     retrieve_player: false
   });
+  if (credentials) {
+    persistCredentialUpdates(inner.session, botId);
+    try {
+      await inner.session.signIn(credentials);
+    } catch (error) {
+      // Private playlists will not be visible, but public ones still resolve.
+      console.warn(`[youtube-bridge] Playlist sign-in failed for ${botId}:`, error.message);
+    }
+  }
+  return inner;
 }
 
 async function getPlaylist(body) {
-  const session = await getWebSession(body.cookie_file);
+  const session = await getWebSession(body.bot_id);
   const playlistId = body.playlist_id || (await extractPlaylistId(body.url, session));
   if (!playlistId) throw new Error('Invalid YouTube playlist URL or ID');
   const playlist = await session.getPlaylist(playlistId);
@@ -626,7 +773,7 @@ async function searchVideos(body) {
     const topVideoId = results[0].videoId || results[0].id;
     if (topVideoId) {
       const requestedClient = mode === 'music' ? 'YTMUSIC' : 'MWEB';
-      const cacheKey = `${cookieFileKey(body.cookie_file)}:${requestedClient}:${topVideoId}`;
+      const cacheKey = `${sessionKey(body.bot_id)}:${requestedClient}:${topVideoId}`;
       const cached = resolveCache.get(cacheKey);
       if (cached && cached.url) {
         results[0] = {
@@ -639,7 +786,7 @@ async function searchVideos(body) {
           const resolved = await resolveTrack({
             video_id: topVideoId,
             client: requestedClient,
-            cookie_file: body.cookie_file
+            bot_id: body.bot_id
           });
           if (resolved && resolved.url) {
             results[0] = {
@@ -662,7 +809,7 @@ async function getMusicRecommendations(body) {
   const videoId = body.video_id || extractVideoId(body.url);
   if (!videoId) throw new Error('Invalid YouTube URL or video ID');
   const limit = Math.min(Math.max(Number(body.limit) || 20, 1), 50);
-  const cacheKey = `${cookieFileKey(body.cookie_file)}:${videoId}`;
+  const cacheKey = `${sessionKey(body.bot_id)}:${videoId}`;
   const startedAt = performance.now();
   const cached = recommendationCache.get(cacheKey);
   if (cached) {
@@ -674,7 +821,7 @@ async function getMusicRecommendations(body) {
     cacheKey,
     RECOMMENDATION_CACHE_TTL_MS,
     async () => {
-      const { session } = await getSession(body.cookie_file);
+      const { session } = await getSession(body.bot_id);
       try {
         const playlist = await session.music.getUpNext(videoId, true);
         return (playlist?.contents || [])
@@ -703,7 +850,7 @@ async function getMusicRecommendations(body) {
 async function getDownloadPlan(body) {
   const videoId = body.video_id || extractVideoId(body.url);
   if (!videoId) throw new Error('Invalid YouTube URL or video ID');
-  const context = await getSession(body.cookie_file);
+  const context = await getSession(body.bot_id);
   const requestedClient = body.client === 'YTMUSIC' ? 'YTMUSIC' : 'MWEB';
 
   if (!body.video) {
@@ -755,7 +902,14 @@ const server = http.createServer(async (req, res) => {
     if (req.method !== 'POST') return json(res, 404, { error: 'Not found' });
 
     const body = await readBody(req);
-    body.cookie_file = getBotCookieFile(body.bot_id);
+    // Validated up front for every route: bot_id is the boundary that keeps one
+    // bot out of another's tokens.
+    requireBotId(body.bot_id);
+
+    if (req.url === '/auth/start') return json(res, 200, await startAuth(body));
+    if (req.url === '/auth/status') return json(res, 200, await authStatus(body));
+    if (req.url === '/auth/signout') return json(res, 200, await signOut(body));
+
     if (req.url === '/resolve') return json(res, 200, await resolveTrack(body));
     if (req.url === '/invalidate') return json(res, 200, invalidateResolution(body));
     if (req.url === '/info') return json(res, 200, await getInfo(body));

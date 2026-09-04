@@ -31,7 +31,7 @@ YOUTUBE_SERVICE_NAME="${STREAMERBOT_YOUTUBE_SERVICE:-streamerbot-youtube}"
 IMAGE_BUILD_ARGS=(
     --build-arg "TTSDK_URL_X86_64=${TTSDK_URL_X86_64:-}"
     --build-arg "TTSDK_URL_ARM64=${TTSDK_URL_ARM64:-}"
-    --build-arg "GO_LIBRESPOT_VERSION=${GO_LIBRESPOT_VERSION:-0.3.0}"
+    --build-arg "GO_LIBRESPOT_VERSION=${GO_LIBRESPOT_VERSION:-0.9.0}"
 )
 YOUTUBE_BRIDGE_URL="http://127.0.0.1:4417"
 UPDATE_LOCK_FILE="/tmp/streamerbot_update.lock"
@@ -117,7 +117,7 @@ create_shared_youtube_service() {
         --restart always \
         -e "STREAMERBOT_BOTS_ROOT=/bots" \
         -e "YOUTUBE_BRIDGE_HOST=0.0.0.0" \
-        -v "${BOTS_ROOT}:/bots:ro" \
+        -v "${BOTS_ROOT}:/bots:rw" \
         --entrypoint /bin/bash \
         "$BOT_IMAGE" \
         /home/streamer/StreamerBot/youtube_services.sh >/dev/null
@@ -148,15 +148,48 @@ shared_youtube_service_supported() {
             -f /home/streamer/StreamerBot/youtube_services.sh
 }
 
+ensure_bot_data_ownership() {
+    # Every bot directory belongs to uid 1000, the container user. The shared
+    # YouTube bridge creates <bot>/youtube_auth/ to store that bot's OAuth
+    # tokens, so the directory has to be writable by that uid or sign-in fails
+    # with EACCES and the bot silently stays anonymous.
+    #
+    # Modes are deliberately tight: these directories hold credentials.
+    [ -d "$BOTS_ROOT" ] || return 0
+
+    local bot_dir
+    for bot_dir in "$BOTS_ROOT"/*; do
+        [ -d "$bot_dir" ] || continue
+        mkdir -p "$bot_dir/youtube_auth"
+        chown -R 1000:1000 "$bot_dir" 2>/dev/null || true
+        chmod 700 "$bot_dir/youtube_auth" 2>/dev/null || true
+    done
+}
+
+shared_youtube_mount_is_writable() {
+    # The bridge now writes each bot's YouTube OAuth tokens under
+    # /bots/<bot>/youtube_auth/. Containers created before that mounted /bots
+    # read-only and are healthy but useless for sign-in, so health alone is not
+    # enough to decide the container is current.
+    [ "$(docker inspect -f \
+        '{{range .Mounts}}{{if eq .Destination "/bots"}}{{.RW}}{{end}}{{end}}' \
+        "$YOUTUBE_SERVICE_NAME" 2>/dev/null)" = "true" ]
+}
+
 reconcile_shared_youtube_service() {
     if ! shared_youtube_service_supported; then
         return 0
     fi
-    if curl -fsS "$YOUTUBE_BRIDGE_URL/health" >/dev/null 2>&1; then
+    if curl -fsS "$YOUTUBE_BRIDGE_URL/health" >/dev/null 2>&1 \
+        && shared_youtube_mount_is_writable; then
         return 0
     fi
 
-    echo -e "${YELLOW}Shared YouTube service is unavailable. Recreating it...${NC}"
+    if ! shared_youtube_mount_is_writable; then
+        echo -e "${YELLOW}Shared YouTube service mounts bots read-only, which blocks YouTube sign-in. Recreating it...${NC}"
+    else
+        echo -e "${YELLOW}Shared YouTube service is unavailable. Recreating it...${NC}"
+    fi
     create_shared_youtube_service && start_shared_youtube_service
 }
 
@@ -593,22 +626,32 @@ update_and_fix_permissions() {
 
         echo ""
         echo -e "${YELLOW}Fixing permissions...${NC}"
-        
+
         # 4. Fix permissions
-        # Operate on SCRIPT_DIR
+        # Operate on SCRIPT_DIR, but never on bots/. That directory holds each
+        # bot's YouTube OAuth tokens and, from the auth portal on, its encrypted
+        # service credentials. It must stay owned by uid 1000, which is the user
+        # inside the container, and it must not be world readable. The blanket
+        # chown and chmod below would break the first and undo the second.
         TARGET_FIX_DIR="$SCRIPT_DIR"
         TARGET_FIX_DIR=$(realpath "$TARGET_FIX_DIR")
-        
+
         echo "Setting ownership to $REAL_USER:$REAL_USER for $TARGET_FIX_DIR..."
-        chown -R "$REAL_USER":"$REAL_USER" "$TARGET_FIX_DIR"
-        
-        echo "Setting permissions (777 - Full Control)..."
-        chmod -R 777 "$TARGET_FIX_DIR"
-        
+        find "$TARGET_FIX_DIR" -path "$TARGET_FIX_DIR/bots" -prune -o \
+            -exec chown "$REAL_USER":"$REAL_USER" {} +
+
+        echo "Setting permissions..."
+        find "$TARGET_FIX_DIR" -path "$TARGET_FIX_DIR/bots" -prune -o \
+            -type d -exec chmod 775 {} +
+        find "$TARGET_FIX_DIR" -path "$TARGET_FIX_DIR/bots" -prune -o \
+            -type f -exec chmod 664 {} +
+
         chmod +x "$TARGET_FIX_DIR"/*.sh 2>/dev/null
-        
+
+        ensure_bot_data_ownership
+
         echo ""
-        echo -e "${GREEN}Done! Permissions set to User: $REAL_USER, Mode: 777.${NC}"
+        echo -e "${GREEN}Done. Repository owned by $REAL_USER; bot data left owned by the container user.${NC}"
     fi
     
     # 5. Auto-Rebuild (if update occurred or version mismatch detected)
