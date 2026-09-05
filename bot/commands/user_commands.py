@@ -8,7 +8,7 @@ from typing import List, Optional, TYPE_CHECKING
 from bot.commands.command import Command
 from bot.player.enums import Mode, State, TrackType
 from bot.TeamTalk.structs import User, UserRight
-from bot import errors, app_vars, utils
+from bot import auth, errors, app_vars, utils
 
 if TYPE_CHECKING:
     from bot.TeamTalk.structs import User
@@ -1456,3 +1456,81 @@ class ToggleLocalDownloadCommand(Command):
         else:
             return self.translator.translate("Local download mode (adsc) disabled.")
 
+
+
+class LoginCommand(Command):
+    """Show which accounts are connected, or start connecting one.
+
+    This is the recovery path for anything skipped during setup. Nobody has to
+    connect every account while creating the bot, and nobody has to delete and
+    recreate a bot to add one later.
+
+    The reply goes to the requesting user, never the channel: a device code or a
+    portal link is a credential, and broadcasting it hands the bot's accounts to
+    everyone present.
+    """
+
+    @property
+    def help(self) -> str:
+        return self.translator.translate(
+            "[service] Shows which streaming accounts are connected. "
+            "With a service (yt, sp, nf, dp, am, az) it starts connecting that one"
+        )
+
+    def __call__(self, arg: str, user: User) -> Optional[str]:
+        portal = getattr(self.command_processor, "auth_portal", None)
+        if portal is None:
+            return self.translator.translate(
+                "The account portal is switched off in this bot's configuration."
+            )
+
+        service = (arg or "").strip().lower()
+
+        if not service:
+            lines = [self.translator.translate("Your streaming accounts:")]
+            for name, state in portal.statuses().items():
+                label = auth.service_name(name)
+                if state == "connected":
+                    lines.append(
+                        self.translator.translate("%(service)s: connected")
+                        % {"service": label}
+                    )
+                else:
+                    lines.append(
+                        self.translator.translate("%(service)s: not connected")
+                        % {"service": label}
+                    )
+            lines.append(portal.mint_link(user.username))
+            return "\n".join(lines)
+
+        if service not in auth.SERVICES:
+            raise errors.InvalidArgumentError()
+
+        label = auth.service_name(service)
+
+        if portal.statuses().get(service) == "connected":
+            # Never silently replace a working account.
+            return self.translator.translate(
+                "%(service)s is already connected. To use a different account, "
+                "disconnect it first at %(url)s"
+            ) % {"service": label, "url": portal.mint_link(user.username)}
+
+        if service == "yt":
+            try:
+                data = portal.youtube_start()
+            except Exception as error:
+                return self.translator.translate(
+                    "YouTube sign-in could not start: %(error)s"
+                ) % {"error": error}
+            code = data.get("user_code", "")
+            url = data.get("verification_url", "https://www.google.com/device")
+            spelled = " ".join(code.replace("-", ""))
+            return self.translator.translate(
+                "To connect YouTube, go to %(url)s and enter the code %(code)s. "
+                "Character by character, that is %(spelled)s. "
+                "Send li on its own to check whether it worked."
+            ) % {"url": url, "code": code, "spelled": spelled}
+
+        return self.translator.translate(
+            "To connect %(service)s, open %(url)s"
+        ) % {"service": label, "url": portal.mint_link(user.username, f"/connect/{service}")}

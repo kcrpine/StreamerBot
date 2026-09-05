@@ -98,8 +98,24 @@ class ShorteningModel(BaseModel):
     service_params: Dict[str, Any] = {}
 
 
+class AuthPortalModel(BaseModel):
+    enabled: bool = True
+    # Loopback by default. The portal hands out account credentials, so exposing
+    # it on 0.0.0.0 is opt-in and the CLI warns when you do.
+    host: str = "127.0.0.1"
+    port: int = 4419
+    # What the bot puts in the link it sends over TeamTalk. Set this when the
+    # bot runs on a VPS and the user's browser is somewhere else.
+    public_url: str = ""
+    # 20 hours. A ?t= token is a time limit on user activity, so SC 2.2.1
+    # Timing Adjustable applies. With no JS we cannot warn before expiry, so we
+    # take WCAG's own 20 Hour Exception instead, which needs no UI at all.
+    token_ttl: int = 72000
+
+
 class ConfigModel(BaseModel):
     config_version: int = 0
+    auth_portal: AuthPortalModel = AuthPortalModel()
     general: GeneralModel = GeneralModel()
     sound_devices: SoundDevicesModel = SoundDevicesModel()
     player: PlayerModel = PlayerModel()

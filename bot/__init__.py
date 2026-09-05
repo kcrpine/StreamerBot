@@ -25,6 +25,10 @@ from bot import (
     translator,
     app_vars,
 )
+from bot.auth import redaction
+from bot.auth.session import AuthJobManager
+from bot.auth.store import SecretStore
+from bot.modules.auth_portal import AuthPortal
 
 
 class Bot:
@@ -80,16 +84,62 @@ class Bot:
         self.jc_requested_by_user_id: Optional[int] = None
         self.default_channel = self.config.teamtalk.channel
         self.is_updating = False
+        self.auth_portal = None
 
     def initialize(self):
         if self.config.logger.log:
             logger.initialize_logger(self)
+        # Installed immediately after the handlers exist and before anything
+        # touches a credential, so there is no window in which a password could
+        # reach a log file.
+        redaction.install()
         logging.debug("Initializing")
         self.sound_device_manager.initialize()
         self.ttclient.initialize()
         self.player.initialize()
         self.service_manager.initialize()
+        self._initialize_auth_portal()
         logging.debug("Initialized")
+
+    def _initialize_auth_portal(self) -> None:
+        """Start the portal and register its stored secrets for redaction.
+
+        A failure here disables account connection but must never stop the bot
+        reaching TeamTalk: YouTube, direct URLs and everything already connected
+        keep working.
+        """
+        config = getattr(self.config, "auth_portal", None)
+        if config is None or not config.enabled:
+            logging.info("The account portal is switched off in the configuration.")
+            return
+        try:
+            secrets_dir = os.path.join(self.config_manager.config_dir, "secrets")
+            store = SecretStore(secrets_dir)
+            # Anything already stored goes into the filter now, so a credential
+            # saved in an earlier run cannot surface in this run's logs.
+            redaction.get_filter().register_all(store.values_to_redact())
+
+            youtube_bridge = None
+            for name in ("yt", "ytm"):
+                service = self.service_manager.services.get(name)
+                bridge = getattr(service, "_bridge", None)
+                if bridge is not None:
+                    youtube_bridge = bridge
+                    break
+
+            self.auth_portal = AuthPortal(
+                translator=self.translator,
+                store=store,
+                jobs=AuthJobManager(),
+                config=config,
+                locale=self.config.general.language,
+                youtube_bridge=youtube_bridge,
+            )
+            self.auth_portal.start()
+            self.command_processor.auth_portal = self.auth_portal
+        except Exception as error:
+            logging.error(f"The account portal could not start: {error}", exc_info=True)
+            self.auth_portal = None
 
     def run(self):
         logging.debug("Starting")
@@ -191,6 +241,13 @@ class Bot:
                 time.sleep(0.5)
             except Exception as e:
                 logging.error(f"Error sending shutdown message: {e}")
+        if self.auth_portal is not None:
+            try:
+                # Also revokes every live token, so a link pasted somewhere does
+                # not survive a restart.
+                self.auth_portal.close()
+            except Exception as e:
+                logging.warning(f"Error closing the account portal: {e}")
         self.player.close()
         self.ttclient.close()
         self.tt_player_connector.close()
