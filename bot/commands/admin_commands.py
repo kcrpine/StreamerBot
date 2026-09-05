@@ -8,7 +8,7 @@ from queue import Empty
 
 from bot.commands.command import Command
 from bot.player.enums import State
-from bot import app_vars, errors
+from bot import app_vars, auth, errors
 
 if TYPE_CHECKING:
     from bot.TeamTalk.structs import User
@@ -457,3 +457,76 @@ class YouTubeLoginCommand(Command):
             "The code lasts about {minutes} minutes. "
             "Send yl on its own to check whether it worked."
         ).format(url=url, code=code, spelled=spelled, minutes=minutes)
+
+
+class AuthPortalCommand(Command):
+    """Portal status, a fresh link, or turning it off."""
+
+    @property
+    def help(self) -> str:
+        return self.translator.translate(
+            "[link|rotate|off] Shows the account portal's status, mints a new link, "
+            "revokes every existing link, or stops the portal"
+        )
+
+    def __call__(self, arg: str, user: User) -> Optional[str]:
+        portal = getattr(self.command_processor, "auth_portal", None)
+        if portal is None:
+            return self.translator.translate("The account portal is not running.")
+
+        action = (arg or "status").strip().lower()
+
+        if action in ("status", ""):
+            return self.translator.translate(
+                "The portal is listening on %(host)s port %(port)s with %(count)s live links."
+            ) % {
+                "host": portal.config.host,
+                "port": portal.config.port,
+                "count": portal.tokens.live_count,
+            }
+
+        if action == "link":
+            return portal.mint_link(user.username)
+
+        if action == "rotate":
+            count = portal.tokens.revoke_all()
+            return self.translator.translate(
+                "Revoked %(count)s links. Send ap link for a new one."
+            ) % {"count": count}
+
+        if action == "off":
+            portal.close()
+            return self.translator.translate("The portal has been stopped.")
+
+        raise errors.InvalidArgumentError()
+
+
+class LogoutServiceCommand(Command):
+    """Disconnect one service, wiping its stored credentials."""
+
+    @property
+    def help(self) -> str:
+        return self.translator.translate(
+            "SERVICE Disconnects a streaming account and deletes its saved sign-in "
+            "(yt, sp, nf, dp, am, az)"
+        )
+
+    def __call__(self, arg: str, user: User) -> Optional[str]:
+        portal = getattr(self.command_processor, "auth_portal", None)
+        if portal is None:
+            return self.translator.translate("The account portal is not running.")
+
+        service = (arg or "").strip().lower()
+        if service not in auth.SERVICES:
+            raise errors.InvalidArgumentError()
+
+        label = auth.service_name(service)
+        if portal.statuses().get(service) != "connected":
+            return self.translator.translate("%(service)s is not connected.") % {
+                "service": label
+            }
+
+        portal.disconnect(service)
+        return self.translator.translate(
+            "%(service)s has been disconnected and its saved sign-in deleted."
+        ) % {"service": label}

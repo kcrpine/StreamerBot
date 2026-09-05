@@ -80,6 +80,7 @@ class CommandProcessor:
             "rd": user_commands.RemoveLinkCommand,
             "ldd": user_commands.DownloadDirectCommand,
             "adsc": user_commands.ToggleLocalDownloadCommand,
+            "li": user_commands.LoginCommand,
         }
         self.admin_commands_dict = {
             "cg": admin_commands.ChangeGenderCommand,
@@ -101,6 +102,8 @@ class CommandProcessor:
             "q": admin_commands.QuitCommand,
             "gcid": admin_commands.GetChannelIDCommand,
             "yl": admin_commands.YouTubeLoginCommand,
+            "ap": admin_commands.AuthPortalCommand,
+            "lo": admin_commands.LogoutServiceCommand,
         }
 
     def run(self):

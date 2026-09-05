@@ -1,5 +1,6 @@
 babel
 beautifulsoup4
+cryptography
 patool
 portalocker
 pydantic>=2.0
