@@ -178,16 +178,30 @@ Work proceeds in numbered phases from the plan; the plan's delivery table record
 actually found, including where reality contradicted it. When a phase finishes, update that table —
 future instances rely on it to know what is real versus planned.
 
-**Keep the published copies in sync, in the same commit as the work.** The plan is authored at
-`~/.claude/plans/` and mirrored into this repository at `.claude/plans/streamerbot-plan.md`. Those two
-drift the moment one is edited and the other is not, so any plan change — a phase marked done, a
-decision overturned, a new requirement — is copied across and pushed alongside the code it describes.
-The same applies to this file. Two consequences:
+### Keeping the plan and this file in sync
 
-- **Never edit `.claude/plans/streamerbot-plan.md` directly.** It is a mirror; the next sync overwrites
-  it. Edit the authored copy and re-copy.
-- **Never finish a phase without pushing the plan that records what it found.** A contributor reading
-  the repository should not be working from a plan several phases behind the code.
+**This repository is the source of truth, and the sync runs both ways.** The plan is authored at
+`~/.claude/plans/` and lives here at `.claude/plans/streamerbot-plan.md`. The repository has
+collaborators with write access, so either copy can move first — a phase finished locally advances one,
+a merged PR advances the other.
+
+**Pull and compare before editing either file:**
+
+```bash
+git pull
+diff ~/.claude/plans/*.md .claude/plans/streamerbot-plan.md
+```
+
+- **Repository moved, local did not** — take the repository's version as the base. Someone recorded
+  something a phase found, or corrected a decision. Working from a stale plan is how the same phase gets
+  implemented twice, differently, and it is worse than no plan because it still reads as authoritative.
+- **Local moved, repository did not** — copy across and push in the same commit as the work.
+- **Both moved** — **merge by hand, never `cp`.** A copy in either direction silently discards whatever
+  the other side wrote, and because the plan is one long prose document, nothing fails loudly afterwards
+  to reveal it. `git log -- .claude/plans/streamerbot-plan.md` names who changed it and why.
+
+A phase is not finished until the plan recording what it found is pushed. Treat the pushed version as
+what the project has agreed; treat anything only in the local copy as not yet real.
 
 Commit messages explain *why*, particularly where a choice looks odd. Several non-obvious decisions in
 this codebase exist because the obvious version was tried and broke something.

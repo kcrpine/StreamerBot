@@ -119,14 +119,32 @@ rejection handlers, `update.sh` pruning `bots/` from its permission pass, and ne
 the same commit as the plan's delivery table, because a stale CLAUDE.md is worse than none — it is
 confidently wrong.
 
-**The published copies are pushed whenever they change, not at the end.** The plan is authored at
-`~/.claude/plans/` and mirrored into the repository at `.claude/plans/streamerbot-plan.md`; those two
-drift the moment the working copy is edited and the mirror is not. So any change to the plan — a phase
-marked done, a decision overturned, a new requirement — is copied across and pushed in the same commit
-as the work it describes, and the same applies to `CLAUDE.md` once it exists. Two rules follow from
-this: never edit the repository's copy of the plan directly, since the next sync overwrites it, and
-never finish a phase without pushing the plan that records what the phase found. A contributor reading
-the repository should never be working from a plan several phases behind the code.
+**The repository is the source of truth for the plan and `CLAUDE.md`, and the sync runs both ways.**
+The plan is authored at `~/.claude/plans/` and lives in the repository at
+`.claude/plans/streamerbot-plan.md`. With collaborators holding write access, either copy can move
+first: a phase finished locally advances the local one, and someone else's merged PR advances the
+repository's. Whichever moved, the two have to be reconciled before any further work, because both
+directions of a blind copy destroy somebody's writing.
+
+**Pull before touching either file.** At the start of a session, and again before editing the plan or
+`CLAUDE.md`, `git pull` and compare the repository's copies against the local ones. If the repository
+has moved — a collaborator added a phase, corrected a decision, recorded something a phase found — take
+that version as the base and carry the local edits onto it. Working from a stale plan is how two people
+end up implementing the same phase differently, and it is worse than having no plan, because the stale
+one still reads as authoritative.
+
+**Push in the same commit as the work.** Any change — a phase marked done, a decision overturned, a new
+requirement — goes up alongside the code it describes. A phase is not finished until the plan recording
+what it found is pushed.
+
+**When both have changed, merge, never overwrite.** Diff the two and reconcile by hand. `cp` in either
+direction silently discards whatever the other side wrote, and because the plan is one long prose
+document rather than code, nothing will fail loudly afterwards to reveal that it happened. If the
+repository's copy has moved and its history is unclear, `git log -- .claude/plans/streamerbot-plan.md`
+names who changed it and why.
+
+The practical consequence: the local copy is a working copy, not the original. Treat the pushed version
+as what the project has agreed, and treat anything only in the local copy as not yet real.
 
 **Curated, not copied wholesale.** A `.claude` directory also contains `.credentials.json` — a live
 OAuth access token and refresh token for the account — and `projects/`, the full transcript of every
