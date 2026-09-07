@@ -51,3 +51,27 @@ fast_forensics.py
 # OS
 .DS_Store
 Thumbs.db
+
+# Claude Code working directory.
+# .claude/ is shared on purpose (the plan, the hooks, the settings), but a
+# .claude directory also accumulates a live OAuth token and the full transcript
+# of every session. Those must never reach a public repository.
+.claude/.credentials.json
+.claude/projects/
+.claude/history.jsonl
+.claude/sessions/
+.claude/session-env/
+.claude/shell-snapshots/
+.claude/cache/
+.claude/debug/
+.claude/jobs/
+.claude/daemon/
+.claude/backups/
+.claude/downloads/
+.claude/ide/
+.claude/chrome/
+.claude/plugins/
+.claude/statsig/
+.claude/settings.local.json
+.claude/.last-*
+.claude/.a11y-agent-team-*

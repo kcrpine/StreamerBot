@@ -1,0 +1,765 @@
+# StreamerBot — multi-service accessible TeamTalk streaming bot
+
+## Context
+
+`C:\Users\kcrpi\Documents\teamtalk tv streamer and music bot\TTMediaBot` is a fork of TTMediaBot
+(origin `JoaoDEVWHADS/TTMediaBot`). Today it streams **YouTube and YouTube Music only**, authenticated
+by a Netscape `cookies.txt` file that the operator must manually re-export from a browser every few
+weeks. It runs one Docker container per bot, managed by `ttbotdocker.sh`, on `python:3.10-slim-bullseye`
+with TeamTalk SDK 5.8.1.
+
+We are turning it into **StreamerBot**: same multi-bot Docker architecture, but
+
+- **no more cookie files** — YouTube signs in with an OAuth device code that refreshes itself forever;
+- **six services** — YouTube, Spotify, Apple Music, Amazon Music, Netflix, Disney+, plus direct URLs;
+- **users connect their own accounts** through an accessible web portal and chat prompts;
+- **audio description** can be switched on for any movie or show, with the bot asking first;
+- Debian 13, TeamTalk SDK 5.22, and auto-update pointed at the user's own GitHub fork.
+
+Primary users are blind. Every surface — the web portal, the TeamTalk chat prompts, and the bash
+manager — is designed against WCAG 2.2 AA and screen-reader-first CLI conventions.
+
+### Settled during implementation
+
+- GitHub repo is **`kcrpine/StreamerBot`**, baked into `project.env`.
+- TeamTalk SDK URLs verified live against bearware.dk: `tt5sdk_v5.22a_ubuntu22_x86_64.7z` and
+  `tt5sdk_v5.22a_raspbian_arm64.7z` (both return 200; the ARM build is `raspbian_arm64`, and the
+  filenames are lowercase — my first guesses at both were wrong).
+- The in-container launcher `TTMediaBot.sh` became **`run_bot.sh`**, not `StreamerBot.sh`: Windows is
+  case-insensitive, so `StreamerBot.sh` and the `streamerbot.sh` manager would be the same path and
+  cannot coexist in the working tree.
+
+### Discovered during Phase 0 — the binding-drift risk was real
+
+The vendored `TeamTalkPy/TeamTalk5.py` was **ABI-incompatible with SDK 5.22a**, exactly the silent-memory-
+corruption risk the plan flagged. Measured against the official 5.22a binding loaded on the same DLL:
+11 structs differed in size (`TextMessage` 2064 vs 2068, `Channel` 5280 vs 5288, `UserAccount` 4184 vs
+6232, `RemoteFile` 2064 vs 3088, `BannedUser` 5124 vs 6148, …) and `TTMessageUnion` was missing its
+`sounddevice` member entirely — 19 fields against 20. Since `getMessage()` reads every event through that
+union, the old binding on a 5.22 library would have misparsed all of them.
+
+Fixed by replacing the vendored file with the SDK's own `Library/TeamTalkPy/TeamTalk5.py`, which exposes
+every name the bot uses (16 symbols, all present) and all 21 called DLL exports. One local delta: upstream's
+Windows-only `os.add_dll_directory(... "/../TeamTalk_DLL")` is guarded with `isdir()`, because it raises
+`FileNotFoundError` and makes the module unimportable when that directory is absent.
+
+### Environment notes
+
+- **Disk**: the C: drive was at 18 MB free when Phase 0 started, which broke WSL with I/O errors mid-build.
+  The Ubuntu-24.04 WSL distro was moved to `D:\wsl\Ubuntu-24.04` (`wsl --manage --move`), returning C: to
+  ~5 GB free and giving Docker room on D:'s 167 GB. Docker Engine runs inside WSL; Docker Desktop was not
+  needed.
+- **Testing**: the SDK and libmpv were downloaded to verify locally and then deleted, so the suite no longer
+  runs on the Windows host — run it in the container instead.
+
+### Added after the plan was approved
+
+- **Auto-update checks hourly, not per-push.** `STREAMERBOT_UPDATE_INTERVAL=3600` in `project.env`
+  replaces `auto_updater.sh`'s 20-second poll. The updater wakes on that interval and only then asks
+  GitHub whether the branch moved; it does not react to individual pushes. `auto_updater.sh` clamps the
+  value to a 300-second floor.
+- **Legacy backup migration.** `streamerbot.sh` gains "Migrate a backup from the old TTMediaBot" which
+  takes an old `backup_bots_*.tar.gz`, and per bot directory: renames `TTMediaBotCache.dat` →
+  `StreamerBotCache.dat` and `TTMediaBot.log` → `StreamerBot.log`, runs the config through the v2
+  migrator (adding `services.spotify`/`netflix`/`disney`/`apple_music`/`amazon_music`/`audio_description`
+  and `auth_portal` with defaults while preserving TeamTalk credentials, channel and nickname), creates
+  `secrets/`, `browser/`, `youtube_auth/`, `librespot/`, retains the old `cookies.txt` as an importable
+  session but reports that YouTube now needs a one-time device-code sign-in, `chown -R 1000:1000`, and
+  recreates the containers on the new image. Dry-run first, printing what it will do per bot.
+  The existing backup and restore functions are kept as they are.
+
+### Added during Phase 3
+
+**A prerelease per push, with email.** GitHub Actions builds a source zip on every push, publishes it
+as a prerelease tagged `build-<run number>-<short sha>`, and records in the release notes whether the
+checks passed. Two reasons this earns its place: every commit gets a downloadable artifact, and
+publishing a release is the **only native GitHub mechanism that emails on a push** — the old Email
+service webhook was removed in 2019, and watching a repository does not notify on raw commits. The CI
+notify job also carries the build tag and link in its own email. A release per push accumulates fast,
+so the job prunes to the most recent 20 prereleases; real tagged releases are untouched.
+
+**A gamdl wrapper for Apple Music downloads.** Separate from the Apple Music *playback* engine in
+Phase 6 — this is downloading, not streaming, and the two share nothing but the service name.
+
+- New `bot/services/gamdl.py` wrapping the `gamdl` CLI, invoked through `subprocess` with an argument
+  list, never a shell string, since track and album names arrive from user input.
+- Output is transcoded to **MP3** and uploaded to the channel the bot is currently in, reusing the
+  existing `download` and file-upload plumbing in `Command` rather than inventing a second path.
+- A single track uploads as one MP3. **An album, artist or playlist is zipped first** and uploaded as
+  one archive, because uploading forty files individually into a TeamTalk channel is unusable with a
+  screen reader — each arrival is its own announcement.
+- Reuses the existing `delete_uploaded_files_after` config so downloads do not accumulate on disk, and
+  the existing `pending_search_results` selection flow so `sl N` picks what to download.
+- Progress is reported as **one message when the download starts and one when the upload finishes**,
+  never a percentage that rewrites itself: the TeamTalk chat announcement rules in this plan exist
+  because a self-updating counter is read aloud in full on every tick.
+- Needs Apple Music credentials, so it goes through the same per-bot `SecretStore` and the auth portal
+  as the playback side, and is disabled with a spoken reason when the account is not connected.
+- gamdl requires a widevine device file for anything above 256kbps AAC; when it is absent the wrapper
+  falls back rather than failing, and says which quality it got.
+
+**Ship the Claude working structure with the repo.** `.claude/` is committed so a contributor using
+Claude Code starts from the same plan and the same rules: `plans/streamerbot-plan.md` (this document),
+the three accessibility hooks, a `settings.json` wiring them through `$CLAUDE_PROJECT_DIR` so it works
+from any clone, and a README explaining the setup.
+
+**Curated, not copied wholesale.** A `.claude` directory also contains `.credentials.json` — a live
+OAuth access token and refresh token for the account — and `projects/`, the full transcript of every
+session run on that machine. On a public repository that is a credential leak and a privacy leak
+respectively, so both, along with `history.jsonl`, `cache/`, `sessions/`, `shell-snapshots/`, `debug/`
+and the rest of the machine state, are excluded by name in `.gitignore`. The accessibility agents
+themselves are referenced rather than vendored: they belong to their own project and are better
+installed from source, and the hooks degrade to printing their reminder when the agents are absent.
+
+### Two risks stated up front, then built anyway
+
+1. **Google publishes no Chrome for linux/arm64**, and only Chrome carries the Widevine CDM. On ARM
+   hosts (Raspberry Pi, Graviton) Netflix, Disney+, Apple Music and Amazon Music will be cleanly
+   disabled with a spoken reason. YouTube, Spotify and direct URLs work everywhere.
+2. **You chose credential entry** for the four no-API services. Those logins routinely throw 2FA codes
+   and CAPTCHAs. Passwords are encrypted at rest with a per-bot Fernet key, never logged (a root-logger
+   redaction filter enforces this), the portal has an interactive OTP step so 2FA does not dead-end,
+   and a session-import page is the escape hatch when a CAPTCHA blocks automation. Rebroadcasting these
+   services into a TeamTalk channel is very likely a ToS violation; the README says so in paragraph one.
+
+---
+
+## Architecture
+
+### The core problem: engines that are not mpv
+
+mpv plays a URL. **librespot and Chrome are already producing audio into the sink** — there is no URL to
+hand mpv. So `Player` stops being a thin mpv wrapper and becomes a transport façade over engines,
+keeping all its existing state (`track_list`, `track_index`, `state`, `mode`, `volume`, queue, prefetch,
+recents). Exactly one engine is active at a time, which is also what keeps the audio topology sane.
+
+**New `bot/player/engines/__init__.py`** — `PlaybackEngine` ABC modelled on the existing `Service` ABC:
+`initialize/can_play/play/pause/resume/stop/set_volume/seek/get_position/get_duration/get_metadata/close`,
+plus an `on_end` callback the engine fires. Unsupported ops raise a new `errors.UnsupportedOperationError`,
+caught by `SeekBackCommand`/`SeekForwardCommand`/`SpeedCommand` in
+[user_commands.py](../../Documents/teamtalk%20tv%20streamer%20and%20music%20bot/TTMediaBot/bot/commands/user_commands.py).
+
+Three engines:
+
+| Engine | File | Plays |
+|---|---|---|
+| `mpv` | `bot/player/engines/mpv_engine.py` | YouTube, YouTube Music, direct URLs — pure extraction from today's `Player`, zero behaviour change |
+| `librespot` | `bot/player/engines/librespot_engine.py` | Spotify |
+| `browser` | `bot/player/engines/browser_engine.py` | Apple Music, Amazon Music, Netflix, Disney+ |
+
+**`Player` changes** in [bot/player/__init__.py](../../Documents/teamtalk%20tv%20streamer%20and%20music%20bot/TTMediaBot/bot/player/__init__.py):
+`_play(arg)` becomes `_play(track)`; on an engine switch it calls `old.stop()` then
+`self.audio.focus(new)`. Extract the queue-priority / SingleTrack / RepeatTrack block at `:698-717`
+into `_advance_after_end()`, and add `on_engine_end(engine, reason)` which ignores callbacks from a
+swapped-out engine. Engines never touch `player.state` — only `Player` mutates it, which is what keeps
+`TTPlayerConnector` (voice transmission + status text) working with **no changes at all**.
+
+**`Track` changes** — add `TrackType.External = 5` and a `Track.engine: str = "mpv"` attribute. External
+tracks carry a stable identifier URI (`spotify:track:…`, `netflix://watch/80100172`) rather than a stream
+URL, are constructed `_is_fetched=True`, and so never enter `_fetch_stream_data`. `Streamer` only accepts
+`http/https/rtmp/rtsp` so these URIs cannot leak into direct-URL playback. Replace the hardcoded
+`if self.service not in ("yt","ytm")` guard at
+[track.py:70](../../Documents/teamtalk%20tv%20streamer%20and%20music%20bot/TTMediaBot/bot/player/track.py) with a
+`getattr(service, "engine", "mpv") != "mpv"` check — chosen deliberately so `test_track_refresh.py`'s
+`SimpleNamespace` mock keeps passing untouched.
+
+**`Service` ABC** gains class-level defaults (`engine = "mpv"`, `requires_auth = False`,
+`supports_audio_description = False`, `auth_status()`), so `YtService`/`YtmService` need no edits.
+`ServiceManager.__init__` stops hardcoding two entries and builds the dict from config. The existing
+`initialize()` loop that catches `ServiceError` → `is_enabled = False` + `error_message` is exactly the
+mechanism that makes "Chrome is unavailable on arm64" and "you are not signed in to Netflix" show up in
+`sv` output with a readable reason — reuse it, do not replace it.
+
+External services implement `search()` returning `TrackType.External` tracks, and `get(process=True)` as
+the identity function (nothing to resolve). `download()` raises `UnsupportedOperationError` — no DRM
+stream is ever written to disk.
+
+### Audio topology
+
+**One null sink, one active producer.** `entrypoint.sh` keeps its current shape but renames the sink to
+`StreamerBotSink` and adds `Xvfb :99 -screen 0 1280x720x24` + `export DISPLAY=:99` before `exec "$@"`.
+
+- mpv → `ao=pulse`, default sink (unchanged)
+- Chrome → `PULSE_SINK=StreamerBotSink` in the Playwright launch env
+- go-librespot → ALSA backend; install `libasound2-plugins` and ship `/etc/asound.conf` mapping
+  `pcm.!default` to pulse
+
+Multiple sinks were rejected because
+[bot/sound_devices.py](../../Documents/teamtalk%20tv%20streamer%20and%20music%20bot/TTMediaBot/bot/sound_devices.py)
+picks the TeamTalk input device **by list index** — adding sinks would shuffle indices and silently break
+every existing bot's `config.json`. As de-risking, add `SoundDevicesModel.input_device_name` and prefer
+name matching, falling back to the index.
+
+New `bot/audio/pulse.py` — `PulseMixer` wrapping `pactl -f json` (Debian 13 ships PulseAudio 17, which
+supports it; no new dependency). `mute_all_except(pids)` on every engine switch is the safety net for
+"Chrome kept a paused-but-unmuted ad playing".
+
+### YouTube: cookies → OAuth device code
+
+In [youtube_bridge/server.mjs](../../Documents/teamtalk%20tv%20streamer%20and%20music%20bot/TTMediaBot/youtube_bridge/server.mjs)
+delete `getBotCookieFile`, `cookieFileKey`, `netscapeCookiesToHeader`, `getWebSessionData`. `getSession`
+becomes keyed on `bot_id` + credentials-file mtime and uses youtubei.js's own auth:
+
+```js
+const yt = await Innertube.create({ cache: new UniversalCache(true, authDir), ... });
+yt.session.on('update-credentials', ({credentials}) => writeCreds(authFile, credentials));
+if (creds) await yt.session.signIn(creds);   // silent, self-refreshing
+```
+
+New endpoints `/auth/start` (returns `{verification_url, user_code, expires_in}` from the `auth-pending`
+event), `/auth/status`, `/auth/signout`. Anonymous fallback is preserved — with no credentials the
+session is created without `signIn()` and search still works, exactly like today's cookie-less path.
+
+**Container change:** the shared infra container mounts `bots/` `:ro` today; token persistence needs
+`:rw`. `shared_youtube_mount_is_current()` in both `streamerbot.sh` and `update.sh` must be updated to
+match, or it will recreate the container on every launch forever. The strict `bot_id` regex stays as the
+containment boundary.
+
+### Spotify
+
+**go-librespot** (devgianlu), not Rust librespot — it exposes a local HTTP + WebSocket control API
+(`/player/play|pause|resume|seek|volume`, `/status`, and a WS event stream), and it supports interactive
+OAuth login writing a reusable `credentials.json`. Rust librespot has no control API. It has arm64
+releases, so **Spotify works on ARM even though the browser services do not.**
+
+`SpotifyService` uses the Spotify Web API for search and album/playlist expansion with the same OAuth
+token; `LibrespotEngine` supervises the daemon (exponential backoff restart, never logs the credentials
+blob) and drives playback. Requires **Premium** — `initialize()` checks `/v1/me` and sets a translated
+`warning_message` otherwise. Requires the operator to register a Spotify developer app for a `client_id`;
+`streamerbot.sh` prompts for it at bot creation with the dashboard URL.
+
+### Netflix / Disney+ / Apple Music / Amazon Music
+
+Playwright driving **real Google Chrome** (`channel="chrome"`, so no `playwright install` and ~400 MB
+saved), **headful under Xvfb** — headless Chrome produces no audio and is detected by Netflix. One
+long-lived Playwright instance owned by a dedicated worker thread with a `queue.Queue` command channel,
+because the sync API is not thread-safe and the bot calls in from the mpv event thread, command threads
+and `TaskProcessor`. Persistent `BrowserContext` per service at `data/browser/<service>/`.
+
+Per-site DOM knowledge is isolated in `bot/services/web/{netflix,disney,apple_music,amazon_music}.py`
+behind a `WebServiceAdapter` ABC (`is_logged_in / login / list_profiles / select_profile / search /
+watchlist / play / list_audio_tracks / set_audio_track`), so a site redesign is a one-file fix. Apple
+Music uses the `MusicKit` JS object on `music.apple.com` rather than DOM scraping — far more stable.
+Amazon Music has no such handle and is the most fragile of the four.
+
+Audio description is a track in the site's own audio menu; the adapter matches on a per-locale substring
+list it owns (never on the bot's translated strings), applied **after** the player loads, because the
+menu is not populated before then.
+
+### Auth portal and secret storage
+
+`bot/modules/auth_portal.py` — stdlib `ThreadingHTTPServer` + hand-rolled router, matching the repo's
+existing framework-free style. Every page requires `?t=<token>`; tokens are `secrets.token_urlsafe(32)`,
+TTL'd, constant-time compared, and minted **only** by a TeamTalk command from a user who already passed
+`CommandProcessor.check_access`. No token → 404, not 403.
+
+`bot/auth/store.py` — `SecretStore` over **Fernet** (new `cryptography` dependency), per-field encryption
+so a partial read leaks nothing:
+
+```
+data/secrets/portal.key            32 bytes, 0600
+data/secrets/credentials.enc       {"entries": {"netflix": {"username": "gAAAA…", "password": "gAAAA…"}}}
+data/browser/<service>/            Chrome profile (cookies live here)
+data/librespot/credentials.json
+data/youtube_auth/credentials.json
+```
+
+**Credentials are per bot, and that is a requirement, not an accident.** Two bots on the same host
+must never share a YouTube, Spotify, Apple Music, Amazon Music, Netflix or Disney+ login. The
+architecture already gives this for free — each container is created with
+`-v "${BOTS_ROOT}/${bot_name}:/home/streamer/StreamerBot/data"`, so every path in the table above
+resolves inside that one bot's directory — but it is written down here so no later phase quietly
+introduces a shared location. Concretely:
+
+- Nothing to do with credentials may live outside `data/`. No `/opt`, no image layer, no
+  `/tmp/streamerbot-*` shared by pid.
+- Each bot gets its own Chrome profile directory and its own Fernet key, so deleting one bot cannot
+  sign another out and copying one bot's directory does not carry another's accounts.
+- The **one** component that sees every bot is the shared YouTube bridge container, which mounts
+  `${BOTS_ROOT}:/bots` because it serves all of them from a single Node process. It never holds
+  ambient credentials: every request names a `bot_id`, and the strict
+  `^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$` regex plus `path.join` under `BOTS_ROOT` is the containment
+  boundary that stops one bot reaching another's tokens. That regex is load-bearing and must not be
+  relaxed.
+- `streamerbot.sh`'s "duplicate bot" action copies configuration but **not** `secrets/`, `browser/`,
+  `librespot/` or `youtube_auth/`; the new bot starts signed out and says so.
+
+Documented honestly: the key sits next to the ciphertext, so this defends against backups, `bots/`
+tarballs and casual disclosure — **not** against an attacker with host root. An opt-in
+`STREAMERBOT_SECRET_KEY` env mode (passphrase prompted at container start, never persisted) is the real
+hardening path and gets its own menu item.
+
+`bot/logger.py` gains a `SecretRedactingFilter` on the root logger scrubbing registered secrets plus
+`password=` / `Bearer ` / `refresh_token` patterns. Playwright tracing, video and HAR are off by default.
+
+`bot/auth/session.py` — `AuthJob` state machine
+`queued → launching → filling → awaiting_otp | awaiting_captcha → success | failed(reason)`. The worker
+calls `prompt.request_otp()`, which blocks on a queue; the portal's OTP POST unblocks it.
+`awaiting_captcha` renders "we cannot solve this — use Import Session instead" with a link.
+
+---
+
+## Accessibility requirements (binding, not aspirational)
+
+### Web portal — WCAG 2.2 AA, plus SC 2.4.13 adopted deliberately
+
+Five architectural decisions that delete whole categories of bugs:
+
+1. **Every step is a real URL with a real page load** — the 2FA step, profile picker, progress and
+   success screens. A full navigation makes the screen reader announce the new `<title>`, the single
+   most reliable "something changed" signal that exists.
+2. **No modals, ever.** Disconnect confirmation is `/disconnect/netflix/confirm`. This removes focus
+   trapping, focus return, Escape handling and inert backgrounds from scope entirely.
+3. **Server-rendered errors are the source of truth.** `novalidate` on every form.
+4. **JS is enhancement only** — the device-code screen gets a manual "Check status" button, the progress
+   screen a manual refresh link.
+5. **No `<meta http-equiv="refresh">` anywhere** — it violates SC 2.2.1/2.2.4 and makes the screen
+   reader re-read the whole page every tick.
+
+**Page titles** are the primary state signal, front-loaded, app name last:
+`Enter code BCDF-GHJK at google.com/device - StreamerBot`. **Hard rule:** any page rendering validation
+errors is prefixed `Error: `.
+
+**The OTP screen and SC 3.3.8 Accessible Authentication.** Both the password and OTP steps *are*
+cognitive function tests; we pass via the *Mechanism* exception, and only if:
+`autocomplete="one-time-code"` / `"username"` / `"current-password"` are present, **paste works**
+(no `onpaste` blocking, no `user-select: none`), there is a single input for the whole code, and an
+explicit submit button. **Forbidden:** splitting the code into six single-character boxes (breaks paste,
+breaks autofill, announces "edit blank" six times, and the auto-advance JS fights the screen reader
+cursor); auto-submitting at N characters (fires mid-review when a blind user arrows back to verify);
+any CAPTCHA; `maxlength` on the password field ever.
+
+**The device code** gets two parallel representations — `<p class="device-code" aria-hidden="true">` for
+sighted users, and a visually-hidden sibling reading `Your code is: B, C, D, F, dash, G, H, J, K.`
+Comma-space is the reliable cross-AT technique to force per-character reading; JAWS re-joins
+space-separated capitals, and `aria-label` on a roleless element is not consistently exposed. Symbols are
+spelled as words. Any code we generate ourselves uses Crockford Base32 (no I, L, O, U).
+
+**Focus management:** nothing on normal page load (autofocus skips the h1 and instructions — exactly the
+content a blind user needs); `#error-summary` on a page with errors; nowhere on async success, then
+navigate. Never move focus except from an explicit user action or a page load. No positive `tabindex`,
+nothing sticky.
+
+**Status list:** the failure mode is six buttons all named "Connect". Each row is an `<h3>` (so H-key
+navigation works) plus visually-hidden text inside the button — `Connect<span class="visually-hidden">
+Netflix</span>` — not `aria-label`, because the hidden-span form is safe by construction for SC 2.5.3
+Label in Name and survives translation workflows. Status is text first (`Not connected`), icon
+`aria-hidden`, colour decorative — SC 1.4.1 satisfied by construction.
+
+Portal HTML is **built from translated fragments in Python**, not shipped as static template files, so
+Babel's `translate` keyword extractor sees the strings.
+
+### Corrections from the Phase 3 accessibility review
+
+The portal spec above was reviewed before any code was written. Five of its "settled" decisions were
+wrong and are overturned here. The originals are left in place above so the reasoning is traceable.
+
+1. **The device code must not be `aria-hidden`.** `<p aria-hidden="true">BCDF-GHJK</p>` is absent from
+   the accessibility tree, so the NVDA and JAWS virtual cursor cannot reach it: a blind user cannot
+   select or copy the code, only memorise nine characters from one spoken pass. That is exactly the
+   transcription burden SC 3.3.8 exists to remove, and copy-paste is the Mechanism we rely on to pass
+   it. Replaced with a **`readonly` (never `disabled`) text input** carrying the code as its value,
+   `aria-describedby` pointing at the visually-hidden comma-spelled sibling. This keeps both
+   representations, restores copy-paste, and adds native left/right character review at the user's own
+   verbosity — better than a fixed pre-spelled string they cannot replay.
+2. **The device code must not be in the `<title>`.** eSpeak, Vocalizer and Eloquence each mangle
+   `BCDF-GHJK` differently as an attempted word, across seven shipped languages, and a title is
+   announced once and is awkward to replay. The one string that must be transcribed correctly was in
+   the one place hardest to re-read. Title carries **state**, body carries **data**:
+   `Connect YouTube: enter your code - StreamerBot`. Front-loaded titles stay everywhere else.
+3. **`Connect<span class="visually-hidden">Netflix</span>` is replaced by a visible service name.**
+   Three failures: the accessible name can concatenate to "ConnectNetflix" without a literal space
+   inside the span; building it from fragments hands translators a bare "Connect" with no object,
+   which is unbuildable in Turkish ("Netflix'e bağlan" — verb last, case suffix on the name) and has
+   agreement problems in Arabic and Russian; and a visibly named control is simply better for everyone.
+   One translatable string, `_("Connect %(service)s")`, and SC 2.5.3 then passes trivially because the
+   visible and accessible names are identical.
+4. **Service rows are `<h2>`, not `<h3>`.** `<h1>` → `<h3>` skips a level (SC 1.3.1) and breaks the
+   outline NVDA's elements list builds. The H key walks every level, so `<h3>` bought nothing.
+5. **Connect and Disconnect are `<a href>`, not `<button>`.** Both navigate to a URL and render a page.
+   Screen reader users navigate by control type and build a model from the role; a "button" that turns
+   out to be a page load is a small betrayal repeated six times. The only genuine `<button>` is the
+   POST submit on the disconnect confirm page, which must stay POST so link prefetchers and antivirus
+   proxies cannot fire it.
+
+Also adopted from the review:
+
+- **Token lifetime becomes 20 hours or more.** A `?t=` token is a time limit on user activity, so
+  SC 2.2.1 Timing Adjustable applies at AA. With no JS we cannot warn before expiry, so the clean fit
+  is WCAG's own **20 Hour Exception** — no UI needed at all. `token_ttl` defaults to 72000, not 3600.
+- **`<meta name="referrer" content="no-referrer">`** on every page. The token is a bearer credential
+  sitting in the URL, and the YouTube page links out to google.com, which would otherwise receive it
+  in the `Referer` header. A security fix, not an accessibility one.
+- **RTL is real here**: `ar` already ships. `lang` and `dir` come from the negotiated locale, CSS uses
+  logical properties throughout (`margin-inline-start`, never `left`), `dir="ltr"` goes on the device
+  code and OTP inputs, and inline `<span lang="en">` wraps hostnames and codes so the synth does not
+  transliterate them.
+- **No `role="alert"` on a server-rendered error summary.** On a full page load it collides with the
+  focus move and the `Error: ` title prefix, giving a double announcement in JAWS and inconsistent
+  behaviour in NVDA. Focus moves to `#error-summary` and that is enough. Summary link `href` targets
+  the **input's** id, and the summary text and the field error text must be byte-identical.
+- **OTP input is `type="text"` with `inputmode="numeric"`, never `type="number"`** — a spinbutton
+  announces as one, arrow keys change the value instead of moving the caret, and leading zeros are
+  dropped. **No `maxlength`** either: a pasted code with a trailing space is silently truncated.
+- **No skip link and no `tabindex="-1"` on `<main>`** while the header is a single line of text; both
+  would add a tab stop that lands nowhere.
+- **SC 3.2.4 Consistent Identification**: one verb across all six services in all seven languages —
+  not "Connect Netflix" beside "Link Spotify" and "Authorise YouTube".
+
+Nine pages were missing and are added: the expired device code, `resend` OTP, expired OTP, sign-in
+timed out, cancel a sign-in, a rate-limit page, **410 Gone for an expired token versus 404 for one
+that never existed** (with different recovery copy), a 500 page, and a `/failure/<service>` sibling to
+`/success`. Every one of these is currently an invisible dead end. A bare 404 is a genuine dead end for
+a blind user who cannot inspect the URL, so every error body carries an explicit recovery path.
+
+The review also re-raised credential entry for the four no-API services as a credential-harvesting
+pattern, with the added point that **browser and OS password managers — which blind users lean on
+heavily — will offer to save Netflix credentials against the portal's own domain and later autofill
+them into the wrong form.** This is a known, accepted decision (see "Two risks stated up front"), not a
+new finding; noted here because the password-manager consequence was not previously written down.
+
+### TeamTalk chat — one-shot audio announcements
+
+Plain text only, no emoji, no arrows, no markdown (`*` is spoken "asterisk"). Front-load the type:
+`Error. Netflix sign-in failed. Wrong password.` One message per event — three in a row means the user
+hears the tail of the first and the head of the third. Yes/no prompts state the accepted replies and
+accept `yes/y/no/n` case-insensitively; an unrecognised reply **re-asks the whole question** rather than
+saying "invalid". Numbered choices are number-first, nine or fewer, `0. Cancel` always last. Write
+"Disney Plus", not "Disney+". Echo the selection back. Say what a link is for *before* the URL. State
+timeouts up front. A `menu` command re-sends the last prompt verbatim.
+
+### streamerbot.sh — screen-reader-first CLI
+
+Keeps the existing plain-`echo`/`read` paradigm (no dialog/whiptail/ncurses) and improves on it:
+
+- **Stop calling `clear`.** Scrollback is what a screen reader user relies on to review what just
+  happened. Print a blank line and a title line instead. *(This is a deliberate change from
+  `ttbotdocker.sh`, which clears on every screen.)*
+- No `====` separators or ASCII banners — `====` is read as "equals equals equals equals".
+- Nine or fewer items per menu; `b) Back` and `q) Quit` last, in the same position, on every menu.
+- Echo the choice back: `You selected 3, Restart bot.` On invalid input restate the valid range.
+- **No spinners or `\r` progress bars** — a self-rewriting line is re-read continuously and is
+  effectively a denial of service. Print discrete `Step 2 of 4. Updating configuration.` lines.
+- Destructive actions require a **typed word**, not `y/N` (capitalisation conveys nothing to TTS):
+  `Type delete to confirm, or press Enter to cancel:`
+- Prefix status lines with the word: `OK.`, `Error.`, `Warning.` Never colour alone.
+- **Non-interactive flags for every menu item** (`streamerbot --status`, `--restart-all`,
+  `--services`) — experienced screen reader users skip menus, and flags are faster and more reliable.
+
+---
+
+## Configuration and repo constants
+
+**New `project.env`** (repo root, shell-sourceable) is the single source of truth:
+
+```
+STREAMERBOT_REPO_OWNER=          # <-- your GitHub username
+STREAMERBOT_REPO_NAME=StreamerBot
+STREAMERBOT_BRANCH=main
+STREAMERBOT_IMAGE=streamerbot
+TTSDK_VERSION=5.22
+TTSDK_URL_X86_64=
+TTSDK_URL_ARM64=
+GO_LIBRESPOT_VERSION=
+```
+
+Every shell script sources it after computing `SCRIPT_DIR`; `bot/app_vars.py` gains a 12-line stdlib
+parser and interpolates `repo_url` into `about_text`. `streamerbot.sh` prompts and `sed -i`s the owner on
+first run if empty; `update.sh` and `auto_updater.sh` exit with a clear message instead (they run
+non-interactively).
+
+This replaces the hardcoded `REPO_OWNER`/`REPO_NAME`/`BRANCH` at `update.sh:304-306`, the systemd unit
+names in `masc.sh`, the clone URLs in `install*.sh`, and the three literal TeamTalk DLL release URLs at
+`update.sh:552/556/559` — those last ones disappear entirely, because the SDK now enters at image build
+time.
+
+**Config schema** (`bot/config/models.py`, pydantic): `ServicesModel` gains `spotify`, `netflix`,
+`disney`, `apple_music`, `amazon_music`, `audio_description`; `ConfigModel` gains `auth_portal`.
+`YtModel.cookiefile_path` is kept but unread, for migration. `ConfigManager.version = 2` with a `to_v2`
+migrator. `bot/cache.py` version 2 adds `ad_preferences` (per-TeamTalk-username AD choice) and
+`web_profiles`.
+
+---
+
+## Docker image
+
+`FROM debian:trixie-slim`, arch-aware via `ARG TARGETARCH`.
+
+Two things will break the build if missed, so handle them explicitly in Phase 0:
+
+1. **PEP 668** — Debian 13 marks the system interpreter externally-managed, so `pip install` fails.
+   Create `/opt/venv` and `ENV PATH=/opt/venv/bin:$PATH`.
+2. **pydantic v1 has no wheels for Python 3.13** (trixie's Python). The code uses `.dict()` and bare
+   `BaseModel` — that is v1 API. Pin `pydantic>=2` and change the two `.dict()` call sites in
+   `bot/config/__init__.py` to `.model_dump()`.
+
+Other changes: `libmpv2`/`libmpv-dev` (trixie names) satisfy the vendored `mpv.py`; TeamTalk SDK 5.22
+fetched from bearware.dk at build time by `$TARGETARCH` into `/opt/teamtalk` with `LD_LIBRARY_PATH` set;
+`google-chrome-stable` from `dl.google.com` **on amd64 only**, writing `/etc/streamerbot-browser-available`
+so `BrowserEngine.initialize()` can raise a clean translated `ServiceError` on ARM; `xvfb`,
+`fonts-liberation`, `libnss3`, `libgbm1`, `libasound2-plugins` + `/etc/asound.conf`; pinned
+`go-librespot` binary for both arches; `pip install playwright` with **no** `playwright install`.
+User `streamer` (uid 1000) at `/home/streamer/StreamerBot`. Keep the existing two-stage layer discipline
+(stable deps above `ARG CACHEBUST`, `COPY . .` below) — the `youtube_bridge/package.json` npm layer
+especially, since `youtubei.js` tracks `#main`.
+
+**Verify `TeamTalkPy/TeamTalk5.py` against the 5.22 SDK.** It is a hand-maintained ctypes binding; if a
+struct the bot touches changed, the symptom is silent memory corruption, not a clean error. Prefer the
+`TeamTalk5.py` shipped in the SDK archive if there is one, and diff carefully.
+
+---
+
+## streamerbot.sh menu tree
+
+```
+StreamerBot manager
+
+1) Create bot
+2) Manage bots
+3) Service logins and auth portal
+4) Rebuild image
+5) Check for updates
+6) Auto-updates on or off
+7) Clean Docker cache
+8) Shared YouTube server
+9) Uninstall everything
+q) Quit
+```
+
+`2) Manage bots` keeps every existing item except "Update Cookies (All Bots)" (deleted along with
+`get_cookies()` and the `cookies.txt` bind mount), and gains **Clear browser profiles**, **Show
+per-service status** (reads a small `bots/<name>/service_status.json` the bot writes on state change —
+no `docker exec` round-trips) and **Rotate auth portal secrets**. Paginate to stay at nine or fewer.
+
+`3) Service logins and auth portal` is new: show portal URLs for all bots or one, rotate a token, sign
+out a service, import session cookies (reusing the old paste-with-CTRL+D UX verbatim — users already
+know it), YouTube sign-in status.
+
+**Startup behaviour change you asked for:** `ttbotdocker.sh:1862-1865` runs the whole of `update.sh` on
+every launch. Replace with `check_for_updates_passive`, which calls a new `update.sh --check-only`
+handled *before* `acquire_update_lock` and before any fetch — a 5-second `git ls-remote` compared against
+`git rev-parse HEAD`, printing exactly:
+
+```
+An update is available. Use Check for updates to install it.
+```
+
+or nothing. No lock, no fetch, no backup, no rebuild. Menu item 5 runs the full update as today.
+
+---
+
+## Update system
+
+Keep the entire proven shape: flock at `/tmp/streamerbot_update.lock`, back up `bots/` to a tmpdir,
+`git reset --hard`, restore, single re-exec guard, `perform_image_rebuild()` writing `update_in_progress`
+/ `update_success` marker files that the Python bot reads and broadcasts as TeamTalk channel messages
+([bot/__init__.py:116-128,152-164](../../Documents/teamtalk%20tv%20streamer%20and%20music%20bot/TTMediaBot/bot/__init__.py)),
+stop-all → rebuild → recreate → restart → five-minute health check. `auto_updater.sh` keeps its 20-second
+`git ls-remote` poll, `.no_update` pin and self-re-exec; the unit becomes `streamerbot-updater.service`.
+
+Changes: repo constants from `project.env`; `--check-only`; delete the TeamTalk_DLL download block
+(`:544-575`) since the SDK now enters at build time; pass `--build-arg` for the SDK and librespot URLs;
+and **exclude `browser/` from the update backup** — `bots/` is kilobytes today but becomes gigabytes with
+Chrome profiles, which would balloon every update. `chown -R 1000:1000` after any restore, or the Chrome
+profiles break.
+
+---
+
+## Delivery order
+
+Each phase has an exit criterion you can actually check.
+
+| Phase | Work | Exit criterion |
+|---|---|---|
+| **0** ✅ | Global rename, `project.env`, pydantic v2 migration, Debian 13 + venv Dockerfile, TT SDK 5.22, `streamerbot.sh` with passive update check | **DONE** — image builds; in-container Python 3.13.5 / pydantic 2.13.5, TeamTalkPy + libmpv import, Chrome 152, go-librespot, PulseAudio null sink with monitor as default source, Xvfb 1280x720, Chrome launches under it, 13 tests pass (2 host-only skips) |
+| **1** ✅ | Engine abstraction, mpv only. `TrackType.External`, `Track.engine`, `_advance_after_end`, name-based sound device | **DONE** — 36 tests pass; the original 13 untouched, incl. `test_player_stream_retry.py` and `test_track_refresh.py`. Note: those two tests pin `on_end_file`, `self._player` and `_play(url_string)` onto `Player`, so mpv's event handling stayed there and only transport moved behind the engines — a deliberate departure from the plan's "move `on_end_file` into `MpvEngine`" |
+| **2** ✅ | YouTube OAuth — bridge `/auth/*`, `yl` command, portal `/youtube` page, `:rw` mount fix | **DONE** (portal page deferred to Phase 3, which builds the portal) — verified against live Google: real device code returned, status tracked pending, `bot_id` traversal refused, anonymous search still resolved, signout cleared tokens. 46 tests pass. Two live-only bugs found: the bridge died with exit 255 because Node makes the device flow's background rejection fatal, taking YouTube down for **all** bots (fixed with process-level handlers); and sign-in hit EACCES because `update.sh` ran `chown -R` to the host user and `chmod -R 777` over the whole repo, both locking uid 1000 out of `bots/` and leaving credentials world-writable (fixed by pruning `bots/` and adding `ensure_bot_data_ownership`) |
+| **3** ✅ | Auth portal + `SecretStore` + `AuthJob`/OTP + log redaction + `li`/`ap`/`lo` commands | **DONE** — 111 tests pass, CI green. Portal reviewed for accessibility *before* coding, which overturned five decisions the plan had marked settled (see "Corrections from the Phase 3 accessibility review"); the `aria-hidden` device code was the serious one — it would have been uncopyable by exactly the users who most need to copy it. **Deferred to Phase 5**, which builds the browser engine: the sign-in worker itself (so `/connect` for the four credential services reaches a job reporting the feature is not ready) and OTP resend |
+| **4** | Spotify — go-librespot, `LibrespotEngine`, `SpotifyService`, PKCE through the portal | `sv sp` then `p <song>` plays into TeamTalk; `n`/`b`/`qa`/`m rnd` all behave; switching to `sv yt` mid-queue swaps engines cleanly |
+| **5** | Browser engine + Netflix only — Xvfb, Chrome, Playwright, login with OTP, profiles, AD prompt | Sign in, pick a profile, `p <title>`, get asked about audio description, hear the AD track |
+| **6** | Disney+, Apple Music, Amazon Music adapters against a proven engine, plus the **gamdl download wrapper** | Each plays with AD where the service offers it; `dl` on an Apple Music album uploads one zip to the channel |
+| **7** | `streamerbot.sh` polish, backup exclusions, README/CHANGELOG rewrite, publish to your fork | `git clone` + `./streamerbot.sh` works from a clean host |
+| **8** | Collapse the inherited history to a single commit, rewrite `README.md` as a fork with its own feature list | `git log` shows only your commits; README describes StreamerBot, not TTMediaBot; `LICENSE` still carries the upstream copyright |
+
+Phase 0 is the riskiest to skip and the cheapest to verify. Phase 4 gives the engine abstraction its
+first real workout on the *easier* of the two external engines, before Chrome.
+
+---
+
+## New chat commands
+
+Checked against the existing 34 user + 17 admin codes — no collisions.
+
+**User** (`commands_dict`): `li` login status / portal link · `w` watchlist · `ep` episodes ·
+`pf` profile picker · `da` audio-description preference.
+
+`li` takes an optional service, and that is the recovery path for anything skipped during setup.
+Nobody has to get every account connected while creating the bot, and nobody has to delete and
+recreate a bot to add one later: with the bot sitting in a channel, a message starts the flow for
+just that service.
+
+- `li` alone — status for all six: connected, not connected, or expired, one line each, plus the
+  portal link.
+- `li nf` / `li dp` / `li sp` / `li am` / `li az` / `li yt` — begin sign-in for that service only.
+  YouTube answers in the channel with the device code and URL (the same flow as the admin `yl`);
+  the other five mint a single-use portal token and reply with the link to that service's page.
+- `li` on an already-connected service reports it and asks whether to replace, so a stray message
+  cannot silently sign someone out.
+
+Access is `check_access`-gated like any other command, and the reply goes to the requesting user
+rather than the channel, so a device code or portal link is never broadcast to everyone present.
+**Admin** (`admin_commands_dict`): `yl` YouTube device-code sign-in · `lo` sign out a service (wipes
+credentials + browser profile) · `ap` portal status / rotate / on / off · `es` engine health
+(mpv, librespot pid + API, Chrome contexts, Xvfb, portal, active engine).
+
+`w`/`ep` load results into the existing `pending_search_results` so `sl N` selects them — reusing
+`SearchResultsCommand` plumbing rather than inventing a second selection mechanism.
+
+**Audio description prompt** reuses the repo's own interactive pattern (`pending_ads_option` at
+[commands/__init__.py:38,118-121](../../Documents/teamtalk%20tv%20streamer%20and%20music%20bot/TTMediaBot/bot/commands/__init__.py)):
+a `pending_ad_prompt` dict checked in `_run` before `parse_command`. New
+`bot/modules/audio_description.py` resolves preference in order user-pref → config default, prompts
+`1. Yes / 2. No / 3. Yes, and remember / 4. No, and remember`, and runs a `threading.Timer` that falls
+back to the default so **playback never hangs on an unanswered prompt**. A single
+`Command._play_with_ad_gate()` hook keeps the logic in one place across
+`PlayPause`/`SelectSearchResult`/`SelectTrack`.
+
+Every new string wrapped in `translate(...)`; run `python tools/compile_locales.py` and commit the
+updated `.pot` + `.po`. **Rename the gettext domain carefully** — `locale/TTMediaBot.pot` and the seven
+`TTMediaBot.po` files must be renamed together or Babel creates empty catalogs and all existing
+translations are lost.
+
+---
+
+## Verification
+
+**Automated**, staying inside the repo's two existing conventions — stdlib `unittest` with
+`object.__new__` + `Mock`, and `tests/deployment/bash_sandbox.py` for shell:
+
+- `test_engine_dispatch.py` — engine switch calls `old.stop()` exactly once; a stale engine's
+  `on_engine_end` is ignored; `_advance_after_end` honours queue priority for an external track
+- `test_track_external.py` — External tracks never enter `_fetch_stream_data`; `refresh_stream` raises
+  for non-mpv engines; the yt/ytm path still works
+- `test_secret_store.py` — round-trip, 0600 perms, wrong-key failure
+- `test_auth_session.py`, `test_auth_portal.py` — state transitions and OTP hand-off; server on port 0
+  driven with `urllib.request`: missing/wrong/expired token → 404, valid → 200. No browser.
+- `test_librespot_engine.py` — a `ThreadingHTTPServer` stub for the go-librespot API
+- `test_pulse_mixer.py` — recorded `pactl -f json` fed through a patched `subprocess.run`
+- `test_browser_adapters.py` — **pure parts only**: URI parsing, and AD track-name matching
+  (`"English [Audio Description]"` yes, `"English [Original]"` no). Never launch Chrome in a unit test.
+- `tests/deployment/test_streamerbot_runtime.py` — shim `git`, assert the "update is available" line
+  appears exactly once and that **no** `docker build` or `git fetch` shim was invoked on launch. This is
+  the regression test for the startup-behaviour change.
+- `youtube_bridge/test/auth.test.mjs` (`node --test`) — `getBotAuthFile` rejects `../`, empty and
+  overlong ids; credentials written 0600.
+
+**Manual**, written into `tests/MANUAL.md` as a numbered accessible checklist:
+Chrome + Widevine playback; a real 2FA flow end-to-end; Spotify Premium gating; TeamTalk audio audit
+(does the channel actually hear it, at what latency); and a **screen-reader pass over the portal with
+NVDA** — tab order, the device-code spelling, the OTP field accepting paste, error-summary focus, and
+every page title.
+
+---
+
+## Phase 8 — own the history, own the README
+
+Runs last, after every feature phase has landed and CI is green. It rewrites published history, so it
+is deliberately the final step: doing it earlier would invalidate every commit hash the later phases
+were built on.
+
+### Collapse the inherited history
+
+The repository currently carries **914 commits from about 20 upstream authors** (Gumerov Amir
+Eduardovich, JoaoDEVWHADS, Beqa Gozalishvili, cyrmax, and others). Only the StreamerBot commits are
+yours. The goal is a history that starts with your work.
+
+Method — squash to a single root commit rather than trying to excise commits individually:
+
+```
+git checkout --orphan release
+git add -A
+git commit -m "StreamerBot 1.0"
+git branch -M release main
+git push --force origin main
+```
+
+An orphan branch has no parent, so the 914 ancestors simply stop being reachable and GitHub garbage
+collects them. Filtering by author instead (`filter-repo --commit-callback`) would leave a broken tree,
+because your commits are diffs against theirs and cannot apply without them.
+
+Three things to be clear about before running it:
+
+- **`LICENSE` must stay exactly as it is.** MIT requires the copyright notice be retained in the
+  software. Deleting git *history* is fine; deleting the notice is not. The file keeps
+  "Copyright (c) 2021 Gumerov Amir Eduardovich" and gains your own line beneath it.
+- **It is a force-push.** Anyone who has cloned or forked the repo gets a history that no longer
+  matches theirs. Right now that is nobody but you, which is exactly why this belongs at the end
+  rather than after the repo has users.
+- **The upstream remote should be dropped** at the same time (`git remote remove upstream`), since
+  `git pull upstream` would drag all 914 commits straight back in.
+
+Take an archive tag first (`git tag archive/pre-squash && git push origin archive/pre-squash`) so the
+old history is recoverable for as long as you want it, and delete the tag once you are satisfied.
+
+### Rewrite README.md
+
+Replace it outright rather than editing around the existing text. The current README documents
+TTMediaBot: its services, its config keys, its install steps, its contributors and its screenshots —
+almost none of which survive this project.
+
+The new one covers, in this order:
+
+1. **What StreamerBot is** — an accessible TeamTalk streaming bot, in two sentences.
+2. **Fork notice**, plainly worded and near the top: a fork of
+   [TTMediaBot](https://github.com/gumerov-amir/TTMediaBot) by Gumerov Amir Eduardovich, further
+   developed from [JoaoDEVWHADS/TTMediaBot](https://github.com/JoaoDEVWHADS/TTMediaBot), MIT licensed,
+   substantially rewritten.
+3. **What this fork adds** — the honest feature list, written from what actually shipped:
+   Spotify, Netflix, Disney+, Apple Music and Amazon Music alongside YouTube; audio description
+   support where the service offers it; YouTube OAuth device-code sign-in replacing `cookies.txt`;
+   the web auth portal with encrypted secret storage; the playback engine abstraction; TeamTalk
+   SDK 5.22a; a Debian 13 image; hourly update checks; and a screen-reader-first CLI.
+4. **Requirements and install**, offering both routes and leading with the one that assumes least:
+
+   **Route A, the one-shot installer** — for a fresh host where the user has no git, no Docker, and no
+   clone. `install_git_clone.sh` is self-contained: it installs git if missing, clones
+   `kcrpine/StreamerBot`, installs `jq`, `curl` and `tar` if missing, installs Docker from
+   `get.docker.com` and starts the service, fixes ownership and permissions for the invoking user, and
+   then `exec`s `streamerbot.sh`. Because the point is that the user does not yet have the repository,
+   the README has to show fetching the script on its own rather than running it from a checkout:
+
+   ```
+   curl -fsSL https://raw.githubusercontent.com/kcrpine/StreamerBot/main/install_git_clone.sh -o install_git_clone.sh
+   less install_git_clone.sh
+   sudo bash install_git_clone.sh
+   ```
+
+   Show the `less` step and say plainly why it is there: this pipes a script from the internet into a
+   root shell, and reading it first is the reasonable precaution. Do not offer a
+   `curl … | sudo bash` one-liner, which removes the chance to look.
+
+   State what it needs and what it does not: a Debian, Ubuntu, Fedora or Arch host with `sudo`, and
+   nothing else — no TeamTalk SDK download, no `TeamTalk_DLL` directory, no `cookies.txt`. The SDK now
+   arrives inside the Docker image. Note that it finishes by launching the manager, so the first run
+   continues straight into creating a bot, and that re-running it on a host that already has the repo
+   is safe.
+
+   **Route B, manual** — for users who already have git and Docker and would rather clone themselves:
+
+   ```
+   git clone https://github.com/kcrpine/StreamerBot.git
+   cd StreamerBot
+   ./streamerbot.sh
+   ```
+
+   Mention that `streamerbot.sh` elevates itself with `sudo` when needed, and that on first run it asks
+   once for the GitHub username to take updates from, writing the answer to `project.env`.
+5. **Configuration** — `project.env` and the per-bot config.
+6. **Accessibility** — that the portal targets WCAG 2.2 AA and the CLI is written for screen readers,
+   since that is the point of the project rather than a footnote.
+7. **License** — MIT, retaining the upstream copyright, plus the note that `mpv.py` is vendored
+   AGPLv3 (a licensing inconsistency inherited from upstream, worth stating rather than hiding).
+
+Everything else from the old README goes: the TTMediaBot name, the old install instructions, the old
+service list, the contributor section and the old screenshots.
+
