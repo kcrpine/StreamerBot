@@ -103,6 +103,22 @@ Claude Code starts from the same plan and the same rules: `plans/streamerbot-pla
 the three accessibility hooks, a `settings.json` wiring them through `$CLAUDE_PROJECT_DIR` so it works
 from any clone, and a README explaining the setup.
 
+**A `CLAUDE.md` at the repository root, kept current.** Written for the next Claude Code instance
+rather than for a human reader, so it carries the things that are expensive to rediscover: that the
+test suite cannot run on a Windows host because the SDK and libmpv binaries are not in the repo and
+must be run in the container; that `project.env` is the only place a repo URL, image name or SDK
+version may live, and that its keys contain digits so a `[A-Z_]+` filter silently drops them; that
+`Player` is a transport over engines and engines must never touch `player.state`; that `bot_id` is the
+containment boundary in the shared bridge and its regex is load-bearing; that credentials live only
+under a bot's own `data/`; and the specific accessibility rules that are easy to regress and are pinned
+by tests.
+
+It also names the traps that already cost time once: the `:rw` mount, the bridge's process-level
+rejection handlers, `update.sh` pruning `bots/` from its permission pass, and never interpolating
+`${{ github.event.* }}` into a `run:` block. **This file is updated as part of finishing a phase**, in
+the same commit as the plan's delivery table, because a stale CLAUDE.md is worse than none — it is
+confidently wrong.
+
 **Curated, not copied wholesale.** A `.claude` directory also contains `.credentials.json` — a live
 OAuth access token and refresh token for the account — and `projects/`, the full transcript of every
 session run on that machine. On a public repository that is a credential leak and a privacy leak
