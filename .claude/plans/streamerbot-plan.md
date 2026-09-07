@@ -119,6 +119,15 @@ rejection handlers, `update.sh` pruning `bots/` from its permission pass, and ne
 the same commit as the plan's delivery table, because a stale CLAUDE.md is worse than none — it is
 confidently wrong.
 
+**The published copies are pushed whenever they change, not at the end.** The plan is authored at
+`~/.claude/plans/` and mirrored into the repository at `.claude/plans/streamerbot-plan.md`; those two
+drift the moment the working copy is edited and the mirror is not. So any change to the plan — a phase
+marked done, a decision overturned, a new requirement — is copied across and pushed in the same commit
+as the work it describes, and the same applies to `CLAUDE.md` once it exists. Two rules follow from
+this: never edit the repository's copy of the plan directly, since the next sync overwrites it, and
+never finish a phase without pushing the plan that records what the phase found. A contributor reading
+the repository should never be working from a plan several phases behind the code.
+
 **Curated, not copied wholesale.** A `.claude` directory also contains `.credentials.json` — a live
 OAuth access token and refresh token for the account — and `projects/`, the full transcript of every
 session run on that machine. On a public repository that is a credential leak and a privacy leak
@@ -773,7 +782,23 @@ The new one covers, in this order:
 5. **Configuration** — `project.env` and the per-bot config.
 6. **Accessibility** — that the portal targets WCAG 2.2 AA and the CLI is written for screen readers,
    since that is the point of the project rather than a footnote.
-7. **License** — MIT, retaining the upstream copyright, plus the note that `mpv.py` is vendored
+7. **Contributing**, and how to get write access. Two paths, stated plainly so nobody has to guess:
+
+   - **Anyone can open an issue or a pull request.** No permission needed, and this is the normal
+     route. Say that PRs run the full CI (tests, shell checks, image build) automatically and that a
+     green run is what gets one merged.
+   - **To become a collaborator with write access**, open an issue asking, or say so in a PR. Access
+     is granted by invitation from the repository owner; it is not something a fork or a PR can
+     confer on itself.
+
+   Also point at the **Claude Code project shipped in `.claude/`** — the implementation plan, the
+   accessibility hooks and the settings — for anyone intending to build on this or make changes. It
+   is there so a contributor starts from the same plan and the same rules rather than reconstructing
+   them, and `CLAUDE.md` at the root is the orientation for it. Note that the accessibility agents the
+   hooks call are referenced rather than vendored and have to be installed separately, and that the
+   hooks degrade to a printed reminder without them, so a fresh clone still works.
+
+8. **License** — MIT, retaining the upstream copyright, plus the note that `mpv.py` is vendored
    AGPLv3 (a licensing inconsistency inherited from upstream, worth stating rather than hiding).
 
 Everything else from the old README goes: the TTMediaBot name, the old install instructions, the old

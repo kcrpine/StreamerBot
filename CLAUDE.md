@@ -178,5 +178,16 @@ Work proceeds in numbered phases from the plan; the plan's delivery table record
 actually found, including where reality contradicted it. When a phase finishes, update that table —
 future instances rely on it to know what is real versus planned.
 
+**Keep the published copies in sync, in the same commit as the work.** The plan is authored at
+`~/.claude/plans/` and mirrored into this repository at `.claude/plans/streamerbot-plan.md`. Those two
+drift the moment one is edited and the other is not, so any plan change — a phase marked done, a
+decision overturned, a new requirement — is copied across and pushed alongside the code it describes.
+The same applies to this file. Two consequences:
+
+- **Never edit `.claude/plans/streamerbot-plan.md` directly.** It is a mirror; the next sync overwrites
+  it. Edit the authored copy and re-copy.
+- **Never finish a phase without pushing the plan that records what it found.** A contributor reading
+  the repository should not be working from a plan several phases behind the code.
+
 Commit messages explain *why*, particularly where a choice looks odd. Several non-obvious decisions in
 this codebase exist because the obvious version was tried and broke something.
