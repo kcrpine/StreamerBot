@@ -185,6 +185,18 @@ future instances rely on it to know what is real versus planned.
 collaborators with write access, so either copy can move first — a phase finished locally advances one,
 a merged PR advances the other.
 
+A pre-commit hook enforces this. Install it once per clone:
+
+```bash
+bash tools/install-hooks.sh
+```
+
+It refuses a commit whose plan has drifted from the local copy, and refuses any
+commit containing private `.claude` files (the OAuth credentials, session transcripts). It finds the
+local plan by matching the document's first heading, not its filename, and does nothing on a machine
+with no local plan, so collaborators are unaffected. `git commit --no-verify` bypasses it. The private
+file check is repeated in CI, where it cannot be bypassed.
+
 **Pull and compare before editing either file:**
 
 ```bash

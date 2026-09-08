@@ -1,0 +1,115 @@
+#!/bin/bash
+#
+# StreamerBot pre-commit hook.
+#
+# Two jobs, in order of how much damage they prevent:
+#
+#   1. Refuse to commit anything private from .claude/. That directory holds a
+#      live OAuth token and the full transcript of every session, and this
+#      repository is public. .gitignore already excludes them, but a "git add
+#      -f", a rename, or an edited .gitignore gets past that.
+#
+#   2. Refuse to commit a plan that has drifted from the local authored copy.
+#      The plan lives in two places and nothing else notices when they differ,
+#      because it is prose: no test fails, no build breaks, the stale copy just
+#      quietly reads as authoritative.
+#
+# Neither check runs on a machine that has no local plan, so a collaborator who
+# clones this repository is unaffected by check 2.
+#
+# Install with tools/install-hooks.sh. Bypass a single commit with
+# "git commit --no-verify" if you genuinely need to.
+
+set -u
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+REPO_PLAN="$REPO_ROOT/.claude/plans/streamerbot-plan.md"
+status=0
+
+say() { printf '%s\n' "$*" >&2; }
+fail() { say "Error. $*"; status=1; }
+
+staged() { git diff --cached --name-only --diff-filter=ACMR; }
+
+# ---------------------------------------------------------------------------
+# 1. Nothing private from .claude/ may be committed.
+# ---------------------------------------------------------------------------
+PRIVATE_PATTERN='^\.claude/(\.credentials\.json|projects/|history\.jsonl|sessions/|session-env/|shell-snapshots/|cache/|debug/|jobs/|daemon/|backups/|downloads/|ide/|chrome/|plugins/|statsig/|settings\.local\.json|\.last-|\.a11y-agent-team-)'
+
+private_hits="$(staged | grep -E "$PRIVATE_PATTERN" || true)"
+if [ -n "$private_hits" ]; then
+    say ""
+    fail "These files are private to your machine and must not be committed:"
+    printf '  %s\n' $private_hits >&2
+    say ""
+    say "  .credentials.json holds a live OAuth access token and refresh token."
+    say "  projects/ holds the full transcript of every session you have run."
+    say "  This repository is public."
+    say ""
+    say "  Unstage them with: git restore --staged <file>"
+    say ""
+fi
+
+# ---------------------------------------------------------------------------
+# 2. The committed plan must match the local authored copy.
+#
+# The counterpart is found by matching the document's first heading rather than
+# by filename, because the authored copy is named after the session that created
+# it and that name is not stable.
+# ---------------------------------------------------------------------------
+find_local_plan() {
+    # An explicit override wins, for anyone whose plan lives elsewhere.
+    if [ -n "${STREAMERBOT_PLAN:-}" ]; then
+        [ -f "$STREAMERBOT_PLAN" ] && printf '%s' "$STREAMERBOT_PLAN"
+        return
+    fi
+    [ -f "$REPO_PLAN" ] || return
+    [ -d "$HOME/.claude/plans" ] || return
+
+    local heading candidate
+    heading="$(head -n 1 "$REPO_PLAN")"
+    [ -n "$heading" ] || return
+
+    for candidate in "$HOME"/.claude/plans/*.md; do
+        [ -f "$candidate" ] || continue
+        if [ "$(head -n 1 "$candidate")" = "$heading" ]; then
+            printf '%s' "$candidate"
+            return
+        fi
+    done
+}
+
+LOCAL_PLAN="$(find_local_plan)"
+
+if [ -n "$LOCAL_PLAN" ] && [ -f "$REPO_PLAN" ]; then
+    # Compare content, not line endings. Git normalises to LF in the index while
+    # the working tree keeps CRLF on Windows, so a byte comparison against the
+    # staged blob reports every line as changed on an identical file.
+    staged_plan="$(git show ":.claude/plans/streamerbot-plan.md" 2>/dev/null | tr -d '\r' || tr -d '\r' < "$REPO_PLAN")"
+    local_plan="$(tr -d '\r' < "$LOCAL_PLAN")"
+    if [ "$staged_plan" != "$local_plan" ]; then
+        say ""
+        fail "The plan in this commit does not match your local copy."
+        say ""
+        say "  repository: .claude/plans/streamerbot-plan.md"
+        say "  local:      $LOCAL_PLAN"
+        say ""
+        say "  Pull first, then reconcile. If both have changed, merge by hand:"
+        say "  a copy in either direction silently discards the other side's"
+        say "  writing, and prose fails quietly."
+        say ""
+        say "    git pull"
+        say "    diff \"$LOCAL_PLAN\" \"$REPO_PLAN\""
+        say ""
+        say "  If only your local copy moved, copy it across and stage it:"
+        say ""
+        say "    cp \"$LOCAL_PLAN\" \"$REPO_PLAN\" && git add \"$REPO_PLAN\""
+        say ""
+    fi
+fi
+
+if [ "$status" -ne 0 ]; then
+    say "Commit stopped. Use git commit --no-verify to override deliberately."
+fi
+
+exit "$status"

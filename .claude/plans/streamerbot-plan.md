@@ -143,6 +143,20 @@ document rather than code, nothing will fail loudly afterwards to reveal that it
 repository's copy has moved and its history is unclear, `git log -- .claude/plans/streamerbot-plan.md`
 names who changed it and why.
 
+**A pre-commit hook enforces both halves of this**, because a convention nobody can forget is worth
+more than one everybody agrees with. `.githooks/pre-commit`, installed per clone by
+`tools/install-hooks.sh`, refuses a commit whose plan has drifted from the local copy, and refuses any
+commit carrying private `.claude` files. It finds the local plan by matching the document's first
+heading rather than its filename, since the authored copy is named after the session that created it,
+and it does nothing at all on a machine with no local plan, so a collaborator cloning the repository is
+unaffected. `git commit --no-verify` bypasses it deliberately.
+
+Hooks live in `.githooks` rather than `.git/hooks` because the latter is not versioned and does not
+survive a clone; `core.hooksPath` is set by the installer, which git requires be run by hand, since a
+repository that could install its own hooks could run arbitrary code on checkout. The private-file half
+is therefore repeated in CI, where it cannot be skipped and does not depend on anyone having run the
+installer.
+
 The practical consequence: the local copy is a working copy, not the original. Treat the pushed version
 as what the project has agreed, and treat anything only in the local copy as not yet real.
 

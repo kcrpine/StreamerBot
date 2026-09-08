@@ -77,6 +77,24 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # The pre-commit hook makes this check locally, but a hook has to be
+      # installed per clone and can be skipped with --no-verify, so the same
+      # rule is enforced here where it cannot be bypassed. Everything below is
+      # private to a contributor's machine and this repository is public.
+      - name: No private .claude files may be committed
+        run: |
+          set -uo pipefail
+          hits=$(git ls-files | grep -E '^\.claude/(\.credentials\.json|projects/|history\.jsonl|sessions/|session-env/|shell-snapshots/|cache/|debug/|jobs/|daemon/|backups/|downloads/|ide/|chrome/|plugins/|statsig/|settings\.local\.json|\.last-|\.a11y-agent-team-)' || true)
+          if [ -n "$hits" ]; then
+            echo "Error. These files are private and must not be in the repository:"
+            printf '  %s\n' $hits
+            echo
+            echo ".credentials.json holds a live OAuth token; projects/ holds session transcripts."
+            echo "Remove them with: git rm --cached <file>"
+            exit 1
+          fi
+          echo "OK. No private .claude files are tracked."
+
       - name: Syntax check every shell script
         run: |
           set -euo pipefail
