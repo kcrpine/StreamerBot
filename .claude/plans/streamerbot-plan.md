@@ -210,6 +210,53 @@ the count within the existing `search_results` config rather than a new limit.
 Selecting an album, artist or playlist expands it into its tracks through the same service `get()` path
 a pasted link uses, so there is one expansion code path per service and not two.
 
+### Help must explain how to connect each service
+
+`h` today prints one line per command and nothing else: with the new commands that is 58 lines in a
+single message, which a screen reader reads start to finish with no way to skip. Worse, nowhere in it
+does a user learn *how* to connect an account — only that `li` exists. The six services sign in three
+different ways, and a user who has just been told "Spotify is not connected" has no route from there to
+a working bot.
+
+**Add help topics alongside the per-command help.** `h` keeps listing commands, but gains a short
+header pointing at the topics, and `h connect` becomes the entry point:
+
+- `h connect` — the three sign-in methods, which services use which, and what to type. Not a wall of
+  text: name the method, name the services, give the command.
+- `h connect <service>` — the full walkthrough for one service, which is where the detail lives.
+
+**The three methods, because they genuinely differ:**
+
+1. **Device code in chat** — YouTube and Spotify. `li yt` or `li sp`, the bot replies with a URL and a
+   code, the user enters it on any device. Nothing is typed into the bot.
+2. **The web portal** — Netflix, Disney+, Apple Music, Amazon Music. `li` gives a link; the account
+   name and password are typed there, never in chat, and a 2FA step may follow.
+3. **Operator setup, done once, not per user** — the Spotify application below. This is the one that
+   confuses people, because it is not a sign-in at all.
+
+**Spotify needs both, and help must say so plainly.** This is the case most likely to leave someone
+stuck, because connecting the account correctly still leaves search broken, with no obvious link
+between the two:
+
+- **To play**: send `li sp`. The bot replies with a code and the address `spotify.com/pair`. Open that
+  address on a phone or computer, sign in to Spotify if asked, enter the code, approve. The bot picks it
+  up on its own; send `li` to confirm. Playback needs Spotify **Premium**.
+- **To search by name**: the bot needs a Spotify application, which is the operator's job and is done
+  once for the whole bot rather than per user. Go to `developer.spotify.com/dashboard`, sign in, choose
+  Create app, give it any name and description, and for the redirect URI enter
+  `http://localhost:4419/` since nothing will use it. Open the app's settings to find the **Client ID**
+  and, behind "View client secret", the **Client Secret**. Put the client ID in the bot's configuration
+  as `services.sp.client_id`, and give the secret to the bot with `lo`-style admin entry so it is stored
+  encrypted rather than sitting in `config.json`.
+- Say explicitly that **pasting a Spotify link works without the application** — only searching by name
+  needs it. Otherwise a user who cannot search assumes their account pairing failed.
+
+Read the codes out character by character in chat, the same as the device-code page does, and spell the
+addresses as words rather than URLs where a synth would otherwise run them together.
+
+Every string goes through `translate(...)`, and the walkthroughs are prose rather than tables, since a
+table read linearly by a screen reader loses its column headings.
+
 ### Two risks stated up front, then built anyway
 
 1. **Google publishes no Chrome for linux/arm64**, and only Chrome carries the Widevine CDM. On ARM
