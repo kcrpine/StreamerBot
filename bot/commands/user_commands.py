@@ -1534,3 +1534,111 @@ class LoginCommand(Command):
         return self.translator.translate(
             "To connect %(service)s, open %(url)s"
         ) % {"service": label, "url": portal.mint_link(user.username, f"/connect/{service}")}
+
+
+class AudioDescriptionCommand(Command):
+    """Set whether films and shows play with audio description.
+
+    For a blind user this is the difference between a film being watchable and
+    ninety minutes of unexplained silence, so it is a first-class setting rather
+    than something buried in a config file.
+    """
+
+    @property
+    def help(self) -> str:
+        return self.translator.translate(
+            "[on|off|ask] Plays films and shows with audio description when it is "
+            "available. With no argument, says what the current setting is"
+        )
+
+    def __call__(self, arg: str, user: User) -> Optional[str]:
+        preference = getattr(self.command_processor, "ad_preference", None)
+        if preference is None:
+            return self.translator.translate(
+                "Audio description is not available in this bot."
+            )
+
+        value = (arg or "").strip().lower()
+        if not value:
+            current = preference.get(user.id)
+            return {
+                "always": self.translator.translate(
+                    "Audio description is on. Films play with the description when there is one."
+                ),
+                "never": self.translator.translate(
+                    "Audio description is off. Send da on to turn it on."
+                ),
+            }.get(current, self.translator.translate(
+                "The bot asks each time. Send da on or da off to stop being asked."
+            ))
+
+        mapping = {
+            "on": "always", "yes": "always", "always": "always",
+            "off": "never", "no": "never", "never": "never",
+            "ask": "ask",
+        }
+        if value not in mapping:
+            raise errors.InvalidArgumentError()
+
+        preference.set(user.id, mapping[value])
+        return {
+            "always": self.translator.translate(
+                "Audio description is on. You will not be asked again."
+            ),
+            "never": self.translator.translate(
+                "Audio description is off. You will not be asked again."
+            ),
+        }.get(mapping[value], self.translator.translate(
+            "The bot will ask each time."
+        ))
+
+
+class ProfileCommand(Command):
+    """List or pick a streaming profile.
+
+    Netflix and Disney Plus keep a separate watchlist and separate audio
+    settings per profile, so this changes what the bot can see, not just a name.
+    """
+
+    @property
+    def help(self) -> str:
+        return self.translator.translate(
+            "[number] Lists the profiles for the current service, or selects one by number"
+        )
+
+    def __call__(self, arg: str, user: User) -> Optional[str]:
+        service = self.service_manager.service
+        if not hasattr(service, "list_profiles"):
+            return self.translator.translate(
+                "%(service)s does not have profiles."
+            ) % {"service": getattr(service, "name", "This service")}
+
+        profiles = service.list_profiles()
+        if not profiles:
+            return self.translator.translate(
+                "No profiles were found. The account may not be connected yet."
+            )
+
+        value = (arg or "").strip()
+        if not value:
+            lines = [
+                self.translator.translate("%(count)s profiles:") % {"count": len(profiles)}
+            ]
+            for index, profile in enumerate(profiles, 1):
+                lines.append(f"{index}. {profile.get('name', '')}")
+            lines.append(self.translator.translate("Send pf and a number to choose one."))
+            return "\n".join(lines)
+
+        try:
+            index = int(value)
+        except ValueError:
+            raise errors.InvalidArgumentError()
+        if not 1 <= index <= len(profiles):
+            raise errors.InvalidArgumentError()
+
+        chosen = profiles[index - 1]
+        if service.select_profile(chosen.get("id", "")):
+            return self.translator.translate("Now using the profile %(name)s.") % {
+                "name": chosen.get("name", "")
+            }
+        return self.translator.translate("That profile could not be selected.")

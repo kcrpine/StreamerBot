@@ -54,6 +54,7 @@ class Service(ABC):
 
 
 from bot.services.yt import YtService
+from bot.services.netflix import NetflixService
 from bot.services.spotify import SpotifyService
 from bot.services.ytm import YtmService
 
@@ -65,6 +66,7 @@ class ServiceManager:
             "yt": YtService(bot, self.config.yt),
             "ytm": YtmService(bot, self.config.ytm),
             "sp": SpotifyService(bot, self.config.sp),
+            "nf": NetflixService(bot, self.config.nf),
         }
         self.service: Service = self.services[self.config.default_service]
         self.fallback_service = app_vars.fallback_service

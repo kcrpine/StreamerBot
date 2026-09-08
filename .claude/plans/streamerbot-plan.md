@@ -251,6 +251,39 @@ between the two:
 - Say explicitly that **pasting a Spotify link works without the application** — only searching by name
   needs it. Otherwise a user who cannot search assumes their account pairing failed.
 
+**Netflix and Disney+ walkthroughs**, since these are the ones with the most steps and the two extra
+concepts nothing else has:
+
+- **To connect**: send `li nf` (or `li dp`). The bot replies with a link that opens the account portal
+  in a browser. The email address and password are typed **there, not in the channel**, because a
+  message in a channel is visible to everyone in it. If the service texts or emails a code, the portal
+  asks for it on its own page; paste or type the whole code into the single box and select Verify.
+  Say plainly that a CAPTCHA cannot be answered by the bot, and what to do instead.
+- **State the requirement honestly**: this needs Google Chrome, so it does not work on a Raspberry Pi
+  or any other ARM machine. On those the service disables itself and says so rather than failing when
+  someone tries to play something.
+
+**Profiles**, which exist on Netflix and Disney+ and nowhere else. Explain what they actually change,
+not just how to switch: each profile has its **own watchlist and its own audio and subtitle settings**,
+so picking the wrong one means the bot cannot see the titles the user expects.
+
+- `pf` on its own lists the profiles as a numbered list.
+- `pf` and a number selects one.
+- Mention that the choice persists until changed, so it is a once-per-bot thing rather than per play.
+
+**Audio description**, which for this project's users is the point rather than a nicety. Help should
+say what it *is* — a second audio track that narrates what is happening on screen — because a user who
+has never had access to one may not know to ask for it.
+
+- `da` on its own says what the current setting is.
+- `da on` plays with description whenever a title has one, and stops asking.
+- `da off` never uses it, and stops asking.
+- `da ask` returns to being asked each time.
+- Explain the prompt itself: when a title has a described track the bot asks, with four numbered
+  options, and **answers after about thirty seconds by falling back to the default**, so a film never
+  sits waiting on a question nobody answered. Say that not every title has one, and that the bot only
+  asks when there is something to offer.
+
 Read the codes out character by character in chat, the same as the device-code page does, and spell the
 addresses as words rather than URLs where a synth would otherwise run them together.
 

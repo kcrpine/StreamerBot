@@ -89,11 +89,19 @@ class SpotifyModel(BaseModel):
     client_id: str = ""
 
 
+class NetflixModel(BaseModel):
+    enabled: bool = True
+    # Which Netflix profile to use. Each has its own watchlist and audio
+    # settings, so this is not cosmetic.
+    profile: str = ""
+
+
 class ServicesModel(BaseModel):
     default_service: str = "yt"
     yt: YtModel = YtModel()
     ytm: YtmModel = YtmModel()
     sp: SpotifyModel = SpotifyModel()
+    nf: NetflixModel = NetflixModel()
 
 
 class LoggerModel(BaseModel):
@@ -110,6 +118,12 @@ class ShorteningModel(BaseModel):
     shorten_links: bool = False
     service: str = "clckru"
     service_params: Dict[str, Any] = {}
+
+
+class AudioDescriptionModel(BaseModel):
+    # ask, always, or never. "ask" is the default because guessing wrong in
+    # either direction is worse than a short question.
+    default: str = "ask"
 
 
 class AuthPortalModel(BaseModel):
@@ -130,6 +144,7 @@ class AuthPortalModel(BaseModel):
 class ConfigModel(BaseModel):
     config_version: int = 0
     auth_portal: AuthPortalModel = AuthPortalModel()
+    audio_description: AudioDescriptionModel = AudioDescriptionModel()
     general: GeneralModel = GeneralModel()
     sound_devices: SoundDevicesModel = SoundDevicesModel()
     player: PlayerModel = PlayerModel()

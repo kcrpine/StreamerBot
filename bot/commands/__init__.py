@@ -10,6 +10,10 @@ from bot import app_vars, errors
 from bot.TeamTalk.structs import Message, User, UserType
 from bot.commands import admin_commands, user_commands
 from bot.commands.task_processor import TaskProcessor
+from bot.modules.audio_description import (
+    AudioDescriptionPreference,
+    parse_answer as parse_ad_answer,
+)
 
 re_command = re.compile("[a-z]+")
 re_arg_split = re.compile(r"(?<!\\)\|")
@@ -40,6 +44,13 @@ class CommandProcessor:
         # Volatile search results state (reset on restart)
         self.search_results_count: int = 1
         self.pending_search_results: Dict[int, List] = {}
+        # Audio description: per-user preference, plus any outstanding prompt.
+        # Keyed by user id, because two people in a channel can be mid-answer at
+        # once and each must get their own question back.
+        self.ad_preference = AudioDescriptionPreference(
+            getattr(getattr(bot.config, "audio_description", None), "default", "ask")
+        )
+        self.pending_ad_prompt: Dict[int, Any] = {}
         self.commands_dict = {
             "h": user_commands.HelpCommand,
             "a": user_commands.AboutCommand,
@@ -81,6 +92,8 @@ class CommandProcessor:
             "ldd": user_commands.DownloadDirectCommand,
             "adsc": user_commands.ToggleLocalDownloadCommand,
             "li": user_commands.LoginCommand,
+            "da": user_commands.AudioDescriptionCommand,
+            "pf": user_commands.ProfileCommand,
         }
         self.admin_commands_dict = {
             "cg": admin_commands.ChangeGenderCommand,
@@ -115,6 +128,16 @@ class CommandProcessor:
 
     def _run(self, message: Message) -> None:
         try:
+            if message.user.id in self.pending_ad_prompt:
+                prompt = self.pending_ad_prompt.pop(message.user.id)
+                answer = parse_ad_answer(message.text)
+                if answer is not None:
+                    prompt.answer(*answer)
+                    return
+                # Not an answer: cancel the prompt and let it be a command, so a
+                # user who changes their mind is not stuck.
+                prompt.cancel()
+
             if message.user.id in self.pending_playlist_download:
                 command_name = "dlp"
                 arg = message.text

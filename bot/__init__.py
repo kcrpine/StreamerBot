@@ -29,7 +29,13 @@ from bot.auth import redaction
 from bot.auth.session import AuthJobManager
 from bot.auth.store import SecretStore
 from bot.modules.auth_portal import AuthPortal
+from bot.player.engines.browser_engine import BrowserEngine
 from bot.player.engines.librespot_engine import LibrespotEngine
+from bot.services.web.netflix import NetflixAdapter
+
+# Which browser adapter serves which service. Adding a site in Phase 6 is
+# an entry here plus one file under bot/services/web/.
+WEB_ADAPTERS = {"nf": NetflixAdapter}
 
 
 class Bot:
@@ -110,6 +116,53 @@ class Bot:
         reason; it must never stop the bot reaching TeamTalk, because YouTube and
         direct URLs do not depend on it.
         """
+        self._initialize_browser_engine()
+        self._initialize_spotify_engine()
+
+    def _initialize_browser_engine(self) -> None:
+        """Start the browser engine and give it to the services that need it.
+
+        On arm64 there is no Google Chrome and therefore no Widevine, so this
+        raises EngineUnavailableError, the engine is simply not registered, and
+        each browser service disables itself with a reason a user can hear.
+        """
+        browser_services = {
+            name: service
+            for name, service in self.service_manager.services.items()
+            if getattr(service, "engine", "") == "browser"
+            and getattr(service, "is_enabled", False)
+        }
+        if not browser_services:
+            return
+
+        engine = BrowserEngine(
+            data_dir=os.path.join(self.config_manager.config_dir, "browser")
+        )
+        try:
+            self.player.attach_engines([engine])
+        except Exception as error:
+            logging.error(f"The browser engine could not start: {error}", exc_info=True)
+
+        if engine.name not in self.player.engines:
+            reason = self.translator.translate(
+                "This needs Google Chrome, which is not available on this machine's "
+                "processor architecture."
+            )
+            for name, service in browser_services.items():
+                service.is_enabled = False
+                service.error_message = reason
+                logging.warning(f"{name} disabled: no browser engine.")
+            return
+
+        for name, service in browser_services.items():
+            adapter = WEB_ADAPTERS.get(name)
+            if adapter is None:
+                continue
+            engine.register_adapter(name, adapter())
+            if hasattr(service, "attach_engine"):
+                service.attach_engine(engine)
+
+    def _initialize_spotify_engine(self) -> None:
         spotify = self.service_manager.services.get("sp")
         if spotify is None or not getattr(spotify, "is_enabled", False):
             return
@@ -131,6 +184,35 @@ class Bot:
             spotify.error_message = self.translator.translate(
                 "Spotify is unavailable: the player could not start."
             )
+
+
+    def _browser_sign_in(self, service: str, username: str, password: str, job) -> None:
+        """Run one credential sign-in through the browser. Phase 3 left this as
+        a stub; the browser engine is what makes it possible.
+
+        Runs on its own thread, spawned by the portal. It blocks inside the
+        adapter while job.request_otp() waits for a code the user types on a web
+        page, which is why the job state machine exists at all.
+        """
+        engine = self.player.engines.get("browser")
+        if engine is None:
+            job.fail(
+                self.translator.translate(
+                    "This needs Google Chrome, which is not available on this machine's "
+                    "processor architecture."
+                )
+            )
+            return
+        try:
+            engine.login(service, username, password, job)
+        except Exception as error:
+            logging.error(f"[{service}] sign-in failed: {error}", exc_info=True)
+            # The message reaches a user, so it must not be a traceback, and it
+            # must never echo the password back.
+            job.fail(self.translator.translate("The sign-in did not complete."))
+        finally:
+            if not job.is_finished:
+                job.fail(self.translator.translate("The sign-in did not complete."))
 
     def _initialize_auth_portal(self) -> None:
         """Start the portal and register its stored secrets for redaction.
@@ -171,6 +253,7 @@ class Bot:
                 locale=self.config.general.language,
                 youtube_bridge=youtube_bridge,
                 librespot_engine=self.player.engines.get("librespot"),
+                sign_in_worker=self._browser_sign_in,
             )
             self.auth_portal.start()
             self.command_processor.auth_portal = self.auth_portal
