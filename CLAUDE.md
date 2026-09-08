@@ -178,6 +178,24 @@ Work proceeds in numbered phases from the plan; the plan's delivery table record
 actually found, including where reality contradicted it. When a phase finishes, update that table —
 future instances rely on it to know what is real versus planned.
 
+### First run in a fresh clone
+
+If `~/.claude/plans/` has no copy of this project's plan, **seed it before doing anything else** —
+before reading code, before making any change:
+
+```bash
+bash tools/install-hooks.sh
+```
+
+That installs the hooks and copies the repository's plan into `~/.claude/plans/`, without overwriting
+one that is already there. Then read [.claude/plans/streamerbot-plan.md](.claude/plans/streamerbot-plan.md).
+
+Do not skip this on the grounds that the plan is also readable in the repository. Every rule below about
+comparing the two copies does nothing when one of them does not exist: the pre-commit hook finds no
+counterpart and skips its drift check silently. Starting work without the plan means starting without
+knowing which phases are done, what each one actually found, or which of its original decisions have
+since been overturned — and several have.
+
 ### Keeping the plan and this file in sync
 
 **This repository is the source of truth, and the sync runs both ways.** The plan is authored at

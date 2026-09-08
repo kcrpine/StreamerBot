@@ -126,6 +126,29 @@ first: a phase finished locally advances the local one, and someone else's merge
 repository's. Whichever moved, the two have to be reconciled before any further work, because both
 directions of a blind copy destroy somebody's writing.
 
+**On a fresh clone, seed the local copy before doing anything else.** Someone who has just cloned this
+repository has no plan in `~/.claude/plans/` at all, so every rule below about comparing the two copies
+silently does nothing: the pre-commit hook finds no counterpart and skips its drift check, and nothing
+else notices either. The failure is quiet and the consequence is not — they start work with no idea
+which phases are done, what each one actually found, or which of the plan's original decisions have
+since been overturned.
+
+So the first action in a fresh clone, before reading code and before touching anything, is to take the
+repository's copies:
+
+```
+cp .claude/plans/streamerbot-plan.md ~/.claude/plans/
+```
+
+and read `CLAUDE.md` at the root. `tools/install-hooks.sh` does the copy as part of setting the hooks
+up, so running it once covers this too, and it will not overwrite a local plan that already exists.
+
+This is why the plan carries a running record of what each phase found rather than only what each phase
+intends. A contributor arriving at Phase 6 needs to know that the vendored TeamTalk binding was ABI
+incompatible, that go-librespot's device auth flow does not exist before 0.9.1, and that five of the
+portal's "settled" accessibility decisions were wrong — none of which is recoverable from the code, and
+all of which would otherwise be rediscovered the expensive way.
+
 **Check GitHub before writing a single word.** This is a precondition, not a step in a checklist: no
 edit to the plan or to `CLAUDE.md` begins until the repository's copy has been fetched and compared.
 Not at the end, not before committing — before typing.
