@@ -1,6 +1,7 @@
 babel
 beautifulsoup4
 cryptography
+gamdl
 patool
 playwright
 portalocker

@@ -313,6 +313,35 @@ addresses as words rather than URLs where a synth would otherwise run them toget
 Every string goes through `translate(...)`, and the walkthroughs are prose rather than tables, since a
 table read linearly by a screen reader loses its column headings.
 
+### Uninstall must ask what "everything" means
+
+`streamerbot.sh`'s menu item reads "Uninstall Everything (Total Cleanup)", which is both frightening and
+inaccurate: it delegates to `uninstall.sh`, which already offers a safe path. Nobody reading the menu
+knows that, so the entry point has to ask the question in plain words instead of hiding three very
+different outcomes behind one label.
+
+**Three levels, asked as one question, with the least destructive first and selected by default:**
+
+1. **Just the bots' containers and images.** Stop and remove every container labelled
+   `role=streamerbot` plus the shared YouTube service, and remove the `streamerbot` image. **Leave
+   `bots/` alone.** This is the option someone wants when they are reclaiming disk space or forcing a
+   clean rebuild, and it must not touch a single credential: every bot's YouTube tokens, encrypted
+   service passwords, Chrome profiles and configuration survive, so `streamerbot.sh` afterwards
+   rebuilds and the bots come back as they were.
+2. **The bots' containers, images and all bot data.** As above, plus `bots/`, the systemd updater unit
+   and the temporary files. This is the current "Standard Uninstall". Say explicitly that this deletes
+   every connected account and cannot be undone, and that a backup can be taken first.
+3. **Docker itself as well.** Prune the whole Docker system and stop the engine. Say plainly that this
+   affects **containers that have nothing to do with StreamerBot**, since a VPS commonly runs other
+   things, and that it is the only option here that can break unrelated software.
+
+The wording matters more than the mechanism. "Do you also want to remove Docker itself? Answering no
+removes only StreamerBot's own containers and images" is answerable; "Total Cleanup" is not.
+
+Follow the project's CLI conventions: no colour-only distinction between the levels, the destructive
+options confirmed by typing a word rather than pressing a key near the safe one, and each level's
+consequences printed as prose before the prompt rather than as a table.
+
 ### Two risks stated up front, then built anyway
 
 1. **Google publishes no Chrome for linux/arm64**, and only Chrome carries the Widevine CDM. On ARM

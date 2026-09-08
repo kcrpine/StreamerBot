@@ -96,12 +96,21 @@ class NetflixModel(BaseModel):
     profile: str = ""
 
 
+class BrowserServiceModel(BaseModel):
+    """Shared shape for the four browser-backed services."""
+    enabled: bool = True
+    profile: str = ""
+
+
 class ServicesModel(BaseModel):
     default_service: str = "yt"
     yt: YtModel = YtModel()
     ytm: YtmModel = YtmModel()
     sp: SpotifyModel = SpotifyModel()
     nf: NetflixModel = NetflixModel()
+    dp: BrowserServiceModel = BrowserServiceModel()
+    am: BrowserServiceModel = BrowserServiceModel()
+    az: BrowserServiceModel = BrowserServiceModel()
 
 
 class LoggerModel(BaseModel):

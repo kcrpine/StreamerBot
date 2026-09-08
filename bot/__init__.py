@@ -31,11 +31,19 @@ from bot.auth.store import SecretStore
 from bot.modules.auth_portal import AuthPortal
 from bot.player.engines.browser_engine import BrowserEngine
 from bot.player.engines.librespot_engine import LibrespotEngine
+from bot.services.web.amazon_music import AmazonMusicAdapter
+from bot.services.web.apple_music import AppleMusicAdapter
+from bot.services.web.disney import DisneyAdapter
 from bot.services.web.netflix import NetflixAdapter
 
 # Which browser adapter serves which service. Adding a site in Phase 6 is
 # an entry here plus one file under bot/services/web/.
-WEB_ADAPTERS = {"nf": NetflixAdapter}
+WEB_ADAPTERS = {
+    "nf": NetflixAdapter,
+    "dp": DisneyAdapter,
+    "am": AppleMusicAdapter,
+    "az": AmazonMusicAdapter,
+}
 
 
 class Bot:
