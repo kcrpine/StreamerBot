@@ -1515,21 +1515,21 @@ class LoginCommand(Command):
                 "disconnect it first at %(url)s"
             ) % {"service": label, "url": portal.mint_link(user.username)}
 
-        if service == "yt":
+        if service in ("yt", "sp"):
             try:
-                data = portal.youtube_start()
+                data = portal.youtube_start() if service == "yt" else portal.spotify_start()
             except Exception as error:
                 return self.translator.translate(
-                    "YouTube sign-in could not start: %(error)s"
-                ) % {"error": error}
+                    "%(service)s sign-in could not start: %(error)s"
+                ) % {"service": label, "error": error}
             code = data.get("user_code", "")
             url = data.get("verification_url", "https://www.google.com/device")
             spelled = " ".join(code.replace("-", ""))
             return self.translator.translate(
-                "To connect YouTube, go to %(url)s and enter the code %(code)s. "
+                "To connect %(service)s, go to %(url)s and enter the code %(code)s. "
                 "Character by character, that is %(spelled)s. "
                 "Send li on its own to check whether it worked."
-            ) % {"url": url, "code": code, "spelled": spelled}
+            ) % {"service": label, "url": url, "code": code, "spelled": spelled}
 
         return self.translator.translate(
             "To connect %(service)s, open %(url)s"

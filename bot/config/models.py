@@ -76,10 +76,24 @@ class YtmModel(BaseModel):
     search_results: int = 1
 
 
+class SpotifyModel(BaseModel):
+    enabled: bool = True
+    # Shown to other Spotify clients on the network as a Connect target.
+    device_name: str = "StreamerBot"
+    # Local control API. Loopback only; the daemon is not something to expose.
+    api_port: int = 3678
+    # Search and metadata go through the Spotify Web API, which needs an
+    # application registered at developer.spotify.com. Playback does not: the
+    # daemon signs in as its own device. The matching secret is held encrypted
+    # in the bot's SecretStore, never here.
+    client_id: str = ""
+
+
 class ServicesModel(BaseModel):
     default_service: str = "yt"
     yt: YtModel = YtModel()
     ytm: YtmModel = YtmModel()
+    sp: SpotifyModel = SpotifyModel()
 
 
 class LoggerModel(BaseModel):

@@ -22,7 +22,7 @@ YOUTUBE_BRIDGE_URL="http://127.0.0.1:4417"
 IMAGE_BUILD_ARGS=(
     --build-arg "TTSDK_URL_X86_64=${TTSDK_URL_X86_64:-}"
     --build-arg "TTSDK_URL_ARM64=${TTSDK_URL_ARM64:-}"
-    --build-arg "GO_LIBRESPOT_VERSION=${GO_LIBRESPOT_VERSION:-0.9.0}"
+    --build-arg "GO_LIBRESPOT_VERSION=${GO_LIBRESPOT_VERSION:-0.9.1}"
 )
 
 # Auto-elevate to root via sudo if needed

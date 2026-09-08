@@ -215,7 +215,8 @@ class PageBuilder:
         )
 
     def device_code_page(
-        self, token: str, code: str, url: str, expires_text: str = ""
+        self, token: str, code: str, url: str, expires_text: str = "",
+        service: str = "yt",
     ) -> str:
         spelled = spell_out(code, self.translator)
         expiry = (
@@ -255,7 +256,11 @@ class PageBuilder:
             + self.back_link(token)
         )
         # The code is deliberately not in the title.
-        return self.page(self._("Connect YouTube: enter your code"), body)
+        return self.page(
+            self._("Connect %(service)s: enter your code")
+            % {"service": service_name(service)},
+            body,
+        )
 
     def credentials_page(
         self,

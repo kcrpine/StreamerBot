@@ -11,7 +11,7 @@ ARG TARGETARCH=amd64
 # Supplied by streamerbot.sh / update.sh from project.env.
 ARG TTSDK_URL_X86_64
 ARG TTSDK_URL_ARM64
-ARG GO_LIBRESPOT_VERSION=0.9.0
+ARG GO_LIBRESPOT_VERSION=0.9.1
 
 ENV DEBIAN_FRONTEND=noninteractive \
     PATH=/opt/venv/bin:$PATH \

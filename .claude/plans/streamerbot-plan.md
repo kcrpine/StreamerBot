@@ -183,6 +183,33 @@ and the rest of the machine state, are excluded by name in `.gitignore`. The acc
 themselves are referenced rather than vendored: they belong to their own project and are better
 installed from source, and the hooks degrade to printing their reminder when the agents are absent.
 
+### Search result ordering, for Spotify, Apple Music and Amazon Music
+
+All three services return several kinds of thing for one query — tracks, albums, artists, playlists —
+and each ranks them by its own relevance model. The bot must not flatten that into one undifferentiated
+list, and must not impose an ordering of its own invention either.
+
+**Find out what the service actually considers the best match, and lead with it.** Each service's search
+API returns its own notion of top results: Apple Music has a `top` results type, Spotify returns
+per-type result sets whose first entries carry its ranking, Amazon Music likewise. Query for the types
+the service supports, keep the service's own ordering within each type, and present the strongest match
+first rather than re-sorting by title, popularity or duration. The ordering is the service's answer to
+the question; second-guessing it produces worse results and is unpredictable for the user.
+
+**Then a numbered list, grouped by kind, artists and albums and playlists before individual tracks.**
+The numbering is what `sl N` already selects on, so this reuses `pending_search_results` rather than
+inventing a second selection mechanism. Grouping matters more here than in a visual UI: a sighted user
+skims a mixed list and picks out the album; a screen reader user hears all twenty entries in order, so
+"three albums, then five artists, then the tracks" is navigable where an interleaved list is not.
+
+Announce it as a short summary first — how many of each kind — then the numbered entries, each stating
+its kind: `1. Album: Abbey Road, The Beatles, 17 tracks`. Kind first in the line, because that is the
+word the user is listening for, and it lets them stop reading once they hear the one they want. Keep
+the count within the existing `search_results` config rather than a new limit.
+
+Selecting an album, artist or playlist expands it into its tracks through the same service `get()` path
+a pasted link uses, so there is one expansion code path per service and not two.
+
 ### Two risks stated up front, then built anyway
 
 1. **Google publishes no Chrome for linux/arm64**, and only Chrome carries the Widevine CDM. On ARM
@@ -290,15 +317,41 @@ containment boundary.
 ### Spotify
 
 **go-librespot** (devgianlu), not Rust librespot — it exposes a local HTTP + WebSocket control API
-(`/player/play|pause|resume|seek|volume`, `/status`, and a WS event stream), and it supports interactive
-OAuth login writing a reusable `credentials.json`. Rust librespot has no control API. It has arm64
-releases, so **Spotify works on ARM even though the browser services do not.**
+(`/player/play|pause|resume|seek|volume`, `/status`, and a WS event stream). Rust librespot has no
+control API. It has arm64 releases, so **Spotify works on ARM even though the browser services do not.**
 
-`SpotifyService` uses the Spotify Web API for search and album/playlist expansion with the same OAuth
-token; `LibrespotEngine` supervises the daemon (exponential backoff restart, never logs the credentials
-blob) and drives playback. Requires **Premium** — `initialize()` checks `/v1/me` and sets a translated
-`warning_message` otherwise. Requires the operator to register a Spotify developer app for a `client_id`;
-`streamerbot.sh` prompts for it at bot creation with the dashboard URL.
+**Pinned to 0.9.1, and the version matters.** Sign-in uses `credentials: type: device_auth`, a
+code-and-URL flow with no browser redirect and no registered developer application — the same shape as
+the YouTube device code, which is what a blind user on a headless server needs. That credential type
+**does not exist in 0.9.0**, which accepts only `zeroconf`, `interactive` and `spotify_token`; it landed
+in 0.9.1 together with "make device auth code available on API", which is what exposes the code at
+`GET /auth/code` for the bot to read out. Building against the upstream README without checking gets
+you a daemon that exits immediately with `unknown credentials: device_auth`, because that README
+documents `master` rather than the latest release.
+
+Track ends are detected by polling `/status`, not by holding the WebSocket. A WebSocket client is a new
+dependency for one event, and the sub-second polling delay is the same order as the gap mpv already
+leaves between tracks. Only a genuine end-of-track advances the queue: a pause from the Spotify app, a
+handover to another engine, or the daemon restarting must not, or the bot would skip a track every time
+any of those happened.
+
+`LibrespotEngine` supervises the daemon (exponential backoff restart, output never inherited so the
+credentials blob cannot reach a log) and drives playback. `SpotifyService` uses the Spotify Web API for
+search and album/playlist expansion. Requires **Premium** for playback.
+
+**The two halves authenticate separately, and this was not obvious.** Playback pairs the user's account
+with a device code and needs no registered application at all. Search does need one: go-librespot could
+mint a Web API token from its own session in 0.9.0 via `POST /token`, which would have removed the
+requirement entirely, but **0.9.1 deleted that endpoint in the same release that added the device auth
+flow** the engine depends on. There is no version that has both. So search falls back to the client
+credentials flow, which needs a `client_id` and secret the operator registers once at
+developer.spotify.com — app-level credentials, no user login. The engine path is tried first, so this
+becomes free again if the endpoint ever returns.
+
+The `client_id` sits in config; **the secret goes in the encrypted `SecretStore`, never in
+`config.json`.** Without both, search is unavailable and says so in a message that distinguishes the two
+halves, because a user told only "Spotify needs setup" will go looking at the wrong one. A pasted
+Spotify link still plays with no application configured.
 
 ### Netflix / Disney+ / Apple Music / Amazon Music
 

@@ -29,6 +29,7 @@ from bot.auth import redaction
 from bot.auth.session import AuthJobManager
 from bot.auth.store import SecretStore
 from bot.modules.auth_portal import AuthPortal
+from bot.player.engines.librespot_engine import LibrespotEngine
 
 
 class Bot:
@@ -98,8 +99,38 @@ class Bot:
         self.ttclient.initialize()
         self.player.initialize()
         self.service_manager.initialize()
+        self._initialize_engines()
         self._initialize_auth_portal()
         logging.debug("Initialized")
+
+    def _initialize_engines(self) -> None:
+        """Register the non-mpv engines and hand them to the services that use them.
+
+        An engine that cannot start here disables its services with a readable
+        reason; it must never stop the bot reaching TeamTalk, because YouTube and
+        direct URLs do not depend on it.
+        """
+        spotify = self.service_manager.services.get("sp")
+        if spotify is None or not getattr(spotify, "is_enabled", False):
+            return
+        try:
+            engine = LibrespotEngine(
+                data_dir=os.path.join(self.config_manager.config_dir, "librespot"),
+                device_name=self.config.services.sp.device_name,
+                port=self.config.services.sp.api_port,
+            )
+            self.player.attach_engines([engine])
+            if engine.name in self.player.engines:
+                # The service needs the same instance: it borrows the daemon's
+                # session to get a Web API token, which is what removes the need
+                # for a registered Spotify developer application.
+                spotify.attach_engine(engine)
+        except Exception as error:
+            logging.error(f"The Spotify player could not start: {error}", exc_info=True)
+            spotify.is_enabled = False
+            spotify.error_message = self.translator.translate(
+                "Spotify is unavailable: the player could not start."
+            )
 
     def _initialize_auth_portal(self) -> None:
         """Start the portal and register its stored secrets for redaction.
@@ -119,6 +150,11 @@ class Bot:
             # saved in an earlier run cannot surface in this run's logs.
             redaction.get_filter().register_all(store.values_to_redact())
 
+            # Spotify reads its Web API client secret from the same store.
+            spotify = self.service_manager.services.get("sp")
+            if spotify is not None and hasattr(spotify, "attach_store"):
+                spotify.attach_store(store)
+
             youtube_bridge = None
             for name in ("yt", "ytm"):
                 service = self.service_manager.services.get(name)
@@ -134,6 +170,7 @@ class Bot:
                 config=config,
                 locale=self.config.general.language,
                 youtube_bridge=youtube_bridge,
+                librespot_engine=self.player.engines.get("librespot"),
             )
             self.auth_portal.start()
             self.command_processor.auth_portal = self.auth_portal

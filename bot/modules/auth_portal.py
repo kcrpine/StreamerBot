@@ -199,6 +199,27 @@ class PortalHandler(BaseHTTPRequestHandler):
             self._redirect(f"/youtube?t={token}")
             return
 
+        if service == "sp":
+            # Device code, not a password form: go-librespot pairs the same way
+            # YouTube does.
+            if portal.spotify_is_signed_in():
+                self._redirect(f"/success/sp?t={token}")
+                return
+            try:
+                info = portal.spotify_start()
+            except Exception as error:
+                logger.error(f"[portal] Spotify pairing could not start: {error}")
+                self._send(200, pages.failure_page(token, "sp", str(error)))
+                return
+            self._send(
+                200,
+                pages.device_code_page(
+                    token, info.get("user_code", ""), info.get("verification_url", ""),
+                    service="sp",
+                ),
+            )
+            return
+
         if tail == "cancel":
             portal.cancel(service)
             self._redirect(f"/?t={token}")
@@ -325,6 +346,7 @@ class AuthPortal:
         config,
         locale: str = "en",
         youtube_bridge: Optional[Any] = None,
+        librespot_engine: Optional[Any] = None,
         sign_in_worker: Optional[Callable[[str, str, str, Any], None]] = None,
     ) -> None:
         self.translator = translator
@@ -334,6 +356,7 @@ class AuthPortal:
         self.pages = PageBuilder(translator, locale)
         self.tokens = TokenStore(getattr(config, "token_ttl", 72000))
         self.youtube_bridge = youtube_bridge
+        self.librespot_engine = librespot_engine
         self.sign_in_worker = sign_in_worker
         self._server: Optional[ThreadingHTTPServer] = None
         self._thread: Optional[threading.Thread] = None
@@ -380,6 +403,8 @@ class AuthPortal:
         for service in SERVICES:
             if service == "yt":
                 result[service] = "connected" if self.youtube_is_signed_in() else "disconnected"
+            elif service == "sp":
+                result[service] = "connected" if self.spotify_is_signed_in() else "disconnected"
             else:
                 result[service] = "connected" if self.store.has(service) else "disconnected"
         return result
@@ -391,6 +416,32 @@ class AuthPortal:
         if self.youtube_bridge is None:
             return False
         return self.youtube_bridge.is_signed_in()
+
+    def spotify_is_signed_in(self) -> bool:
+        if self.librespot_engine is None:
+            return False
+        try:
+            return self.librespot_engine.is_signed_in()
+        except Exception:
+            return False
+
+    def spotify_start(self) -> Dict[str, Any]:
+        """The pairing code go-librespot is waiting on.
+
+        Same shape as YouTube's device flow, deliberately: the user reads a code
+        and types it at a URL, with no browser redirect and no registered
+        developer application anywhere.
+        """
+        if self.librespot_engine is None:
+            raise RuntimeError("The Spotify player is not running.")
+        data = self.librespot_engine.auth_code()
+        if not data:
+            raise RuntimeError("Spotify is already connected, or the player is still starting.")
+        return {
+            "user_code": data.get("code") or data.get("user_code", ""),
+            "verification_url": data.get("url") or data.get("verification_url")
+                                or "https://spotify.com/pair",
+        }
 
     def youtube_start(self) -> Dict[str, Any]:
         if self.youtube_bridge is None:
@@ -437,6 +488,11 @@ class AuthPortal:
                 self.youtube_bridge.auth_signout()
             except Exception as error:
                 logger.warning(f"[portal] YouTube sign-out failed: {error}")
+        if service == "sp" and self.librespot_engine is not None:
+            try:
+                self.librespot_engine.sign_out()
+            except Exception as error:
+                logger.warning(f"[portal] Spotify sign-out failed: {error}")
         self.store.delete(service)
         self.jobs.clear(service)
 
