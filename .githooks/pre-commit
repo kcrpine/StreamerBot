@@ -108,6 +108,42 @@ if [ -n "$LOCAL_PLAN" ] && [ -f "$REPO_PLAN" ]; then
     fi
 fi
 
+# ---------------------------------------------------------------------------
+# 3. Do not commit over someone else's plan.
+#
+# The rule is to check GitHub before editing these files. This catches the case
+# where that did not happen: the fetched origin already carries changes to the
+# plan or CLAUDE.md that this branch does not have, and this commit touches the
+# same files, so pushing it means reconciling two prose revisions after the
+# fact, or quietly picking one.
+#
+# Deliberately no network call. A hook that fetches is slow on every commit and
+# fails offline, so this uses whatever origin/main was last fetched: it cannot
+# see changes pushed since, which is why the rule asks for a fetch up front
+# rather than relying on this.
+# ---------------------------------------------------------------------------
+SYNCED_FILES=".claude/plans/streamerbot-plan.md CLAUDE.md"
+
+touches_synced_file="$(staged | grep -E '^(\.claude/plans/streamerbot-plan\.md|CLAUDE\.md)$' || true)"
+
+if [ -n "$touches_synced_file" ] && git rev-parse --verify --quiet origin/main >/dev/null; then
+    # shellcheck disable=SC2086
+    incoming="$(git log --oneline HEAD..origin/main -- $SYNCED_FILES 2>/dev/null || true)"
+    if [ -n "$incoming" ]; then
+        say ""
+        fail "origin/main has changes to the plan or CLAUDE.md that you do not have."
+        say ""
+        printf '  %s\n' "$incoming" >&2
+        say ""
+        say "  You are committing changes to the same files. Pull and build on"
+        say "  that version first, or your edit lands on top of someone else's."
+        say ""
+        say "    git pull"
+        say "    git log --oneline HEAD..origin/main -- $SYNCED_FILES"
+        say ""
+    fi
+fi
+
 if [ "$status" -ne 0 ]; then
     say "Commit stopped. Use git commit --no-verify to override deliberately."
 fi

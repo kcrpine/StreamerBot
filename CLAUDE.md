@@ -197,12 +197,19 @@ local plan by matching the document's first heading, not its filename, and does 
 with no local plan, so collaborators are unaffected. `git commit --no-verify` bypasses it. The private
 file check is repeated in CI, where it cannot be bypassed.
 
-**Pull and compare before editing either file:**
+**Check GitHub before writing a single word.** This is a precondition, not a step to remember later. No
+edit to the plan or to this file begins until the repository's copy has been fetched and compared:
 
 ```bash
-git pull
+git fetch origin main
+git log --oneline HEAD..origin/main -- .claude/plans/streamerbot-plan.md CLAUDE.md
 diff ~/.claude/plans/*.md .claude/plans/streamerbot-plan.md
 ```
+
+Anything the second command lists is someone else's writing that you do not have. Pull it and build on
+it. Checking first is the only point at which reconciling is cheap — edit first and both documents have
+moved, and merging two prose revisions of the same paragraph is manual work that gets resolved by
+picking a side, which is how a collaborator's contribution disappears without anyone noticing.
 
 - **Repository moved, local did not** — take the repository's version as the base. Someone recorded
   something a phase found, or corrected a decision. Working from a stale plan is how the same phase gets

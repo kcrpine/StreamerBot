@@ -126,12 +126,27 @@ first: a phase finished locally advances the local one, and someone else's merge
 repository's. Whichever moved, the two have to be reconciled before any further work, because both
 directions of a blind copy destroy somebody's writing.
 
-**Pull before touching either file.** At the start of a session, and again before editing the plan or
-`CLAUDE.md`, `git pull` and compare the repository's copies against the local ones. If the repository
-has moved — a collaborator added a phase, corrected a decision, recorded something a phase found — take
-that version as the base and carry the local edits onto it. Working from a stale plan is how two people
-end up implementing the same phase differently, and it is worse than having no plan, because the stale
-one still reads as authoritative.
+**Check GitHub before writing a single word.** This is a precondition, not a step in a checklist: no
+edit to the plan or to `CLAUDE.md` begins until the repository's copy has been fetched and compared.
+Not at the end, not before committing — before typing.
+
+```
+git fetch origin main
+git log --oneline HEAD..origin/main -- .claude/plans/streamerbot-plan.md CLAUDE.md
+```
+
+Anything listed there is someone else's writing that the local copy does not have. Pull it and take
+that version as the base, then carry the local edits onto it.
+
+The reason for the ordering is that it is the only point at which reconciling is cheap. Edit first and
+the two documents have both moved, and merging two prose revisions of the same paragraph is manual,
+error-prone work that a tired person resolves by picking one side — which is exactly how a
+collaborator's contribution disappears without anyone noticing. Check first and the common case is that
+nothing has changed and the cost is one command.
+
+Working from a stale plan is also how two people implement the same phase differently, each believing
+they are following the agreed design. That is worse than having no plan at all, because a stale plan
+still reads as authoritative.
 
 **Push in the same commit as the work.** Any change — a phase marked done, a decision overturned, a new
 requirement — goes up alongside the code it describes. A phase is not finished until the plan recording
