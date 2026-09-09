@@ -1,0 +1,353 @@
+name: Tests
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  unit-tests:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Load project constants
+        run: |
+          set -euo pipefail
+          grep -E '^[A-Z0-9_]+=' project.env >> "$GITHUB_ENV"
+          echo "Loaded project.env"
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Install system libraries
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          # libmpv2 backs the vendored mpv.py ctypes binding; p7zip unpacks the
+          # TeamTalk SDK archive.
+          sudo apt-get install -y --no-install-recommends libmpv2 p7zip-full
+
+      - name: Install TeamTalk SDK ${{ env.TTSDK_VERSION }}
+        run: |
+          set -euo pipefail
+          curl -fsSL "$TTSDK_URL_X86_64" -o /tmp/ttsdk.7z
+          7z x -y /tmp/ttsdk.7z -o/tmp/ttsdk > /dev/null
+          sudo mkdir -p /opt/teamtalk
+          sudo cp -a /tmp/ttsdk/*/Library/TeamTalk_DLL/. /opt/teamtalk/
+          test -f /opt/teamtalk/libTeamTalk5.so
+          echo "LD_LIBRARY_PATH=/opt/teamtalk" >> "$GITHUB_ENV"
+
+      - name: Install Python dependencies
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run tests
+        id: tests
+        run: |
+          python tools/ci_test_report.py \
+            --title "Unit tests on ${{ github.sha }}" \
+            --markdown test-report.md \
+            --text test-report.txt
+
+      - name: Upload test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-test-report
+          path: |
+            test-report.md
+            test-report.txt
+          retention-days: 30
+
+  shell-checks:
+    name: Shell scripts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # The pre-commit hook makes this check locally, but a hook has to be
+      # installed per clone and can be skipped with --no-verify, so the same
+      # rule is enforced here where it cannot be bypassed. Everything below is
+      # private to a contributor's machine and this repository is public.
+      - name: No private .claude files may be committed
+        run: |
+          set -uo pipefail
+          hits=$(git ls-files | grep -E '^\.claude/(\.credentials\.json|projects/|history\.jsonl|sessions/|session-env/|shell-snapshots/|cache/|debug/|jobs/|daemon/|backups/|downloads/|ide/|chrome/|plugins/|statsig/|settings\.local\.json|\.last-|\.a11y-agent-team-)' || true)
+          if [ -n "$hits" ]; then
+            echo "Error. These files are private and must not be in the repository:"
+            printf '  %s\n' $hits
+            echo
+            echo ".credentials.json holds a live OAuth token; projects/ holds session transcripts."
+            echo "Remove them with: git rm --cached <file>"
+            exit 1
+          fi
+          echo "OK. No private .claude files are tracked."
+
+      - name: Syntax check every shell script
+        run: |
+          set -euo pipefail
+          status=0
+          while IFS= read -r script; do
+            if bash -n "$script"; then
+              echo "OK.      $script"
+            else
+              echo "Error.   $script failed to parse"
+              status=1
+            fi
+          done < <(find . -name '*.sh' -not -path './.git/*' | sort)
+          exit "$status"
+
+      - name: ShellCheck
+        continue-on-error: true
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends shellcheck
+          # Advisory only. These scripts predate the rewrite and a hard failure
+          # here would block unrelated work.
+          find . -name '*.sh' -not -path './.git/*' -print0 \
+            | xargs -0 shellcheck -S error -f gcc || true
+
+  docker-build:
+    name: Docker image
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Load project constants
+        run: grep -E '^[A-Z0-9_]+=' project.env >> "$GITHUB_ENV"
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Build image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          load: true
+          tags: streamerbot:ci
+          build-args: |
+            TTSDK_URL_X86_64=${{ env.TTSDK_URL_X86_64 }}
+            TTSDK_URL_ARM64=${{ env.TTSDK_URL_ARM64 }}
+            GO_LIBRESPOT_VERSION=${{ env.GO_LIBRESPOT_VERSION }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Verify the runtime inside the image
+        run: |
+          set -euo pipefail
+          docker run --rm --entrypoint bash streamerbot:ci -c '
+            set -e
+            python -c "import TeamTalkPy"        && echo "OK. TeamTalkPy imports"
+            python -c "import mpv"               && echo "OK. libmpv binding loads"
+            python -c "import pydantic, sys; assert pydantic.VERSION.startswith(\"2\")" && echo "OK. pydantic v2"
+            test -x /usr/local/bin/go-librespot  && echo "OK. go-librespot present"
+            test -f /etc/streamerbot-browser-available && echo "OK. browser marker present"
+            google-chrome --version              && echo "OK. Chrome present"
+          '
+
+      - name: Run the suite inside the image
+        run: |
+          docker run --rm --entrypoint bash streamerbot:ci -c '
+            python tools/ci_test_report.py --title "In-image tests"
+          '
+
+  # A prerelease per push, so every commit has a downloadable build and a
+  # permanent record of whether CI liked it. Publishing a release also emails
+  # everyone watching the repository, which is the only native GitHub mechanism
+  # that fires on a push: the old Email service webhook was removed in 2019 and
+  # watching a repo does not notify on raw commits.
+  prerelease:
+    name: Prerelease
+    runs-on: ubuntu-latest
+    needs: [unit-tests, shell-checks, docker-build]
+    if: always() && github.event_name == 'push'
+    permissions:
+      contents: write
+    outputs:
+      url: ${{ steps.publish.outputs.url }}
+      tag: ${{ steps.publish.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Build the source zip
+        id: build
+        run: |
+          set -euo pipefail
+          tag="build-${{ github.run_number }}-$(git rev-parse --short HEAD)"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          # git archive respects .gitignore and export-ignore and never
+          # includes .git itself, so the zip is the tracked tree exactly.
+          git archive --format=zip -o "StreamerBot-${tag}.zip" HEAD
+          ls -lh "StreamerBot-${tag}.zip"
+
+      - name: Write the release notes
+        id: notes
+        env:
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+          UNIT: ${{ needs.unit-tests.result }}
+          SHELL_CHECKS: ${{ needs.shell-checks.result }}
+          DOCKER: ${{ needs.docker-build.result }}
+        run: |
+          if [ "$UNIT" = "success" ] && [ "$SHELL_CHECKS" = "success" ] && [ "$DOCKER" = "success" ]; then
+            verdict="All checks passed."
+          else
+            verdict="CHECKS FAILED. Do not use this build."
+          fi
+          echo "verdict=$verdict" >> "$GITHUB_OUTPUT"
+          {
+            printf '%s\n\n' "$verdict"
+            printf 'Commit: %s\n\n' "${{ github.sha }}"
+            printf 'unit-tests: %s\nshell-checks: %s\ndocker-build: %s\n\n' \
+              "$UNIT" "$SHELL_CHECKS" "$DOCKER"
+            printf 'Commit message\n--------------\n%s\n' "$COMMIT_MESSAGE"
+          } > notes.md
+          cat notes.md
+
+      - name: Publish the prerelease
+        id: publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.build.outputs.tag }}
+        run: |
+          set -euo pipefail
+          gh release create "$TAG" "StreamerBot-${TAG}.zip" \
+            --prerelease \
+            --title "$TAG" \
+            --notes-file notes.md \
+            --target "${{ github.sha }}"
+          url="${{ github.server_url }}/${{ github.repository }}/releases/tag/$TAG"
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "Published $url"
+
+      # One release per push accumulates quickly. Keep the most recent 20
+      # prereleases and delete the rest, so the releases page stays usable and
+      # the repository does not grow a zip per commit forever. Tagged real
+      # releases are untouched.
+      - name: Prune old prereleases
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh release list --repo "${{ github.repository }}" --limit 200 \
+            --json tagName,isPrerelease,createdAt \
+            --jq '[.[] | select(.isPrerelease)] | sort_by(.createdAt) | reverse | .[20:] | .[].tagName' \
+            > stale.txt || true
+          count=$(wc -l < stale.txt | tr -d ' ')
+          echo "Prereleases to remove: $count"
+          while IFS= read -r tag; do
+            [ -n "$tag" ] || continue
+            echo "Deleting $tag"
+            gh release delete "$tag" --repo "${{ github.repository }}" --yes --cleanup-tag || true
+          done < stale.txt
+
+  notify:
+    name: Report
+    runs-on: ubuntu-latest
+    needs: [unit-tests, shell-checks, docker-build, prerelease]
+    if: always() && github.event_name == 'push'
+    env:
+      # Job-level so the email step's "if" can read it. Empty until the secret
+      # is set, which is what keeps that step inert.
+      MAIL_USERNAME: ${{ secrets.MAIL_USERNAME }}
+    steps:
+      - name: Download test report
+        if: always()
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: unit-test-report
+
+      - name: Decide outcome
+        id: outcome
+        run: |
+          set -euo pipefail
+          if [ "${{ needs.unit-tests.result }}" = "success" ] \
+             && [ "${{ needs.shell-checks.result }}" = "success" ] \
+             && [ "${{ needs.docker-build.result }}" = "success" ]              && [ "${{ needs.prerelease.result }}" = "success" ]; then
+            echo "failed=false" >> "$GITHUB_OUTPUT"
+            echo "word=passed" >> "$GITHUB_OUTPUT"
+          else
+            echo "failed=true" >> "$GITHUB_OUTPUT"
+            echo "word=FAILED" >> "$GITHUB_OUTPUT"
+          fi
+          {
+            echo "unit-tests:   ${{ needs.unit-tests.result }}"
+            echo "shell-checks: ${{ needs.shell-checks.result }}"
+            echo "docker-build: ${{ needs.docker-build.result }}"
+            echo "prerelease:   ${{ needs.prerelease.result }}"
+          } > status.txt
+          cat status.txt
+
+      # Written for every run, pass or fail, so that a silent CI is
+      # distinguishable from a CI that ran and was happy.
+      #
+      # Every dynamic value arrives through env rather than ${{ }} interpolation.
+      # A commit message is attacker-controlled text: interpolated directly into
+      # this script its second line onwards would be executed as shell commands,
+      # so "$(...)" in a commit message would run in CI holding the workflow
+      # token. Through env it is only ever data.
+      - name: Build email body
+        env:
+          OUTCOME: ${{ steps.outcome.outputs.word }}
+          REPOSITORY: ${{ github.repository }}
+          BRANCH: ${{ github.ref_name }}
+          COMMIT: ${{ github.sha }}
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          RELEASE_URL: ${{ needs.prerelease.outputs.url }}
+          RELEASE_TAG: ${{ needs.prerelease.outputs.tag }}
+        run: |
+          {
+            printf 'StreamerBot CI %s.\n\n' "$OUTCOME"
+            printf 'Repository: %s\n' "$REPOSITORY"
+            printf 'Branch:     %s\n' "$BRANCH"
+            printf 'Commit:     %s\n' "$COMMIT"
+            printf 'Run:        %s\n\n' "$RUN_URL"
+            printf 'Commit message\n--------------\n%s\n\n' "$COMMIT_MESSAGE"
+            printf 'Job results\n-----------\n'
+            cat status.txt
+            echo
+            if [ -f test-report.txt ]; then
+              cat test-report.txt
+            else
+              echo "No unit test report was produced. The run probably failed before the tests started; see the run link above."
+            fi
+          } > email-body.txt
+          cat email-body.txt
+
+      # Sends on both success and failure, so a quiet inbox means CI did not
+      # run at all. Stays inert until MAIL_USERNAME, MAIL_PASSWORD and MAIL_TO
+      # exist as repository secrets, so no credentials live in the repository.
+      - name: Email the report
+        if: env.MAIL_USERNAME != ''
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: ${{ secrets.MAIL_SERVER || 'smtp.gmail.com' }}
+          server_port: ${{ secrets.MAIL_PORT || 465 }}
+          secure: true
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          from: StreamerBot CI
+          to: ${{ secrets.MAIL_TO }}
+          subject: "StreamerBot CI ${{ steps.outcome.outputs.word }} on ${{ github.ref_name }} (${{ github.sha }})"
+          body: file://email-body.txt
+
+      - name: Fail the run if anything failed
+        if: steps.outcome.outputs.failed == 'true'
+        run: |
+          echo "One or more jobs failed. See the job summary for per-test detail."
+          exit 1

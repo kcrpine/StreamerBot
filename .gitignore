@@ -1,0 +1,77 @@
+/bots/
+/TeamTalk_DLL/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environment
+venv/
+env/
+ENV/
+
+# Project Specific
+# config.json (Allowed)
+cookies.txt
+*.log
+StreamerBot.log
+StreamerBotCache.dat
+fast_forensics.py
+*.mp3
+*.m4a
+*.webm
+*.opus
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Claude Code working directory.
+# .claude/ is shared on purpose (the plan, the hooks, the settings), but a
+# .claude directory also accumulates a live OAuth token and the full transcript
+# of every session. Those must never reach a public repository.
+.claude/.credentials.json
+.claude/projects/
+.claude/history.jsonl
+.claude/sessions/
+.claude/session-env/
+.claude/shell-snapshots/
+.claude/cache/
+.claude/debug/
+.claude/jobs/
+.claude/daemon/
+.claude/backups/
+.claude/downloads/
+.claude/ide/
+.claude/chrome/
+.claude/plugins/
+.claude/statsig/
+.claude/settings.local.json
+.claude/.last-*
+.claude/.a11y-agent-team-*

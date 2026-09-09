@@ -1,0 +1,163 @@
+from typing import Any, Dict, List, Union
+
+from pydantic import BaseModel
+
+
+class GeneralModel(BaseModel):
+    language: str = "en"
+    send_channel_messages: bool = True
+    cache_file_name: str = "StreamerBotCache.dat"
+    blocked_commands: List[str] = []
+    delete_uploaded_files_after: int = 300
+    time_format: str = r"%H:%M"
+    start_commands: List[str] = []
+    search_results_mode: bool = False
+
+class SoundDevicesModel(BaseModel):
+    output_device: int = 0
+    input_device: int = 0
+    # Preferred over the indices above when set. Indices shift whenever the set
+    # of PulseAudio devices changes, which silently points a bot at the wrong
+    # device; matching on name survives that. Substring match, case insensitive.
+    output_device_name: str = ""
+    input_device_name: str = ""
+
+
+class PlayerModel(BaseModel):
+    default_volume: int = 50
+    max_volume: int = 100
+    volume_fading: bool = True
+    volume_fading_interval: float = 0.025
+    seek_step: int = 5
+    player_options: Dict[str, Any] = {}
+
+class TeamTalkUserModel(BaseModel):
+    admins: List[str] = ["admin"]
+    banned_users: List[str] = []
+
+
+class EventHandlingModel(BaseModel):
+    load_event_handlers: bool = False
+    event_handlers_file_name: str = "event_handlers.py"
+
+
+class TeamTalkModel(BaseModel):
+    hostname: str = "localhost"
+    tcp_port: int = 10333
+    udp_port: int = 10333
+    encrypted: bool = False
+    nickname: str = "StreamerBot"
+    status: str = ""
+    gender: str = "n"
+    username: str = ""
+    password: str = ""
+    channel: Union[int, str] = "/"
+    channel_password: str = ""
+    license_name: str = ""
+    license_key: str = ""
+    reconnection_attempts: int = -1
+    reconnection_timeout: int = 10
+    users: TeamTalkUserModel = TeamTalkUserModel()
+    event_handling: EventHandlingModel = EventHandlingModel()
+
+
+
+
+class YtModel(BaseModel):
+    enabled: bool = True
+    cookiefile_path: str = ""
+    search_results: int = 1
+
+
+
+
+class YtmModel(BaseModel):
+    enabled: bool = True
+    search_results: int = 1
+
+
+class SpotifyModel(BaseModel):
+    enabled: bool = True
+    # Shown to other Spotify clients on the network as a Connect target.
+    device_name: str = "StreamerBot"
+    # Local control API. Loopback only; the daemon is not something to expose.
+    api_port: int = 3678
+    # Search and metadata go through the Spotify Web API, which needs an
+    # application registered at developer.spotify.com. Playback does not: the
+    # daemon signs in as its own device. The matching secret is held encrypted
+    # in the bot's SecretStore, never here.
+    client_id: str = ""
+
+
+class NetflixModel(BaseModel):
+    enabled: bool = True
+    # Which Netflix profile to use. Each has its own watchlist and audio
+    # settings, so this is not cosmetic.
+    profile: str = ""
+
+
+class BrowserServiceModel(BaseModel):
+    """Shared shape for the four browser-backed services."""
+    enabled: bool = True
+    profile: str = ""
+
+
+class ServicesModel(BaseModel):
+    default_service: str = "yt"
+    yt: YtModel = YtModel()
+    ytm: YtmModel = YtmModel()
+    sp: SpotifyModel = SpotifyModel()
+    nf: NetflixModel = NetflixModel()
+    dp: BrowserServiceModel = BrowserServiceModel()
+    am: BrowserServiceModel = BrowserServiceModel()
+    az: BrowserServiceModel = BrowserServiceModel()
+
+
+class LoggerModel(BaseModel):
+    log: bool = True
+    level: str = "INFO"
+    format: str = "%(levelname)s [%(asctime)s]: %(message)s in %(threadName)s file: %(filename)s line %(lineno)d function %(funcName)s"
+    mode: Union[int, str] = "FILE"
+    file_name: str = "StreamerBot.log"
+    max_file_size: int = 0
+    backup_count: int = 0
+
+
+class ShorteningModel(BaseModel):
+    shorten_links: bool = False
+    service: str = "clckru"
+    service_params: Dict[str, Any] = {}
+
+
+class AudioDescriptionModel(BaseModel):
+    # ask, always, or never. "ask" is the default because guessing wrong in
+    # either direction is worse than a short question.
+    default: str = "ask"
+
+
+class AuthPortalModel(BaseModel):
+    enabled: bool = True
+    # Loopback by default. The portal hands out account credentials, so exposing
+    # it on 0.0.0.0 is opt-in and the CLI warns when you do.
+    host: str = "127.0.0.1"
+    port: int = 4419
+    # What the bot puts in the link it sends over TeamTalk. Set this when the
+    # bot runs on a VPS and the user's browser is somewhere else.
+    public_url: str = ""
+    # 20 hours. A ?t= token is a time limit on user activity, so SC 2.2.1
+    # Timing Adjustable applies. With no JS we cannot warn before expiry, so we
+    # take WCAG's own 20 Hour Exception instead, which needs no UI at all.
+    token_ttl: int = 72000
+
+
+class ConfigModel(BaseModel):
+    config_version: int = 0
+    auth_portal: AuthPortalModel = AuthPortalModel()
+    audio_description: AudioDescriptionModel = AudioDescriptionModel()
+    general: GeneralModel = GeneralModel()
+    sound_devices: SoundDevicesModel = SoundDevicesModel()
+    player: PlayerModel = PlayerModel()
+    teamtalk: TeamTalkModel = TeamTalkModel()
+    services: ServicesModel = ServicesModel()
+    logger: LoggerModel = LoggerModel()
+    shortening: ShorteningModel = ShorteningModel()

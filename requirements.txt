@@ -1,0 +1,11 @@
+babel
+beautifulsoup4
+cryptography
+gamdl
+patool
+playwright
+portalocker
+pydantic>=2.0
+pyshorteners
+requests
+httpx[http2]

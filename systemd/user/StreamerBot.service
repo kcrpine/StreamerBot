@@ -1,0 +1,12 @@
+[Unit]
+Description=StreamerBot
+Requires=pulseaudio.service
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/StreamerBot
+ExecStart=/opt/StreamerBot/run_bot.sh -c /opt/StreamerBot/config.json
+Restart=on-failure
+
+[Install]
+WantedBy=default.target
