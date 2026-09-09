@@ -1,5 +1,5 @@
 {
-    "config_version": 0,
+    "config_version": 2,
     "general": {
         "language": "en",
         "send_channel_messages": true,
@@ -11,7 +11,9 @@
     },
     "sound_devices": {
         "output_device": 0,
-        "input_device": 0
+        "input_device": 0,
+        "output_device_name": "",
+        "input_device_name": ""
     },
     "player": {
         "default_volume": 50,
@@ -52,12 +54,33 @@
         "default_service": "yt",
         "yt": {
             "enabled": true,
-            "cookiefile_path": "",
             "search_results": 1
         },
         "ytm": {
             "enabled": true,
             "search_results": 1
+        },
+        "sp": {
+            "enabled": true,
+            "device_name": "StreamerBot",
+            "api_port": 3678,
+            "client_id": ""
+        },
+        "nf": {
+            "enabled": true,
+            "profile": ""
+        },
+        "dp": {
+            "enabled": true,
+            "profile": ""
+        },
+        "am": {
+            "enabled": true,
+            "profile": ""
+        },
+        "az": {
+            "enabled": true,
+            "profile": ""
         }
     },
     "logger": {
@@ -73,5 +96,15 @@
         "shorten_links": false,
         "service": "clckru",
         "service_params": {}
+    },
+    "auth_portal": {
+        "enabled": true,
+        "host": "127.0.0.1",
+        "port": 4419,
+        "public_url": "",
+        "token_ttl": 72000
+    },
+    "audio_description": {
+        "default": "ask"
     }
 }

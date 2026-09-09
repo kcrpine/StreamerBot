@@ -80,42 +80,6 @@ header() {
     echo ""
 }
 
-# Function: Get Cookies (Path or Paste)
-get_cookies() {
-    local tmp_cookies="/tmp/cookies_pasted.txt"
-    rm -f "$tmp_cookies"
-    
-    echo -e "${YELLOW}How do you want to provide cookies?${NC}"
-    echo "1. Path to existing file"
-    echo "2. Paste cookie content"
-    read -p "Option [1-2] (Default 1): " cookie_opt
-    cookie_opt=${cookie_opt:-1}
-    
-    if [ "$cookie_opt" == "2" ]; then
-        echo -e "${YELLOW}--------------------------------------------------${NC}"
-        echo -e "${YELLOW}PASTE YOUR COOKIES BELOW.${NC}"
-        echo -e "${YELLOW}THEN: Press ENTER and then press CTRL+D to save.${NC}"
-        echo -e "${YELLOW}--------------------------------------------------${NC}"
-        cat > "$tmp_cookies"
-        echo ""
-        if [ -s "$tmp_cookies" ]; then
-            # Auto-fix: Convert sequences of spaces/tabs to real TABs for Netscape format
-            # preservation of comments and 7-column structure
-            awk '/^#/ {print; next} NF>=7 { $1=$1; print } NF<7 && NF>0 { print }' OFS='\t' "$tmp_cookies" > "${tmp_cookies}.tmp" && mv "${tmp_cookies}.tmp" "$tmp_cookies"
-            
-            echo -e "${GREEN}SUCCESS: Cookies captured and format normalized!${NC}"
-            sleep 1
-            RET_COOKIES="$tmp_cookies"
-        else
-            echo -e "${RED}ERROR: No content was pasted.${NC}"
-            sleep 1
-            RET_COOKIES=""
-        fi
-    else
-        read -p "Full path to cookies file (Ex: /root/cookies.txt): " c_path
-        RET_COOKIES="$c_path"
-    fi
-}
 
 
 # Function: Install Dependencies
@@ -276,14 +240,12 @@ recreate_bot_containers() {
                 docker rm -f "$bot_name" >/dev/null 2>&1
             fi
             
-            # Recreate
-            # Ensure cookies.txt exists just in case
-            if [ ! -f "$d/cookies.txt" ]; then touch "$d/cookies.txt"; fi
-            if [ -f "$d/config.json" ]; then
-                tmp_config=$(mktemp)
-                jq '.services.yt.cookiefile_path = "data/cookies.txt"' "$d/config.json" > "$tmp_config" && mv "$tmp_config" "$d/config.json"
-                chown 1000:1000 "$d/config.json"
-            fi
+            # Make sure the credential directories exist. Nothing writes a
+            # cookies.txt any more, and cookiefile_path is no longer forced back
+            # into the config: the bridge stopped reading it in Phase 2.
+            mkdir -p "$d/secrets" "$d/browser" "$d/youtube_auth" "$d/librespot"
+            chown -R 1000:1000 "$d" 2>/dev/null || true
+            chmod 700 "$d/secrets" "$d/youtube_auth" "$d/librespot" 2>/dev/null || true
             
             docker create \
                 --name "${bot_name}" \
@@ -430,8 +392,19 @@ create_bot() {
     echo ""
     read -p "Bot Nickname (Default: StreamerBot): " nickname
     nickname=${nickname:-StreamerBot}
-    get_cookies
-    cookies_path="$RET_COOKIES"
+
+    # No cookies question. YouTube signs in with a device code once the bot
+    # is running, so there is nothing useful to ask for, and asking implied a
+    # file was required.
+    cookies_path=""
+
+    # Startup commands: how a bot plays a stream the moment it connects. It is
+    # easy to miss that the setting exists at all, so it is asked for here
+    # rather than left to be discovered in a config file.
+    echo ""
+    echo "A startup command runs every time the bot connects. The usual one plays"
+    echo "a stream, for example:  u http://example.org:8000/live.mp3"
+    read -p "Startup command (Enter for none): " start_command
     
     read -p "Channel (Default: /): " channel
     channel=${channel:-/}
@@ -616,27 +589,35 @@ create_bot() {
     # Copy default config
     cp "$CONFIG_SOURCE" "$CURRENT_BOT_DIR/config.json"
     
-    # Configure cookies mount
+    # No cookies file. YouTube signs in with a device code now, so there is
+    # nothing to copy and nothing to mount; an empty cookies.txt existed only to
+    # stop the mount failing. If the user pointed at one anyway, keep it rather
+    # than discard it, but say that it does nothing.
     COOKIES_MOUNT=""
     CONTAINER_COOKIE_PATH=""
-    
-    if [ -f "$cookies_path" ]; then
-        echo "Copying cookies file..."
+    if [ -n "${cookies_path:-}" ] && [ -f "$cookies_path" ]; then
         cp "$cookies_path" "$CURRENT_BOT_DIR/cookies.txt"
-        chown 1000:1000 "$CURRENT_BOT_DIR/cookies.txt"
-        COOKIES_MOUNT="-v ${CURRENT_BOT_DIR}/cookies.txt:/home/streamer/StreamerBot/data/cookies.txt"
-        CONTAINER_COOKIE_PATH="data/cookies.txt"
-    else
-        echo -e "${RED}Cookies file not found! The bot will be created without specific cookies.${NC}"
-        # Create empty cookies file to avoid mount errors if referenced
-        touch "$CURRENT_BOT_DIR/cookies.txt"
-        COOKIES_MOUNT="-v ${CURRENT_BOT_DIR}/cookies.txt:/home/streamer/StreamerBot/data/cookies.txt"
-        CONTAINER_COOKIE_PATH="data/cookies.txt"
+        chown 1000:1000 "$CURRENT_BOT_DIR/cookies.txt" 2>/dev/null || true
+        echo "Note. The cookies file was kept, but this version does not use it."
+        echo "YouTube signs in with a code. Send li yt to the bot once it is running."
     fi
+
+    # Directories the services write their own credentials into.
+    mkdir -p "$CURRENT_BOT_DIR/secrets" "$CURRENT_BOT_DIR/browser"              "$CURRENT_BOT_DIR/youtube_auth" "$CURRENT_BOT_DIR/librespot"
+    chown -R 1000:1000 "$CURRENT_BOT_DIR" 2>/dev/null || true
+    chmod 700 "$CURRENT_BOT_DIR/secrets" "$CURRENT_BOT_DIR/youtube_auth"               "$CURRENT_BOT_DIR/librespot" 2>/dev/null || true
     
     # Update JSON with jq
     tmp_config=$(mktemp)
-    jq --arg host "$server_addr" \
+    # An empty answer must give an empty list, not a list holding one empty
+    # string, which the bot would try to run as a command on every connect.
+    if [ -n "${start_command:-}" ]; then
+        start_commands_json=$(jq -cn --arg c "$start_command" '[$c]')
+    else
+        start_commands_json='[]'
+    fi
+    jq --argjson startcmds "$start_commands_json" \
+       --arg host "$server_addr" \
        --argjson tcp "$tcp_port" \
        --argjson udp "$udp_port" \
        --argjson enc "$encrypted" \
@@ -645,7 +626,6 @@ create_bot() {
        --arg pass "$password" \
        --arg chan "$channel" \
        --arg chan_pass "$channel_password" \
-       --arg cookie "$CONTAINER_COOKIE_PATH" \
        --argjson del_timer "$delete_timer" \
        '.teamtalk.hostname = $host |
         .teamtalk.tcp_port = $tcp |
@@ -657,7 +637,7 @@ create_bot() {
         .teamtalk.channel = $chan |
         .teamtalk.channel_password = $chan_pass |
         .general.delete_uploaded_files_after = $del_timer |
-        if $cookie != "" then .services.yt.cookiefile_path = $cookie else . end' \
+        .general.start_commands = $startcmds' \
        "$CURRENT_BOT_DIR/config.json" > "$tmp_config" && mv "$tmp_config" "$CURRENT_BOT_DIR/config.json"
 
     # Fix permissions for container user (uid 1000 is standard for non-root in many images)
@@ -1487,62 +1467,6 @@ duplicate_bot() {
     done
 }
 
-# Function: Update Cookies for All Bots
-update_all_cookies() {
-    header
-    echo -e "${YELLOW} --- Update Cookies for All Bots --- ${NC}"
-    list_bots
-    
-    get_cookies
-    new_cookies_path="$RET_COOKIES"
-    
-    if [ ! -f "$new_cookies_path" ]; then
-        echo -e "${RED}File not found!${NC}"
-        read -p "Enter to return..."
-        return
-    fi
-    
-    echo "Updating cookies in all bots..."
-    
-    # Loop verify dirs
-    found_any=false
-    for bot_dir in "$BOTS_ROOT"/*; do
-        if [ -d "$bot_dir" ]; then
-            found_any=true
-            bot_name=$(basename "$bot_dir")
-            echo "Updating bot: $bot_name"
-            
-            cp "$new_cookies_path" "$bot_dir/cookies.txt"
-            tmp_config=$(mktemp)
-            jq '.services.yt.cookiefile_path = "data/cookies.txt"' "$bot_dir/config.json" > "$tmp_config" && mv "$tmp_config" "$bot_dir/config.json"
-            chown 1000:1000 "$bot_dir/config.json"
-            
-            # Ensure permissions
-            chown 1000:1000 "$bot_dir/cookies.txt"
-            
-            echo -e "${GREEN}OK.${NC}"
-        fi
-    done
-    
-    if [ "$found_any" = false ]; then
-        echo "No bots found."
-    else
-        echo -e "${YELLOW}Restarting all bots to apply new cookies...${NC}"
-        
-        # Stop all bots in parallel (fast)
-        echo "Stopping bots..."
-        docker stop -t 1 $(docker ps -a -q -f "label=role=streamerbot") 2>/dev/null
-        
-        # Start all bots in parallel (fast)
-        echo "Starting bots..."
-        docker start $(docker ps -a -q -f "label=role=streamerbot") 2>/dev/null
-        
-        echo -e "${GREEN}All bots restarted.${NC}"
-    fi
-    
-    rm -f /tmp/cookies_pasted.txt
-    read -p "Completed. Enter to return..."
-}
 
 # Function: Restart All with Timer
 restart_with_timer() {
@@ -1765,6 +1689,224 @@ backup_bots() {
 }
 
 # Function: Restore Bots
+# ---------------------------------------------------------------------------
+# Migrating a restored backup.
+#
+# A backup from the old TTMediaBot has none of the sections this version needs
+# and carries names this version no longer uses.
+#
+# Such a config does still start: every new section has a default, so pydantic
+# fills them in silently. That is exactly the problem. The settings then exist
+# only in memory, so nobody can see or edit them, the cache and log keep their
+# old names and the bot's history is orphaned under a file it no longer writes,
+# and the credential directories do not exist with the ownership the container
+# needs. The bot appears to work and then cannot connect an account.
+#
+# So the migration writes the new sections to disk where they can be read and
+# changed, rather than leaving them as invisible defaults.
+#
+# So every restored bot is checked and brought up to date BEFORE any container is
+# created. Three rules govern all of it:
+#
+#   The bot's identity is sacred. Its directory name, its TeamTalk nickname,
+#   username, password, status text, channel and channel password are what make
+#   it the same bot to the people on that server. A restore that silently renamed
+#   a bot or reset its nickname would be worse than one that failed outright.
+#
+#   Never overwrite a value the user already had. Missing keys are filled from
+#   defaults and existing ones are left exactly as they were, which is why the
+#   merge is "defaults * existing" and not the other way round.
+#
+#   Never delete anything. Files this version stopped using stay where they are.
+#   A restore is not the moment to throw away something someone may still want.
+# ---------------------------------------------------------------------------
+
+# Fields that identify the bot to a TeamTalk server. Read before the migration
+# and checked afterwards, because getting these wrong is the one failure mode
+# nobody would forgive.
+BOT_IDENTITY_FIELDS='.teamtalk.nickname, .teamtalk.username, .teamtalk.password, .teamtalk.status, .teamtalk.channel, .teamtalk.channel_password, .teamtalk.hostname, .teamtalk.tcp_port, .general.language'
+
+bot_identity_fingerprint() {
+    jq -c "[${BOT_IDENTITY_FIELDS}]" "$1" 2>/dev/null
+}
+
+# Sections this version needs. Anything already in the bot's config wins.
+streamerbot_config_defaults() {
+    cat <<'DEFAULTSJSON'
+  {
+    "services": {
+      "sp": { "enabled": true, "device_name": "StreamerBot", "api_port": 3678, "client_id": "" },
+      "nf": { "enabled": true, "profile": "" },
+      "dp": { "enabled": true, "profile": "" },
+      "am": { "enabled": true, "profile": "" },
+      "az": { "enabled": true, "profile": "" }
+    },
+    "auth_portal": {
+      "enabled": true,
+      "host": "127.0.0.1",
+      "port": 4419,
+      "public_url": "",
+      "token_ttl": 72000
+    },
+    "audio_description": { "default": "ask" },
+    "sound_devices": { "output_device_name": "", "input_device_name": "" }
+  }
+DEFAULTSJSON
+}
+
+# True when this bot directory predates the current version.
+bot_dir_is_legacy() {
+    local dir="$1"
+    [ -f "$dir/TTMediaBotCache.dat" ] && return 0
+    [ -f "$dir/TTMediaBot.log" ] && return 0
+    if [ -f "$dir/config.json" ]; then
+        grep -q "TTMediaBot" "$dir/config.json" 2>/dev/null && return 0
+        # No auth_portal section means it predates this version whatever it is named.
+        jq -e 'has("auth_portal")' "$dir/config.json" >/dev/null 2>&1 || return 0
+    fi
+    return 1
+}
+
+migrate_one_bot() {
+    local dir="$1" name before after
+    name=$(basename "$dir")
+
+    # Directories the new services need, created empty. A restore signs nothing
+    # in; the bot creates what it needs inside them.
+    local sub
+    for sub in secrets browser youtube_auth librespot; do
+        [ -d "$dir/$sub" ] || mkdir -p "$dir/$sub"
+    done
+
+    # Renamed files, moved only when the new name is absent, so re-running is safe.
+    if [ -f "$dir/TTMediaBotCache.dat" ] && [ ! -f "$dir/StreamerBotCache.dat" ]; then
+        mv "$dir/TTMediaBotCache.dat" "$dir/StreamerBotCache.dat"
+        echo "  Renamed the cache file, keeping its contents."
+    fi
+    if [ -f "$dir/TTMediaBot.log" ] && [ ! -f "$dir/StreamerBot.log" ]; then
+        mv "$dir/TTMediaBot.log" "$dir/StreamerBot.log"
+        echo "  Renamed the log file."
+    fi
+
+    if [ -f "$dir/config.json" ]; then
+        before=$(bot_identity_fingerprint "$dir/config.json")
+        if [ -z "$before" ]; then
+            echo "  Warning. config.json could not be read as JSON, so it was left untouched."
+            echo "  This bot will not start until that file is valid."
+            return 1
+        fi
+
+        local tmp defaults
+        tmp=$(mktemp)
+        defaults=$(streamerbot_config_defaults)
+
+        # Deep merge with the bot's own values winning, then the few renames a
+        # merge cannot express, because the old value is still valid JSON and
+        # would simply be kept. Note that nothing here touches .teamtalk.
+        if ! jq --argjson d "$defaults" '
+                ($d * .)
+                | .general.cache_file_name =
+                    (if ((.general.cache_file_name // "") | test("TTMediaBot"))
+                     then "StreamerBotCache.dat"
+                     else (.general.cache_file_name // "StreamerBotCache.dat") end)
+                | .logger.file_name =
+                    (if ((.logger.file_name // "") | test("TTMediaBot"))
+                     then "StreamerBot.log"
+                     else (.logger.file_name // "StreamerBot.log") end)
+                | .config_version = (if ((.config_version // 0) < 2) then 2 else .config_version end)
+              ' "$dir/config.json" > "$tmp" 2>/dev/null; then
+            rm -f "$tmp"
+            echo "  Warning. The configuration could not be updated and was left untouched."
+            return 1
+        fi
+
+        # Refuse the change if the bot's identity moved. Better to leave a bot on
+        # the old config and say so than to bring it back under a different name.
+        after=$(bot_identity_fingerprint "$tmp")
+        if [ "$before" != "$after" ]; then
+            rm -f "$tmp"
+            echo "  Error. The update would have changed this bot's name or server details,"
+            echo "  so it was abandoned and the original configuration kept."
+            return 1
+        fi
+
+        if cmp -s "$tmp" "$dir/config.json"; then
+            rm -f "$tmp"
+        else
+            # The untouched original stays beside the new one. If this migration
+            # got something wrong, that file is the way back.
+            cp "$dir/config.json" "$dir/config.json.pre-migration"
+            mv "$tmp" "$dir/config.json"
+            echo "  Added the new configuration sections. Nickname and server details unchanged."
+            echo "  The original is kept as config.json.pre-migration."
+        fi
+
+        # A leftover cookies.txt is not deleted, but it does nothing now, and
+        # saying so stops someone concluding YouTube is broken.
+        if [ -f "$dir/cookies.txt" ]; then
+            echo "  This bot has a cookies.txt, which this version no longer uses."
+            echo "  YouTube signs in with a code now. Send li yt to the bot once it is running."
+        fi
+    fi
+
+    # The container runs as uid 1000 and must be able to write the credential
+    # directories it was just given.
+    chown -R 1000:1000 "$dir" 2>/dev/null || true
+    chmod 700 "$dir/secrets" "$dir/youtube_auth" "$dir/librespot" 2>/dev/null || true
+    return 0
+}
+
+migrate_restored_bots() {
+    [ -d "$BOTS_ROOT" ] || return 0
+
+    if ! command -v jq >/dev/null 2>&1; then
+        echo "Warning. jq is not installed, so restored configurations cannot be checked."
+        echo "Install jq and run Restore again, or the bots may not start."
+        return 1
+    fi
+
+    local dir name legacy_count=0 total=0
+    for dir in "$BOTS_ROOT"/*; do
+        [ -d "$dir" ] || continue
+        total=$((total + 1))
+        bot_dir_is_legacy "$dir" && legacy_count=$((legacy_count + 1))
+    done
+
+    [ "$total" -gt 0 ] || return 0
+
+    echo "Step 1 of 2. Checking the restored bots."
+    if [ "$legacy_count" -eq 0 ]; then
+        echo "OK. All $total restored bots already have the current configuration."
+    else
+        echo "This backup came from an older version. $legacy_count of $total bots need updating."
+        echo "Their configurations are brought up to date before any container is created."
+        echo "Every bot keeps its name, its nickname and its server details, and nothing"
+        echo "is deleted."
+    fi
+    echo ""
+
+    local failed=0
+    for dir in "$BOTS_ROOT"/*; do
+        [ -d "$dir" ] || continue
+        name=$(basename "$dir")
+        echo "Bot $name:"
+        if migrate_one_bot "$dir"; then
+            echo "  OK."
+        else
+            failed=$((failed + 1))
+        fi
+    done
+
+    echo ""
+    if [ "$failed" -gt 0 ]; then
+        echo "Warning. $failed bots could not be updated and may not start."
+        echo "Their original configurations were left untouched."
+        return 1
+    fi
+    echo "OK. Every bot is ready."
+    return 0
+}
+
 restore_bots() {
     header
     echo -e "${YELLOW} --- Restore Bots Config & Cache --- ${NC}"
@@ -1837,8 +1979,21 @@ restore_bots() {
     tar -xzf "$selected_path" -C "$SCRIPT_DIR"
     
     if [ $? -eq 0 ]; then
-        echo -e "${GREEN}Extraction completed!${NC}"
-        echo -e "${YELLOW}Refreshing the shared YouTube service mount...${NC}"
+        echo "OK. Extraction complete."
+        echo ""
+
+        # Before any container exists. A bot started against an old config either
+        # fails validation or comes up missing half its services, and either looks
+        # like the restore having gone wrong.
+        migrate_restored_bots
+        migration_status=$?
+        if [ "$migration_status" -ne 0 ]; then
+            echo ""
+            echo "Warning. Some bots were not updated. Continuing, but check them before use."
+        fi
+        echo ""
+        echo "Step 2 of 2. Recreating the containers."
+        echo "Refreshing the shared YouTube service mount."
         create_shared_youtube_service || {
             echo -e "${RED}Could not recreate the shared YouTube service.${NC}"
             read -p "Press Enter to continue..."
@@ -1970,14 +2125,13 @@ manage_bots() {
         echo "4. Delete Bot"
         echo "5. Bulk Delete Bots"
         echo "6. Duplicate Bot"
-        echo "7. Update Cookies (All Bots)"
-        echo "8. Restart with Timer (Stop -> Wait -> Start)"
-        echo "9. Bulk Update Configuration"
-        echo "10. Backup / Restore Bots"
-        echo "11. Clear All Bot Logs"
-        echo "12. Clear All Bot Cache Files"
-        echo "13. Clear YouTube Bridge Cache"
-        echo "14. Return to Main Menu"
+        echo "7. Restart with Timer (Stop, Wait, Start)"
+        echo "8. Bulk Update Configuration"
+        echo "9. Backup and Restore Bots"
+        echo "10. Clear All Bot Logs"
+        echo "11. Clear All Bot Cache Files"
+        echo "12. Clear YouTube Bridge Cache"
+        echo "13. Return to Main Menu"
         echo ""
         read -p "Choose an option: " opt_manage
         
@@ -2022,34 +2176,30 @@ manage_bots() {
                 header
                 ;;
             7)
-                update_all_cookies
-                header
-                ;;
-            8)
                 restart_with_timer
                 header
                 ;;
-            9)
+            8)
                 bulk_update_config
                 header
                 ;;
-            10)
+            9)
                 backup_restore_menu
                 header
                 ;;
-            11)
+            10)
                 clear_bot_logs
                 header
                 ;;
-            12)
+            11)
                 clear_bot_caches
                 header
                 ;;
-            13)
+            12)
                 clear_youtube_bridge_cache
                 header
                 ;;
-            14)
+            13)
                 return
                 ;;
             *)

@@ -209,14 +209,12 @@ recreate_bot_containers() {
                 docker rm -f "$bot_name" >/dev/null 2>&1
             fi
             
-            # Recreate
-            # Ensure cookies.txt exists just in case
-            if [ ! -f "$d/cookies.txt" ]; then touch "$d/cookies.txt"; fi
-            if [ -f "$d/config.json" ]; then
-                tmp_config=$(mktemp)
-                jq '.services.yt.cookiefile_path = "data/cookies.txt"' "$d/config.json" > "$tmp_config" && mv "$tmp_config" "$d/config.json"
-                chown 1000:1000 "$d/config.json"
-            fi
+            # No cookies.txt and no cookiefile_path: the bridge stopped reading
+            # either in Phase 2. Ensure the credential directories exist instead,
+            # since the container writes its tokens into them as uid 1000.
+            mkdir -p "$d/secrets" "$d/browser" "$d/youtube_auth" "$d/librespot"
+            chown -R 1000:1000 "$d" 2>/dev/null || true
+            chmod 700 "$d/secrets" "$d/youtube_auth" "$d/librespot" 2>/dev/null || true
             
             docker create \
                 --name "${bot_name}" \
