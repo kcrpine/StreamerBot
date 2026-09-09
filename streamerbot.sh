@@ -26,6 +26,38 @@ IMAGE_BUILD_ARGS=(
 )
 
 # Auto-elevate to root via sudo if needed
+# --help needs no privileges, so answer it before elevating. Asking someone for a
+# root password to read a help text is a bad trade.
+if [ "${1:-}" = "--help" ] || [ "${1:-}" = "-h" ]; then
+    echo "StreamerBot manager"
+    echo ""
+    echo "Run with no arguments for the menu, or use one of these:"
+    echo ""
+    echo "  --status         List every bot and whether it is running."
+    echo "  --services       Show the shared YouTube service and the image."
+    echo "  --start-all      Start every bot."
+    echo "  --stop-all       Stop every bot."
+    echo "  --restart-all    Restart every bot."
+    echo "  --check-updates  Say whether an update is available, without installing it."
+    echo "  --logs NAME      Show the last 50 log lines for one bot."
+    echo "  --help           This text."
+    echo ""
+    echo "Everything except --help needs root, and will ask for it."
+    exit 0
+fi
+
+# Validate the flag name before elevating, so a typo does not cost a password
+# prompt first.
+case "${1:-}" in
+    ""|--status|--services|--start-all|--stop-all|--restart-all|--check-updates|--logs)
+        ;;
+    *)
+        echo "Error. Unknown option: $1"
+        echo "Run with --help to see the available options."
+        exit 1
+        ;;
+esac
+
 if [ "$EUID" -ne 0 ]; then
     echo "Not running as root. Re-launching with sudo..."
     exec sudo bash "$0" "$@"
@@ -40,8 +72,11 @@ NC='\033[0m' # No Color
 
 # Function: Display Header
 header() {
-    clear
-    echo -e "${GREEN}      StreamerBot Docker Manager          ${NC}"
+    # Deliberately does not call clear. Scrollback is what a screen reader user
+    # relies on to review what just happened, and clearing it destroys the only
+    # record of the last action's output.
+    echo ""
+    echo "StreamerBot manager"
     echo ""
 }
 
@@ -153,19 +188,18 @@ create_shared_youtube_service() {
 
 start_shared_youtube_service() {
     docker start "$YOUTUBE_SERVICE_NAME" >/dev/null
-    echo -n "Waiting for shared YouTube service"
+    echo "Waiting for the shared YouTube service to start."
     for _ in $(seq 1 60); do
         if curl -fsS "$YOUTUBE_BRIDGE_URL/health" >/dev/null 2>&1; then
-            echo -e " [ ${GREEN}OK${NC} ]"
+            echo "OK. The shared YouTube service is ready."
             return 0
         fi
         if [ "$(docker inspect -f '{{.State.Running}}' "$YOUTUBE_SERVICE_NAME" 2>/dev/null)" != "true" ]; then
             break
         fi
-        echo -n "."
         sleep 0.5
     done
-    echo -e " [ ${RED}FAILED${NC} ]"
+    echo "Error. The shared YouTube service did not become ready."
     docker logs --tail 30 "$YOUTUBE_SERVICE_NAME" 2>&1
     return 1
 }
@@ -729,9 +763,12 @@ delete_bot() {
         CONTAINER_NAME="${bot_to_delete}"
         BOT_DIR="${BOTS_ROOT}/${bot_to_delete}"
         
-        echo -e "${RED}WARNING: This will delete everything about '$bot_to_delete' (Container and Folder).${NC}"
-        read -p "Are you sure? (y/N): " confirm
-        if [[ "$confirm" =~ ^[yY]$ ]]; then
+        echo "Warning. This deletes the bot '$bot_to_delete' completely: its container and its"
+        echo "folder, which holds its configuration and every connected account."
+        echo "This cannot be undone."
+        echo ""
+        read -p "Type delete to confirm, or press Enter to cancel: " confirm
+        if [ "$confirm" = "delete" ]; then
             echo "1. Removing Container..."
             docker stop -t 1 "$CONTAINER_NAME" >/dev/null 2>&1
             docker rm "$CONTAINER_NAME" >/dev/null 2>&1
@@ -824,14 +861,15 @@ delete_bots_batch() {
         
         # Show summary and confirm
         echo ""
-        echo -e "${RED}WARNING: You are about to DELETE the following bots:${NC}"
+        echo "Warning. This deletes the following bots completely, including every"
+        echo "connected account. This cannot be undone."
         for bot in "${selected_bots[@]}"; do
-            echo "  - $bot"
+            echo "  $bot"
         done
         echo ""
-        read -p "Are you sure? (y/N): " confirm
-        
-        if [[ "$confirm" =~ ^[yY]$ ]]; then
+        read -p "Type delete to confirm, or press Enter to cancel: " confirm
+
+        if [ "$confirm" = "delete" ]; then
             echo ""
             echo -e "${YELLOW}Stopping all selected containers...${NC}"
             # Stop all selected containers at once
@@ -1524,12 +1562,10 @@ restart_with_timer() {
     docker stop -t 1 $(docker ps -a -q -f "label=role=streamerbot")
     
     echo -e "${YELLOW}Waiting ${wait_time} seconds...${NC}"
-    # Countdown visual
-    for ((i=wait_time; i>0; i--)); do
-        printf "\r%02d..." "$i"
-        sleep 1
-    done
-    echo ""
+    # A carriage-return countdown rewrites one line every second, and a screen
+    # reader reads the whole line again on each rewrite, talking over the user
+    # for the entire wait. The two surrounding messages say the same thing.
+    sleep "$wait_time"
     
     echo -e "${YELLOW}Starting all bots...${NC}"
     docker start $(docker ps -a -q -f "label=role=streamerbot")
@@ -1538,14 +1574,115 @@ restart_with_timer() {
     read -p "Enter to return..."
 }
 
-# Function: Delegate Uninstall to uninstall.sh
-uninstall_all() {
-    if [ -f "${SCRIPT_DIR}/uninstall.sh" ]; then
-        exec bash "${SCRIPT_DIR}/uninstall.sh"
+# ---------------------------------------------------------------------------
+# Uninstall.
+#
+# "Uninstall everything" hid three very different outcomes behind one label, so
+# it now asks which. The least destructive is first and is what Enter selects,
+# because the common reason for coming here is reclaiming disk space or forcing
+# a clean rebuild, not throwing away accounts.
+#
+# Level 1 deliberately leaves bots/ untouched. That directory holds every bot's
+# YouTube tokens, encrypted service passwords, browser profiles and
+# configuration, so preserving it means streamerbot.sh afterwards rebuilds and
+# the bots come back exactly as they were.
+# ---------------------------------------------------------------------------
+remove_bot_containers_and_images() {
+    echo ""
+    echo "Step 1 of 3. Stopping and removing bot containers."
+    local ids
+    ids=$(docker ps -a -q -f "label=role=${STREAMERBOT_LABEL:-streamerbot}" 2>/dev/null)
+    if [ -n "$ids" ]; then
+        docker rm -f $ids >/dev/null 2>&1
+        echo "OK. Bot containers removed."
     else
-        echo -e "${RED}Error: uninstall.sh not found.${NC}"
-        read -p "Press Enter to continue..."
+        echo "OK. There were no bot containers."
     fi
+
+    echo "Step 2 of 3. Removing the shared YouTube service."
+    if docker rm -f "$YOUTUBE_SERVICE_NAME" >/dev/null 2>&1; then
+        echo "OK. Shared YouTube service removed."
+    else
+        echo "OK. There was no shared YouTube service."
+    fi
+
+    echo "Step 3 of 3. Removing the StreamerBot image."
+    if docker rmi -f "$BOT_IMAGE" >/dev/null 2>&1; then
+        echo "OK. Image removed."
+    else
+        echo "OK. There was no image to remove."
+    fi
+}
+
+uninstall_all() {
+    header
+    echo "Uninstall"
+    echo ""
+    echo "There are three levels. Choose how much to remove."
+    echo ""
+    echo "1. Just the containers and the image."
+    echo "   Removes every bot container, the shared YouTube service, and the"
+    echo "   StreamerBot image. Your bots folder is left completely alone, so every"
+    echo "   connected account and all configuration survive and the bots come back"
+    echo "   when you rebuild. This is the safe option."
+    echo ""
+    echo "2. The containers, the image, and all bot data."
+    echo "   Everything in option 1, plus the bots folder, the auto-update service"
+    echo "   and temporary files. This deletes every connected account and cannot be"
+    echo "   undone. Take a backup first if you may want any of it back."
+    echo ""
+    echo "3. All of that, and Docker itself."
+    echo "   Everything in option 2, plus a full Docker prune and stopping the Docker"
+    echo "   engine. Warning. This affects containers that have nothing to do with"
+    echo "   StreamerBot, so it can break other software on this machine."
+    echo ""
+    echo "b. Back, without removing anything."
+    echo ""
+    read -p "Choose 1, 2, 3, or b [Enter = 1]: " level
+    level="${level:-1}"
+
+    case "$level" in
+        1)
+            echo "You selected 1, just the containers and the image."
+            echo ""
+            echo "Your bots folder and every connected account will be kept."
+            read -p "Type remove to confirm, or press Enter to cancel: " confirm
+            if [ "$confirm" != "remove" ]; then
+                echo "Cancelled. Nothing was removed."
+                read -p "Press Enter to continue..."
+                return
+            fi
+            remove_bot_containers_and_images
+            echo ""
+            echo "OK. Done. Your bots folder was not touched."
+            echo "Run this script again to rebuild and start the bots."
+            read -p "Press Enter to continue..."
+            ;;
+        2|3)
+            # Both of these are uninstall.sh's territory: it already knows how to
+            # remove bot data and how to take Docker down, and duplicating that
+            # here would mean two things to keep correct.
+            if [ ! -f "${SCRIPT_DIR}/uninstall.sh" ]; then
+                echo "Error. uninstall.sh was not found, so this cannot continue."
+                read -p "Press Enter to continue..."
+                return
+            fi
+            if [ "$level" = "2" ]; then
+                echo "You selected 2, the containers, the image, and all bot data."
+            else
+                echo "You selected 3, all of that and Docker itself."
+            fi
+            echo ""
+            exec bash "${SCRIPT_DIR}/uninstall.sh"
+            ;;
+        b|B)
+            echo "You selected b, back. Nothing was removed."
+            ;;
+        *)
+            echo "That was not one of the choices. Enter 1, 2, 3, or b."
+            read -p "Press Enter to continue..."
+            ;;
+    esac
 }
 
 
@@ -1595,17 +1732,34 @@ backup_bots() {
     TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
     BACKUP_FILE="${BACKUP_DIR}/backup_bots_${TIMESTAMP}.tar.gz"
     
-    echo -e "${YELLOW}Backing up 'bots/' folder to:${NC}"
+    echo "Backing up the bots folder to:"
     echo "  $BACKUP_FILE"
     echo ""
-    
-    # Compress bots/ directory
-    tar -czf "$BACKUP_FILE" -C "$SCRIPT_DIR" bots
-    
-    if [ $? -eq 0 ]; then
-        echo -e "${GREEN}Backup completed successfully!${NC}"
+    echo "Warning. This archive contains the sign-in details for every connected"
+    echo "account, including the key that decrypts the stored passwords. Treat it"
+    echo "like the passwords themselves: do not paste it anywhere, and keep it"
+    echo "somewhere only you can read."
+    echo ""
+
+    # Browser caches are excluded. A Chrome profile's caches run to hundreds of
+    # megabytes per service per bot, they regenerate on first use, and including
+    # them makes a backup slow enough that people stop taking them. Cookies and
+    # Local Storage are NOT excluded: those are the signed-in session, which is
+    # the thing worth keeping.
+    #
+    # Logs and the media cache go too, for the same reason: large, and worthless
+    # once restored.
+    echo "Step 1 of 2. Building the archive, without browser caches or logs."
+    tar -czf "$BACKUP_FILE" -C "$SCRIPT_DIR"         --exclude='bots/*/browser/*/Cache'         --exclude='bots/*/browser/*/Code Cache'         --exclude='bots/*/browser/*/GPUCache'         --exclude='bots/*/browser/*/DawnGraphiteCache'         --exclude='bots/*/browser/*/DawnWebGPUCache'         --exclude='bots/*/browser/*/Service Worker/CacheStorage'         --exclude='bots/*/browser/*/component_crx_cache'         --exclude='bots/*/browser/*/Crashpad'         --exclude='bots/*/*.log'         --exclude='bots/*/StreamerBotCache.dat'         bots
+    tar_status=$?
+
+    if [ "$tar_status" -eq 0 ]; then
+        echo "Step 2 of 2. Checking the archive."
+        size=$(du -h "$BACKUP_FILE" 2>/dev/null | cut -f1)
+        echo "OK. Backup complete. Size: ${size:-unknown}."
     else
-        echo -e "${RED}Error: Backup failed.${NC}"
+        echo "Error. The backup failed and the archive may be incomplete."
+        rm -f "$BACKUP_FILE"
     fi
     read -p "Press Enter to continue..."
 }
@@ -1651,9 +1805,12 @@ restore_bots() {
     selected_backup="${backups[$((choice-1))]}"
     selected_path="${BACKUP_DIR}/${selected_backup}"
     
-    echo -e "${RED}WARNING: This will overwrite your current 'bots/' folder and configuration files!${NC}"
-    read -p "Are you sure you want to proceed? (y/N): " confirm
-    if [[ ! "$confirm" =~ ^[yY]$ ]]; then
+    echo "Warning. This replaces the current bots folder and every bot's configuration"
+    echo "with the contents of that backup. Anything connected since the backup was"
+    echo "taken will be lost."
+    echo ""
+    read -p "Type restore to confirm, or press Enter to cancel: " confirm
+    if [ "$confirm" != "restore" ]; then
         return
     fi
     
@@ -1957,6 +2114,139 @@ check_for_updates_passive() {
         echo ""
     fi
 }
+
+# ---------------------------------------------------------------------------
+# Non-interactive flags.
+#
+# Experienced screen reader users skip menus: a flag is one line of typing and
+# gives its answer immediately, where a menu is several rounds of listening to
+# options to reach the same place. These also make the manager scriptable.
+#
+# Handled after project.env is loaded, so the image and service names are known,
+# and before the menu is drawn, so nothing interactive happens.
+# ---------------------------------------------------------------------------
+print_cli_help() {
+    echo "StreamerBot manager"
+    echo ""
+    echo "Run with no arguments for the menu, or use one of these:"
+    echo ""
+    echo "  --status         List every bot and whether it is running."
+    echo "  --services       Show the shared YouTube service and the image."
+    echo "  --start-all      Start every bot."
+    echo "  --stop-all       Stop every bot."
+    echo "  --restart-all    Restart every bot."
+    echo "  --check-updates  Say whether an update is available, without installing it."
+    echo "  --logs NAME      Show the last 50 log lines for one bot."
+    echo "  --help           This text."
+}
+
+cli_bot_names() {
+    [ -d "$BOTS_ROOT" ] || return 0
+    local dir
+    for dir in "$BOTS_ROOT"/*; do
+        [ -d "$dir" ] && basename "$dir"
+    done
+}
+
+cli_status() {
+    local found=0 name state
+    while IFS= read -r name; do
+        [ -n "$name" ] || continue
+        found=1
+        state=$(docker inspect -f '{{.State.Status}}' "$name" 2>/dev/null || echo "no container")
+        echo "$name: $state"
+    done < <(cli_bot_names)
+    [ "$found" -eq 1 ] || echo "There are no bots yet."
+}
+
+cli_services() {
+    local state
+    state=$(docker inspect -f '{{.State.Status}}' "$YOUTUBE_SERVICE_NAME" 2>/dev/null || echo "not created")
+    echo "Shared YouTube service: $state"
+    if curl -fsS "$YOUTUBE_BRIDGE_URL/health" >/dev/null 2>&1; then
+        echo "YouTube bridge: responding"
+    else
+        echo "YouTube bridge: not responding"
+    fi
+    if docker image inspect "$BOT_IMAGE" >/dev/null 2>&1; then
+        echo "Image $BOT_IMAGE: present"
+    else
+        echo "Image $BOT_IMAGE: missing. Run this script with no arguments to build it."
+    fi
+}
+
+cli_for_each_bot() {
+    local action="$1" name count=0
+    while IFS= read -r name; do
+        [ -n "$name" ] || continue
+        if docker "$action" "$name" >/dev/null 2>&1; then
+            echo "OK. $action $name."
+        else
+            echo "Error. Could not $action $name."
+        fi
+        count=$((count + 1))
+    done < <(cli_bot_names)
+    [ "$count" -gt 0 ] || echo "There are no bots yet."
+}
+
+case "${1:-}" in
+    --help|-h)
+        print_cli_help
+        exit 0
+        ;;
+    --status)
+        cli_status
+        exit 0
+        ;;
+    --services)
+        cli_services
+        exit 0
+        ;;
+    --start-all)
+        cli_for_each_bot start
+        exit 0
+        ;;
+    --stop-all)
+        cli_for_each_bot stop
+        exit 0
+        ;;
+    --restart-all)
+        cli_for_each_bot restart
+        exit 0
+        ;;
+    --check-updates)
+        if [ -f "$SCRIPT_DIR/update.sh" ]; then
+            notice="$(bash "$SCRIPT_DIR/update.sh" --check-only 2>/dev/null)"
+            if [ -n "$notice" ]; then
+                echo "$notice"
+            else
+                echo "OK. StreamerBot is up to date."
+            fi
+        else
+            echo "Error. update.sh was not found."
+        fi
+        exit 0
+        ;;
+    --logs)
+        if [ -z "${2:-}" ]; then
+            echo "Error. Give a bot name, for example: streamerbot.sh --logs mybot"
+            exit 1
+        fi
+        docker logs --tail 50 "$2" 2>&1 || {
+            echo "Error. No container named $2."
+            exit 1
+        }
+        exit 0
+        ;;
+    "")
+        ;;
+    *)
+        echo "Error. Unknown option: $1"
+        echo ""
+        print_cli_help
+        exit 1
+        ;;
+esac
 
 ensure_project_env
 check_for_updates_passive
