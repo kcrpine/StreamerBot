@@ -3,6 +3,7 @@ from enum import Flag
 import logging
 from logging.handlers import RotatingFileHandler
 import os
+import threading
 import sys
 from typing import TYPE_CHECKING, Any, List
 
@@ -57,3 +58,57 @@ def initialize_logger(bot: Bot) -> None:
         stream_handler.setLevel(level)
         handlers.append(stream_handler)
     logging.basicConfig(level=level, format=config.format, handlers=handlers)
+    # From here on, nothing crashes silently: an unhandled exception in any
+    # of the bot's seventeen threads reaches this log rather than stderr.
+    install_exception_hooks()
+
+def install_exception_hooks() -> None:
+    """Make sure no unhandled exception escapes without reaching the log.
+
+    Python's defaults print a traceback to stderr. In a container with the logger
+    in FILE mode that goes to docker logs at best and nowhere at worst, so the log
+    file a user is asked to send would show the bot working right up to the moment
+    it stopped, with no reason recorded.
+
+    This matters more here than in most programs because the bot runs seventeen
+    threads: the mpv event thread, the browser worker, the librespot monitor, one
+    per command, the task processor. threading.excepthook covers those, and
+    sys.excepthook the main thread. A thread dying silently is how "playback just
+    stops" bugs become unreportable.
+
+    Everything goes through logging rather than print, so the secret-redaction
+    filter scrubs it on the way out: a traceback can carry a password in a local
+    variable's repr.
+    """
+
+    def handle_main(exc_type, exc_value, exc_traceback) -> None:
+        if issubclass(exc_type, KeyboardInterrupt):
+            # Ctrl+C is a request, not a fault. Restore the default behaviour so
+            # the process still exits promptly.
+            sys.__excepthook__(exc_type, exc_value, exc_traceback)
+            return
+        logging.critical(
+            "Unhandled exception; the bot is stopping",
+            exc_info=(exc_type, exc_value, exc_traceback),
+        )
+
+    def handle_thread(args) -> None:
+        if issubclass(args.exc_type, SystemExit):
+            return
+        name = getattr(args.thread, "name", "unknown")
+        logging.error(
+            f"Unhandled exception in thread {name}; that thread has died",
+            exc_info=(args.exc_type, args.exc_value, args.exc_traceback),
+        )
+
+    def handle_unraisable(args) -> None:
+        # Raised from __del__ and similar, where an exception cannot propagate.
+        # Usually harmless, occasionally the only sign a handle was left open.
+        logging.warning(
+            f"Unraisable exception in {args.object!r}",
+            exc_info=(args.exc_type, args.exc_value, args.exc_traceback),
+        )
+
+    sys.excepthook = handle_main
+    threading.excepthook = handle_thread
+    sys.unraisablehook = handle_unraisable

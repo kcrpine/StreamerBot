@@ -102,7 +102,26 @@ class AuthJob:
                 self._detail.update(detail)
             if state in TERMINAL_STATES:
                 self.finished_at = time.time()
-        logger.debug(f"Auth job {self.service} is now {state.value}")
+
+        # Level matters here. Every transition used to log at debug, and the
+        # default level is INFO, so a failed sign-in produced no log line at all
+        # -- the one event a user most needs to see when asked why an account
+        # will not connect. Outcomes are now logged where they will be read;
+        # intermediate steps stay at debug.
+        if state is AuthState.Failed:
+            logger.error(
+                f"Sign-in to {self.service} failed: {self._reason or 'no reason given'}"
+            )
+        elif state is AuthState.AwaitingCaptcha:
+            logger.warning(
+                f"Sign-in to {self.service} hit a CAPTCHA, which the bot cannot answer"
+            )
+        elif state is AuthState.Success:
+            logger.info(f"Sign-in to {self.service} succeeded")
+        elif state is AuthState.AwaitingOtp:
+            logger.info(f"Sign-in to {self.service} is waiting for a verification code")
+        else:
+            logger.debug(f"Auth job {self.service} is now {state.value}")
 
     def succeed(self) -> None:
         self.set_state(AuthState.Success)
@@ -122,6 +141,10 @@ class AuthJob:
         try:
             code = self._otp_queue.get(timeout=OTP_TIMEOUT_SECONDS)
         except Empty:
+            logger.error(
+                f"Sign-in to {self.service} timed out after "
+                f"{OTP_TIMEOUT_SECONDS} seconds waiting for a verification code"
+            )
             self.fail("No verification code was entered in time.")
             return None
         self.set_state(AuthState.Filling)
