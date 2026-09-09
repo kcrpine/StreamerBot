@@ -2,10 +2,20 @@ from __future__ import annotations
 
 import unittest
 
-from tests.deployment.bash_sandbox import BashSandbox, ROOT, find_bash
+from tests.deployment.bash_sandbox import (
+    BashSandbox,
+    ROOT,
+    deployment_scripts_present,
+    flock_available,
+    find_bash,
+)
 
 
 @unittest.skipUnless(find_bash(), "bash is required")
+@unittest.skipUnless(
+    deployment_scripts_present("auto_updater.sh"),
+    "auto_updater.sh is not present; host-only test skipped",
+)
 class AutoUpdaterRuntimeTests(unittest.TestCase):
     def setUp(self) -> None:
         self.sandbox = BashSandbox()
@@ -114,6 +124,9 @@ exit 0
         self.assertIn("state=0:0", result.stdout)
         self.assertFalse(self.sandbox.trace.exists())
 
+    @unittest.skipUnless(
+        flock_available(), "flock does not exclude a second holder on this host"
+    )
     def test_git_update_runs_even_while_recovery_is_backed_off(self) -> None:
         result = self.sandbox.run(
             [self._one_cycle_script()],

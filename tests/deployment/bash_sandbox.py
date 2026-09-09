@@ -11,6 +11,47 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 
 
+def flock_available() -> bool:
+    """True when flock exists and actually excludes a second holder.
+
+    update.sh serialises itself with flock. Git Bash on Windows ships no flock at
+    all, so acquire_update_lock silently does nothing there and any test of
+    mutual exclusion measures the missing binary rather than the script. These
+    tests therefore skip on such a host and run on Linux, which is where the
+    script actually runs.
+
+    Presence is not assumed to mean working: some environments provide a stub.
+    """
+    if not shutil.which("flock"):
+        return False
+    bash = find_bash()
+    if not bash:
+        return False
+    probe = (
+        'T="$(mktemp)"; exec 9>"$T"; '
+        'flock -n 9 || exit 1; '
+        'flock -n "$T" -c true && exit 1; '
+        'exit 0'
+    )
+    try:
+        return subprocess.run(
+            [bash, "-c", probe], capture_output=True, timeout=20
+        ).returncode == 0
+    except (OSError, subprocess.SubprocessError):
+        return False
+
+
+def deployment_scripts_present(*names: str) -> bool:
+    """True when the host-side shell scripts are on disk.
+
+    .dockerignore keeps update.sh, auto_updater.sh and streamerbot.sh out of the
+    runtime image on purpose: they manage containers from the host and have no
+    job inside one. So these tests pass on a host and must skip in the image
+    rather than failing on files that are absent by design.
+    """
+    return all((ROOT / name).is_file() for name in (names or ("update.sh", "auto_updater.sh")))
+
+
 def find_bash() -> str | None:
     return shutil.which("bash")
 

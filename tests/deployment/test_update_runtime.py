@@ -2,10 +2,20 @@ from __future__ import annotations
 
 import unittest
 
-from tests.deployment.bash_sandbox import BashSandbox, ROOT, find_bash
+from tests.deployment.bash_sandbox import (
+    BashSandbox,
+    ROOT,
+    deployment_scripts_present,
+    flock_available,
+    find_bash,
+)
 
 
 @unittest.skipUnless(find_bash(), "bash is required")
+@unittest.skipUnless(
+    deployment_scripts_present("update.sh"),
+    "update.sh is not present; host-only test skipped",
+)
 class UpdateRuntimeTests(unittest.TestCase):
     def setUp(self) -> None:
         self.sandbox = BashSandbox()
@@ -83,6 +93,9 @@ class UpdateRuntimeTests(unittest.TestCase):
         self.assertIn("already in progress", result.stdout)
         self.assertTrue((self.sandbox.root / "update.lock").exists())
 
+    @unittest.skipUnless(
+        flock_available(), "flock does not exclude a second holder on this host"
+    )
     def test_lock_file_is_not_deleted_by_the_lock_owner(self) -> None:
         result = self.sandbox.run(
             [self._lock_harness()], env={"AUTO_UPDATE": "true"}
@@ -115,6 +128,9 @@ class UpdateRuntimeTests(unittest.TestCase):
         self.assertEqual(75, result.returncode, result.stdout + result.stderr)
         self.assertIn("already in progress", result.stdout)
 
+    @unittest.skipUnless(
+        flock_available(), "flock does not exclude a second holder on this host"
+    )
     def test_inherited_fd_reuses_lock_and_excludes_third_process(self) -> None:
         lock_harness = self._lock_harness()
         command = (
