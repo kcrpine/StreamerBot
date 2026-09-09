@@ -1,4 +1,7 @@
 /bots/
+
+# Manager log, written by streamerbot.sh on the host.
+/logs/
 /TeamTalk_DLL/
 
 # Python

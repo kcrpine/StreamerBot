@@ -1,5 +1,41 @@
 # Changelog
 
+Every change gets a number in square brackets. Numbers only ever go up and are
+never reused, so `[004]` refers to one change permanently and can be cited in an
+issue or a commit message. Numbering continues across releases.
+
+## Unreleased
+
+- **[006]** The bot's log records account sign-in outcomes. Every state change
+  logged at debug before, and the default level is INFO, so a failed sign-in
+  produced no log line at all — the one event someone most needs when asking why
+  an account will not connect. Failures now log at error, CAPTCHAs at warning,
+  and a code request that times out says how long it waited.
+- **[005]** Connection and login failures to the TeamTalk server name the host,
+  the port, the attempt number and the retry limit. They were already logged, but
+  as "Connection failed" and "Login failed" with no detail, which told a reader
+  nothing they could act on. The password is deliberately not among the details.
+- **[004]** Unhandled exceptions in any thread reach the bot's log instead of
+  stderr, which a container sends nowhere useful. This matters because the bot
+  runs seventeen threads — the mpv event thread, the browser worker, the librespot
+  monitor, one per command — and a thread dying silently is how "playback just
+  stops" becomes unreportable. Tracebacks go through logging, so the secret
+  redaction filter scrubs them: a traceback can carry a password in a local
+  variable.
+- **[003]** Creating a bot writes a log at `logs/manager.log`, with the steps it
+  ran and what they returned. `docker create` sent its output to `/dev/null`, so a
+  failed creation said only "Error creating" with no reason. The log sits outside
+  `bots/` because a creation that fails early never gets a bot directory, which is
+  exactly the case worth having a record of. Passwords are not written to it.
+- **[002]** No `cookies.txt` is ever written into a bot's folder, copied when a
+  bot is duplicated, or mounted into a container. Nothing has read one since
+  sign-in moved to device codes, so it was a stale credential in plaintext.
+- **[001]** Restoring a backup from the old TTMediaBot deletes its obsolete
+  `cookies.txt` during migration, before any container starts. This reverses an
+  earlier decision to keep it and merely report it: on reflection a dead YouTube
+  session sitting in a directory that gets tarred into every backup is worse than
+  the small loss of deleting a file nothing reads.
+
 ## StreamerBot 1.0 (unreleased)
 
 A rewrite of TTMediaBot. The multi-bot Docker architecture is unchanged; almost

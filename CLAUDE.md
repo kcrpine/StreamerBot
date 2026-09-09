@@ -196,6 +196,29 @@ counterpart and skips its drift check silently. Starting work without the plan m
 knowing which phases are done, what each one actually found, or which of its original decisions have
 since been overturned — and several have.
 
+### Every push adds a numbered CHANGELOG entry
+
+In the same commit as the work, not at release time when nobody remembers what changed or why.
+
+Entries go under `## Unreleased` at the top of [CHANGELOG.md](CHANGELOG.md), newest first, each opening
+with a number in square brackets:
+
+```markdown
+## Unreleased
+
+- **[003]** Connection and login failures now name the host, port and attempt number. They were
+  logged already, but as "Connection failed" with no detail, which told a user nothing.
+- **[002]** Unhandled exceptions in any thread now reach the bot's log rather than stderr.
+```
+
+- **Numbers only go up and are never reused**, including for a reverted change — the revert gets its
+  own number and says what it undid. A number has to mean one thing forever to be citable in an issue.
+- **One entry per change, not per commit.** A fix spread over three commits is one entry.
+- **Say what it does and why.** "Fixed thread.py" is worthless in six months; the reasoning is the part
+  the diff does not carry.
+- On a release, `## Unreleased` becomes that version's section and a fresh empty one is started.
+  **Numbering continues across releases** so a number identifies a change on its own.
+
 ### Keeping the plan and this file in sync
 
 **This repository is the source of truth, and the sync runs both ways.** The plan is authored at

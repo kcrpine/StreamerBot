@@ -60,12 +60,29 @@ class TeamTalkThread(Thread):
                 or event.event_type == EventType.CON_LOST
                 or event.event_type == EventType.MYSELF_KICKED
             ):
+                server = f"{self.config.hostname}:{self.config.tcp_port}"
+                attempt = self.ttclient.reconnect_attempt + 1
+                limit = (
+                    "unlimited"
+                    if self.config.reconnection_attempts < 0
+                    else str(self.config.reconnection_attempts)
+                )
                 if event.event_type == EventType.CON_FAILED:
-                    logging.warning("Connection failed")
+                    logging.warning(
+                        f"Could not connect to {server}. "
+                        f"Attempt {attempt} of {limit}. "
+                        "Check the hostname, the TCP port, and whether the server "
+                        "requires an encrypted connection."
+                    )
                 elif event.event_type == EventType.CON_LOST:
-                    logging.warning("Server lost")
+                    logging.warning(
+                        f"Lost the connection to {server}. Attempt {attempt} of {limit}."
+                    )
                 else:
-                    logging.warning("Kicked")
+                    logging.warning(
+                        f"Kicked from {server} as {self.config.username!r}. "
+                        f"Attempt {attempt} of {limit}."
+                    )
                 self.ttclient.disconnect()
                 if (
                     self.ttclient.reconnect
@@ -78,14 +95,24 @@ class TeamTalkThread(Thread):
                     self.ttclient.connect()
                     self.ttclient.reconnect_attempt += 1
                 else:
-                    logging.error("Connection error")
+                    logging.error(
+                        f"Giving up on {self.config.hostname}:{self.config.tcp_port} "
+                        f"after {self.ttclient.reconnect_attempt} attempts. "
+                        "The bot is stopping. Set teamtalk.reconnection_attempts to -1 "
+                        "in this bot's config.json to keep retrying forever."
+                    )
                     sys.exit(1)
             elif event.event_type == EventType.CON_SUCCESS:
                 self.ttclient.reconnect_attempt = 0
                 self.ttclient.login()
             elif event.event_type == EventType.ERROR:
                 if self.ttclient.flags & Flags.AUTHORIZED == Flags(0):
-                    logging.warning("Login failed")
+                    logging.warning(
+                        f"The server at {self.config.hostname}:{self.config.tcp_port} "
+                        f"rejected the login for username {self.config.username!r}. "
+                        "Check the username and password, and that the account exists "
+                        "on that server."
+                    )
                     if (
                         self.ttclient.reconnect
                         and self.ttclient.reconnect_attempt

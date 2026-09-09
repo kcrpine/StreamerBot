@@ -149,6 +149,37 @@ incompatible, that go-librespot's device auth flow does not exist before 0.9.1, 
 portal's "settled" accessibility decisions were wrong — none of which is recoverable from the code, and
 all of which would otherwise be rediscovered the expensive way.
 
+**Every push adds a numbered entry to the CHANGELOG.** Not at release time, when nobody remembers
+what changed or why: in the same commit as the work, while the reasoning is still in hand.
+
+Entries live under an `## Unreleased` heading at the top of `CHANGELOG.md`, newest first, each one
+opening with a number in square brackets:
+
+```
+## Unreleased
+
+- **[003]** Connection and login failures now name the host, the port and the attempt number.
+  They were logged already, but as "Connection failed" with no detail, which told a user nothing.
+- **[002]** Unhandled exceptions in any of the bot's threads now reach the bot's log rather than
+  stderr, where a container sends them nowhere. A playback thread dying used to be invisible.
+- **[001]** Restoring an old backup removes its obsolete cookies.txt.
+```
+
+Rules that make the numbers worth having:
+
+- **Numbers only ever go up, and are never reused**, even for a change that is later reverted. The
+  revert gets its own number and says what it undid. A number is a permanent handle: "the [002]
+  change" has to mean one thing forever, or referring to it in an issue is useless.
+- **One entry per change, not per commit.** A fix split across three commits is one entry; three
+  unrelated fixes in one commit are three.
+- **Say what it does and why, not what was edited.** "Fixed thread.py" is worthless in six months.
+  Anything surprising gets the reasoning, because that is the part not recoverable from the diff.
+- **When a release is cut**, the `## Unreleased` block becomes that version's section and a fresh
+  empty one is started. Numbering continues across releases rather than restarting, so a number
+  identifies a change without needing a version alongside it.
+- The numbers are for tracking, not for users. The prose in each entry is what a person reads; the
+  number is what an issue or a commit message points at.
+
 **Check GitHub before writing a single word.** This is a precondition, not a step in a checklist: no
 edit to the plan or to `CLAUDE.md` begins until the repository's copy has been fetched and compared.
 Not at the end, not before committing — before typing.

@@ -99,14 +99,23 @@ class IdentityIsPreservedTests(TestCase):
 
         self.assertIn("config.json.pre-migration", migrate)
 
-    def test_nothing_is_deleted(self):
-        """A restore is not the moment to throw away a file someone may want."""
+    def test_nothing_is_deleted_except_the_obsolete_cookie_file(self):
+        """Config and data are never destroyed. The old cookies.txt is the one
+        deliberate exception: nothing has read it since sign-in moved to device
+        codes, and leaving it behind means a stale YouTube session sitting in
+        plaintext in a directory that gets tarred into every backup."""
         migrate = self.script[
             self.script.index("migrate_one_bot() {"):self.script.index("migrate_restored_bots() {")
         ]
         self.assertNotIn("rm -rf", migrate)
-        # cookies.txt is reported as unused, never removed.
-        self.assertNotRegex(migrate, r"rm\s+.*cookies\.txt")
+        self.assertRegex(migrate, r"rm -f \"\$dir/cookies\.txt\"")
+
+    def test_the_config_is_never_deleted(self):
+        migrate = self.script[
+            self.script.index("migrate_one_bot() {"):self.script.index("migrate_restored_bots() {")
+        ]
+
+        self.assertNotRegex(migrate, r"rm\s+(-\w+\s+)*\"?\$dir/config\.json")
 
 
 class StartCommandsSurviveTests(TestCase):
@@ -191,6 +200,72 @@ class CookieRemovalTests(TestCase):
     def test_templates_do_not_declare_a_cookie_path(self):
         for name in ("config.json", "config_default.json"):
             self.assertNotIn("cookiefile_path", read_config(name)["services"]["yt"], name)
+
+
+class NoCookieFileIsEverWrittenTests(TestCase):
+    """A cookies.txt in a bot folder is a stale credential nothing reads. It must
+    not be created, copied between bots, or mounted into a container."""
+
+    def setUp(self):
+        self.script = read_script("streamerbot.sh")
+
+    def test_nothing_copies_a_cookie_file_into_a_bot_folder(self):
+        # Checked as plain substrings: the shell forms that would copy a cookie
+        # file into a bot directory, without a regex that needs escaping.
+        for form in (
+            'cp "$cookies_path" "$CURRENT_BOT_DIR/cookies.txt"',
+            'cp "$SOURCE_BOT_DIR/cookies.txt" "$CURRENT_BOT_DIR/cookies.txt"',
+            'cp "$d/cookies.txt"',
+        ):
+            self.assertFalse(form in self.script, f"streamerbot.sh still does: {form}")
+
+    def test_nothing_creates_an_empty_one(self):
+        self.assertNotRegex(self.script, r'touch "\$[A-Za-z_]*(BOT_DIR|d)/cookies\.txt"')
+
+    def test_no_container_mounts_one(self):
+        needle = "/home/streamer/StreamerBot/data/cookies.txt"
+
+        self.assertFalse(
+            needle in self.script, f"streamerbot.sh still mounts {needle}"
+        )
+
+    def test_creation_removes_one_it_finds(self):
+        """Only reachable when a directory is reused, but a leftover credential
+        should not survive a fresh bot being created on top of it."""
+        self.assertIn('rm -f "$CURRENT_BOT_DIR/cookies.txt"', self.script)
+
+
+class CreationIsLoggedTests(TestCase):
+    """Creating a bot touches Docker, jq, the filesystem and the network. When it
+    fails the detail has usually scrolled away or was sent to /dev/null."""
+
+    def setUp(self):
+        self.script = read_script("streamerbot.sh")
+
+    def test_there_is_a_log_file_outside_the_bots_directory(self):
+        """A creation that fails early may never get a bot directory, which is
+        exactly the case worth having a record of."""
+        self.assertIn('MANAGER_LOG="${SCRIPT_DIR}/logs/manager.log"', self.script)
+
+    def test_container_creation_no_longer_discards_its_output(self):
+        create = self.script[self.script.index("log_say \"Creating the container.\""):]
+        create = create[: create.index("fi")]
+
+        self.assertIn("log_run", create)
+        self.assertNotIn("> /dev/null 2>&1", create)
+
+    def test_the_log_records_what_was_asked_for(self):
+        self.assertRegex(self.script, r'log_line "Creating bot \$current_bot_name')
+
+    def test_passwords_are_not_written_to_the_log(self):
+        """A log that records a password is a log that leaks it."""
+        line = next(
+            l for l in self.script.splitlines()
+            if l.strip().startswith('log_line "Creating bot')
+        )
+
+        self.assertNotIn("$password", line)
+        self.assertNotIn("$channel_password", line)
 
 
 if __name__ == "__main__":

@@ -70,6 +70,57 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
+# ---------------------------------------------------------------------------
+# Manager log.
+#
+# Creating a bot touches Docker, jq, the filesystem and the network, and when it
+# goes wrong the useful detail has usually scrolled away or was never printed. So
+# every step is appended here with a timestamp, whether or not it is also shown.
+#
+# The log lives outside bots/ on purpose: a creation that fails early may never
+# get a bot directory, and that is exactly the case worth having a record of.
+# Nothing secret is written -- passwords and channel passwords are never passed
+# to it, only the fact that a step ran and what it returned.
+# ---------------------------------------------------------------------------
+MANAGER_LOG="${SCRIPT_DIR}/logs/manager.log"
+
+log_line() {
+    local message="$1"
+    mkdir -p "$(dirname "$MANAGER_LOG")" 2>/dev/null || return 0
+    printf '%s  %s
+' "$(date '+%Y-%m-%d %H:%M:%S')" "$message" >> "$MANAGER_LOG" 2>/dev/null || true
+}
+
+# Say it and record it. Used for the steps a user should see anyway.
+log_say() {
+    echo "$1"
+    log_line "$1"
+}
+
+# Run a command, record its exit status and its output, and show the output only
+# when it failed. Keeps a successful creation quiet without losing the detail.
+log_run() {
+    local description="$1"
+    shift
+    local output status
+    output=$("$@" 2>&1)
+    status=$?
+    log_line "$description -> exit $status"
+    if [ -n "$output" ]; then
+        printf '%s
+' "$output" | while IFS= read -r line; do
+            log_line "    $line"
+        done
+    fi
+    if [ "$status" -ne 0 ]; then
+        echo "Error. $description failed."
+        [ -n "$output" ] && printf '%s
+' "$output" | tail -5
+        echo "Full detail is in $MANAGER_LOG"
+    fi
+    return "$status"
+}
+
 # Function: Display Header
 header() {
     # Deliberately does not call clear. Scrollback is what a screen reader user
@@ -255,7 +306,6 @@ recreate_bot_containers() {
                 --label "role=streamerbot" \
                 --restart always \
                 -v "${d}:/home/streamer/StreamerBot/data" \
-                -v "${d}/cookies.txt:/home/streamer/StreamerBot/data/cookies.txt" \
                 "${BOT_IMAGE}" > /dev/null 2>&1
                 
             if [ $? -eq 0 ]; then
@@ -589,17 +639,16 @@ create_bot() {
     # Copy default config
     cp "$CONFIG_SOURCE" "$CURRENT_BOT_DIR/config.json"
     
-    # No cookies file. YouTube signs in with a device code now, so there is
-    # nothing to copy and nothing to mount; an empty cookies.txt existed only to
-    # stop the mount failing. If the user pointed at one anyway, keep it rather
-    # than discard it, but say that it does nothing.
+    # No cookies file is created, copied or mounted. YouTube signs in with a
+    # device code, so a cookies.txt would be a stale credential sitting in
+    # plaintext in the bot's folder doing nothing.
     COOKIES_MOUNT=""
     CONTAINER_COOKIE_PATH=""
-    if [ -n "${cookies_path:-}" ] && [ -f "$cookies_path" ]; then
-        cp "$cookies_path" "$CURRENT_BOT_DIR/cookies.txt"
-        chown 1000:1000 "$CURRENT_BOT_DIR/cookies.txt" 2>/dev/null || true
-        echo "Note. The cookies file was kept, but this version does not use it."
-        echo "YouTube signs in with a code. Send li yt to the bot once it is running."
+    if [ -f "$CURRENT_BOT_DIR/cookies.txt" ]; then
+        # Only reachable if a directory was reused. Remove it rather than leave a
+        # credential nothing reads.
+        rm -f "$CURRENT_BOT_DIR/cookies.txt"
+        log_line "Removed a leftover cookies.txt from $CURRENT_BOT_DIR"
     fi
 
     # Directories the services write their own credentials into.
@@ -644,24 +693,26 @@ create_bot() {
     echo "Adjusting folder permissions..."
     chown -R 1000:1000 "$CURRENT_BOT_DIR"
 
-    echo -e "${YELLOW}Creating container...${NC}"
-    # Use label to identify bots later since name is variable
-    docker create \
-        --name "${current_bot_name}" \
-        --network host \
-        -e "TTBOT_INSTANCE=${current_bot_name}" \
-        -e "YOUTUBE_BRIDGE_URL=${YOUTUBE_BRIDGE_URL}" \
-        --label "role=streamerbot" \
-        --restart always \
-        -v "${CURRENT_BOT_DIR}:/home/streamer/StreamerBot/data" \
-        $COOKIES_MOUNT \
-        "${BOT_IMAGE}" > /dev/null 2>&1
-
-
-    if [ $? -eq 0 ]; then
-        echo "  ✓ Bot '$current_bot_name' created successfully!"
+    log_line "Creating bot $current_bot_name: host=$server_addr tcp=$tcp_port udp=$udp_port encrypted=$encrypted channel=$channel nickname=$nickname startup=${start_command:-none}"
+    # Deliberately absent from that line: the account password and the channel
+    # password. A log that records those is a log that leaks them.
+    log_say "Creating the container."
+    # docker create output went to /dev/null, so a failure said only "Error
+    # creating" with no reason. It now goes to the log, and is shown when the
+    # command fails.
+    if log_run "docker create for $current_bot_name" \
+        docker create \
+            --name "${current_bot_name}" \
+            --network host \
+            -e "TTBOT_INSTANCE=${current_bot_name}" \
+            -e "YOUTUBE_BRIDGE_URL=${YOUTUBE_BRIDGE_URL}" \
+            --label "role=streamerbot" \
+            --restart always \
+            -v "${CURRENT_BOT_DIR}:/home/streamer/StreamerBot/data" \
+            "${BOT_IMAGE}"; then
+        log_say "OK. Bot $current_bot_name created."
     else
-        echo "  ✗ Error creating '$current_bot_name'"
+        log_say "Error. Bot $current_bot_name was not created."
     fi
     done
     
@@ -1425,18 +1476,15 @@ duplicate_bot() {
             tmp_config=$(mktemp)
             jq --arg nick "$current_nickname" '.teamtalk.nickname = $nick' "$CURRENT_BOT_DIR/config.json" > "$tmp_config" && mv "$tmp_config" "$CURRENT_BOT_DIR/config.json"
             
-            # Copy cookies if exists
-            if [ -f "$SOURCE_BOT_DIR/cookies.txt" ]; then
-                cp "$SOURCE_BOT_DIR/cookies.txt" "$CURRENT_BOT_DIR/cookies.txt"
-            else
-                touch "$CURRENT_BOT_DIR/cookies.txt"
-            fi
+            # No cookies file is carried across. Duplicating a bot duplicates
+            # its configuration, not its sign-ins: the copy connects its own
+            # accounts, which is also what keeps two bots from sharing one.
+            rm -f "$CURRENT_BOT_DIR/cookies.txt"
             
             # Fix permissions
             chown -R 1000:1000 "$CURRENT_BOT_DIR"
             
             # Create container (without starting)
-            COOKIES_MOUNT_DUP="-v ${CURRENT_BOT_DIR}/cookies.txt:/home/streamer/StreamerBot/data/cookies.txt"
             docker create \
                 --name "${current_bot_name}" \
                 --network host \
@@ -1445,7 +1493,6 @@ duplicate_bot() {
                 --label "role=streamerbot" \
                 --restart always \
                 -v "${CURRENT_BOT_DIR}:/home/streamer/StreamerBot/data" \
-                -v "${CURRENT_BOT_DIR}/cookies.txt:/home/streamer/StreamerBot/data/cookies.txt" \
                 "${BOT_IMAGE}" > /dev/null 2>&1
             
             if [ $? -eq 0 ]; then
@@ -1841,11 +1888,16 @@ migrate_one_bot() {
             echo "  The original is kept as config.json.pre-migration."
         fi
 
-        # A leftover cookies.txt is not deleted, but it does nothing now, and
-        # saying so stops someone concluding YouTube is broken.
+        # The old cookies.txt is removed. Nothing reads it since the switch to
+        # device-code sign-in, and leaving it behind means a stale YouTube
+        # session sitting in plaintext in a directory that gets tarred into
+        # backups. Deleting it is the safer of the two options, not the riskier
+        # one, and the bot signs in again with a code.
         if [ -f "$dir/cookies.txt" ]; then
-            echo "  This bot has a cookies.txt, which this version no longer uses."
-            echo "  YouTube signs in with a code now. Send li yt to the bot once it is running."
+            rm -f "$dir/cookies.txt"
+            log_line "Removed the obsolete cookies.txt from $name"
+            echo "  Removed the old cookies.txt. This version signs in with a code"
+            echo "  instead. Send li yt to the bot once it is running."
         fi
     fi
 
