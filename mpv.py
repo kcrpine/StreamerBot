@@ -1410,11 +1410,25 @@ class MPV(object):
             for key, val in options.items()
         )
 
+    # mpv 0.38 inserted an <index> argument into loadfile, between <flags> and
+    # <options>: "loadfile <url> [<flags> [<index> [<options>]]]". The options
+    # string that used to sit third is not a number, so against a newer libmpv
+    # every load failed with MPV_ERROR_INVALID_PARAMETER (-4) and the bot
+    # reported "Invalid value for mpv parameter" instead of playing anything.
+    # Debian 13 ships mpv 0.40 (client API 2.5), which is what the image runs.
+    _LOADFILE_INDEX_API_VERSION = (2, 2)
+
     def loadfile(self, filename, mode="replace", **options):
         """Mapped mpv loadfile command, see man mpv(1)."""
-        self.command(
-            "loadfile", filename.encode(fs_enc), mode, MPV._encode_options(options)
-        )
+        args = ["loadfile", filename.encode(fs_enc), mode]
+        if options:
+            # Position only matters when there is something to position. With no
+            # options the two-argument form is accepted by every mpv release,
+            # old and new, and that is the form the bot itself always takes.
+            if _mpv_client_api_version() >= MPV._LOADFILE_INDEX_API_VERSION:
+                args.append("-1")  # -1 means append to the end of the playlist
+            args.append(MPV._encode_options(options))
+        self.command(*args)
 
     def loadlist(self, playlist, mode="replace"):
         """Mapped mpv loadlist command, see man mpv(1)."""

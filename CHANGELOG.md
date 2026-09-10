@@ -6,6 +6,17 @@ issue or a commit message. Numbering continues across releases.
 
 ## Unreleased
 
+- **[008]** Playing anything works again. mpv 0.38 inserted an `<index>`
+  argument into its `loadfile` command, between the flags and the per-file
+  options, and the vendored `mpv.py` still passed its options string in the old
+  third position. Debian 13 ships mpv 0.40, so against the image's own libmpv
+  every load was rejected with `MPV_ERROR_INVALID_PARAMETER` and the user got a
+  private message reading "Invalid value for mpv parameter" instead of audio.
+  `loadfile` now sends the two-argument form when there are no per-file options,
+  which every mpv release accepts and which is the only form the bot itself uses,
+  and inserts the index ahead of the options when there are. Tests cover both the
+  arguments assembled and a real load through libmpv, because the argument test
+  alone only restates the assumption that was wrong.
 - **[007]** A newly created bot starts instead of exiting at once. `config.json`
   declared `config_version` 2 while `ConfigManager` still understood 1, and a
   version above what the bot knows is rejected outright — so every bot created
