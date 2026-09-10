@@ -104,6 +104,26 @@ youtubei.js. Python talks to it over HTTP via `bot/services/youtube_bridge.py`.
 There is no `cookies.txt` anywhere any more. Sign-in is an OAuth device code (`yl` command,
 `/auth/start`), and anonymous use still works exactly as the cookie-less path did.
 
+**Two things about resolving a stream that cost a day each.** Both are in `media.mjs`'s
+`planPlaybackAttempts`, which is where the client chain lives and is pure so it can be tested:
+
+- **`ClientType` is not the vocabulary `getBasicInfo({client})` speaks.** `ClientType` is for
+  `Innertube.create({client_type})`. `getBasicInfo`'s `client` option is validated against
+  `Constants.SUPPORTED_CLIENTS`, which holds the enum's **keys** (`'TV_EMBEDDED'`), while
+  `ClientType.TV_EMBEDDED` is its **value** (`'TVHTML5_SIMPLY_EMBEDDED_PLAYER'`). Passing the enum
+  throws `Invalid client: …` inside the process, so that fallback silently never ran. The two
+  parameters look interchangeable and are not.
+- **A signed-in session must be able to fall back to an anonymous one.** YouTube answers **400** to an
+  OAuth-authenticated player request that it serves anonymously, so completing `yl` for age-restricted
+  content otherwise breaks *all* playback. Authenticated attempts come first — they are the only ones
+  that can return age-restricted or member content — and the anonymous session is built lazily. Search
+  is unaffected either way, so "search works but nothing plays" is the signature of this class of bug.
+
+A chain of fallbacks is only a fallback if the entries differ. The original read
+`['YTMUSIC', 'MWEB', ClientType.TV_EMBEDDED]` and was one real client: the caller rewrote `'YTMUSIC'`
+to MWEB and the third was invalid. `youtubei.js` is pinned to `#main`, so this is a moving target —
+when playback breaks, probe which clients resolve *today* before changing the order.
+
 ### Per-bot isolation is a requirement, not an accident
 
 Each container is created with `-v "${BOTS_ROOT}/${bot}:/home/streamer/StreamerBot/data"`, so every
@@ -114,6 +134,25 @@ one host must never share a streaming account.
 Bot directories are owned by uid 1000 (the container user). `update.sh` deliberately prunes `bots/`
 from its repo-wide `chown`/`chmod` pass — a blanket `chmod -R 777` there once left credentials
 world-writable and locked the container out.
+
+**Bots run with `--network host`, so any port in `config.json` must be unique per bot.** Two are:
+`auth_portal.port` (4419) and `services.sp.api_port` (3678). Both were written as the same constant
+into every bot, so the first bot to start took them and every other bot lost its portal *and* its
+Spotify daemon. Neither failure named itself — a portal that failed to bind was indistinguishable from
+one switched off, so `li` blamed the configuration, and go-librespot's output went to `/dev/null` so its
+restart loop logged no exit code. `streamerbot.sh` now allocates per bot (`assign_unique_bot_ports`) on
+create, on restore, and automatically before Start All and Restart All, with `--repair-ports` for
+existing bots.
+
+Two rules if you touch that allocation: it must be **idempotent**, since it runs before every start; and
+a bot's **own** live listener is not a clash. Testing "is this port in use" with `ss` catches the bot's
+own running portal and moves it on every restart, which breaks the firewall rule and `public_url` the
+user set up. That is why there are two predicates — `port_claimed_by_another_bot` (config only, for a
+port a bot already has) and `port_free_for_new_bot` (also checks listeners, for choosing a new one).
+
+**If you add a new listening port, add it to both.** And remember a free port is only half of
+reachability: the port still has to be allowed through the host's firewall and forwarded by anything in
+front of it, which produces the same "link does not open" symptom for an entirely different reason.
 
 ### Auth portal and secrets
 
@@ -170,7 +209,21 @@ prerelease zip per push, and an email report.
 
 **Never interpolate `${{ github.event.* }}` into a `run:` block.** Commit messages are
 attacker-controlled; pass them through `env:` and reference quoted shell variables. This was a live
-script-injection sink until it was fixed.
+script-injection sink until it was fixed. Issue titles and bodies are the same class of input —
+`label-untemplated-issues.yml` uses `github-script` and never touches the text at all.
+
+**The runner's mpv is older than the image's, and code that depends on the difference will pass locally
+and fail in CI.** `ubuntu-latest` installs `libmpv2 0.37`; the image ships mpv 0.40. mpv 0.38 inserted an
+`<index>` argument into `loadfile`, so the two want different argument counts, gated on
+`MPV._LOADFILE_INDEX_API_VERSION`. The client API numbers are what matter and are easy to get wrong by
+one release: **0.37 is (2, 2), 0.38 is (2, 3)**, 0.39 (2, 4), 0.40 (2, 5). A gate of (2, 2) captures 0.37
+and breaks every load on the runner. Measure both sides rather than reasoning about it —
+`test_mpv_loadfile.py` talks to a real libmpv and pins the boundary independently of the gate
+expression, because the argument-order test uses the same condition as the code and so cannot catch a
+wrong constant.
+
+Labels named by an issue form must exist in the repository, or the form files the issue without them and
+says nothing.
 
 ## Commit and phase conventions
 
