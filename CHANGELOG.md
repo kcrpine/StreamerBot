@@ -15,6 +15,13 @@ issue or a commit message. Numbering continues across releases.
   `jq` — two copies of the same rules drifting apart is what `[007]` was. It
   mounts `bots/` read-only, so it is safe to run while every bot is up.
 
+  A server on the same box is not a complaint. Containers are created with
+  `--network host`, so `localhost` inside a container is the host, and running
+  the TeamTalk server alongside the bots is an ordinary way to do this. What is
+  worth saying is the shipped template nobody filled in — server, account and
+  nickname all still at their defaults — which is a different thing and is
+  reported as such.
+
   The stricter part is lineage. Version numbers only mean something within one
   project: a config restored or copied from `gumerov-amir/TTMediaBot`, from
   `JoaoDEVWHADS/TTMediaBot` or from any other fork can declare a `config_version`

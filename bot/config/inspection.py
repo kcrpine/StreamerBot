@@ -20,7 +20,7 @@ from typing import Any, Dict, List
 from pydantic import ValidationError
 
 from bot.config import ConfigManager
-from bot.config.models import ConfigModel, ServicesModel
+from bot.config.models import ConfigModel, ServicesModel, TeamTalkModel
 from bot.migrators.config_migrator import is_foreign_lineage, migrate_functs
 
 # The bot will not start at all.
@@ -225,6 +225,12 @@ def _check_model(migrated: Dict[str, Any]) -> List[Finding]:
     return []
 
 
+# Names for this same machine. Containers are created with --network host, so
+# these reach the host's own ports: a TeamTalk server on the same box is an
+# ordinary way to run this, not a mistake.
+LOCAL_HOSTNAMES = ("localhost", "127.0.0.1", "::1", "0.0.0.0")
+
+
 def _check_reachability(data: Dict[str, Any]) -> List[Finding]:
     """Things that let a bot start and then never appear in the channel."""
     teamtalk = data.get("teamtalk")
@@ -232,18 +238,54 @@ def _check_reachability(data: Dict[str, Any]) -> List[Finding]:
         return []
     findings = []
     hostname = teamtalk.get("hostname", "")
-    if not hostname or hostname in ("localhost", "127.0.0.1"):
+    username = teamtalk.get("username", "")
+    nickname = teamtalk.get("nickname", "")
+
+    # Read from the model, so changing a default cannot leave this behind.
+    default_hostname = TeamTalkModel.model_fields["hostname"].default
+    default_nickname = TeamTalkModel.model_fields["nickname"].default
+
+    if not hostname:
         findings.append(
             Finding(
                 WARNING,
                 "no_server",
-                f"The server is set to {hostname or 'nothing'}, which is this "
-                "machine rather than a TeamTalk server. The bot starts and "
-                "retries forever without ever appearing in a channel.",
+                "No server is set, so the bot has nothing to connect to. It "
+                "starts and retries forever without appearing in a channel.",
                 "Set teamtalk.hostname to the server's address.",
             )
         )
-    if not teamtalk.get("nickname"):
+    elif hostname in LOCAL_HOSTNAMES:
+        findings.append(
+            Finding(
+                NOTE,
+                "local_server",
+                f"The server is {hostname}, on this same machine. That works: "
+                "the container shares the host's network.",
+            )
+        )
+
+    # The shipped template, untouched. Every field creating a bot fills in is
+    # still at its default, which is a bot nobody finished setting up rather
+    # than one pointed at a local server. Testing the hostname alone would
+    # accuse every legitimate same-box deployment.
+    if (
+        hostname == default_hostname
+        and not username
+        and nickname == default_nickname
+    ):
+        findings.append(
+            Finding(
+                WARNING,
+                "never_configured",
+                "This bot still has the server, account and nickname it was "
+                "created with, so nothing was ever filled in. It starts and "
+                "never appears in a channel.",
+                "Create the bot again, or edit teamtalk in its config.json.",
+            )
+        )
+
+    if not nickname:
         findings.append(
             Finding(
                 WARNING,

@@ -116,12 +116,56 @@ class InspectionTests(unittest.TestCase):
         }
         self.assertIn("unknown_default_service", codes(inspect_config_data(data), ERROR))
 
-    def test_a_config_still_on_the_shipped_defaults_is_flagged(self):
+    def test_a_server_on_this_same_box_is_not_a_complaint(self):
+        """Containers are created with --network host, so localhost inside the
+        container is the host. Running the TeamTalk server on the same machine
+        is an ordinary deployment, not a mistake."""
+        for hostname in ("localhost", "127.0.0.1", "::1"):
+            with self.subTest(hostname=hostname):
+                data = {
+                    "config_version": ConfigManager.version,
+                    "teamtalk": {
+                        "hostname": hostname,
+                        "username": "streamer",
+                        "nickname": "Local Bot",
+                    },
+                }
+                findings = inspect_config_data(data)
+                self.assertEqual(codes(findings, WARNING), set())
+                self.assertEqual(codes(findings, ERROR), set())
+                self.assertIn("local_server", codes(findings, NOTE))
+
+    def test_a_local_server_with_no_account_is_still_fine(self):
+        """Some servers take a guest login. An empty username alone proves
+        nothing, so it must not be enough to accuse anybody."""
+        data = {
+            "config_version": ConfigManager.version,
+            "teamtalk": {"hostname": "localhost", "username": "", "nickname": "Mine"},
+        }
+        self.assertEqual(codes(inspect_config_data(data), WARNING), set())
+
+    def test_the_untouched_template_is_flagged(self):
+        """Server, account and nickname all still at their defaults: this is a
+        bot nobody finished creating, which is a different thing from a bot
+        pointed at a local server."""
+        import json as _json
+        import os as _os
+
+        here = _os.path.dirname(_os.path.abspath(__file__))
+        with open(_os.path.join(here, "config.json"), encoding="utf-8") as f:
+            data = _json.load(f)
+        self.assertIn("never_configured", codes(inspect_config_data(data), WARNING))
+
+    def test_no_server_at_all_is_flagged(self):
         data = {"config_version": ConfigManager.version,
-                "teamtalk": {"hostname": "localhost", "nickname": ""}}
-        findings = inspect_config_data(data)
-        self.assertIn("no_server", codes(findings, WARNING))
-        self.assertIn("no_nickname", codes(findings, WARNING))
+                "teamtalk": {"hostname": "", "username": "u", "nickname": "n"}}
+        self.assertIn("no_server", codes(inspect_config_data(data), WARNING))
+
+    def test_a_missing_nickname_is_flagged(self):
+        data = {"config_version": ConfigManager.version,
+                "teamtalk": {"hostname": "tt.example.org", "username": "u",
+                             "nickname": ""}}
+        self.assertIn("no_nickname", codes(inspect_config_data(data), WARNING))
 
     def test_a_wrongly_typed_value_is_reported_not_raised(self):
         data = {"config_version": ConfigManager.version,
