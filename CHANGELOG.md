@@ -6,6 +6,17 @@ issue or a commit message. Numbering continues across releases.
 
 ## Unreleased
 
+- **[007]** A newly created bot starts instead of exiting at once. `config.json`
+  declared `config_version` 2 while `ConfigManager` still understood 1, and a
+  version above what the bot knows is rejected outright — so every bot created
+  since that change died during configuration loading, before it reached
+  TeamTalk, and `--restart always` then restarted it forever. To a user the bot
+  was running and simply never connected. The version bump on the shell side now
+  has a matching migration on the Python side, the rejection message names both
+  version numbers instead of saying only "invalid config_version value", and a
+  configuration written before versioning existed is migrated rather than
+  silently left alone. Tests now read the migrator, which nothing did before,
+  including one that fails if the two version numbers drift apart again.
 - **[006]** The bot's log records account sign-in outcomes. Every state change
   logged at debug before, and the default level is INFO, so a failed sign-in
   produced no log line at all — the one event someone most needs when asking why
