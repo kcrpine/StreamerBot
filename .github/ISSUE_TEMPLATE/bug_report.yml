@@ -1,0 +1,131 @@
+name: Bug report
+description: Something in the bot, the manager script or the account portal does not work.
+title: "Bug: "
+labels:
+  - bug
+  - needs investigation
+body:
+  - type: markdown
+    attributes:
+      # Written as prose rather than a checklist of demands. Most people filing
+      # here use a screen reader, and a wall of bold warnings read start to
+      # finish before the first question is a poor way to begin.
+      value: >-
+        Thank you for reporting this. Only the first two questions are required,
+        so please do not hold a report back because you cannot answer the rest.
+
+        One thing to keep in mind: this issue is public. Do not paste passwords,
+        the contents of a secrets folder, or an account portal link, because a
+        portal link is itself a credential.
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: >-
+        What you did and what the bot did. If the bot replied with a message in
+        the channel, the exact wording of that message is the single most useful
+        thing you can include.
+      placeholder: >-
+        I sent "p weather in texas" and the bot replied "The selected service is
+        currently unavailable".
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected instead
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Which part of the bot
+      description: Pick the closest one. If you are not sure, choose "I am not sure".
+      options:
+        - I am not sure
+        - YouTube or YouTube Music
+        - Spotify
+        - Netflix
+        - Disney Plus
+        - Apple Music
+        - Amazon Music
+        - A direct stream link, such as Icecast
+        - Downloading with the dl command
+        - The account portal, or connecting an account
+        - The streamerbot.sh manager script
+        - Installing or updating
+        - Audio, or the bot being silent in the channel
+        - Something else
+    validations:
+      required: false
+
+  - type: dropdown
+    id: have-log
+    attributes:
+      label: Do you have the log file handy
+      description: >-
+        Each bot writes its own log inside its own folder, at
+        bots/YOUR-BOT-NAME/StreamerBot.log. The manager keeps a separate log at
+        logs/manager.log, and Spotify's daemon writes
+        bots/YOUR-BOT-NAME/librespot/go-librespot.log. Answering "no" is a
+        perfectly good answer and does not stop this being useful.
+      options:
+        - Yes, and I will attach it or paste it below
+        - Yes, I have it but cannot share it right now
+        - No, I do not have a log
+        - I do not know where to find it
+    validations:
+      required: false
+
+  - type: textarea
+    id: log
+    attributes:
+      label: The log, if you have it
+      description: >-
+        Paste it here, or drag the file into this box to attach it. The lines
+        around the failure matter more than the whole file, but a whole file is
+        welcome. Before pasting, check it for anything you would not want public.
+        The bot removes passwords and tokens from its own log on purpose, so a
+        normal log is safe to share.
+      render: text
+    validations:
+      required: false
+
+  - type: input
+    id: version
+    attributes:
+      label: Which version
+      description: >-
+        Run "git rev-parse --short HEAD" in the StreamerBot folder, or give the
+        date you last updated. If you installed from a prerelease zip, its
+        build number works too.
+      placeholder: 1a3a5cc, or "updated on 9 September"
+    validations:
+      required: false
+
+  - type: input
+    id: host
+    attributes:
+      label: What it runs on
+      description: >-
+        The operating system and the processor type. The processor matters more
+        than it looks: Netflix, Disney Plus, Apple Music and Amazon Music need
+        Google Chrome, and Google publishes no Chrome for ARM, so on a Raspberry
+        Pi those four disable themselves by design.
+      placeholder: Debian 13 on an x86_64 VPS, or Raspberry Pi 5 running Ubuntu
+    validations:
+      required: false
+
+  - type: input
+    id: bots
+    attributes:
+      label: How many bots are on this machine
+      description: >-
+        Asked because several faults only appear with more than one bot, since
+        every bot on a host shares that host's ports.
+      placeholder: "3"
+    validations:
+      required: false

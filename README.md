@@ -186,9 +186,22 @@ is the normal route. Pull requests run the full checks automatically — the tes
 suite, the shell scripts, and a Docker image build — and a green run is what gets
 one merged.
 
-**To become a collaborator with write access,** open an issue asking, or say so in
-a pull request. Access is granted by invitation from the repository owner; it is
-not something a fork or a pull request can give itself.
+**To report a fault,** use the [bug report
+form](https://github.com/kcrpine/StreamerBot/issues/new?template=bug_report.yml).
+Only two of its questions are required, so a report is worth filing even when you
+cannot answer the rest. It asks whether you have a log file and where to find one:
+each bot writes its own at `bots/<your bot>/StreamerBot.log`. If none of the forms
+fit, open a blank issue — it gets sorted automatically.
+
+**To become a collaborator with write access,** use the [collaboration request
+form](https://github.com/kcrpine/StreamerBot/issues/new?template=collab_request.yml),
+or say so in a pull request. Access is granted by invitation from the repository
+owner; it is not something a fork or a pull request can give itself.
+
+Issues are public, including anything written in them. Do not paste passwords, the
+contents of a bot's `secrets` folder, or an account portal link — a portal link is
+itself a credential. A normal `StreamerBot.log` is safe to share: the bot strips
+passwords and tokens from its own log on purpose.
 
 ### If you use Claude Code
 

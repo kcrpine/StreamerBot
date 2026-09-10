@@ -6,6 +6,32 @@ issue or a commit message. Numbering continues across releases.
 
 ## Unreleased
 
+- **[014]** Issue forms, sorted automatically. A bug report form labels itself
+  `bug` and `needs investigation`; a collaboration request form labels itself
+  `colab request` and asks for a GitHub username, an email address, why the
+  person wants to work on this, and what they would like to work on. Blank issues
+  stay enabled and a GitHub Actions workflow labels anything filed without a form
+  as `other`, so nothing arrives unsorted and nobody has to remember to sort it.
+
+  Dependabot cannot do this labelling — it only opens dependency pull requests
+  and security alerts and never touches issues people file — so the mechanism is
+  the forms' own `labels:` field plus that workflow. The workflow uses
+  `github-script` rather than a `run:` block and never handles the issue text at
+  all, because an issue title is attacker-controlled in exactly the way a commit
+  message was when one executed itself in this repository's CI.
+
+  The bug form asks separately whether a log is available, with "yes but I cannot
+  share it right now" and "I do not know where to find it" as real answers, and
+  says where each bot's log lives. Neither that question nor the paste box is
+  required: requiring a log turns "I do not have one" into a reason not to file at
+  all. Only "what happened" and "what you expected" are required.
+
+  Both forms say plainly that the issue is public. The bug form says not to paste
+  a portal link, which is a bearer credential; the collaboration form says so on
+  the email field and offers wording for anyone who would rather send it another
+  way, since collecting an address in a public issue without mentioning that is
+  signing someone up for spam they did not agree to.
+
 - **[013]** Every bot gets its own account portal and Spotify port, which fixes
   Apple Music sign-in and Spotify on every bot but the first. `li am` reported
   "The account portal is switched off in this bot's configuration" on a bot whose

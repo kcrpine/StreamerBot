@@ -1,0 +1,52 @@
+name: Label untemplated issues
+
+# Issues filed through a form carry that form's labels already: the bug form adds
+# "bug" and "needs investigation", the collaboration form adds "colab request".
+# A blank issue carries none, and that is exactly what this labels "other", so
+# nothing arrives unsorted and nobody has to remember to sort it.
+#
+# Dependabot cannot do this. It only opens dependency pull requests and security
+# alerts; it never touches issues people file. This workflow is the mechanism.
+
+on:
+  issues:
+    types: [opened]
+
+# Only the ability to write a label on an issue. Nothing here reads code.
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  label:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Label an issue that came from no template
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // Deliberately github-script rather than a run: block. The issue
+            // title and body are attacker-controlled text, and interpolating
+            // ${{ github.event.* }} into a shell command is how a commit message
+            // once executed itself in this repository's CI. Here the text is
+            // never handled at all -- only the label count is.
+            const issue = context.payload.issue;
+            const existing = (issue.labels || []).map((label) =>
+              typeof label === 'string' ? label : label.name
+            );
+
+            if (existing.length > 0) {
+              core.info(
+                `Issue #${issue.number} already carries ${existing.join(', ')}, ` +
+                'so it came from a template. Leaving it alone.'
+              );
+              return;
+            }
+
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issue.number,
+              labels: ['other']
+            });
+            core.info(`Labelled issue #${issue.number} as other.`);

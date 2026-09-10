@@ -1,0 +1,91 @@
+name: Collaboration request
+description: Ask for write access to work on StreamerBot.
+title: "Collab request: "
+labels:
+  - colab request
+body:
+  - type: markdown
+    attributes:
+      value: >-
+        Anyone can open an issue or a pull request without asking, and that is
+        the normal route. This form is only for write access to the repository
+        itself, which is granted by invitation from the owner.
+
+        Before you fill this in, one thing worth knowing: this issue is public,
+        and so is anything you put in it. That matters most for the email
+        question below.
+
+  - type: input
+    id: github-username
+    attributes:
+      label: Your GitHub username
+      description: >-
+        The username itself, not a link. This is the account the invitation is
+        sent to, so please check the spelling.
+      placeholder: octocat
+    validations:
+      required: true
+
+  - type: input
+    id: email
+    attributes:
+      label: Your email address
+      description: >-
+        This issue is public and address-harvesting bots read public issues, so
+        think about whether you want yours here. If you would rather not, write
+        "will send privately" in this box instead, and the repository owner will
+        ask you for it another way. Either answer is fine.
+      placeholder: you@example.com, or "will send privately"
+    validations:
+      required: true
+
+  - type: textarea
+    id: why
+    attributes:
+      label: Why you want to work on this project
+      description: >-
+        In your own words. There is no right answer and no minimum length.
+      placeholder: >-
+        I run a TeamTalk server for blind users and I maintain the audio setup
+        for it, so I would like to help with the parts that touch PulseAudio.
+    validations:
+      required: true
+
+  - type: textarea
+    id: ideas
+    attributes:
+      label: What you would like to help work on
+      description: >-
+        Some idea of where you want to put your effort. It does not have to be a
+        plan, and it is not a commitment. If you have found something in the
+        project you think is wrong, saying so here is welcome.
+      placeholder: >-
+        Adding a service adapter, improving the screen reader experience in the
+        manager script, translations, testing on ARM hardware.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: accessibility
+    attributes:
+      label: Do you use a screen reader or other assistive technology
+      description: >-
+        Entirely optional, and it does not affect whether access is granted. It
+        is asked because this project exists for blind users, and knowing who on
+        the project can test with real assistive technology is genuinely useful.
+      options:
+        - I would rather not say
+        - "Yes"
+        - "No"
+    validations:
+      required: false
+
+  - type: markdown
+    attributes:
+      value: >-
+        One last thing, so nothing here is a surprise. Pull requests run the full
+        CI: the test suite, shellcheck, and a Docker image build. A green run is
+        what gets a change merged. The implementation plan and the working rules
+        for this project ship in the repository, in the .claude folder and
+        CLAUDE.md at the root, and reading those first will save you rediscovering
+        decisions the hard way.

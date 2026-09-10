@@ -1,0 +1,20 @@
+# Blank issues stay enabled on purpose.
+#
+# Forcing every report through a form sounds tidy and is not: someone who cannot
+# fit their problem into one of these forms would otherwise have nowhere to put
+# it, and a report filed awkwardly is worth far more than a report not filed. A
+# blank issue is labelled "other" automatically by
+# .github/workflows/label-untemplated-issues.yml, so nothing arrives unsorted.
+blank_issues_enabled: true
+
+contact_links:
+  - name: How to connect an account
+    url: https://github.com/kcrpine/StreamerBot#configuration
+    about: >-
+      Before filing a bug about a service not connecting, the h connect command
+      in the bot walks through each one. Send "h connect" in the channel, or
+      "h connect spotify" for one service.
+  - name: Ask a question
+    url: https://github.com/kcrpine/StreamerBot/discussions
+    about: >-
+      For questions about setting the bot up rather than a fault in it.
