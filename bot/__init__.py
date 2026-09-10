@@ -328,7 +328,7 @@ class Bot:
         if os.path.exists(success_file):
             try:
                 time.sleep(2)
-                msg = self.translator.translate("Hello this is the streamer bot here, I have finished updates, I am now back online, and ready for streaming again. Thank you for being patient.")
+                msg = self.translator.translate("Hello! I'm back and ready for you to stream again. Thank you for your patience!")
                 self.ttclient.send_message(msg, type=2)
             except Exception as e:
                 logging.error(f"Error sending update success message: {e}")
@@ -364,7 +364,7 @@ class Bot:
             if os.path.exists(update_file):
                 self.is_updating = True
                 try:
-                    msg = self.translator.translate("Hello, this is the streamer bot here, just wanted to let you know a update is running and I will restart shortly.")
+                    msg = self.translator.translate("Hello there! It's me, the Straemer Bot, just coming in here to let you know that an update is in progress and I will restart in a few moments to apply it. Thank you!")
                     self.ttclient.send_message(msg, type=2)
                 except Exception as e:
                     logging.error(f"Error sending update warning: {e}")
