@@ -486,7 +486,18 @@ class AuthPortalCommand(Command):
             }
 
         if action == "link":
-            return portal.mint_link(user.username)
+            link = portal.mint_link(user.username)
+            advice = portal.link_advice() if hasattr(portal, "link_advice") else None
+            source = portal.link_source() if hasattr(portal, "link_source") else ""
+            lines = [link]
+            if source:
+                lines.append(
+                    self.translator.translate("That address came from %(source)s.")
+                    % {"source": source}
+                )
+            if advice:
+                lines.append(advice)
+            return chr(10).join(lines)
 
         if action == "rotate":
             count = portal.tokens.revoke_all()

@@ -1501,6 +1501,12 @@ class LoginCommand(Command):
                         % {"service": label}
                     )
             lines.append(portal.mint_link(user.username))
+            # A link that cannot be reached is worse than no link: the user
+            # gets a browser error with no way to know the portal was only
+            # listening on loopback.
+            advice = portal.link_advice() if hasattr(portal, "link_advice") else None
+            if advice:
+                lines.append(advice)
             return "\n".join(lines)
 
         if service not in auth.SERVICES:
@@ -1531,9 +1537,13 @@ class LoginCommand(Command):
                 "Send li on its own to check whether it worked."
             ) % {"service": label, "url": url, "code": code, "spelled": spelled}
 
-        return self.translator.translate(
+        message = self.translator.translate(
             "To connect %(service)s, open %(url)s"
         ) % {"service": label, "url": portal.mint_link(user.username, f"/connect/{service}")}
+        advice = portal.link_advice() if hasattr(portal, "link_advice") else None
+        if advice:
+            return message + chr(10) + advice
+        return message
 
 
 class AudioDescriptionCommand(Command):

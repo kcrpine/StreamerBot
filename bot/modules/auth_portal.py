@@ -24,6 +24,7 @@ from urllib.parse import parse_qs, urlparse
 from bot.auth import SERVICES, service_name
 from bot.auth.session import AuthState
 from bot.auth.tokens import TokenStore
+from bot.modules import public_address
 from bot.modules.portal_pages import PageBuilder
 
 logger = logging.getLogger(__name__)
@@ -390,11 +391,29 @@ class AuthPortal:
     # -- links -------------------------------------------------------------
 
     def mint_link(self, username: str = "", path: str = "/") -> str:
+        """A link the user can actually open.
+
+        This used to hand out http://127.0.0.1:4419, which on a remote Linux box
+        is a link to the user's own computer, where nothing is listening. See
+        bot/modules/public_address.py for how the address is worked out.
+        """
         token = self.tokens.mint(username)
-        base = self.config.public_url.rstrip("/") or (
-            f"http://{self.config.host}:{self.config.port}"
-        )
+        base, _how = public_address.resolve(self.config)
         return f"{base}{path}?t={token}"
+
+    def link_advice(self) -> Optional[str]:
+        """What to change when the link cannot work, or None when it can.
+
+        Handing over an unreachable link with no explanation is the failure this
+        replaces: the user sees a browser error and has no way to know the portal
+        was listening on loopback.
+        """
+        base, _how = public_address.resolve(self.config)
+        return public_address.reachability_warning(self.config, base)
+
+    def link_source(self) -> str:
+        """Which of the sources the address came from, for the ap command."""
+        return public_address.resolve(self.config)[1]
 
     # -- state the pages ask about ----------------------------------------
 

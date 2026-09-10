@@ -6,6 +6,22 @@ issue or a commit message. Numbering continues across releases.
 
 ## Unreleased
 
+- **[010]** The portal link uses an address a user can actually open. It handed
+  out `http://127.0.0.1:4419`, which on the remote Linux box these bots run on is
+  a link to the user's own computer, where nothing is listening — so every attempt
+  to connect an account died with a browser error and no explanation. The address
+  now comes from `auth_portal.public_url` if set, then
+  `STREAMERBOT_PUBLIC_URL`, then the address of the interface that routes to the
+  internet, which on a VPS is the public IP. A third-party lookup service is
+  deliberately not used: it would answer better behind NAT, but it tells someone
+  else's server where the bot lives every time the portal starts.
+
+  Detecting the address is only half of it, so `li` and `ap link` now also say
+  what will stop the link working. The portal still binds to loopback by default,
+  because it takes account passwords, so the advice names the exact change:
+  set `auth_portal.host` to `0.0.0.0`, restart, and open the port. Bot containers
+  use host networking, so no Docker port mapping is involved.
+
 - **[009]** Configurations are checked before any bot is started, and a
   configuration from another fork is no longer taken at its word. Creating a bot
   now scans every bot on the host, not just the new one, and says which ones will
