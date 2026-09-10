@@ -6,6 +6,35 @@ issue or a commit message. Numbering continues across releases.
 
 ## Unreleased
 
+- **[012]** YouTube plays again. Searching worked, and every result and every
+  pasted YouTube link then failed — "The selected service is currently
+  unavailable" for a search, "Cannot process stream URL" for a link — while
+  Icecast and other direct streams were fine, because those need no resolving.
+  Three bugs stacked up in the bridge's client fallback chain, which read
+  `['YTMUSIC', 'MWEB', ClientType.TV_EMBEDDED]`:
+
+  - The caller rewrote `'YTMUSIC'` to MWEB, so the first two entries sent an
+    identical request and came back with an identical error.
+  - `ClientType.TV_EMBEDDED` is the enum **value**
+    `'TVHTML5_SIMPLY_EMBEDDED_PLAYER'`, but youtubei.js validates the `client`
+    option against the enum **keys**, so that entry was rejected inside the
+    process and had never once worked. `ClientType` is the vocabulary for
+    `Innertube.create({client_type})` and the wrong one for `getBasicInfo`.
+  - So one real client was ever tried — and YouTube answers 400 to an
+    OAuth-authenticated player request that it serves anonymously. Signing in to
+    reach age-restricted content therefore broke ordinary playback, with nothing
+    behind it. The bot worked until the moment someone completed `yl`.
+
+  The chain is now distinct, valid clients, and a signed-in bot falls back to an
+  anonymous session so an account YouTube dislikes can no longer take playback
+  down. Signed-in attempts still come first, because they are the only ones that
+  can return age-restricted or member content. Verified against the two videos
+  from the reported log: one resolved on MWEB, the other only on IOS — a client
+  the old chain did not contain, so it had no route to a stream at all.
+
+  The chain moved to `media.mjs` as a pure function, because the ordering is
+  what was wrong and it was not reachable from a test where it was.
+
 - **[011]** `loadfile`'s version gate was one mpv release too low, which broke
   playback on every mpv older than 0.40 and turned CI red. [008] correctly found
   that mpv 0.38 inserted an `<index>` argument into `loadfile` and started sending

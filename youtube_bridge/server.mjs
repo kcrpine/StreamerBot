@@ -5,7 +5,13 @@ import path from 'node:path';
 import { URL } from 'node:url';
 import { ClientType, Innertube, UniversalCache, Platform } from 'youtubei.js';
 import { ExpiringLruCache } from './cache.mjs';
-import { musicItemPayload, normalizeSearchKey, streamCacheTtlMs } from './media.mjs';
+import {
+  clientTakesPoToken,
+  musicItemPayload,
+  normalizeSearchKey,
+  planPlaybackAttempts,
+  streamCacheTtlMs
+} from './media.mjs';
 
 const HOST = process.env.YOUTUBE_BRIDGE_HOST || '127.0.0.1';
 const PORT = Number(process.env.YOUTUBE_BRIDGE_PORT || 4417);
@@ -345,6 +351,28 @@ async function getSearchSession() {
   return searchSessionPromise;
 }
 
+// An anonymous session that can decipher, which getSearchSession cannot
+// (retrieve_player: false). This is the fallback when a signed-in session is
+// what the player endpoint is rejecting — see PLAYBACK_ATTEMPTS below.
+let playbackSessionPromise = null;
+
+async function getAnonymousPlaybackSession() {
+  if (!playbackSessionPromise) {
+    playbackSessionPromise = Innertube.create({
+      user_agent: USER_AGENT,
+      client_type: ClientType.MWEB,
+      cache: new UniversalCache(true),
+      enable_session_cache: true,
+      generate_session_locally: true,
+      retrieve_player: true
+    }).catch((error) => {
+      playbackSessionPromise = null;
+      throw error;
+    });
+  }
+  return playbackSessionPromise;
+}
+
 async function getPoToken(contentBinding) {
   try {
     const response = await fetch(POT_URL, {
@@ -457,9 +485,15 @@ function formatPayload(format) {
   };
 }
 
+// getBasicInfo's `client` option is NOT the ClientType enum. It is validated
+// against Constants.SUPPORTED_CLIENTS, which holds the enum's *keys*
+// ('TV_EMBEDDED', 'WEB_EMBEDDED'), while ClientType.TV_EMBEDDED is its *value*
+// ('TVHTML5_SIMPLY_EMBEDDED_PLAYER'). Passing the enum through here throws
+// "Invalid client: TVHTML5_SIMPLY_EMBEDDED_PLAYER" and always has. ClientType
+// is the right vocabulary for Innertube.create({ client_type }) and the wrong
+// one here; the two parameters look interchangeable and are not.
 async function getPlayableInfo(session, videoId, client, poToken) {
-  const targetClient = client === 'YTMUSIC' ? ClientType.MWEB : client;
-  return session.getBasicInfo(videoId, { client: targetClient, po_token: poToken });
+  return session.getBasicInfo(videoId, { client, po_token: poToken });
 }
 
 function playabilityDescription(info) {
@@ -469,33 +503,38 @@ function playabilityDescription(info) {
 }
 
 async function resolveFormat(context, videoId, requestedClient, formatOptions) {
-  // WEB is SABR-only for many videos in 2026. MWEB still exposes classic
-  // adaptive formats and is the preferred web playback client here.
-  const clients = requestedClient === 'YTMUSIC'
-    ? ['YTMUSIC', 'MWEB', ClientType.TV_EMBEDDED]
-    : ['MWEB', ClientType.TV_EMBEDDED];
+  // planPlaybackAttempts lives in media.mjs, with the reasoning for the order
+  // and a note on why the client names are not ClientType values.
+  const signedIn = Boolean(context?.session?.session?.logged_in);
+  const attempts = planPlaybackAttempts({ signedIn });
   const failures = [];
-  const { session } = context;
 
-  for (const client of clients) {
+  for (const attempt of attempts) {
+    const client = attempt.client;
+    const label = attempt.label;
     const clientStartedAt = performance.now();
     try {
+      // The anonymous session is built only if an attempt actually needs it, so
+      // a bot whose first attempt succeeds never pays for it.
+      const session = attempt.session === 'anonymous'
+        ? await getAnonymousPlaybackSession()
+        : context.session;
       const poStartedAt = performance.now();
-      const poToken = client === ClientType.TV_EMBEDDED
-        ? undefined
-        : await getPoToken(videoId);
-      console.log(`[youtube-bridge-timing] video=${videoId} client=${client} stage=po-token elapsed_ms=${Math.round(performance.now() - poStartedAt)} available=${Boolean(poToken)}`);
+      const poToken = clientTakesPoToken(client)
+        ? await getPoToken(videoId)
+        : undefined;
+      console.log(`[youtube-bridge-timing] video=${videoId} client=${label} stage=po-token elapsed_ms=${Math.round(performance.now() - poStartedAt)} available=${Boolean(poToken)}`);
 
       const playerStartedAt = performance.now();
       const info = await getPlayableInfo(session, videoId, client, poToken);
-      console.log(`[youtube-bridge-timing] video=${videoId} client=${client} stage=player elapsed_ms=${Math.round(performance.now() - playerStartedAt)} status=${info?.playability_status?.status || 'UNKNOWN'}`);
+      console.log(`[youtube-bridge-timing] video=${videoId} client=${label} stage=player elapsed_ms=${Math.round(performance.now() - playerStartedAt)} status=${info?.playability_status?.status || 'UNKNOWN'}`);
       if (!info?.streaming_data) {
         throw new Error(`no streaming data (${playabilityDescription(info)})`);
       }
 
       const formatStartedAt = performance.now();
       const format = info.chooseFormat(formatOptions);
-      console.log(`[youtube-bridge-timing] video=${videoId} client=${client} stage=choose-format elapsed_ms=${Math.round(performance.now() - formatStartedAt)} itag=${format.itag}`);
+      console.log(`[youtube-bridge-timing] video=${videoId} client=${label} stage=choose-format elapsed_ms=${Math.round(performance.now() - formatStartedAt)} itag=${format.itag}`);
       if (!session.session.player) {
         throw new Error('YouTube player is unavailable');
       }
@@ -503,18 +542,18 @@ async function resolveFormat(context, videoId, requestedClient, formatOptions) {
       session.session.player.po_token = poToken;
       const decipherStartedAt = performance.now();
       format.url = await format.decipher(session.session.player);
-      console.log(`[youtube-bridge-timing] video=${videoId} client=${client} stage=decipher elapsed_ms=${Math.round(performance.now() - decipherStartedAt)}`);
+      console.log(`[youtube-bridge-timing] video=${videoId} client=${label} stage=decipher elapsed_ms=${Math.round(performance.now() - decipherStartedAt)}`);
 
       if (!format.url) {
         throw new Error('decipher returned an empty stream URL');
       }
 
-      console.log(`[youtube-bridge] resolved ${videoId} with client=${client} itag=${format.itag} elapsed_ms=${Math.round(performance.now() - clientStartedAt)}`);
+      console.log(`[youtube-bridge] resolved ${videoId} with client=${label} itag=${format.itag} elapsed_ms=${Math.round(performance.now() - clientStartedAt)}`);
       return { info, format, client };
     } catch (error) {
       const message = error?.message || String(error);
-      failures.push(`${client}: ${message}`);
-      console.warn(`[youtube-bridge] ${videoId} client=${client} failed: ${message}`);
+      failures.push(`${label}: ${message}`);
+      console.warn(`[youtube-bridge] ${videoId} client=${label} failed: ${message}`);
     }
   }
 
