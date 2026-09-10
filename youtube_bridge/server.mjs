@@ -187,7 +187,7 @@ async function getSession(botId) {
 
   const contextPromise = (async () => {
     const credentials = botId ? await readCredentials(botId) : null;
-    const session = await Innertube.create({
+    const { session, poToken } = await createAttestedSession({
       user_agent: USER_AGENT,
       client_type: ClientType.MWEB,
       cache: new UniversalCache(true, botId ? getBotAuthDir(botId) : undefined),
@@ -207,7 +207,7 @@ async function getSession(botId) {
         console.warn(`[youtube-bridge] Sign-in failed for ${botId}, continuing anonymously:`, error.message);
       }
     }
-    return { session };
+    return { session, poToken };
   })().catch((error) => {
     sessionCache.delete(key);
     throw error;
@@ -358,7 +358,7 @@ let playbackSessionPromise = null;
 
 async function getAnonymousPlaybackSession() {
   if (!playbackSessionPromise) {
-    playbackSessionPromise = Innertube.create({
+    playbackSessionPromise = createAttestedSession({
       user_agent: USER_AGENT,
       client_type: ClientType.MWEB,
       cache: new UniversalCache(true),
@@ -373,7 +373,33 @@ async function getAnonymousPlaybackSession() {
   return playbackSessionPromise;
 }
 
+// A proof-of-origin token, bound to `contentBinding`.
+//
+// The binding is the whole point and was wrong. YouTube checks that the token's
+// binding matches the identity of the request it arrives on; a token bound to
+// anything else is not an error, it is simply ignored, and the request is then
+// treated as un-attested. From a datacenter IP that means
+// "LOGIN_REQUIRED: Sign in to confirm you're not a bot" on every client, whether
+// signed in or not — which is exactly what it did.
+//
+// For youtubei.js the token is **session-bound**: `po_token` is a session option
+// that flows into Session.getSessionData alongside `visitor_data`, and into
+// Player.create. So the binding must be the session's own visitorData. It was
+// the video ID, handed to that session-shaped slot on every call, and the
+// session itself was created with neither a token nor a matching visitor_data.
+//
+// Cached per binding until it expires, because minting one is not free and a
+// session keeps its visitorData.
+const poTokenCache = new Map();
+
 async function getPoToken(contentBinding) {
+  if (!contentBinding) return undefined;
+
+  const cached = poTokenCache.get(contentBinding);
+  if (cached && cached.expiresAtMs > Date.now() + 60_000) {
+    return cached.token;
+  }
+
   try {
     const response = await fetch(POT_URL, {
       method: 'POST',
@@ -386,11 +412,69 @@ async function getPoToken(contentBinding) {
       return undefined;
     }
     const data = await response.json();
-    return data.poToken || data.po_token || undefined;
+    const token = data.poToken || data.po_token || undefined;
+    if (token) {
+      const expiresAtMs = data.expiresAt
+        ? Date.parse(data.expiresAt)
+        : Date.now() + 30 * 60_000;
+      poTokenCache.set(contentBinding, { token, expiresAtMs });
+      // Bounded: one entry per session, and sessions are already capped.
+      while (poTokenCache.size > 128) {
+        poTokenCache.delete(poTokenCache.keys().next().value);
+      }
+    }
+    return token;
   } catch (error) {
-    console.warn(`[youtube-bridge] POT provider unavailable: ${error.message}`);
+    // Worth being loud about. Without a token, playback fails from any IP
+    // YouTube does not trust, and the failure names bot detection rather than
+    // the missing provider, which sends the reader in the wrong direction.
+    console.warn(
+      `[youtube-bridge] POT provider at ${POT_URL} is unavailable (${error.message}). ` +
+      'Playback will fail with "Sign in to confirm you\'re not a bot" on any ' +
+      'address YouTube does not trust, which includes most VPS hosts.'
+    );
     return undefined;
   }
+}
+
+// Create a session that carries a proof-of-origin token bound to its own
+// visitorData.
+//
+// Two creates, because the token has to be bound to the visitorData that the
+// session will actually send, and that value does not exist until a session
+// exists. The first create is cheap: generate_session_locally means the visitor
+// data is produced without a network round trip, and retrieve_player skips
+// fetching the player. Sessions are cached, so this happens once per bot.
+async function createAttestedSession(options) {
+  const probe = await Innertube.create({
+    ...options,
+    retrieve_player: false
+  });
+  const visitorData = probe.session?.context?.client?.visitorData;
+
+  if (!visitorData) {
+    console.warn(
+      '[youtube-bridge] No visitorData was available, so this session carries no ' +
+      'proof-of-origin token and playback may be refused as bot traffic.'
+    );
+    return { session: await Innertube.create(options), poToken: undefined };
+  }
+
+  const poToken = await getPoToken(visitorData);
+  if (!poToken) {
+    console.warn(
+      '[youtube-bridge] Continuing without a proof-of-origin token. Search will ' +
+      'work; playback will likely be refused as bot traffic.'
+    );
+  }
+
+  const session = await Innertube.create({
+    ...options,
+    visitor_data: visitorData,
+    po_token: poToken
+  });
+
+  return { session, poToken };
 }
 
 function extractVideoId(input) {
@@ -516,14 +600,18 @@ async function resolveFormat(context, videoId, requestedClient, formatOptions) {
     try {
       // The anonymous session is built only if an attempt actually needs it, so
       // a bot whose first attempt succeeds never pays for it.
-      const session = attempt.session === 'anonymous'
+      const attemptContext = attempt.session === 'anonymous'
         ? await getAnonymousPlaybackSession()
-        : context.session;
-      const poStartedAt = performance.now();
-      const poToken = clientTakesPoToken(client)
-        ? await getPoToken(videoId)
-        : undefined;
-      console.log(`[youtube-bridge-timing] video=${videoId} client=${label} stage=po-token elapsed_ms=${Math.round(performance.now() - poStartedAt)} available=${Boolean(poToken)}`);
+        : context;
+      const session = attemptContext.session;
+
+      // The session's own token, minted against its visitorData when the session
+      // was created. Not a fresh one bound to this video: the binding has to
+      // match the identity of the request, and for youtubei.js that identity is
+      // the session. Binding it to the video ID here is what left every request
+      // effectively un-attested.
+      const poToken = clientTakesPoToken(client) ? attemptContext.poToken : undefined;
+      console.log(`[youtube-bridge-timing] video=${videoId} client=${label} stage=po-token available=${Boolean(poToken)}`);
 
       const playerStartedAt = performance.now();
       const info = await getPlayableInfo(session, videoId, client, poToken);
@@ -631,8 +719,9 @@ async function getInfo(body) {
   if (!videoId) throw new Error('Invalid YouTube URL or video ID');
   const context = await getSession(body.bot_id);
   const client = body.client === 'YTMUSIC' ? 'YTMUSIC' : 'MWEB';
-  const poToken = await getPoToken(context.poBinding || videoId);
-  const info = await getPlayableInfo(context.session, videoId, client, poToken);
+  // The session's token, for the same reason as in resolveFormat: it is bound to
+  // the session's visitorData, and a token bound to this video would be ignored.
+  const info = await getPlayableInfo(context.session, videoId, client, context.poToken);
   return {
     ...infoPayload(info, videoId),
     playability_status: info?.playability_status?.status || '',
@@ -936,7 +1025,33 @@ async function getDownloadPlan(body) {
 const server = http.createServer(async (req, res) => {
   try {
     if (req.method === 'GET' && req.url === '/health') {
-      return json(res, 200, { ok: true, version: '2' });
+      // The proof-of-origin provider is reported here because without it
+      // playback fails as "Sign in to confirm you're not a bot", which reads
+      // like an account problem and is not one. Naming it turns a day of
+      // guessing into one request.
+      let potReachable = false;
+      let potDetail = '';
+      try {
+        const ping = await fetch(POT_URL.replace(/\/get_pot$/, '/ping'), {
+          signal: AbortSignal.timeout(3000)
+        });
+        potReachable = ping.ok;
+        if (!ping.ok) potDetail = `HTTP ${ping.status}`;
+      } catch (error) {
+        potDetail = error.message;
+      }
+      return json(res, 200, {
+        ok: true,
+        version: '2',
+        pot_provider: {
+          url: POT_URL,
+          reachable: potReachable,
+          detail: potDetail,
+          note: potReachable
+            ? ''
+            : 'Playback will be refused as bot traffic on any address YouTube does not trust.'
+        }
+      });
     }
     if (req.method !== 'POST') return json(res, 404, { error: 'Not found' });
 

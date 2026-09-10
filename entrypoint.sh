@@ -56,12 +56,42 @@ export DISPLAY="${DISPLAY:-:99}"
 
 if [ "$(cat /etc/streamerbot-browser-available 2>/dev/null || echo 0)" = "1" ]; then
     if command -v Xvfb > /dev/null 2>&1; then
-        Xvfb "$DISPLAY" -screen 0 1280x720x24 -nolisten tcp > /dev/null 2>&1 &
+        # A restarted container keeps its own /tmp, so the lock file and socket
+        # from the previous run are still sitting there and Xvfb refuses to start
+        # with "Server is already active for display 99". Nothing is actually
+        # listening, so Chrome then died with "Missing X server or $DISPLAY" and
+        # every Netflix, Disney Plus, Apple Music and Amazon Music sign-in failed
+        # at launch — on a container that had merely been restarted once.
+        #
+        # Only cleared when no X server actually answers, so a display that is
+        # genuinely in use is never pulled out from under it.
+        display_number="${DISPLAY#:}"
+        display_number="${display_number%%.*}"
+        if ! xdpyinfo -display "$DISPLAY" > /dev/null 2>&1; then
+            rm -f "/tmp/.X${display_number}-lock" "/tmp/.X11-unix/X${display_number}"
+        fi
+
+        Xvfb "$DISPLAY" -screen 0 1280x720x24 -nolisten tcp > /tmp/xvfb.log 2>&1 &
+
+        display_ready=0
         for _ in $(seq 1 25); do
-            if xdpyinfo -display "$DISPLAY" > /dev/null 2>&1; then break; fi
+            if xdpyinfo -display "$DISPLAY" > /dev/null 2>&1; then
+                display_ready=1
+                break
+            fi
             sleep 0.2
         done
-        echo "OK. Virtual display $DISPLAY started for the browser engine."
+
+        # This used to print OK unconditionally, so it reported success after
+        # failing all 25 checks. A start-up line that is always OK is worse than
+        # no line at all: it actively points the reader away from the fault.
+        if [ "$display_ready" = "1" ]; then
+            echo "OK. Virtual display $DISPLAY started for the browser engine."
+        else
+            echo "Error. The virtual display $DISPLAY did not start, so Netflix, Disney Plus, Apple Music and Amazon Music cannot sign in or play."
+            echo "Error. Xvfb said:"
+            sed 's/^/  /' /tmp/xvfb.log 2>/dev/null | head -5
+        fi
     else
         echo "Warning. Xvfb is missing, so the browser services cannot start."
     fi

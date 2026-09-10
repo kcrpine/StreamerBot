@@ -230,7 +230,13 @@ class BrowserEngine(PlaybackEngine):
                 # user is unprivileged anyway.
                 "--no-sandbox",
             ],
-            env={"DISPLAY": self._display},
+            # Merged onto the real environment, not passed on its own. Playwright
+            # *replaces* the environment when given env=, so {"DISPLAY": ...}
+            # alone launched Chrome with no HOME, no XDG_RUNTIME_DIR and no
+            # PULSE_* — and a Chrome that cannot find the PulseAudio socket is a
+            # Chrome that plays into nothing, which looks exactly like a site
+            # that failed to start the video.
+            env={**os.environ, "DISPLAY": self._display},
             viewport={"width": 1280, "height": 720},
             ignore_default_args=["--mute-audio"],
         )

@@ -3,13 +3,13 @@
 #
 # Two independent cadences share one loop:
 #
-#   GitHub update check  - every STREAMERBOT_UPDATE_INTERVAL seconds (default one
-#                          hour). This does NOT react to individual pushes; it
-#                          wakes on the interval and only then asks GitHub
-#                          whether the branch has moved.
+#   GitHub update check  - every STREAMERBOT_UPDATE_INTERVAL seconds (default
+#                          five minutes). This does NOT react to individual
+#                          pushes; it wakes on the interval and only then asks
+#                          GitHub whether the branch has moved.
 #   Health check         - every tick (60s), because recovering a dead shared
 #                          YouTube service is a self-healing feature and should
-#                          not have to wait for the hourly update window.
+#                          not have to wait for the next update window.
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
@@ -21,9 +21,9 @@ if [ -f "$SCRIPT_DIR/project.env" ]; then
 fi
 
 TICK_SECONDS=60
-UPDATE_INTERVAL="${STREAMERBOT_UPDATE_INTERVAL:-3600}"
+UPDATE_INTERVAL="${STREAMERBOT_UPDATE_INTERVAL:-300}"
 case "$UPDATE_INTERVAL" in
-    ''|*[!0-9]*) UPDATE_INTERVAL=3600 ;;
+    ''|*[!0-9]*) UPDATE_INTERVAL=300 ;;
 esac
 # Floor: anything more aggressive than five minutes is pointless polling.
 [ "$UPDATE_INTERVAL" -lt 300 ] && UPDATE_INTERVAL=300

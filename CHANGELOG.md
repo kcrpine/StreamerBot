@@ -6,6 +6,74 @@ issue or a commit message. Numbering continues across releases.
 
 ## Unreleased
 
+- **[017]** The auto-updater checks GitHub every five minutes instead of every
+  hour. An hour is too long to sit on a fix for something that stops the bot
+  working, which is the case that matters. Five minutes is also the floor
+  `auto_updater.sh` already enforced, so this is as aggressive as it goes. It
+  still does not react to individual pushes: it wakes on the interval, asks
+  whether the branch moved, and only rebuilds if it did.
+
+- **[016]** Netflix, Disney Plus, Apple Music and Amazon Music could not sign in
+  or play on any bot container that had ever been restarted, which — since bots
+  are created with `--restart always` — was all of them after their first start.
+  Apple Music sign-in failed with `Target page, context or browser has been
+  closed`, and underneath it Chrome had said `Missing X server or $DISPLAY`.
+
+  `/tmp` survives a `docker restart`, so Xvfb's lock file still held the previous
+  run's pid — and after a restart that low pid is alive again in the fresh pid
+  namespace, so Xvfb concluded a server was genuinely running and exited. This is
+  not the stale-lock case Xvfb cleans up itself, which is why a lock naming a dead
+  pid does not reproduce it. Measured over four starts of one container: display
+  present on the first, absent on all three restarts.
+
+  The lock and socket are now cleared when — and only when — no X server actually
+  answers, so a display genuinely in use is never pulled out from under it. Same
+  test after the fix: present on all four.
+
+  The entrypoint also printed `OK. Virtual display :99 started` on all four runs,
+  including the three failures, because that line sat after the wait loop and
+  never consulted it. A start-up line that is always OK is worse than none: it
+  points the reader away from the fault. It now reports honestly, names the four
+  services that will not work, and shows what Xvfb said.
+
+  Second fault found on the way: Playwright *replaces* the environment when given
+  `env=`, so `env={"DISPLAY": ...}` launched Chrome with no `HOME`, no
+  `XDG_RUNTIME_DIR` and no `PULSE_*`. That would have been the next failure after
+  the display one — a Chrome that cannot find the PulseAudio socket plays into
+  nothing, which looks exactly like a site that failed to start the video. The
+  environment is now merged rather than replaced.
+
+  No change was needed to how Apple Music signs in. That flow already waits for
+  Apple's verification code and asks for it through the portal
+  (`apple_music.py`); it was simply never reached, because Chrome died first.
+
+- **[015]** YouTube playback is attested properly, which is what
+  `LOGIN_REQUIRED: Sign in to confirm you're not a bot` was really about. After
+  [012] all five clients were tried and all five were refused — signed in with a
+  400, signed out as bot traffic — so signing out was no escape and the bot
+  announced a track and then played silence.
+
+  The proof-of-origin token was bound to the wrong thing. YouTube checks that a
+  token's binding matches the identity of the request it arrives on; a token bound
+  to anything else is not rejected, it is ignored, and the request is then treated
+  as un-attested. From a VPS that means bot detection on every client. For
+  youtubei.js the token is **session**-bound — `po_token` is a session option that
+  flows into `Session.getSessionData` beside `visitor_data`, and into
+  `Player.create` — but it was being minted per call against the **video ID**, and
+  the session itself was created with neither a token nor a matching
+  `visitor_data`.
+
+  Sessions now learn their own `visitorData` first, mint a token bound to it, and
+  are created carrying both. Tokens are cached until they expire. Verified against
+  the two videos from the reported log: both resolve, `po-token available=true`,
+  and the stream URL returns real audio bytes. The datacenter block itself cannot
+  be reproduced from a residential address, so that half is confirmed only on a
+  host YouTube distrusts.
+
+  `/health` now reports whether the token provider is reachable, because the
+  symptom of it being down is a message about bot detection that reads like an
+  account problem and sends you looking in the wrong place entirely.
+
 - **[014]** Issue forms, sorted automatically. A bug report form labels itself
   `bug` and `needs investigation`; a collaboration request form labels itself
   `colab request` and asks for a GitHub username, an email address, why the
