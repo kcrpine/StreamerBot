@@ -6,6 +6,11 @@ issue or a commit message. Numbering continues across releases.
 
 ## Unreleased
 
+- **[018]** Fixed "Straemer Bot" in the update-in-progress broadcast from [017a].
+  It is sent to every user in the channel and read aloud, so a misspelling of the
+  bot's own name is heard by everyone every time an update runs. The wording is
+  otherwise untouched.
+
 - **[017]** The auto-updater checks GitHub every five minutes instead of every
   hour. An hour is too long to sit on a fix for something that stops the bot
   working, which is the case that matters. Five minutes is also the floor

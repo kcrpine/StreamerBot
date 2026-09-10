@@ -364,7 +364,7 @@ class Bot:
             if os.path.exists(update_file):
                 self.is_updating = True
                 try:
-                    msg = self.translator.translate("Hello there! It's me, the Straemer Bot, just coming in here to let you know that an update is in progress and I will restart in a few moments to apply it. Thank you!")
+                    msg = self.translator.translate("Hello there! It's me, the Streamer Bot, just coming in here to let you know that an update is in progress and I will restart in a few moments to apply it. Thank you!")
                     self.ttclient.send_message(msg, type=2)
                 except Exception as e:
                     logging.error(f"Error sending update warning: {e}")
