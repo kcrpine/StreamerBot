@@ -117,24 +117,76 @@ class LibrespotEngine(PlaybackEngine):
         with open(path, "w", encoding="utf-8") as f:
             f.write(config)
 
+    @property
+    def _daemon_log_path(self) -> str:
+        return os.path.join(self._dir, "go-librespot.log")
+
     def _start_daemon(self) -> None:
         with self._lock:
             if self._process is not None and self._process.poll() is None:
                 return
-            # Output is captured rather than inherited: the daemon prints its
-            # credentials blob on some paths and it must not reach the log.
+            # stderr goes to a file in this bot's own librespot directory rather
+            # than to the bot log or to /dev/null.
+            #
+            # /dev/null was the original choice because the daemon prints its
+            # credentials blob on some paths, and that must not reach a log the
+            # bot broadcasts or ships. But it also meant a daemon that exited one
+            # second after every start, forever, reported nothing but "exited;
+            # restarting" — no exit code, no reason — which made a plain port
+            # clash undiagnosable from the log.
+            #
+            # This directory is already chmod 700 and holds credentials.json, so
+            # it is the right side of the line the /dev/null choice was drawing.
+            try:
+                stderr_sink = open(self._daemon_log_path, "w", encoding="utf-8")
+                os.chmod(self._daemon_log_path, 0o600)
+            except OSError as error:
+                logger.warning(
+                    f"Could not open {self._daemon_log_path}, so go-librespot's "
+                    f"output is discarded and a failure will have no reason: {error}"
+                )
+                stderr_sink = subprocess.DEVNULL
+
             self._process = subprocess.Popen(
                 ["/usr/local/bin/go-librespot", "--config_dir", self._dir],
                 stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
+                stderr=stderr_sink,
                 stdin=subprocess.DEVNULL,
             )
-        logger.info("go-librespot started")
+            if stderr_sink is not subprocess.DEVNULL:
+                # The child holds its own descriptor now.
+                stderr_sink.close()
+        logger.info(f"go-librespot started on port {self._port}")
+
+    def _daemon_failure_reason(self) -> str:
+        """The last meaningful line the daemon printed, for the log.
+
+        Bounded on purpose: the point is to name the cause, not to copy a
+        credentials blob into the bot log line by line.
+        """
+        try:
+            with open(self._daemon_log_path, "r", encoding="utf-8", errors="replace") as f:
+                lines = [line.strip() for line in f.readlines()[-40:] if line.strip()]
+        except OSError:
+            return ""
+        if not lines:
+            return ""
+        for line in reversed(lines):
+            lowered = line.lower()
+            if "address already in use" in lowered or "bind" in lowered:
+                return (
+                    f"{line[:200]} — this is the go-librespot API port "
+                    f"({self._port}) already being used by another bot on this "
+                    f"machine. Run the manager, choose Manage Bots, then Repair "
+                    f"Account Portal and Spotify Ports."
+                )
+        return lines[-1][:200]
 
     def _supervise(self) -> None:
         """Restart the daemon if it dies, backing off so a broken install does
         not spin."""
         attempt = 0
+        reported_persistent_failure = False
         while not self._closing:
             time.sleep(1)
             with self._lock:
@@ -142,10 +194,35 @@ class LibrespotEngine(PlaybackEngine):
             if self._closing:
                 return
             if process is not None and process.poll() is None:
+                if attempt:
+                    logger.info("go-librespot is running again; Spotify is available")
                 attempt = 0
+                reported_persistent_failure = False
                 continue
+
+            code = process.poll() if process is not None else None
+            reason = self._daemon_failure_reason()
             delay = RESTART_BACKOFF_SECONDS[min(attempt, len(RESTART_BACKOFF_SECONDS) - 1)]
-            logger.warning(f"go-librespot exited; restarting in {delay}s")
+            # The exit code and the reason were both missing before, so a daemon
+            # failing identically every minute for hours said only "exited".
+            logger.warning(
+                f"go-librespot exited with code {code}; restarting in {delay}s"
+                + (f". Reason: {reason}" if reason else "")
+            )
+
+            # Say once, at ERROR, that this is not transient. The backoff tops
+            # out at a minute, so without this the only trace of a permanently
+            # broken Spotify is a warning that repeats forever and reads the same
+            # as a single restart.
+            if attempt >= len(RESTART_BACKOFF_SECONDS) and not reported_persistent_failure:
+                logger.error(
+                    "go-librespot has failed to stay running after "
+                    f"{attempt} attempts, so Spotify is unavailable on this bot. "
+                    + (f"Reason: {reason}. " if reason else "")
+                    + f"Its output is in {self._daemon_log_path}."
+                )
+                reported_persistent_failure = True
+
             time.sleep(delay)
             if self._closing:
                 return

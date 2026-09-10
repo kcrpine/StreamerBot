@@ -1,3 +1,4 @@
+import errno
 import os
 import logging
 import queue
@@ -232,6 +233,15 @@ class Bot:
         config = getattr(self.config, "auth_portal", None)
         if config is None or not config.enabled:
             logging.info("The account portal is switched off in the configuration.")
+            self.command_processor.auth_portal_error = self.translator.translate(
+                "The account portal is switched off in this bot's configuration, so "
+                "Netflix, Disney Plus, Apple Music and Amazon Music cannot be "
+                "connected. Set auth_portal.enabled to true in this bot's "
+                "config.json and restart it. If the manager switched it off for a "
+                "port clash, there is a file named PORT_CONFLICT.txt in the bot's "
+                "folder explaining it, and Repair Account Portal and Spotify Ports "
+                "in the manager turns it back on."
+            )
             return
         try:
             secrets_dir = os.path.join(self.config_manager.config_dir, "secrets")
@@ -268,6 +278,28 @@ class Bot:
         except Exception as error:
             logging.error(f"The account portal could not start: {error}", exc_info=True)
             self.auth_portal = None
+            # A portal that failed to bind used to be indistinguishable from one
+            # that was switched off, so li told people to check a configuration
+            # that was correct. The port is the thing to name, because every bot
+            # on this host shares the host's ports and two bots cannot both have
+            # this one.
+            port = getattr(config, "port", 4419)
+            if isinstance(error, OSError) and error.errno == errno.EADDRINUSE:
+                self.command_processor.auth_portal_error = self.translator.translate(
+                    "The account portal could not start because port %(port)s is "
+                    "already in use, most likely by another bot on this machine. "
+                    "Netflix, Disney Plus, Apple Music and Amazon Music cannot be "
+                    "connected until that is fixed. Run the manager, choose Manage "
+                    "Bots, then Repair Account Portal and Spotify Ports, and "
+                    "restart this bot. YouTube and Spotify are unaffected, because "
+                    "they sign in with a code in the channel."
+                ) % {"port": port}
+            else:
+                self.command_processor.auth_portal_error = self.translator.translate(
+                    "The account portal could not start, so Netflix, Disney Plus, "
+                    "Apple Music and Amazon Music cannot be connected. The reason "
+                    "is in this bot's log file: %(reason)s"
+                ) % {"reason": error}
 
     def run(self):
         logging.debug("Starting")

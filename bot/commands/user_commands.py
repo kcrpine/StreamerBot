@@ -1480,8 +1480,16 @@ class LoginCommand(Command):
     def __call__(self, arg: str, user: User) -> Optional[str]:
         portal = getattr(self.command_processor, "auth_portal", None)
         if portal is None:
-            return self.translator.translate(
-                "The account portal is switched off in this bot's configuration."
+            # Why it is absent matters. "Switched off in this bot's
+            # configuration" was printed even when the configuration said
+            # enabled and the portal had simply failed to bind, which sent
+            # people to check a file that was already correct.
+            return getattr(self.command_processor, "auth_portal_error", None) or (
+                self.translator.translate(
+                    "The account portal is not running, so Netflix, Disney Plus, "
+                    "Apple Music and Amazon Music cannot be connected. The reason "
+                    "is in this bot's log file."
+                )
             )
 
         service = (arg or "").strip().lower()

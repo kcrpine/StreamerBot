@@ -6,6 +6,42 @@ issue or a commit message. Numbering continues across releases.
 
 ## Unreleased
 
+- **[013]** Every bot gets its own account portal and Spotify port, which fixes
+  Apple Music sign-in and Spotify on every bot but the first. `li am` reported
+  "The account portal is switched off in this bot's configuration" on a bot whose
+  configuration said it was on. It was not a configuration problem: bot
+  containers run with `--network host`, and `auth_portal.port` (4419) and
+  `services.sp.api_port` (3678) were written into every bot as the same
+  constants. The first bot to start took both, and the rest failed — the portal
+  with `Address already in use`, go-librespot by exiting a second after every
+  start, forever. Both failures were invisible: a portal that failed to bind was
+  indistinguishable from one switched off, so the bot blamed the config and sent
+  people to check a correct file, and go-librespot's output went to `/dev/null`
+  so its restart loop logged no exit code and no reason.
+
+  Ports are now allocated per bot on creation, on restore, and automatically
+  before Start All and Restart All, so bots already clashing are repaired without
+  anyone knowing to ask. There is also `Manage Bots` → `Repair Account Portal and
+  Spotify Ports` and a `--repair-ports` flag. Allocation is sticky and
+  idempotent: a bot keeps the ports it has, and a bot's own live listener is not
+  treated as a clash — counting it would move the port on every restart and break
+  the firewall rule and `public_url` set up for it.
+
+  When no port can be found, the portal is switched off deliberately rather than
+  left pointing at a port it cannot have, and the bot's folder gets a
+  `PORT_CONFLICT.txt` naming the recovery path. It also covers the case where the
+  port is free but a firewall or a router is not letting it through to the host,
+  because that produces the same symptom for a different reason. Repairing turns
+  the portal back on.
+
+  `li` now distinguishes "switched off in the configuration" from "failed to
+  start", and the bind failure names the port and the fix. go-librespot's stderr
+  goes to `go-librespot.log` in the bot's own directory at 0600 — the reason
+  `/dev/null` was chosen was to keep its credentials blob out of the shipped log,
+  and that directory is already 0700 and holds `credentials.json`. Its exit code
+  is logged, and a daemon that will not stay running says so once at ERROR
+  instead of only repeating a warning that reads like a single restart.
+
 - **[012]** YouTube plays again. Searching worked, and every result and every
   pasted YouTube link then failed — "The selected service is currently
   unavailable" for a search, "Cannot process stream URL" for a link — while

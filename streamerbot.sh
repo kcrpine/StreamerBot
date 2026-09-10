@@ -40,6 +40,7 @@ if [ "${1:-}" = "--help" ] || [ "${1:-}" = "-h" ]; then
     echo "  --restart-all    Restart every bot."
     echo "  --check-updates  Say whether an update is available, without installing it."
     echo "  --logs NAME      Show the last 50 log lines for one bot."
+    echo "  --repair-ports   Give every bot its own account portal and Spotify port."
     echo "  --help           This text."
     echo ""
     echo "Everything except --help needs root, and will ask for it."
@@ -49,7 +50,7 @@ fi
 # Validate the flag name before elevating, so a typo does not cost a password
 # prompt first.
 case "${1:-}" in
-    ""|--status|--services|--start-all|--stop-all|--restart-all|--check-updates|--logs)
+    ""|--status|--services|--start-all|--stop-all|--restart-all|--check-updates|--logs|--repair-ports)
         ;;
     *)
         echo "Error. Unknown option: $1"
@@ -688,6 +689,11 @@ create_bot() {
         .general.delete_uploaded_files_after = $del_timer |
         .general.start_commands = $startcmds' \
        "$CURRENT_BOT_DIR/config.json" > "$tmp_config" && mv "$tmp_config" "$CURRENT_BOT_DIR/config.json"
+
+    # The portal and go-librespot both listen, and every bot shares the host's
+    # ports. Without this the second bot's portal never starts and its Spotify
+    # daemon restarts forever.
+    assign_unique_bot_ports "$CURRENT_BOT_DIR"
 
     # Fix permissions for container user (uid 1000 is standard for non-root in many images)
     echo "Adjusting folder permissions..."
@@ -1797,6 +1803,262 @@ bot_identity_fingerprint() {
 }
 
 # Sections this version needs. Anything already in the bot's config wins.
+# --- Ports that have to be unique per bot ---------------------------------
+#
+# Bot containers are created with --network host, so every bot shares the host's
+# port space. Two settings in config.json are per-bot listeners:
+#
+#   auth_portal.port      the account portal            (default 4419)
+#   services.sp.api_port  go-librespot's control API    (default 3678)
+#
+# Both were written as the same constant into every bot, so the first bot to
+# start won and the rest failed. Neither failure said what was wrong:
+#
+#   - the portal died with "Address already in use", and since a portal that
+#     failed to start looked exactly like one that was switched off, "li am"
+#     told people the portal was disabled in their configuration when it was
+#     not, sending them to check a file that was correct;
+#   - go-librespot exited about a second after every start, forever, so Spotify
+#     never worked on any bot but the first.
+#
+# Allocation is sticky: a bot keeps the ports it has, and only a genuine clash
+# moves one. A port that silently changed on restart would break the firewall
+# rule and the public_url the user had set up for it.
+DEFAULT_PORTAL_PORT=4419
+DEFAULT_LIBRESPOT_API_PORT=3678
+
+# Every port already claimed by a bot other than the one in $1.
+bot_claimed_ports() {
+    local skip_dir="$1" cfg
+    for cfg in "$BOTS_ROOT"/*/config.json; do
+        [ -f "$cfg" ] || continue
+        [ "$(dirname "$cfg")" = "$skip_dir" ] && continue
+        jq -r '[.auth_portal.port // empty, .services.sp.api_port // empty]
+               | .[] | tostring' "$cfg" 2>/dev/null
+    done
+}
+
+# Whether another bot's configuration already claims this port.
+#
+# Deliberately does NOT look at what is listening on the host. This is the test
+# for a port a bot already has, and a running bot is listening on its own port —
+# treating that as a clash would move it every time this ran, which is the
+# port-shuffling that breaks the firewall rule and public_url the user set up.
+port_claimed_by_another_bot() {
+    local port="$1" claimed="$2"
+    printf '%s\n' "$claimed" | grep -qx -- "$port"
+}
+
+# Whether a port is a safe choice for a bot that needs a new one. Stricter: it
+# also skips anything currently listening, which catches software on this host
+# that has nothing to do with StreamerBot.
+port_free_for_new_bot() {
+    local port="$1" claimed="$2"
+    port_claimed_by_another_bot "$port" "$claimed" && return 1
+    if command -v ss >/dev/null 2>&1; then
+        ss -ltnH 2>/dev/null | grep -qE "[:.]${port}[[:space:]]" && return 1
+    fi
+    return 0
+}
+
+next_free_port() {
+    local candidate="$1" claimed="$2" limit=$(($1 + 200))
+    while [ "$candidate" -lt "$limit" ]; do
+        if port_free_for_new_bot "$candidate" "$claimed"; then
+            printf '%s' "$candidate"
+            return 0
+        fi
+        candidate=$((candidate + 1))
+    done
+    return 1
+}
+
+# No port is available, so turn the portal off and leave a note saying why.
+#
+# The note is a plain text file in the bot's own folder rather than only a log
+# line, because this is the one failure a user has to act on themselves and the
+# bot's folder is where they will be looking.
+disable_portal_for_port_conflict() {
+    local dir="$1" wanted="$2" name tmp
+    name=$(basename "$dir")
+
+    tmp=$(mktemp)
+    if jq '.auth_portal.enabled = false' "$dir/config.json" > "$tmp" 2>/dev/null; then
+        mv "$tmp" "$dir/config.json"
+        chown 1000:1000 "$dir/config.json" 2>/dev/null || true
+    else
+        rm -f "$tmp"
+    fi
+
+    cat > "$dir/PORT_CONFLICT.txt" <<NOTEEOF
+The account portal is switched off on this bot because no free port could be
+found for it.
+
+Every bot on this host shares the host's ports, and nothing was free in the 200
+ports starting at ${DEFAULT_PORTAL_PORT}. Port ${wanted} was already taken.
+
+While the portal is off, connecting Netflix, Disney Plus, Apple Music and Amazon
+Music will not work on this bot. YouTube and Spotify sign-in are unaffected:
+those use a code in the channel rather than the portal.
+
+To fix it, free up some ports near ${DEFAULT_PORTAL_PORT} or delete bots that are
+no longer used, then run Manage Bots, Repair Account Portal and Spotify Ports.
+That turns the portal back on when it finds a free port.
+
+A note on firewalls, because the same warning can appear for a different reason.
+A free port is only half of what the portal needs: the port also has to be
+allowed through to this host. If a firewall on this machine, or a router or cloud
+security group in front of it, is not letting the port through or forwarding it
+here, then the portal starts and binds correctly and the link still will not
+open in anyone's browser. So if the ports are repaired and the portal is on and
+the link still fails, the port is the wrong place to keep looking. Allow the
+portal's port through the firewall, and where the bot sits behind a router or a
+cloud provider, forward it to this host as well.
+
+This file is written by streamerbot.sh and is safe to delete.
+NOTEEOF
+    chown 1000:1000 "$dir/PORT_CONFLICT.txt" 2>/dev/null || true
+
+    echo "  Warning. No free port for the account portal near ${DEFAULT_PORTAL_PORT}."
+    echo "  The portal is switched off on this bot until that is resolved, so"
+    echo "  Netflix, Disney Plus, Apple Music and Amazon Music cannot be connected."
+    echo "  YouTube and Spotify still work, because they sign in with a code."
+    echo "  A free port is only half of it. The port also has to be allowed through"
+    echo "  any firewall on this host, and forwarded here by a router or cloud"
+    echo "  security group in front of it, or the portal binds and the link still"
+    echo "  will not open."
+    echo "  Details are in ${dir}/PORT_CONFLICT.txt"
+    log_line "Portal disabled on ${name}: no free port near ${DEFAULT_PORTAL_PORT} (wanted ${wanted})"
+}
+
+# The portal was disabled for a port clash and now has a port again.
+reenable_portal_after_repair() {
+    local dir="$1" port="$2" name tmp
+    [ -f "$dir/PORT_CONFLICT.txt" ] || return 0
+    name=$(basename "$dir")
+
+    tmp=$(mktemp)
+    if jq '.auth_portal.enabled = true' "$dir/config.json" > "$tmp" 2>/dev/null; then
+        mv "$tmp" "$dir/config.json"
+        chown 1000:1000 "$dir/config.json" 2>/dev/null || true
+        rm -f "$dir/PORT_CONFLICT.txt"
+        echo "  The account portal is switched back on, on port ${port}."
+        log_line "Portal re-enabled on ${name} at port ${port}"
+    else
+        rm -f "$tmp"
+    fi
+}
+
+# Give the bot in $1 ports nothing else is using. Prints what it changed.
+# Returns 0 whether or not anything moved; only a failure to find a free port
+# is an error, and that is reported rather than left to fail at start.
+assign_unique_bot_ports() {
+    local dir="$1" claimed portal api new_portal new_api tmp changed=0
+    [ -f "$dir/config.json" ] || return 0
+
+    claimed=$(bot_claimed_ports "$dir")
+    portal=$(jq -r ".auth_portal.port // ${DEFAULT_PORTAL_PORT}" "$dir/config.json" 2>/dev/null)
+    api=$(jq -r ".services.sp.api_port // ${DEFAULT_LIBRESPOT_API_PORT}" "$dir/config.json" 2>/dev/null)
+    [[ "$portal" =~ ^[0-9]+$ ]] || portal="$DEFAULT_PORTAL_PORT"
+    [[ "$api" =~ ^[0-9]+$ ]] || api="$DEFAULT_LIBRESPOT_API_PORT"
+
+    new_portal="$portal"
+    if port_claimed_by_another_bot "$portal" "$claimed"; then
+        if ! new_portal=$(next_free_port "$DEFAULT_PORTAL_PORT" "$claimed"); then
+            # Nothing in 200 ports is free. Switching the portal off is better
+            # than leaving it configured to a port it cannot have: it would fail
+            # to bind on every start, and a portal that failed to start is
+            # indistinguishable from one that was switched off, which is what
+            # made this hard to diagnose in the first place. Off and explained
+            # beats broken and silent.
+            disable_portal_for_port_conflict "$dir" "$portal"
+            return 0
+        fi
+        changed=1
+    fi
+
+    # The portal's port counts as claimed now, or the two could be given the
+    # same number in one pass.
+    claimed=$(printf '%s\n%s\n' "$claimed" "$new_portal")
+
+    new_api="$api"
+    if port_claimed_by_another_bot "$api" "$claimed"; then
+        if ! new_api=$(next_free_port "$DEFAULT_LIBRESPOT_API_PORT" "$claimed"); then
+            echo "  Warning. No free port for go-librespot near ${DEFAULT_LIBRESPOT_API_PORT}."
+            echo "  Spotify will be unavailable on this bot."
+            return 0
+        fi
+        changed=1
+    fi
+
+    if [ "$changed" -eq 0 ]; then
+        # The ports are fine. If this bot was switched off for a clash that no
+        # longer exists, turn it back on.
+        reenable_portal_after_repair "$dir" "$new_portal"
+        return 0
+    fi
+
+    tmp=$(mktemp)
+    if jq --argjson p "$new_portal" --argjson a "$new_api" \
+          '.auth_portal.port = $p | .services.sp.api_port = $a' \
+          "$dir/config.json" > "$tmp" 2>/dev/null; then
+        mv "$tmp" "$dir/config.json"
+        chown 1000:1000 "$dir/config.json" 2>/dev/null || true
+        [ "$new_portal" != "$portal" ] &&
+            echo "  Account portal port ${portal} was already taken, so this bot uses ${new_portal}."
+        [ "$new_api" != "$api" ] &&
+            echo "  go-librespot port ${api} was already taken, so this bot uses ${new_api}."
+        log_line "Ports for $(basename "$dir"): portal ${portal}->${new_portal} librespot ${api}->${new_api}"
+        reenable_portal_after_repair "$dir" "$new_portal"
+    else
+        rm -f "$tmp"
+        echo "  Warning. The ports could not be updated, so this bot may clash with another."
+    fi
+    return 0
+}
+
+# Every bot on this host, checked and repaired. Safe to run at any time: a bot
+# whose ports nothing else wants is left exactly as it is.
+#
+# $1 quiet  print only what changed, for the automatic pass before starting bots
+repair_all_bot_ports() {
+    local mode="${1:-}" dir name output changed=0 checked=0
+
+    [ -d "$BOTS_ROOT" ] || { [ "$mode" = quiet ] || echo "There are no bots yet."; return 0; }
+
+    for dir in "$BOTS_ROOT"/*; do
+        [ -d "$dir" ] || continue
+        [ -f "$dir/config.json" ] || continue
+        name=$(basename "$dir")
+        checked=$((checked + 1))
+        output=$(assign_unique_bot_ports "$dir")
+        if [ -n "$output" ]; then
+            changed=$((changed + 1))
+            echo "Bot ${name}:"
+            printf '%s\n' "$output"
+        fi
+    done
+
+    if [ "$checked" -eq 0 ]; then
+        [ "$mode" = quiet ] || echo "There are no bots yet."
+        return 0
+    fi
+
+    if [ "$changed" -eq 0 ]; then
+        [ "$mode" = quiet ] || echo "OK. All ${checked} bots already have ports of their own."
+        return 0
+    fi
+
+    echo ""
+    echo "OK. Repaired ${changed} of ${checked} bots."
+    echo "Restart those bots for the new ports to take effect."
+    if [ "$mode" = quiet ]; then
+        echo "This ran automatically because clashing ports stop the account portal"
+        echo "and Spotify from working on every bot but one."
+    fi
+    return 0
+}
+
 streamerbot_config_defaults() {
     cat <<'DEFAULTSJSON'
   {
@@ -1950,6 +2212,11 @@ migrate_one_bot() {
             echo "  instead. Send li yt to the bot once it is running."
         fi
     fi
+
+    # Every restored bot arrives holding the same portal and go-librespot ports,
+    # since the defaults merged in above are constants. Left alone, only the
+    # first bot to start would get a working portal or Spotify.
+    assign_unique_bot_ports "$dir"
 
     # The container runs as uid 1000 and must be able to write the credential
     # directories it was just given.
@@ -2244,7 +2511,8 @@ manage_bots() {
         echo "10. Clear All Bot Logs"
         echo "11. Clear All Bot Cache Files"
         echo "12. Clear YouTube Bridge Cache"
-        echo "13. Return to Main Menu"
+        echo "13. Repair Account Portal and Spotify Ports"
+        echo "14. Return to Main Menu"
         echo ""
         read -p "Choose an option: " opt_manage
         
@@ -2256,16 +2524,19 @@ manage_bots() {
         
         case $opt_manage in
             1)
-                echo "Starting all bots..."
+                echo "Step 1 of 2. Checking for clashing ports."
+                repair_all_bot_ports quiet
+                echo "Step 2 of 2. Starting all bots."
                 docker start $(docker ps -a -q -f "label=role=streamerbot")
                 read -p "Completed. Enter to continue..."
                 header
                 ;;
             2)
-                echo "Restarting all bots..."
-                echo "  Stopping..."
+                echo "Step 1 of 3. Checking for clashing ports."
+                repair_all_bot_ports quiet
+                echo "Step 2 of 3. Stopping all bots."
                 docker stop -t 1 $(docker ps -a -q -f "label=role=streamerbot")
-                echo "  Starting..."
+                echo "Step 3 of 3. Starting all bots."
                 docker start $(docker ps -a -q -f "label=role=streamerbot")
                 read -p "Completed. Enter to continue..."
                 header
@@ -2313,6 +2584,16 @@ manage_bots() {
                 header
                 ;;
             13)
+                echo ""
+                echo "Every bot shares this host's ports, so two bots cannot both use the"
+                echo "account portal port or the Spotify port. This gives each bot its own."
+                echo "A bot that already has ports to itself is left alone."
+                echo ""
+                repair_all_bot_ports
+                read -p "Press Enter to continue..."
+                header
+                ;;
+            14)
                 return
                 ;;
             *)
@@ -2400,6 +2681,7 @@ print_cli_help() {
     echo "  --restart-all    Restart every bot."
     echo "  --check-updates  Say whether an update is available, without installing it."
     echo "  --logs NAME      Show the last 50 log lines for one bot."
+    echo "  --repair-ports   Give every bot its own account portal and Spotify port."
     echo "  --help           This text."
 }
 
@@ -2488,6 +2770,10 @@ case "${1:-}" in
         else
             echo "Error. update.sh was not found."
         fi
+        exit 0
+        ;;
+    --repair-ports)
+        repair_all_bot_ports
         exit 0
         ;;
     --logs)
