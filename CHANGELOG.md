@@ -6,6 +6,27 @@ issue or a commit message. Numbering continues across releases.
 
 ## Unreleased
 
+- **[009]** Configurations are checked before any bot is started, and a
+  configuration from another fork is no longer taken at its word. Creating a bot
+  now scans every bot on the host, not just the new one, and says which ones will
+  not connect and why; restoring does the same after migrating. The check runs
+  inside the image and asks `bot/config/inspection.py`, beside the model and the
+  migration table that define the rules, rather than restating those rules in
+  `jq` — two copies of the same rules drifting apart is what `[007]` was. It
+  mounts `bots/` read-only, so it is safe to run while every bot is up.
+
+  The stricter part is lineage. Version numbers only mean something within one
+  project: a config restored or copied from `gumerov-amir/TTMediaBot`, from
+  `JoaoDEVWHADS/TTMediaBot` or from any other fork can declare a `config_version`
+  this bot also uses and mean something entirely different by it. Migration used
+  to return early on a matching number, so such a file passed straight through —
+  keeping TTMediaBot's cache and log filenames and, worse, a `default_service` of
+  `vk`, which `ServiceManager` looks up in a plain dict and dies on. That was a
+  `KeyError` at startup, before TeamTalk, with a traceback instead of an
+  explanation. Lineage is now decided by the shape of the file, never by its
+  version number, and such a config is migrated whatever number it carries; a
+  service name that has no equivalent here falls back to the default and says so.
+  Nothing touches the nickname, the server or the channel.
 - **[008]** Playing anything works again. mpv 0.38 inserted an `<index>`
   argument into its `loadfile` command, between the flags and the per-file
   options, and the vendored `mpv.py` still passed its options string in the old

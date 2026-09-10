@@ -717,11 +717,30 @@ create_bot() {
     done
     
     echo ""
+    # Every bot on the host, not only the ones just created. A configuration
+    # copied in by hand, or restored from another fork, reaches a container
+    # without passing through the migration above, and the first sign of it is
+    # a bot that stays up and never joins a channel. Checking costs one
+    # container run and turns that into a sentence at creation time.
+    echo "Checking every bot's configuration before starting."
+    config_check_failed=0
+    validate_bot_configs || config_check_failed=1
+    echo ""
+
     echo -e "${YELLOW}Starting all bots in parallel...${NC}"
     # Start all newly created bots in parallel
     ensure_shared_youtube_service || return
     docker start $(docker ps -a -q -f "label=role=streamerbot" -f "status=created") 2>/dev/null
-    
+
+    echo ""
+    if [ "$config_check_failed" -eq 1 ]; then
+        # Started anyway: a bot with a broken configuration restarts in a loop
+        # whether or not it was started here, and refusing to start the healthy
+        # ones created in the same batch helps nobody. What was missing before
+        # was being told, so say it last, where it is read last.
+        echo "Error. The bots named above will not connect until their"
+        echo "configurations are fixed. The others started normally."
+    fi
     echo -e "${GREEN}Creation completed! $total_bots bot(s) created and started.${NC}"
     rm -f /tmp/cookies_pasted.txt
     read -p "Press Enter to return..."
@@ -1801,6 +1820,37 @@ streamerbot_config_defaults() {
 DEFAULTSJSON
 }
 
+# Ask the image whether these configurations will actually start a bot.
+#
+# The rules live in bot/config/inspection.py, beside the model and the migration
+# table that define them, and this asks that code rather than restating them in
+# jq. config.json declaring config_version 2 while ConfigManager understood 1 is
+# what two copies of the same rules drifting apart looks like, and it stopped
+# every newly created bot before it reached TeamTalk.
+#
+# The mount is read-only deliberately. A running bot holds a lock on its own
+# config.json, and a check must never write to what it is inspecting.
+validate_bot_configs() {
+    [ -d "$BOTS_ROOT" ] || return 0
+
+    if ! docker image inspect "$BOT_IMAGE" >/dev/null 2>&1; then
+        echo "Warning. The image is not built yet, so configurations were not checked."
+        return 0
+    fi
+    # An image built before this check exists is not a failure; it predates the
+    # feature. Say so rather than printing a container error nobody can act on.
+    if ! docker run --rm --entrypoint test "$BOT_IMAGE" \
+        -f /home/streamer/StreamerBot/tools/check_config.py >/dev/null 2>&1; then
+        echo "Warning. This image predates the configuration check."
+        echo "Rebuild with option 3 to have configurations checked from now on."
+        return 0
+    fi
+
+    docker run --rm -v "${BOTS_ROOT}:/bots:ro" \
+        --entrypoint python "$BOT_IMAGE" \
+        /home/streamer/StreamerBot/tools/check_config.py --bots-root /bots
+}
+
 # True when this bot directory predates the current version.
 bot_dir_is_legacy() {
     local dir="$1"
@@ -1926,7 +1976,7 @@ migrate_restored_bots() {
 
     [ "$total" -gt 0 ] || return 0
 
-    echo "Step 1 of 2. Checking the restored bots."
+    echo "Step 1 of 3. Checking the restored bots."
     if [ "$legacy_count" -eq 0 ]; then
         echo "OK. All $total restored bots already have the current configuration."
     else
@@ -1953,6 +2003,17 @@ migrate_restored_bots() {
     if [ "$failed" -gt 0 ]; then
         echo "Warning. $failed bots could not be updated and may not start."
         echo "Their original configurations were left untouched."
+        return 1
+    fi
+
+    # The migration above says what it changed. This says whether the result
+    # will actually start, which is a different question and the one that
+    # matters before any container is created.
+    echo "Step 2 of 3. Checking that every configuration will start a bot."
+    if ! validate_bot_configs; then
+        echo ""
+        echo "Warning. The restore finished, but the bots listed above will not"
+        echo "connect until their configurations are fixed."
         return 1
     fi
     echo "OK. Every bot is ready."
@@ -2044,7 +2105,7 @@ restore_bots() {
             echo "Warning. Some bots were not updated. Continuing, but check them before use."
         fi
         echo ""
-        echo "Step 2 of 2. Recreating the containers."
+        echo "Step 3 of 3. Recreating the containers."
         echo "Refreshing the shared YouTube service mount."
         create_shared_youtube_service || {
             echo -e "${RED}Could not recreate the shared YouTube service.${NC}"
