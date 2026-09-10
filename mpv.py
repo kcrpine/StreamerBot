@@ -1416,7 +1416,18 @@ class MPV(object):
     # every load failed with MPV_ERROR_INVALID_PARAMETER (-4) and the bot
     # reported "Invalid value for mpv parameter" instead of playing anything.
     # Debian 13 ships mpv 0.40 (client API 2.5), which is what the image runs.
-    _LOADFILE_INDEX_API_VERSION = (2, 2)
+    #
+    # The boundary is 0.38, and 0.38 reports client API 2.3 — not 2.2, which is
+    # 0.37, the last release that wants the old three-argument form. Both sides
+    # were measured rather than reasoned about, because getting it wrong in
+    # either direction breaks every load on one of the two:
+    #
+    #   mpv 0.37, API (2, 2):  "replace start=0"      ok   "replace -1 start=0"  -4
+    #   mpv 0.40, API (2, 5):  "replace start=0"      -4   "replace -1 start=0"  ok
+    #
+    # Ubuntu 24.04 ships 0.37, which is what the GitHub Actions runner has, so a
+    # gate of (2, 2) passes in the container and fails every test in CI.
+    _LOADFILE_INDEX_API_VERSION = (2, 3)
 
     def loadfile(self, filename, mode="replace", **options):
         """Mapped mpv loadfile command, see man mpv(1)."""

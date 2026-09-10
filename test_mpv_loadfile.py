@@ -53,6 +53,12 @@ class LoadfileArgumentTests(unittest.TestCase):
         )
 
     def test_options_are_positioned_after_the_index(self):
+        """Note what this can and cannot catch: the condition is the same
+        expression the code under test uses, so it passes for any value of
+        _LOADFILE_INDEX_API_VERSION, including a wrong one. It checks the
+        argument order, not the boundary. WhereTheBoundaryIsTests pins the
+        boundary, and LoadfileAgainstRealMpvTests is what actually asks mpv.
+        """
         self.loadfile("http://example.invalid/a.mp3", "replace", start=5)
         name, filename, mode, *rest = self.calls[0]
         self.assertEqual((name, mode), ("loadfile", "replace"))
@@ -64,6 +70,32 @@ class LoadfileArgumentTests(unittest.TestCase):
     def test_the_mode_is_preserved(self):
         self.loadfile("http://example.invalid/a.mp3", "append")
         self.assertEqual(self.calls[0][2], "append")
+
+
+class WhereTheBoundaryIsTests(unittest.TestCase):
+    """The constant itself, pinned to a measurement.
+
+    An off-by-one release here is invisible on the machine you happen to be
+    testing on and breaks every load on the other one, which is how this went
+    out: a gate of (2, 2) is correct against the container's mpv 0.40 and wrong
+    against the CI runner's 0.37, so it passed locally and failed in CI.
+    """
+
+    def test_the_index_starts_at_the_api_version_mpv_0_38_reports(self):
+        """mpv's own DOCS/client-api-changes.rst: 0.37 is 2.2, 0.38 is 2.3.
+        0.38 is the release that inserted <index>, so 2.3 is the first version
+        that wants it and 2.2 must still get the old form.
+        """
+        self.assertEqual(mpv.MPV._LOADFILE_INDEX_API_VERSION, (2, 3))
+
+    def test_mpv_0_37_is_below_the_boundary(self):
+        """Measured: mpv 0.37 accepts "replace start=0" and rejects
+        "replace -1 start=0" with MPV_ERROR_INVALID_PARAMETER."""
+        self.assertLess((2, 2), mpv.MPV._LOADFILE_INDEX_API_VERSION)
+
+    def test_mpv_0_40_is_at_or_above_it(self):
+        """Measured the other way round: 0.40 rejects the three-argument form."""
+        self.assertGreaterEqual((2, 5), mpv.MPV._LOADFILE_INDEX_API_VERSION)
 
 
 class LoadfileAgainstRealMpvTests(unittest.TestCase):

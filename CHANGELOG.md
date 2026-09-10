@@ -6,6 +6,24 @@ issue or a commit message. Numbering continues across releases.
 
 ## Unreleased
 
+- **[011]** `loadfile`'s version gate was one mpv release too low, which broke
+  playback on every mpv older than 0.40 and turned CI red. [008] correctly found
+  that mpv 0.38 inserted an `<index>` argument into `loadfile` and started sending
+  it, but gated that on client API `>= (2, 2)`. `(2, 2)` is mpv **0.37**, the last
+  release that wants the old form — 0.38 reports `(2, 3)`. So 0.37 was handed an
+  argument it rejects, and every load raised `MPV_ERROR_INVALID_PARAMETER`.
+
+  The gate is now `(2, 3)`. Both sides were measured rather than reasoned about,
+  since guessing wrong in either direction breaks all playback on one of them:
+  0.37 accepts `replace start=0` and rejects `replace -1 start=0`; 0.40 does the
+  exact reverse. Ubuntu 24.04 ships 0.37 and the container ships 0.40, which is
+  why this passed locally and failed on every GitHub Actions run.
+
+  The existing argument-order test could not have caught it: its condition is the
+  same expression the code under test uses, so it passes for any value of the
+  constant. Three tests now pin the boundary itself, and the note on that test
+  says what it does and does not cover.
+
 - **[010]** The portal link uses an address a user can actually open. It handed
   out `http://127.0.0.1:4419`, which on the remote Linux box these bots run on is
   a link to the user's own computer, where nothing is listening — so every attempt
