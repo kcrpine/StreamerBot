@@ -108,6 +108,9 @@ class YtmService(_Service):
             stream_url = resolved.get("url")
             if not stream_url:
                 raise errors.ServiceError("YouTube.js returned no stream URL")
+            # Route mpv through the local relay instead of handing it the raw
+            # googlevideo.com URL -- see bot/services/stream_proxy.py for why.
+            stream_url = self.bot.stream_proxy.register(stream_url, resolved.get("http_headers"))
 
             title = resolved.get("title") or info.get("title") or self.bot.translator.translate("Unknown")
             uploader = resolved.get("uploader")

@@ -1806,26 +1806,37 @@ bot_identity_fingerprint() {
 # --- Ports that have to be unique per bot ---------------------------------
 #
 # Bot containers are created with --network host, so every bot shares the host's
-# port space. Two settings in config.json are per-bot listeners:
+# port space. Three settings in config.json are per-bot listeners:
 #
-#   auth_portal.port      the account portal            (default 4419)
-#   services.sp.api_port  go-librespot's control API    (default 3678)
+#   auth_portal.port          the account portal                 (default 4419)
+#   services.sp.api_port      go-librespot's control API         (default 3678)
+#   player.stream_proxy_port  the local relay mpv fetches         (default 4420)
+#                             YouTube stream URLs through instead
+#                             of googlevideo.com directly, because
+#                             Debian's ffmpeg only speaks HTTPS via
+#                             GnuTLS and Google's CDN rejects that
+#                             for some videos (bot/services/stream_proxy.py)
 #
-# Both were written as the same constant into every bot, so the first bot to
-# start won and the rest failed. Neither failure said what was wrong:
+# All three were written as the same constant into every bot, so the first bot
+# to start won and the rest failed. Neither failure said what was wrong:
 #
 #   - the portal died with "Address already in use", and since a portal that
 #     failed to start looked exactly like one that was switched off, "li am"
 #     told people the portal was disabled in their configuration when it was
 #     not, sending them to check a file that was correct;
 #   - go-librespot exited about a second after every start, forever, so Spotify
-#     never worked on any bot but the first.
+#     never worked on any bot but the first;
+#   - the stream proxy fails closed rather than loudly: if it cannot bind, YT
+#     playback just falls back to fetching googlevideo.com directly, which is
+#     only wrong for some videos, so a clash here reads as "YouTube skips
+#     sometimes" rather than an obvious startup failure.
 #
 # Allocation is sticky: a bot keeps the ports it has, and only a genuine clash
 # moves one. A port that silently changed on restart would break the firewall
 # rule and the public_url the user had set up for it.
 DEFAULT_PORTAL_PORT=4419
 DEFAULT_LIBRESPOT_API_PORT=3678
+DEFAULT_STREAM_PROXY_PORT=4420
 
 # Every port already claimed by a bot other than the one in $1.
 bot_claimed_ports() {
@@ -1833,7 +1844,7 @@ bot_claimed_ports() {
     for cfg in "$BOTS_ROOT"/*/config.json; do
         [ -f "$cfg" ] || continue
         [ "$(dirname "$cfg")" = "$skip_dir" ] && continue
-        jq -r '[.auth_portal.port // empty, .services.sp.api_port // empty]
+        jq -r '[.auth_portal.port // empty, .services.sp.api_port // empty, .player.stream_proxy_port // empty]
                | .[] | tostring' "$cfg" 2>/dev/null
     done
 }
@@ -1953,14 +1964,16 @@ reenable_portal_after_repair() {
 # Returns 0 whether or not anything moved; only a failure to find a free port
 # is an error, and that is reported rather than left to fail at start.
 assign_unique_bot_ports() {
-    local dir="$1" claimed portal api new_portal new_api tmp changed=0
+    local dir="$1" claimed portal api proxy new_portal new_api new_proxy tmp changed=0
     [ -f "$dir/config.json" ] || return 0
 
     claimed=$(bot_claimed_ports "$dir")
     portal=$(jq -r ".auth_portal.port // ${DEFAULT_PORTAL_PORT}" "$dir/config.json" 2>/dev/null)
     api=$(jq -r ".services.sp.api_port // ${DEFAULT_LIBRESPOT_API_PORT}" "$dir/config.json" 2>/dev/null)
+    proxy=$(jq -r ".player.stream_proxy_port // ${DEFAULT_STREAM_PROXY_PORT}" "$dir/config.json" 2>/dev/null)
     [[ "$portal" =~ ^[0-9]+$ ]] || portal="$DEFAULT_PORTAL_PORT"
     [[ "$api" =~ ^[0-9]+$ ]] || api="$DEFAULT_LIBRESPOT_API_PORT"
+    [[ "$proxy" =~ ^[0-9]+$ ]] || proxy="$DEFAULT_STREAM_PROXY_PORT"
 
     new_portal="$portal"
     if port_claimed_by_another_bot "$portal" "$claimed"; then
@@ -1977,8 +1990,8 @@ assign_unique_bot_ports() {
         changed=1
     fi
 
-    # The portal's port counts as claimed now, or the two could be given the
-    # same number in one pass.
+    # The portal's port counts as claimed now, or two of these could be given
+    # the same number in one pass.
     claimed=$(printf '%s\n%s\n' "$claimed" "$new_portal")
 
     new_api="$api"
@@ -1986,6 +1999,23 @@ assign_unique_bot_ports() {
         if ! new_api=$(next_free_port "$DEFAULT_LIBRESPOT_API_PORT" "$claimed"); then
             echo "  Warning. No free port for go-librespot near ${DEFAULT_LIBRESPOT_API_PORT}."
             echo "  Spotify will be unavailable on this bot."
+            return 0
+        fi
+        changed=1
+    fi
+
+    claimed=$(printf '%s\n%s\n' "$claimed" "$new_api")
+
+    new_proxy="$proxy"
+    if port_claimed_by_another_bot "$proxy" "$claimed"; then
+        if ! new_proxy=$(next_free_port "$DEFAULT_STREAM_PROXY_PORT" "$claimed"); then
+            # Unlike the portal, there is nothing to disable: the proxy already
+            # fails closed on its own (bot/services/stream_proxy.py falls back
+            # to fetching googlevideo.com directly if it cannot bind), so this
+            # is just a warning, not a config change.
+            echo "  Warning. No free port for the YouTube stream relay near ${DEFAULT_STREAM_PROXY_PORT}."
+            echo "  YouTube playback on this bot will fetch stream URLs directly, which"
+            echo "  is more likely to be refused by YouTube's CDN for some videos."
             return 0
         fi
         changed=1
@@ -1999,8 +2029,8 @@ assign_unique_bot_ports() {
     fi
 
     tmp=$(mktemp)
-    if jq --argjson p "$new_portal" --argjson a "$new_api" \
-          '.auth_portal.port = $p | .services.sp.api_port = $a' \
+    if jq --argjson p "$new_portal" --argjson a "$new_api" --argjson s "$new_proxy" \
+          '.auth_portal.port = $p | .services.sp.api_port = $a | .player.stream_proxy_port = $s' \
           "$dir/config.json" > "$tmp" 2>/dev/null; then
         mv "$tmp" "$dir/config.json"
         chown 1000:1000 "$dir/config.json" 2>/dev/null || true
@@ -2008,7 +2038,9 @@ assign_unique_bot_ports() {
             echo "  Account portal port ${portal} was already taken, so this bot uses ${new_portal}."
         [ "$new_api" != "$api" ] &&
             echo "  go-librespot port ${api} was already taken, so this bot uses ${new_api}."
-        log_line "Ports for $(basename "$dir"): portal ${portal}->${new_portal} librespot ${api}->${new_api}"
+        [ "$new_proxy" != "$proxy" ] &&
+            echo "  YouTube stream relay port ${proxy} was already taken, so this bot uses ${new_proxy}."
+        log_line "Ports for $(basename "$dir"): portal ${portal}->${new_portal} librespot ${api}->${new_api} stream_proxy ${proxy}->${new_proxy}"
         reenable_portal_after_repair "$dir" "$new_portal"
     else
         rm -f "$tmp"

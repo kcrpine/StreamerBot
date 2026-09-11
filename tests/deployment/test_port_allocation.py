@@ -77,13 +77,14 @@ class PortAllocationHarness(TestCase):
     def tearDown(self):
         shutil.rmtree(self.tmp, ignore_errors=True)
 
-    def make_bot(self, name, portal=4419, api=3678, enabled=True):
+    def make_bot(self, name, portal=4419, api=3678, proxy=4420, enabled=True):
         d = self.bots / name
         d.mkdir(parents=True, exist_ok=True)
         (d / "config.json").write_text(
             json.dumps({
                 "auth_portal": {"enabled": enabled, "port": portal, "host": "127.0.0.1"},
                 "services": {"sp": {"enabled": True, "api_port": api}},
+                "player": {"stream_proxy_port": proxy},
                 "teamtalk": {"nickname": name},
             }),
             encoding="utf-8",
@@ -96,6 +97,7 @@ class PortAllocationHarness(TestCase):
             f'BOTS_ROOT="{self.bots.as_posix()}"',
             "DEFAULT_PORTAL_PORT=4419",
             "DEFAULT_LIBRESPOT_API_PORT=3678",
+            "DEFAULT_STREAM_PROXY_PORT=4420",
             # The real one writes to the manager log, which is not under test.
             "log_line() { :; }",
             # Nothing here runs as root.
@@ -114,6 +116,10 @@ class PortAllocationHarness(TestCase):
         data = json.loads((self.bots / name / "config.json").read_text(encoding="utf-8"))
         return data["auth_portal"]["port"], data["services"]["sp"]["api_port"]
 
+    def stream_proxy_port_of(self, name):
+        data = json.loads((self.bots / name / "config.json").read_text(encoding="utf-8"))
+        return data["player"]["stream_proxy_port"]
+
     def portal_enabled(self, name):
         data = json.loads((self.bots / name / "config.json").read_text(encoding="utf-8"))
         return data["auth_portal"]["enabled"]
@@ -128,6 +134,7 @@ class AllocationTests(PortAllocationHarness):
 
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(self.ports_of("solo"), (4419, 3678))
+        self.assertEqual(self.stream_proxy_port_of("solo"), 4420)
 
     def test_a_second_bot_is_moved_off_both_ports(self):
         """The actual bug: two bots, identical ports, one working portal."""
@@ -142,6 +149,18 @@ class AllocationTests(PortAllocationHarness):
         self.assertNotEqual(portal, 4419)
         self.assertNotEqual(api, 3678)
 
+    def test_a_second_bot_is_moved_off_the_stream_proxy_port_too(self):
+        """Same bug, third port: the local relay mpv fetches YouTube stream
+        URLs through (bot/services/stream_proxy.py)."""
+        self.make_bot("first")
+        self.make_bot("second")
+
+        result = self.run_shell('assign_unique_bot_ports "$BOTS_ROOT/second"')
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(self.stream_proxy_port_of("first"), 4420)
+        self.assertNotEqual(self.stream_proxy_port_of("second"), 4420)
+
     def test_the_two_ports_never_collide_with_each_other(self):
         """Assigned in one pass, so the portal's new port has to be treated as
         taken before go-librespot picks one."""
@@ -153,6 +172,16 @@ class AllocationTests(PortAllocationHarness):
         portal, api = self.ports_of("second")
         self.assertNotEqual(portal, api)
 
+    def test_all_three_ports_never_collide_with_each_other(self):
+        self.make_bot("first")
+        self.make_bot("second", portal=4420, api=4419, proxy=3678)
+
+        self.run_shell('assign_unique_bot_ports "$BOTS_ROOT/second"')
+
+        portal, api = self.ports_of("second")
+        proxy = self.stream_proxy_port_of("second")
+        self.assertEqual(len({portal, api, proxy}), 3)
+
     def test_running_a_second_time_changes_nothing(self):
         """Idempotence is what makes it safe to run before every start."""
         self.make_bot("first")
@@ -160,9 +189,11 @@ class AllocationTests(PortAllocationHarness):
 
         self.run_shell('assign_unique_bot_ports "$BOTS_ROOT/second"')
         after_first = self.ports_of("second")
+        proxy_after_first = self.stream_proxy_port_of("second")
         self.run_shell('assign_unique_bot_ports "$BOTS_ROOT/second"')
 
         self.assertEqual(self.ports_of("second"), after_first)
+        self.assertEqual(self.stream_proxy_port_of("second"), proxy_after_first)
 
     def test_a_bots_own_port_is_never_treated_as_a_clash(self):
         """A running bot is listening on its own port. Counting that as taken
@@ -194,8 +225,10 @@ class AllocationTests(PortAllocationHarness):
 
         portals = [self.ports_of(n)[0] for n in names]
         apis = [self.ports_of(n)[1] for n in names]
+        proxies = [self.stream_proxy_port_of(n) for n in names]
         self.assertEqual(len(set(portals)), len(names), portals)
         self.assertEqual(len(set(apis)), len(names), apis)
+        self.assertEqual(len(set(proxies)), len(names), proxies)
 
     def test_a_teamtalk_section_is_never_touched(self):
         """The same promise the restore path makes. A bot that comes back under a

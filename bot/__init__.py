@@ -30,6 +30,7 @@ from bot.auth import redaction
 from bot.auth.session import AuthJobManager
 from bot.auth.store import SecretStore
 from bot.modules.auth_portal import AuthPortal
+from bot.services.stream_proxy import StreamProxy
 from bot.player.engines.browser_engine import BrowserEngine
 from bot.player.engines.librespot_engine import LibrespotEngine
 from bot.services.web.amazon_music import AmazonMusicAdapter
@@ -101,6 +102,7 @@ class Bot:
         self.default_channel = self.config.teamtalk.channel
         self.is_updating = False
         self.auth_portal = None
+        self.stream_proxy = StreamProxy(port=self.config.player.stream_proxy_port)
 
     def initialize(self):
         if self.config.logger.log:
@@ -112,6 +114,7 @@ class Bot:
         logging.debug("Initializing")
         self.sound_device_manager.initialize()
         self.ttclient.initialize()
+        self.stream_proxy.start()
         self.player.initialize()
         self.service_manager.initialize()
         self._initialize_engines()
@@ -409,6 +412,7 @@ class Bot:
             except Exception as e:
                 logging.warning(f"Error closing the account portal: {e}")
         self.player.close()
+        self.stream_proxy.close()
         self.ttclient.close()
         self.tt_player_connector.close()
         self.config_manager.close()

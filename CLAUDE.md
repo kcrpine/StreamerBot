@@ -124,6 +124,38 @@ A chain of fallbacks is only a fallback if the entries differ. The original read
 to MWEB and the third was invalid. `youtubei.js` is pinned to `#main`, so this is a moving target —
 when playback breaks, probe which clients resolve *today* before changing the order.
 
+### mpv never fetches a googlevideo.com URL directly — `bot/services/stream_proxy.py`
+
+Resolving a stream is not the same as being able to play it. A resolved `videoplayback` URL is handed
+to mpv, which asks for the whole remaining file in one request (`Range: bytes=0-`, ordinary progressive
+download). Google's CDN answers a bare **403** to a single request past some size — measured directly
+against real resolved URLs, one video tolerated up to 1,000,000 bytes and 403'd at 2,000,000; another
+403'd anywhere past ~950,000. **The cutoff is not a fixed constant** — it varies per video/session, so a
+single hardcoded chunk size will eventually guess wrong for some track. `on_end_file`'s stream-refresh
+retry (`bot/player/__init__.py`) treated this as a normal playback error, re-resolved to a brand-new
+URL, hit the identical 403 again, and — since a URL that resolves fine but 403s on the CDN produces no
+`ServiceError` for anything upstream to catch — silently advanced to the next track instead. Set loose
+on an autoplay queue that reads as "skips through 15+ tracks in under two seconds," which looks exactly
+like the bot picking bad tracks rather than every track failing the same way.
+
+**A day was spent on the wrong culprit first.** Debian's ffmpeg has no OpenSSL support at all
+(`ffmpeg -version`'s build config shows `--enable-gnutls`, never `--enable-openssl` — that needs
+`--enable-nonfree`, which Debian's package deliberately omits), and the same URL that 403'd through
+mpv/ffmpeg succeeded every time fetched with `curl` or Python's `requests` — both OpenSSL-based. That
+looked conclusive: rebuild ffmpeg with OpenSSL, done. It would have been a heavy, fragile image change
+for nothing, because the actual `requests` tests up to that point had all used a small explicit `Range`
+without noticing it — GnuTLS was never the variable, request size was. Probe the byte-range cutoff
+directly before reaching for a TLS-backend explanation; it is cheaper to rule out and it is what the CDN
+is actually enforcing.
+
+The fix: `bot/services/stream_proxy.py` runs a loopback-only HTTP relay (like `auth_portal` and
+go-librespot's API port, one more per-bot port — `player.stream_proxy_port`, default 4420, in the same
+`assign_unique_bot_ports` machinery in `streamerbot.sh`). `yt.py`/`ytm.py` register the real resolved
+URL with it and hand mpv a `http://127.0.0.1:<port>/<token>` URL instead. The relay fetches upstream in
+bounded windows comfortably under the lowest cutoff seen so far, concatenating them into one continuous
+response so mpv never knows chunking happened; a window that still 403s is halved and retried rather
+than failing the whole track, since the cutoff itself is a moving target, not a wall.
+
 ### Per-bot isolation is a requirement, not an accident
 
 Each container is created with `-v "${BOTS_ROOT}/${bot}:/home/streamer/StreamerBot/data"`, so every
@@ -135,14 +167,16 @@ Bot directories are owned by uid 1000 (the container user). `update.sh` delibera
 from its repo-wide `chown`/`chmod` pass — a blanket `chmod -R 777` there once left credentials
 world-writable and locked the container out.
 
-**Bots run with `--network host`, so any port in `config.json` must be unique per bot.** Two are:
-`auth_portal.port` (4419) and `services.sp.api_port` (3678). Both were written as the same constant
-into every bot, so the first bot to start took them and every other bot lost its portal *and* its
-Spotify daemon. Neither failure named itself — a portal that failed to bind was indistinguishable from
-one switched off, so `li` blamed the configuration, and go-librespot's output went to `/dev/null` so its
-restart loop logged no exit code. `streamerbot.sh` now allocates per bot (`assign_unique_bot_ports`) on
-create, on restore, and automatically before Start All and Restart All, with `--repair-ports` for
-existing bots.
+**Bots run with `--network host`, so any port in `config.json` must be unique per bot.** Three are:
+`auth_portal.port` (4419), `services.sp.api_port` (3678), and `player.stream_proxy_port` (4420, the
+local relay described above). All three were originally written as the same constant into every bot, so
+the first bot to start took them and every other bot lost its portal *and* its Spotify daemon. Neither
+failure named itself — a portal that failed to bind was indistinguishable from one switched off, so `li`
+blamed the configuration, and go-librespot's output went to `/dev/null` so its restart loop logged no
+exit code. The stream proxy fails closed instead (falls back to fetching googlevideo.com directly), so
+a clash there reads as "YouTube skips sometimes" rather than an obvious startup failure. `streamerbot.sh`
+now allocates per bot (`assign_unique_bot_ports`) on create, on restore, and automatically before Start
+All and Restart All, with `--repair-ports` for existing bots.
 
 Two rules if you touch that allocation: it must be **idempotent**, since it runs before every start; and
 a bot's **own** live listener is not a clash. Testing "is this port in use" with `ss` catches the bot's

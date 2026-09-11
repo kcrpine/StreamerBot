@@ -30,6 +30,11 @@ class PlayerModel(BaseModel):
     volume_fading_interval: float = 0.025
     seek_step: int = 5
     player_options: Dict[str, Any] = {}
+    # Loopback relay mpv fetches YouTube stream URLs through instead of
+    # fetching googlevideo.com directly -- see bot/services/stream_proxy.py.
+    # Per-bot unique like auth_portal.port and services.sp.api_port, since
+    # bots share the host's port space (--network host).
+    stream_proxy_port: int = 4420
 
 class TeamTalkUserModel(BaseModel):
     admins: List[str] = ["admin"]

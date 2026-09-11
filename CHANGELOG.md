@@ -6,6 +6,17 @@ issue or a commit message. Numbering continues across releases.
 
 ## Unreleased
 
+- **[021]** YouTube and YouTube Music playback no longer hands mpv a googlevideo.com URL directly.
+  A new loopback relay (`bot/services/stream_proxy.py`, port `player.stream_proxy_port`, default
+  4420) fetches the stream in bounded byte-range windows and hands mpv a local URL instead, because
+  Google's CDN answers a bare 403 to the single open-ended request mpv normally makes for anything
+  past a per-video byte limit that isn't a fixed constant — a limit low enough that this was hitting
+  ordinary, non-obscure tracks, not just edge cases. Without this, `on_end_file`'s stream-refresh retry
+  saw the 403 as a normal playback error, re-resolved to an equally-doomed URL, and silently advanced
+  to the next track — which looked like the bot racing through 15+ autoplay tracks in under two
+  seconds. A window that still 403s is retried at half size rather than failing the track, since the
+  CDN's limit was measured to vary by video/session rather than holding at one number.
+
 - **[020]** `YtService.get()` now retries any transient bridge/CDN error up to twice before giving up,
   not only ones whose message looks auth-related. A bare bridge hiccup used to surface as "The selected
   service is currently unavailable" on the very first try.
