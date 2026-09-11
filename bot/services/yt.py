@@ -33,6 +33,7 @@ class YtService(_Service):
         self._warm_lock = threading.Lock()
         self._is_warmed = False
         self._max_retries = 2
+        self._TRANSIENT_RETRY_BACKOFF_SECONDS = 1.0
 
     def initialize(self):
         self._bridge = YouTubeBridge(client="YTMUSIC")
@@ -93,9 +94,17 @@ class YtService(_Service):
             raise errors.InvalidArgumentError()
         
         last_error = None
+        is_auth_error = False
         for attempt in range(self._max_retries + 1):
             if attempt > 0:
-                wait_time = 2 ** attempt
+                # Auth errors need time for a freshly-completed sign-in to
+                # propagate. A bare bridge/CDN hiccup is the far more common
+                # case and reliably clears within about a second -- confirmed
+                # by re-fetching a freshly-signed stream URL directly outside
+                # mpv, where the first hit 403s and a retry ~1s later
+                # succeeds -- so it doesn't need the same multi-second
+                # backoff.
+                wait_time = 2 ** attempt if is_auth_error else self._TRANSIENT_RETRY_BACKOFF_SECONDS
                 logging.warning(f"YT Get: Retry {attempt}/{self._max_retries} for '{url}' after {wait_time}s delay")
                 time.sleep(wait_time)
 
@@ -105,10 +114,10 @@ class YtService(_Service):
                 last_error = e
                 error_msg = str(e)
                 is_auth_error = "Sign in to confirm" in error_msg or "cookies" in error_msg.lower()
-                if not is_auth_error or attempt >= self._max_retries:
+                if attempt >= self._max_retries:
                     raise
-                logging.warning(f"YT Get: Auth-related error, will retry: {error_msg[:100]}")
-        
+                logging.warning(f"YT Get: Retryable error, will retry: {error_msg[:100]}")
+
         raise last_error or errors.ServiceError("Max retries exceeded")
 
     def _get_inner(

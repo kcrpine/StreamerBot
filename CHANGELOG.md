@@ -6,6 +6,10 @@ issue or a commit message. Numbering continues across releases.
 
 ## Unreleased
 
+- **[020]** `YtService.get()` now retries any transient bridge/CDN error up to twice before giving up,
+  not only ones whose message looks auth-related. A bare bridge hiccup used to surface as "The selected
+  service is currently unavailable" on the very first try.
+
 - **[019]** The YouTube stream-refresh retry (`on_end_file` in `bot/player/__init__.py`) now backs off
   briefly and allows up to 3 attempts instead of exactly 1 with no delay, since a freshly re-resolved
   stream URL can hit the same transient failure the original did.
