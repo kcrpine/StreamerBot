@@ -6,6 +6,10 @@ issue or a commit message. Numbering continues across releases.
 
 ## Unreleased
 
+- **[019]** The YouTube stream-refresh retry (`on_end_file` in `bot/player/__init__.py`) now backs off
+  briefly and allows up to 3 attempts instead of exactly 1 with no delay, since a freshly re-resolved
+  stream URL can hit the same transient failure the original did.
+
 - **[018]** Fixed "Straemer Bot" in the update-in-progress broadcast from [017a].
   It is sent to every user in the channel and read aloud, so a misspelling of the
   bot's own name is heard by everyone every time an update runs. The wording is

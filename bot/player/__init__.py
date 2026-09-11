@@ -23,6 +23,16 @@ if TYPE_CHECKING:
 
 PREFETCH_DELAY_SECONDS = 0.05
 
+# googlevideo.com playback URLs occasionally 403 on the very first fetch after
+# being signed -- an edge/token propagation lag on Google's side, confirmed by
+# fetching the same URL directly outside mpv: the first hit 403s, a retry
+# ~1s later succeeds, unrelated to which video or client resolved it. A single
+# immediate retry isn't enough because the freshly re-resolved URL can hit the
+# exact same transient window, so this backs off and allows a few attempts
+# before treating the track as genuinely gone.
+YOUTUBE_STREAM_REFRESH_MAX_ATTEMPTS = 3
+YOUTUBE_STREAM_REFRESH_BACKOFF_SECONDS = 0.75
+
 
 class Player:
     def __init__(self, bot: Bot):
@@ -753,21 +763,25 @@ class Player:
         if (
             reason == mpv.MpvEventEndFile.ERROR
             and self.track.service in ("yt", "ytm")
-            and not getattr(self.track, "_stream_refresh_attempted", False)
+            and getattr(self.track, "_stream_refresh_attempts", 0)
+            < YOUTUBE_STREAM_REFRESH_MAX_ATTEMPTS
         ):
-            self.track._stream_refresh_attempted = True
+            attempt = getattr(self.track, "_stream_refresh_attempts", 0) + 1
+            self.track._stream_refresh_attempts = attempt
             try:
                 logging.warning(
                     "[PlaybackTiming] youtube_stream_refresh_started "
-                    f"track={self.track.name!r}"
+                    f"track={self.track.name!r} "
+                    f"attempt={attempt}/{YOUTUBE_STREAM_REFRESH_MAX_ATTEMPTS}"
                 )
+                time.sleep(YOUTUBE_STREAM_REFRESH_BACKOFF_SECONDS)
                 refreshed_url = self.track.refresh_stream()
                 self._play(refreshed_url, save_to_recents=False)
                 return
             except Exception as error:
                 logging.error(
                     "[PlaybackTiming] youtube_stream_refresh_failed "
-                    f"track={self.track.name!r} error={error!r}"
+                    f"track={self.track.name!r} attempt={attempt} error={error!r}"
                 )
         if self.state == State.Playing and self._player.idle_active:
             self._advance_after_end()
