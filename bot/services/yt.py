@@ -38,15 +38,16 @@ class YtService(_Service):
     def initialize(self):
         self._bridge = YouTubeBridge(client="YTMUSIC")
 
-        # Sign-in is optional. Anonymous search and playback still work, exactly
-        # as the cookie-less path always did; a signed-in session additionally
-        # unlocks age-restricted videos and the account's own recommendations.
+        # Sign-in is optional where YouTube trusts the host's address: anonymous
+        # search and playback work there. From a datacenter address YouTube
+        # refuses anonymous playback, and a browser session is what plays.
         if self._bridge.is_signed_in():
-            logging.info("YT Service: signed in to YouTube.")
+            logging.info("YT Service: signed in to YouTube with a browser session.")
         else:
             logging.info(
-                "YT Service: not signed in to YouTube. Public videos still play; "
-                "use the yl command to sign in for age-restricted content."
+                "YT Service: not signed in to YouTube. Public videos play where "
+                "YouTube trusts this server's address; on most VPS hosts they will "
+                "not. Send li yt to connect an account."
             )
 
         # Run pre-warming in a background thread so the bot connects to TeamTalk immediately

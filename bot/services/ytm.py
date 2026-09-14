@@ -52,8 +52,8 @@ class YtmService(_Service):
             logging.error(f"[YTM] Background Autoplay fetch failed: {e}")
 
     def initialize(self):
-        # Shares the YouTube account: the bridge keys credentials on bot_id, so
-        # signing in once with yl covers both yt and ytm for this bot.
+        # Shares the YouTube account: the bridge keys the session on bot_id, so
+        # connecting once with li yt covers both yt and ytm for this bot.
         self._bridge = YouTubeBridge(client="YTMUSIC")
 
         # Run pre-warming in a background thread so the bot connects to TeamTalk immediately

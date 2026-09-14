@@ -30,6 +30,7 @@ from bot.auth import redaction
 from bot.auth.session import AuthJobManager
 from bot.auth.store import SecretStore
 from bot.modules.auth_portal import AuthPortal
+from bot.modules.youtube_session_keeper import YouTubeSessionKeeper
 from bot.services.stream_proxy import StreamProxy
 from bot.player.engines.browser_engine import BrowserEngine
 from bot.player.engines.librespot_engine import LibrespotEngine
@@ -37,6 +38,7 @@ from bot.services.web.amazon_music import AmazonMusicAdapter
 from bot.services.web.apple_music import AppleMusicAdapter
 from bot.services.web.disney import DisneyAdapter
 from bot.services.web.netflix import NetflixAdapter
+from bot.services.web.youtube import YouTubeAdapter
 
 # Which browser adapter serves which service. Adding a site in Phase 6 is
 # an entry here plus one file under bot/services/web/.
@@ -102,6 +104,7 @@ class Bot:
         self.default_channel = self.config.teamtalk.channel
         self.is_updating = False
         self.auth_portal = None
+        self.youtube_session: Optional[YouTubeSessionKeeper] = None
         self.stream_proxy = StreamProxy(port=self.config.player.stream_proxy_port)
 
     def initialize(self):
@@ -130,6 +133,24 @@ class Bot:
         """
         self._initialize_browser_engine()
         self._initialize_spotify_engine()
+        self._initialize_youtube_session()
+
+    def _youtube_wants_browser(self) -> bool:
+        yt = self.config.services.yt
+        return bool(yt.enabled and getattr(yt, "browser_sign_in", True))
+
+    def _initialize_youtube_session(self) -> None:
+        """Keep this bot's YouTube session alive (Phase 9).
+
+        Created whenever YouTube is enabled, browser or not: on arm64 it still
+        stores an imported session and answers "has it ended", it just has no
+        Chrome to refresh with.
+        """
+        if not self.config.services.yt.enabled:
+            return
+        self.youtube_session = YouTubeSessionKeeper(self)
+        self.command_processor.youtube_session = self.youtube_session
+        self.youtube_session.start()
 
     def _initialize_browser_engine(self) -> None:
         """Start the browser engine and give it to the services that need it.
@@ -144,7 +165,9 @@ class Bot:
             if getattr(service, "engine", "") == "browser"
             and getattr(service, "is_enabled", False)
         }
-        if not browser_services:
+        # YouTube is not a browser *service*, it plays through the bridge, but it
+        # signs in and stays signed in through a browser profile of its own.
+        if not browser_services and not self._youtube_wants_browser():
             return
 
         engine = BrowserEngine(
@@ -164,7 +187,15 @@ class Bot:
                 service.is_enabled = False
                 service.error_message = reason
                 logging.warning(f"{name} disabled: no browser engine.")
+            if self._youtube_wants_browser():
+                logging.info(
+                    "YouTube browser sign-in is unavailable without Chrome; "
+                    "a session can still be imported through the portal."
+                )
             return
+
+        if self._youtube_wants_browser():
+            engine.register_adapter("yt", YouTubeAdapter())
 
         for name, service in browser_services.items():
             adapter = WEB_ADAPTERS.get(name)
@@ -207,6 +238,8 @@ class Bot:
         page, which is why the job state machine exists at all.
         """
         engine = self.player.engines.get("browser")
+        if service == "yt" and self.youtube_session is not None:
+            engine = self.youtube_session.engine
         if engine is None:
             job.fail(
                 self.translator.translate(
@@ -217,6 +250,10 @@ class Bot:
             return
         try:
             engine.login(service, username, password, job)
+            if service == "yt" and not job.is_finished and job.detail.get("signed_in"):
+                # Signed in to Google is not yet connected: the session has to be
+                # read out and stored before the portal may say so.
+                self.youtube_session.finish_browser_sign_in(job)
         except Exception as error:
             logging.error(f"[{service}] sign-in failed: {error}", exc_info=True)
             # The message reaches a user, so it must not be a traceback, and it
@@ -275,6 +312,7 @@ class Bot:
                 youtube_bridge=youtube_bridge,
                 librespot_engine=self.player.engines.get("librespot"),
                 sign_in_worker=self._browser_sign_in,
+                youtube_session=self.youtube_session,
             )
             self.auth_portal.start()
             self.command_processor.auth_portal = self.auth_portal
@@ -404,6 +442,8 @@ class Bot:
                 time.sleep(0.5)
             except Exception as e:
                 logging.error(f"Error sending shutdown message: {e}")
+        if self.youtube_session is not None:
+            self.youtube_session.close()
         if self.auth_portal is not None:
             try:
                 # Also revokes every live token, so a link pasted somewhere does

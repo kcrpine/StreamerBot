@@ -444,9 +444,9 @@ create_bot() {
     read -p "Bot Nickname (Default: StreamerBot): " nickname
     nickname=${nickname:-StreamerBot}
 
-    # No cookies question. YouTube signs in with a device code once the bot
-    # is running, so there is nothing useful to ask for, and asking implied a
-    # file was required.
+    # No cookies question. YouTube is connected through the account portal
+    # (li yt) once the bot is running, which also keeps the session alive, so
+    # there is nothing useful to ask for here.
     cookies_path=""
 
     # Startup commands: how a bot plays a stream the moment it connects. It is
@@ -640,9 +640,10 @@ create_bot() {
     # Copy default config
     cp "$CONFIG_SOURCE" "$CURRENT_BOT_DIR/config.json"
     
-    # No cookies file is created, copied or mounted. YouTube signs in with a
-    # device code, so a cookies.txt would be a stale credential sitting in
-    # plaintext in the bot's folder doing nothing.
+    # No cookies file is created, copied or mounted here. YouTube's session is
+    # written by the bot itself to youtube_auth/cookies.txt when someone
+    # connects it, and refreshed there; a cookies.txt in the bot's top folder
+    # would be a stale credential nothing reads.
     COOKIES_MOUNT=""
     CONTAINER_COOKIE_PATH=""
     if [ -f "$CURRENT_BOT_DIR/cookies.txt" ]; then

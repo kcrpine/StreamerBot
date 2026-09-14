@@ -448,6 +448,28 @@ class BrowserEngine(PlaybackEngine):
             timeout=30, name="cookies",
         )
 
+    def export_session(self, service: str) -> Dict[str, Any]:
+        """Load the service in its profile and read the signed-in session back out.
+
+        For YouTube this is also the keep-alive: loading youtube.com is what makes
+        Google rotate the session cookies.
+        """
+        adapter = self._adapter(service)
+        return self.submit(
+            lambda: adapter.export_session(self._page_for(service), self._context_for(service)),
+            timeout=120, name=f"export_session:{service}",
+        )
+
+    def import_session(self, service: str, cookies: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Load cookies from another browser into this profile, then export as above."""
+        adapter = self._adapter(service)
+        return self.submit(
+            lambda: adapter.import_session(
+                self._page_for(service), self._context_for(service), cookies
+            ),
+            timeout=120, name=f"import_session:{service}",
+        )
+
     def sign_out(self, service: str) -> None:
         """Drop the whole browser profile: cookies live in it."""
         def job():

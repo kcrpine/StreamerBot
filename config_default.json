@@ -55,7 +55,9 @@
         "default_service": "yt",
         "yt": {
             "enabled": true,
-            "search_results": 1
+            "search_results": 1,
+            "browser_sign_in": true,
+            "session_refresh_hours": 6
         },
         "ytm": {
             "enabled": true,

@@ -7,6 +7,8 @@ import { ClientType, Innertube, UniversalCache, Platform } from 'youtubei.js';
 import { ExpiringLruCache } from './cache.mjs';
 import {
   clientTakesPoToken,
+  contentBindingFor,
+  cookieHeaderFromNetscape,
   musicItemPayload,
   normalizeSearchKey,
   planPlaybackAttempts,
@@ -24,10 +26,10 @@ const USER_AGENT = process.env.YOUTUBE_BRIDGE_USER_AGENT ||
 Platform.shim.eval = async (data) => new Function(data.output)();
 
 // This process is shared infrastructure: every bot on the host resolves through
-// it. Node makes an unhandled rejection fatal, and the OAuth device flow polls
-// Google in the background long after /auth/start has returned, so a single
-// bot's abandoned or expired sign-in would otherwise take YouTube down for
-// everyone. Log and keep serving instead.
+// it. Node makes an unhandled rejection fatal, so one bot's failure in a
+// background promise would otherwise take YouTube down for everyone. The OAuth
+// device flow that first did this is gone, but the rule is about the process,
+// not that flow. Log and keep serving instead.
 process.on('unhandledRejection', (reason) => {
   console.error('[youtube-bridge] Unhandled rejection (continuing):', reason?.message || reason);
 });
@@ -96,16 +98,24 @@ async function readBody(req) {
 }
 
 // ---------------------------------------------------------------------------
-// Per-bot OAuth credentials.
+// Per-bot browser sessions.
 //
-// Replaces the Netscape cookies.txt path entirely. Cookies expired every few
-// weeks and had to be re-exported from a desktop browser by hand, which is a
-// miserable thing to ask of a screen reader user. youtubei.js signs in with a
-// TV device code instead and refreshes itself indefinitely.
+// Phase 9 replaced the OAuth device code. YouTube stopped serving playback to
+// that grant (every authenticated player request answered 400), and refuses
+// anonymous playback from datacenter addresses, so a bot on a VPS could sign in
+// and still play nothing. What YouTube does serve is a real browser session:
+// its cookies, plus a proof-of-origin token bound to the account's DataSync ID.
+//
+// The bot writes both under bots/<bot_id>/youtube_auth/: cookies.txt from its
+// own signed-in Chrome (or a file the user imported) and session.json with the
+// DataSync ID. This process only reads them. The session cache key includes the
+// cookie file's mtime, so a refreshed file rebuilds that one bot's session on
+// its next request, and nothing is restarted: this process serves every bot on
+// the host, and restarting it for one bot's cookies would stop them all.
 //
 // bot_id is the containment boundary between bots: it is validated against a
 // strict pattern and joined under BOTS_ROOT, so one bot can never reach
-// another's tokens. Do not relax that regex.
+// another's session. Do not relax that regex.
 // ---------------------------------------------------------------------------
 const BOT_ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/;
 
@@ -120,56 +130,64 @@ function getBotAuthDir(botId) {
   return path.join(BOTS_ROOT, requireBotId(botId), 'youtube_auth');
 }
 
-function getBotCredentialsFile(botId) {
-  return path.join(getBotAuthDir(botId), 'credentials.json');
+function getBotCookiesFile(botId) {
+  return path.join(getBotAuthDir(botId), 'cookies.txt');
 }
 
-// Cache key changes with the credentials file, so signing in or out builds a
-// fresh session on the next request instead of serving a stale one.
+function getBotSessionMetaFile(botId) {
+  return path.join(getBotAuthDir(botId), 'session.json');
+}
+
+// Cache key changes with the cookie file, so signing in, a refresh that rotated
+// the cookies, or signing out builds a fresh session on the next request instead
+// of serving a stale one.
 function sessionKey(botId) {
   if (!botId) return 'anonymous';
   try {
-    const stat = statSync(getBotCredentialsFile(botId));
+    const stat = statSync(getBotCookiesFile(botId));
     return `${botId}:${stat.mtimeMs}:${stat.size}`;
   } catch {
     return `${botId}:anonymous`;
   }
 }
 
-async function readCredentials(botId) {
+/**
+ * The bot's stored browser session, or null when it has none.
+ * @returns {Promise<{cookie: string, datasyncId: string}|null>}
+ */
+async function readBrowserSession(botId) {
+  let text;
   try {
-    return JSON.parse(await fs.readFile(getBotCredentialsFile(botId), 'utf8'));
+    text = await fs.readFile(getBotCookiesFile(botId), 'utf8');
   } catch (error) {
-    if (error?.code === 'ENOENT') return null;
-    console.warn(`[youtube-bridge] Unreadable credentials for ${botId}:`, error.message);
+    if (error?.code !== 'ENOENT') {
+      console.warn(`[youtube-bridge] Unreadable cookies for ${botId}:`, error.message);
+    }
     return null;
   }
+  const cookie = cookieHeaderFromNetscape(text);
+  if (!cookie) return null;
+
+  let datasyncId = '';
+  try {
+    const meta = JSON.parse(await fs.readFile(getBotSessionMetaFile(botId), 'utf8'));
+    datasyncId = typeof meta?.datasync_id === 'string' ? meta.datasync_id : '';
+  } catch {}
+  return { cookie, datasyncId };
 }
 
-async function writeCredentials(botId, credentials) {
-  const dir = getBotAuthDir(botId);
-  await fs.mkdir(dir, { recursive: true });
-  const file = getBotCredentialsFile(botId);
-  // Written via a temp file so a crash mid-write cannot leave a truncated
-  // credentials file that silently signs the bot out.
-  const tmp = `${file}.tmp`;
-  await fs.writeFile(tmp, JSON.stringify(credentials), { mode: 0o600 });
-  await fs.rename(tmp, file);
-}
-
-async function clearCredentials(botId) {
-  await fs.rm(getBotAuthDir(botId), { recursive: true, force: true });
-}
-
-/** Attach the listener that keeps refreshed tokens on disk. */
-function persistCredentialUpdates(session, botId) {
-  session.on('update-credentials', async ({ credentials }) => {
-    try {
-      await writeCredentials(botId, credentials);
-    } catch (error) {
-      console.warn(`[youtube-bridge] Could not persist credentials for ${botId}:`, error.message);
-    }
-  });
+// A session imported on a host with no Chrome (arm64) arrives without a
+// DataSync ID, because nothing loaded youtube.com to read ytcfg. YouTube also
+// reports it in the account menu's response context.
+async function discoverDatasyncId(session) {
+  try {
+    const response = await session.actions.execute('/account/account_menu', { client: 'WEB' });
+    const id = response?.data?.responseContext?.mainAppWebResponseContext?.datasyncId;
+    return typeof id === 'string' ? id : '';
+  } catch (error) {
+    console.warn('[youtube-bridge] Could not read the DataSync ID:', error?.message || error);
+    return '';
+  }
 }
 
 async function getSession(botId) {
@@ -186,27 +204,16 @@ async function getSession(botId) {
   }
 
   const contextPromise = (async () => {
-    const credentials = botId ? await readCredentials(botId) : null;
+    const browserSession = botId ? await readBrowserSession(botId) : null;
     const { session, poToken } = await createAttestedSession({
       user_agent: USER_AGENT,
       client_type: ClientType.MWEB,
       cache: new UniversalCache(true, botId ? getBotAuthDir(botId) : undefined),
-      enable_session_cache: true,
+      enable_session_cache: !browserSession,
       generate_session_locally: true,
-      retrieve_player: true
-    });
-    if (credentials) {
-      persistCredentialUpdates(session.session, botId);
-      try {
-        // Silent: with stored credentials this refreshes rather than starting
-        // a device flow.
-        await session.session.signIn(credentials);
-      } catch (error) {
-        // A revoked or corrupt grant must not take search down with it. Fall
-        // back to anonymous, which is what the cookie-less path always did.
-        console.warn(`[youtube-bridge] Sign-in failed for ${botId}, continuing anonymously:`, error.message);
-      }
-    }
+      retrieve_player: true,
+      ...(browserSession ? { cookie: browserSession.cookie } : {})
+    }, browserSession);
     return { session, poToken };
   })().catch((error) => {
     sessionCache.delete(key);
@@ -220,118 +227,10 @@ async function getSession(botId) {
   return contextPromise;
 }
 
-// ---------------------------------------------------------------------------
-// Device-code sign-in.
-//
-// signIn() with no credentials does not return until the user has finished on
-// google.com/device, so /auth/start must not await it. It kicks the flow off,
-// resolves as soon as the auth-pending event carries the code, and leaves the
-// promise running in the background to complete the sign-in.
-// ---------------------------------------------------------------------------
-const pendingAuth = new Map();
-
-const AUTH_PENDING_TIMEOUT_MS = 15000;
-
-async function startAuth(body) {
+async function sessionStatus(body) {
   const botId = requireBotId(body.bot_id);
-
-  const existing = pendingAuth.get(botId);
-  if (existing && existing.expires_at > Date.now()) {
-    return { ...existing.info, already_pending: true };
-  }
-
-  const inner = await Innertube.create({
-    user_agent: USER_AGENT,
-    client_type: ClientType.MWEB,
-    cache: new UniversalCache(true, getBotAuthDir(botId)),
-    generate_session_locally: true,
-    retrieve_player: false
-  });
-  const session = inner.session;
-
-  const pending = new Promise((resolve, reject) => {
-    const timer = setTimeout(
-      () => reject(new Error('YouTube did not return a device code in time')),
-      AUTH_PENDING_TIMEOUT_MS
-    );
-    session.once('auth-pending', (data) => {
-      clearTimeout(timer);
-      resolve({
-        verification_url: data.verification_url,
-        user_code: data.user_code,
-        expires_in: data.expires_in
-      });
-    });
-    session.once('auth-error', (error) => {
-      clearTimeout(timer);
-      reject(error instanceof Error ? error : new Error(String(error)));
-    });
-  });
-
-  session.once('auth', async ({ credentials }) => {
-    try {
-      await writeCredentials(botId, credentials);
-      // Drop cached anonymous sessions so the next request is signed in.
-      for (const cachedKey of [...sessionCache.keys()]) {
-        if (cachedKey.startsWith(`${botId}:`)) sessionCache.delete(cachedKey);
-      }
-      const entry = pendingAuth.get(botId);
-      if (entry) entry.status = 'authenticated';
-      console.log(`[youtube-bridge] ${botId} signed in to YouTube`);
-    } catch (error) {
-      console.error(`[youtube-bridge] Could not save credentials for ${botId}:`, error.message);
-      const entry = pendingAuth.get(botId);
-      if (entry) { entry.status = 'failed'; entry.error = error.message; }
-    }
-  });
-  persistCredentialUpdates(session, botId);
-
-  // Deliberately not awaited: it settles when the user finishes on the device
-  // page, which may be minutes from now.
-  session.signIn().catch((error) => {
-    console.warn(`[youtube-bridge] Device sign-in for ${botId} ended:`, error?.message || error);
-    const entry = pendingAuth.get(botId);
-    if (entry && entry.status === 'pending') { entry.status = 'failed'; entry.error = error?.message; }
-  });
-
-  const info = await pending;
-  pendingAuth.set(botId, {
-    info,
-    status: 'pending',
-    expires_at: Date.now() + (Number(info.expires_in) || 1800) * 1000
-  });
-  return info;
-}
-
-async function authStatus(body) {
-  const botId = requireBotId(body.bot_id);
-  const credentials = await readCredentials(botId);
-  if (credentials) {
-    pendingAuth.delete(botId);
-    return { status: 'authenticated', signed_in: true };
-  }
-  const entry = pendingAuth.get(botId);
-  if (entry && entry.expires_at > Date.now()) {
-    return {
-      status: entry.status,
-      signed_in: false,
-      error: entry.error,
-      ...entry.info
-    };
-  }
-  pendingAuth.delete(botId);
-  return { status: 'signed_out', signed_in: false };
-}
-
-async function signOut(body) {
-  const botId = requireBotId(body.bot_id);
-  pendingAuth.delete(botId);
-  await clearCredentials(botId);
-  for (const cachedKey of [...sessionCache.keys()]) {
-    if (cachedKey.startsWith(`${botId}:`)) sessionCache.delete(cachedKey);
-  }
-  console.log(`[youtube-bridge] ${botId} signed out of YouTube`);
-  return { status: 'signed_out', signed_in: false };
+  const browserSession = await readBrowserSession(botId);
+  return { status: browserSession ? 'authenticated' : 'signed_out', signed_in: Boolean(browserSession) };
 }
 
 async function getSearchSession() {
@@ -437,30 +336,41 @@ async function getPoToken(contentBinding) {
   }
 }
 
-// Create a session that carries a proof-of-origin token bound to its own
-// visitorData.
+// Create a session that carries a proof-of-origin token bound to the identity
+// YouTube will check it against.
 //
-// Two creates, because the token has to be bound to the visitorData that the
-// session will actually send, and that value does not exist until a session
-// exists. The first create is cheap: generate_session_locally means the visitor
-// data is produced without a network round trip, and retrieve_player skips
-// fetching the player. Sessions are cached, so this happens once per bot.
-async function createAttestedSession(options) {
+// Two creates, because the binding does not exist until a session does. Signed
+// out, it is the session's visitorData: generate_session_locally produces that
+// without a network round trip, and retrieve_player skips fetching the player,
+// so the probe is cheap. Signed in with a browser session, it is the account's
+// DataSync ID, read from the bot's Chrome and stored beside the cookies, or
+// asked of YouTube when an imported session arrived without one. Sessions are
+// cached, so this happens once per bot per cookie file.
+async function createAttestedSession(options, browserSession = null) {
+  const signedIn = Boolean(browserSession);
   const probe = await Innertube.create({
     ...options,
     retrieve_player: false
   });
   const visitorData = probe.session?.context?.client?.visitorData;
+  let datasyncId = browserSession?.datasyncId || '';
+  if (signedIn && !datasyncId) {
+    datasyncId = await discoverDatasyncId(probe);
+  }
 
-  if (!visitorData) {
+  const binding = contentBindingFor({ signedIn, visitorData, datasyncId });
+  if (!binding) {
     console.warn(
-      '[youtube-bridge] No visitorData was available, so this session carries no ' +
-      'proof-of-origin token and playback may be refused as bot traffic.'
+      signedIn
+        ? '[youtube-bridge] No DataSync ID for this signed-in session, so it carries no ' +
+          'proof-of-origin token and playback may be refused as bot traffic.'
+        : '[youtube-bridge] No visitorData was available, so this session carries no ' +
+          'proof-of-origin token and playback may be refused as bot traffic.'
     );
     return { session: await Innertube.create(options), poToken: undefined };
   }
 
-  const poToken = await getPoToken(visitorData);
+  const poToken = await getPoToken(binding);
   if (!poToken) {
     console.warn(
       '[youtube-bridge] Continuing without a proof-of-origin token. Search will ' +
@@ -470,7 +380,7 @@ async function createAttestedSession(options) {
 
   const session = await Innertube.create({
     ...options,
-    visitor_data: visitorData,
+    ...(visitorData ? { visitor_data: visitorData } : {}),
     po_token: poToken
   });
 
@@ -730,25 +640,18 @@ async function getInfo(body) {
 }
 
 async function getWebSession(botId) {
-  const credentials = botId ? await readCredentials(botId) : null;
-  const inner = await Innertube.create({
+  // Signed in with the bot's browser session, so the account's private
+  // playlists resolve too; public ones resolve either way.
+  const browserSession = botId ? await readBrowserSession(botId) : null;
+  return Innertube.create({
     user_agent: USER_AGENT,
     client_type: ClientType.WEB,
     cache: new UniversalCache(true, botId ? getBotAuthDir(botId) : undefined),
-    enable_session_cache: true,
+    enable_session_cache: !browserSession,
     generate_session_locally: true,
-    retrieve_player: false
+    retrieve_player: false,
+    ...(browserSession ? { cookie: browserSession.cookie } : {})
   });
-  if (credentials) {
-    persistCredentialUpdates(inner.session, botId);
-    try {
-      await inner.session.signIn(credentials);
-    } catch (error) {
-      // Private playlists will not be visible, but public ones still resolve.
-      console.warn(`[youtube-bridge] Playlist sign-in failed for ${botId}:`, error.message);
-    }
-  }
-  return inner;
 }
 
 async function getPlaylist(body) {
@@ -1042,7 +945,7 @@ const server = http.createServer(async (req, res) => {
       }
       return json(res, 200, {
         ok: true,
-        version: '2',
+        version: '3',
         pot_provider: {
           url: POT_URL,
           reachable: potReachable,
@@ -1060,9 +963,9 @@ const server = http.createServer(async (req, res) => {
     // bot out of another's tokens.
     requireBotId(body.bot_id);
 
-    if (req.url === '/auth/start') return json(res, 200, await startAuth(body));
-    if (req.url === '/auth/status') return json(res, 200, await authStatus(body));
-    if (req.url === '/auth/signout') return json(res, 200, await signOut(body));
+    // /auth/start and /auth/signout were the device-code sign-in, retired in
+    // Phase 9. Sign-in and sign-out now happen in the bot, which owns the files.
+    if (req.url === '/auth/status') return json(res, 200, await sessionStatus(body));
 
     if (req.url === '/resolve') return json(res, 200, await resolveTrack(body));
     if (req.url === '/invalidate') return json(res, 200, invalidateResolution(body));

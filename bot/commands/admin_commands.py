@@ -386,77 +386,52 @@ class GetChannelIDCommand(Command):
 
 
 class YouTubeLoginCommand(Command):
-    """Sign this bot in to YouTube with a device code, or sign it out.
+    """This bot's YouTube sign-in: its state, or signing it out.
 
-    The bot used to need a cookies.txt exported from a desktop browser every
-    few weeks. This asks YouTube for a short code instead, which the user types
-    at the given URL on any device; the bridge then refreshes the tokens
-    indefinitely on its own.
-
-    Credentials belong to this bot alone. The bridge stores them under
-    bots/<bot_id>/youtube_auth/, so two bots on the same host never share a
-    YouTube account.
+    Until Phase 9 this started a device-code sign-in. YouTube stopped serving
+    playback to that kind of sign-in, so connecting now happens through the
+    portal (li yt), in the bot's own browser or by importing a session. yl
+    stays for the two things an administrator still wants from the channel:
+    whether the bot is signed in, and signing it out.
     """
 
     @property
     def help(self) -> str:
         return self.translator.translate(
-            "[status|start|out] Signs this bot in to YouTube. "
-            "No argument shows the current state, start begins sign-in, out signs the bot out"
-        )
-
-    def _bridge(self):
-        # yt and ytm share one account, so either service's bridge will do.
-        for name in ("yt", "ytm"):
-            service = self.service_manager.services.get(name)
-            bridge = getattr(service, "_bridge", None)
-            if bridge is not None:
-                return bridge
-        raise errors.ServiceError(
-            self.translator.translate("The YouTube service is not enabled.")
+            "[status|out] Shows whether this bot is signed in to YouTube, or signs it out. "
+            "To sign in, send li yt"
         )
 
     def __call__(self, arg: str, user: User) -> Optional[str]:
-        bridge = self._bridge()
+        keeper = getattr(self.command_processor, "youtube_session", None)
+        if keeper is None:
+            raise errors.ServiceError(
+                self.translator.translate("The YouTube service is not enabled.")
+            )
         action = (arg or "status").strip().lower()
 
         if action in ("status", ""):
-            if bridge.is_signed_in():
+            state = keeper.status()
+            if state == "connected":
                 return self.translator.translate("This bot is signed in to YouTube.")
+            if state == "expired":
+                return self.translator.translate(
+                    "Google signed this bot out of YouTube. To sign in again, send this command: li yt"
+                )
             return self.translator.translate(
-                "This bot is not signed in to YouTube. "
-                "Public videos still play. Send yl start to sign in."
+                "This bot is not signed in to YouTube. To sign in, send this command: li yt"
             )
 
         if action in ("out", "signout", "logout"):
-            bridge.auth_signout()
+            keeper.sign_out()
             return self.translator.translate("This bot has been signed out of YouTube.")
 
-        if action not in ("start", "in", "login", "signin"):
-            raise errors.InvalidArgumentError()
-
-        if bridge.is_signed_in():
-            # Signing in again would silently replace a working account.
+        if action in ("start", "in", "login", "signin"):
             return self.translator.translate(
-                "This bot is already signed in to YouTube. "
-                "Send yl out first if you want to use a different account."
+                "YouTube is connected through the account portal now. Send this command: li yt"
             )
 
-        data = bridge.auth_start()
-        url = data.get("verification_url") or "https://www.google.com/device"
-        code = data.get("user_code") or ""
-        minutes = max(1, int(data.get("expires_in") or 1800) // 60)
-
-        # The code is spelled out character by character because these codes mix
-        # letters and digits, and a screen reader reading "ABCD-1234" as a word
-        # is not something the user can type back.
-        spelled = " ".join(code.replace("-", ""))
-        return self.translator.translate(
-            "To sign in to YouTube, go to {url} and enter the code {code}. "
-            "Character by character, that is {spelled}. "
-            "The code lasts about {minutes} minutes. "
-            "Send yl on its own to check whether it worked."
-        ).format(url=url, code=code, spelled=spelled, minutes=minutes)
+        raise errors.InvalidArgumentError()
 
 
 class AuthPortalCommand(Command):

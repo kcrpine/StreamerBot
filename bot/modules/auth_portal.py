@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import logging
 import threading
+import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Any, Callable, Dict, Optional, Tuple
 from urllib.parse import parse_qs, urlparse
@@ -24,12 +25,27 @@ from urllib.parse import parse_qs, urlparse
 from bot.auth import SERVICES, service_name
 from bot.auth.session import AuthState
 from bot.auth.tokens import TokenStore
+from bot.modules.youtube_session_keeper import ImportProblem, MAX_IMPORT_BYTES
 from bot.modules import public_address
 from bot.modules.portal_pages import PageBuilder
 
 logger = logging.getLogger(__name__)
 
 MAX_BODY_BYTES = 64 * 1024
+
+# The session import form carries a cookies.txt file, uploaded or pasted. Real
+# ones are a few kilobytes; this leaves room for both fields and multipart
+# framing while refusing anything that could only be the wrong file.
+MAX_IMPORT_BODY_BYTES = 2 * MAX_IMPORT_BYTES + MAX_BODY_BYTES
+
+# A body bigger than this is not read at all; the connection is closed instead.
+MAX_DRAIN_BYTES = 8 * 1024 * 1024
+
+TOO_LARGE = "__too_large__"
+
+# How long "I have approved it" waits for the worker to see Google move on
+# before sending the person back to the approval page.
+APPROVAL_CHECK_SECONDS = 6
 
 
 class PortalHandler(BaseHTTPRequestHandler):
@@ -78,14 +94,54 @@ class PortalHandler(BaseHTTPRequestHandler):
     def _query(self) -> Dict[str, list]:
         return parse_qs(urlparse(self.path).query)
 
-    def _form(self) -> Dict[str, list]:
+    def _form(self, limit: int = MAX_BODY_BYTES) -> Dict[str, list]:
         try:
             length = int(self.headers.get("content-length") or 0)
         except ValueError:
             return {}
-        if length <= 0 or length > MAX_BODY_BYTES:
+        if length <= 0:
             return {}
-        return parse_qs(self.rfile.read(length).decode("utf-8", "replace"))
+        if length > limit:
+            # Said as an error rather than silently truncated. Drained so the
+            # browser gets the page instead of a connection reset mid-upload.
+            if length <= MAX_DRAIN_BYTES:
+                self.rfile.read(length)
+            else:
+                self.close_connection = True
+            return {TOO_LARGE: ["1"]}
+        body = self.rfile.read(length)
+        content_type = self.headers.get("content-type") or ""
+        if content_type.lower().startswith("multipart/form-data"):
+            return self._multipart(content_type, body)
+        return parse_qs(body.decode("utf-8", "replace"))
+
+    @staticmethod
+    def _multipart(content_type: str, body: bytes) -> Dict[str, list]:
+        """multipart/form-data, for the session import's file field.
+
+        email.parser rather than cgi, which Python 3.13 removed. Every value,
+        file or not, comes back as text.
+        """
+        from email.parser import BytesParser
+        from email.policy import default
+
+        blank_line = bytes([13, 10, 13, 10])
+        try:
+            message = BytesParser(policy=default).parsebytes(
+                b"Content-Type: " + content_type.encode("latin-1", "replace") + blank_line + body
+            )
+        except Exception:
+            return {}
+        form: Dict[str, list] = {}
+        if not message.is_multipart():
+            return form
+        for part in message.iter_parts():
+            name = part.get_param("name", header="content-disposition")
+            if not name:
+                continue
+            payload = part.get_payload(decode=True) or b""
+            form.setdefault(name, []).append(payload.decode("utf-8", "replace"))
+        return form
 
     def _token(self, params: Dict[str, list]) -> str:
         return (params.get("t") or [""])[0]
@@ -103,7 +159,8 @@ class PortalHandler(BaseHTTPRequestHandler):
         pages = portal.pages
         path = urlparse(self.path).path.rstrip("/") or "/"
         query = self._query()
-        form = self._form() if method == "POST" else {}
+        limit = MAX_IMPORT_BODY_BYTES if path.startswith("/import") else MAX_BODY_BYTES
+        form = self._form(limit) if method == "POST" else {}
         token = self._token(form) or self._token(query)
 
         if not portal.tokens.check(token):
@@ -135,13 +192,24 @@ class PortalHandler(BaseHTTPRequestHandler):
         parts = [p for p in path.split("/") if p]
 
         if not parts:
-            self._send(200, pages.status_page(token, portal.statuses()))
+            self._send(200, pages.status_page(
+                token, portal.statuses(), youtube_browser=portal.youtube_browser_available()
+            ))
             return
 
         head = parts[0]
 
         if head == "youtube":
-            self._route_youtube(method, parts, token)
+            # The device-code page lived here until Phase 9. Old links still land
+            # somewhere useful.
+            self._redirect(f"/connect/yt?t={token}")
+            return
+
+        if head in ("approve", "import"):
+            if len(parts) < 2 or parts[1] != "yt":
+                self._send(404, pages.not_found_page())
+                return
+            getattr(self, f"_route_{head}")(method, token, query, form)
             return
 
         if head in ("connect", "otp", "disconnect", "progress", "success", "failure"):
@@ -158,37 +226,69 @@ class PortalHandler(BaseHTTPRequestHandler):
 
     # -- routes ------------------------------------------------------------
 
-    def _route_youtube(self, method: str, parts: list, token: str) -> None:
+    def _route_approve(self, method: str, token: str, query: Dict[str, list], form: Dict[str, list]) -> None:
+        """Google's "check your phone" step."""
         portal = self.portal
         pages = portal.pages
-        tail = parts[1] if len(parts) > 1 else ""
+        job = portal.jobs.get("yt")
+        if job is None or job.state is not AuthState.AwaitingApproval:
+            self._redirect(f"/progress/yt?t={token}")
+            return
 
-        if tail == "check" and method == "POST":
-            if portal.youtube_is_signed_in():
-                self._redirect(f"/success/yt?t={token}")
+        if method == "POST":
+            # Nudge the worker to look at once, and give it a moment, so a
+            # person who really did approve lands on progress or success rather
+            # than straight back here.
+            job.confirm_approval()
+            deadline = time.monotonic() + APPROVAL_CHECK_SECONDS
+            while time.monotonic() < deadline and job.state is AuthState.AwaitingApproval:
+                time.sleep(0.25)
+            if job.state is AuthState.AwaitingApproval:
+                self._redirect(f"/approve/yt?t={token}&not_yet=1")
             else:
-                self._redirect(f"/youtube?t={token}")
+                self._redirect(f"/progress/yt?t={token}")
             return
 
-        if portal.youtube_is_signed_in():
-            self._redirect(f"/success/yt?t={token}")
+        detail = job.detail
+        self._send(200, pages.approval_page(
+            token,
+            heading=detail.get("approval_heading", ""),
+            instruction=detail.get("approval_instruction", ""),
+            number=detail.get("approval_number", ""),
+            not_yet=bool(query.get("not_yet")),
+        ))
+
+    def _route_import(self, method: str, token: str, query: Dict[str, list], form: Dict[str, list]) -> None:
+        """A cookies.txt file from the user's own browser."""
+        portal = self.portal
+        pages = portal.pages
+        keeper = portal.youtube_session
+        if keeper is None:
+            self._send(200, pages.failure_page(
+                token, "yt", portal.translator.translate("The YouTube service is not enabled.")
+            ))
+            return
+        browser = keeper.browser_available
+
+        if method == "GET":
+            self._send(200, pages.import_page(token, browser_available=browser))
             return
 
-        try:
-            info = portal.youtube_start()
-        except Exception as error:
-            logger.error(f"[portal] YouTube sign-in could not start: {error}")
-            self._send(200, pages.failure_page(token, "yt", str(error)))
-            return
+        if form.get(TOO_LARGE):
+            problem = ImportProblem.TooLarge
+        else:
+            # The file wins over the paste box when both are filled: it is the
+            # route this page recommends, and cannot have lost its tabs.
+            uploaded = (form.get("cookies_file") or [""])[0]
+            pasted = (form.get("cookies") or [""])[0]
+            text = uploaded if uploaded.strip() else pasted
+            ok, problem = keeper.import_text(text)
+            if ok:
+                self._redirect(f"/success/yt?t={token}")
+                return
 
-        self._send(
-            200,
-            pages.device_code_page(
-                token,
-                info.get("user_code", ""),
-                info.get("verification_url", "https://www.google.com/device"),
-            ),
-        )
+        message = pages.import_problem_message(problem)
+        self._send(200, pages.import_page(token, [("cookies", message)], browser_available=browser))
 
     def _route_connect(
         self, method: str, service: str, tail: str, token: str, form: Dict[str, list]
@@ -197,8 +297,16 @@ class PortalHandler(BaseHTTPRequestHandler):
         pages = portal.pages
 
         if service == "yt":
-            self._redirect(f"/youtube?t={token}")
-            return
+            keeper = portal.youtube_session
+            if keeper is None:
+                self._send(200, pages.failure_page(
+                    token, "yt", portal.translator.translate("The YouTube service is not enabled.")
+                ))
+                return
+            if not keeper.browser_available:
+                # No Chrome on this host: importing is the only route that works.
+                self._redirect(f"/import/yt?t={token}")
+                return
 
         if service == "sp":
             # Device code, not a password form: go-librespot pairs the same way
@@ -236,11 +344,15 @@ class PortalHandler(BaseHTTPRequestHandler):
         errors = []
         if not username:
             errors.append(
+                ("username", pages._("Enter the Google account email address"))
+                if service == "yt" else
                 ("username", pages._("Enter your %(service)s email address or username")
                  % {"service": service_name(service)})
             )
         if not password:
             errors.append(
+                ("password", pages._("Enter the Google account password"))
+                if service == "yt" else
                 ("password", pages._("Enter your %(service)s password")
                  % {"service": service_name(service)})
             )
@@ -304,6 +416,9 @@ class PortalHandler(BaseHTTPRequestHandler):
         if job.state is AuthState.AwaitingOtp:
             self._redirect(f"/otp/{service}?t={token}")
             return
+        if job.state is AuthState.AwaitingApproval:
+            self._redirect(f"/approve/{service}?t={token}")
+            return
         if job.state is AuthState.Success:
             self._redirect(f"/success/{service}?t={token}")
             return
@@ -349,6 +464,7 @@ class AuthPortal:
         youtube_bridge: Optional[Any] = None,
         librespot_engine: Optional[Any] = None,
         sign_in_worker: Optional[Callable[[str, str, str, Any], None]] = None,
+        youtube_session: Optional[Any] = None,
     ) -> None:
         self.translator = translator
         self.store = store
@@ -359,6 +475,7 @@ class AuthPortal:
         self.youtube_bridge = youtube_bridge
         self.librespot_engine = librespot_engine
         self.sign_in_worker = sign_in_worker
+        self.youtube_session = youtube_session
         self._server: Optional[ThreadingHTTPServer] = None
         self._thread: Optional[threading.Thread] = None
 
@@ -421,7 +538,10 @@ class AuthPortal:
         result: Dict[str, str] = {}
         for service in SERVICES:
             if service == "yt":
-                result[service] = "connected" if self.youtube_is_signed_in() else "disconnected"
+                result[service] = (
+                    self.youtube_session.status() if self.youtube_session is not None
+                    else "disconnected"
+                )
             elif service == "sp":
                 result[service] = "connected" if self.spotify_is_signed_in() else "disconnected"
             else:
@@ -432,9 +552,10 @@ class AuthPortal:
         return self.store.get(service, "username") or ""
 
     def youtube_is_signed_in(self) -> bool:
-        if self.youtube_bridge is None:
-            return False
-        return self.youtube_bridge.is_signed_in()
+        return self.youtube_session is not None and self.youtube_session.status() == "connected"
+
+    def youtube_browser_available(self) -> bool:
+        return self.youtube_session is not None and self.youtube_session.browser_available
 
     def spotify_is_signed_in(self) -> bool:
         if self.librespot_engine is None:
@@ -462,20 +583,19 @@ class AuthPortal:
                                 or "https://spotify.com/pair",
         }
 
-    def youtube_start(self) -> Dict[str, Any]:
-        if self.youtube_bridge is None:
-            raise RuntimeError("The YouTube service is not enabled.")
-        return self.youtube_bridge.auth_start()
-
     # -- actions -----------------------------------------------------------
 
     def begin_sign_in(self, service: str, username: str, password: str) -> None:
-        self.store.set(service, username=username, password=password)
         # Registered immediately so the password cannot reach a log even if the
         # sign-in blows up on the very next line.
         from bot.auth import redaction
 
         redaction.get_filter().register(password)
+        if service != "yt":
+            # A Google password is not kept. The session is what the bot keeps,
+            # and a dead session needs the person present for the phone prompt
+            # anyway, so a stored password could not sign in again on its own.
+            self.store.set(service, username=username, password=password)
 
         job = self.jobs.start(service)
         if self.sign_in_worker is None:
@@ -502,9 +622,9 @@ class AuthPortal:
         self.jobs.clear(service)
 
     def disconnect(self, service: str) -> None:
-        if service == "yt" and self.youtube_bridge is not None:
+        if service == "yt" and self.youtube_session is not None:
             try:
-                self.youtube_bridge.auth_signout()
+                self.youtube_session.sign_out()
             except Exception as error:
                 logger.warning(f"[portal] YouTube sign-out failed: {error}")
         if service == "sp" and self.librespot_engine is not None:

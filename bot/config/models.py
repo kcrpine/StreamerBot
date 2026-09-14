@@ -72,6 +72,13 @@ class YtModel(BaseModel):
     enabled: bool = True
     cookiefile_path: str = ""
     search_results: int = 1
+    # Sign in to YouTube through the bot's own Chrome (Phase 9). Off leaves
+    # session import as the only route, and nothing refreshes the session.
+    browser_sign_in: bool = True
+    # How often the bot loads youtube.com to keep its Google session rotating.
+    # 0 turns the scheduled refresh off; a refused playback still triggers one.
+    # Settings only: the session itself lives in data/youtube_auth/, never here.
+    session_refresh_hours: float = 6
 
 
 

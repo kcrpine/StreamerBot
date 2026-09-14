@@ -62,12 +62,15 @@ export function streamCacheTtlMs(streamUrl, nowMs = Date.now()) {
 //    third was rejected inside youtubei.js before it left the process. A chain
 //    that retries the same request is not a fallback.
 //
-// 2. An anonymous retry has to be in it. YouTube's player endpoint answers 400
-//    to an OAuth-authenticated request that it serves anonymously, so signing
-//    in to reach age-restricted content took ordinary playback down with it.
-//    The signed-in attempts come first, because they are the only ones that can
-//    return age-restricted or member content; the anonymous ones come after,
-//    because they are what works when the account is the problem.
+// 2. An anonymous retry has to be in it. YouTube's player endpoint answered 400
+//    to every OAuth-authenticated request, so signing in took ordinary playback
+//    down with it. Phase 9 replaced OAuth with a real browser session, which is
+//    what YouTube still serves from an untrusted address, but the rule stands:
+//    a session Google has just ended fails the same way. The signed-in attempts
+//    come first, because they are the only ones that can return age-restricted
+//    or member content, and the only ones a datacenter address is served at
+//    all; the anonymous ones come after, because they are what works on a host
+//    YouTube trusts when the account is the problem.
 //
 // The client names are the short keys youtubei.js validates against
 // (Constants.SUPPORTED_CLIENTS), NOT the ClientType enum values. ClientType is
@@ -123,4 +126,63 @@ export function planPlaybackAttempts({ signedIn }) {
   }
 
   return attempts;
+}
+
+// ---------------------------------------------------------------------------
+// A bot's browser session, as youtubei.js takes it.
+// ---------------------------------------------------------------------------
+
+const YOUTUBE_DOMAIN = /(^|\.)youtube\.com$/i;
+
+/**
+ * A Netscape cookies.txt file as the Cookie header youtubei.js's `cookie`
+ * option expects: "name=value; name=value".
+ *
+ * Only youtube.com cookies, because those are the ones a browser sends to
+ * youtube.com; the file also carries google.com cookies for the bot's own
+ * Chrome. Expired cookies are dropped. Where the same name appears on several
+ * youtube.com domains, the most specific domain wins, as it does in a browser.
+ *
+ * Pure, and the only place this format is read on the Node side.
+ *
+ * @param {string} text
+ * @param {number} [nowSeconds]
+ * @returns {string}
+ */
+export function cookieHeaderFromNetscape(text, nowSeconds = Date.now() / 1000) {
+  const chosen = new Map();
+  for (const raw of String(text || '').replace(/^\uFEFF/, '').split(/\r?\n/)) {
+    let line = raw;
+    if (line.startsWith('#HttpOnly_')) line = line.slice('#HttpOnly_'.length);
+    if (!line.trim() || line.startsWith('#')) continue;
+    const fields = line.split('\t');
+    if (fields.length !== 7) continue;
+    const [domain, , , , expires, name, value] = fields;
+    const bare = domain.replace(/^\./, '');
+    if (!name || !YOUTUBE_DOMAIN.test(bare)) continue;
+    const expiry = Number(expires);
+    if (Number.isFinite(expiry) && expiry > 0 && expiry < nowSeconds) continue;
+    const previous = chosen.get(name);
+    if (!previous || bare.length > previous.domainLength) {
+      chosen.set(name, { value, domainLength: bare.length });
+    }
+  }
+  return [...chosen.entries()].map(([name, { value }]) => `${name}=${value}`).join('; ');
+}
+
+/**
+ * What a proof-of-origin token must be bound to for this session.
+ *
+ * A signed-out session is identified by its visitorData ([015]). A signed-in
+ * one is identified by the account's DataSync ID, and a token bound to anything
+ * else is silently ignored, which from a datacenter address means
+ * LOGIN_REQUIRED on every client. The DataSync ID comes from ytcfg in the bot's
+ * own Chrome, stored beside the cookies.
+ *
+ * @param {{signedIn: boolean, visitorData?: string, datasyncId?: string}} session
+ * @returns {string|undefined}
+ */
+export function contentBindingFor({ signedIn, visitorData, datasyncId }) {
+  if (signedIn) return datasyncId || undefined;
+  return visitorData || undefined;
 }

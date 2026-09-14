@@ -34,9 +34,13 @@ where one exists. The bot asks first, and remembers the answer if you tell it to
 For a blind listener this is the difference between a film being watchable and
 being ninety minutes of unexplained silence.
 
-**No more `cookies.txt`.** YouTube used to need a cookie file exported from a
-desktop browser every few weeks. It now signs in with a short code you enter on
-any device, and refreshes itself from then on. Spotify pairs the same way.
+**YouTube that plays from a server.** From most VPS addresses YouTube refuses to
+play anything without a signed-in account, and it no longer plays for the TV code
+sign-in either. The bot signs a Google account in through its own Chrome, keeps
+that session alive by itself, and holds a request while it renews rather than
+failing it. Where Google refuses the bot's browser, a session exported from your
+own browser can be imported instead, by choosing the file on a web page. Nobody
+re-exports a cookie file every few weeks. Spotify pairs with a code.
 
 **Accounts connect through a web page, not the chat.** A password does not belong
 in a channel where everyone can read it. Two-factor codes have their own step, so
@@ -57,7 +61,7 @@ Full detail is in [CHANGELOG.md](CHANGELOG.md).
 
 | Service | Plays through | Needs |
 | --- | --- | --- |
-| YouTube, YouTube Music | mpv | Nothing. Signing in only adds age-restricted content |
+| YouTube, YouTube Music | mpv | Nothing where YouTube trusts the address. On most VPS hosts, a Google account made for the bot |
 | Spotify | go-librespot | Premium. A Spotify application if you want to search by name |
 | Netflix, Disney+ | Chrome | An account. **amd64 only** |
 | Apple Music, Amazon Music | Chrome | An account. **amd64 only** |
@@ -124,8 +128,13 @@ connect each account.
 
 To connect an account:
 
-- **YouTube:** send `li yt`. The bot replies with a code and an address. Enter the
-  code there, and it picks it up on its own.
+- **YouTube:** send `li yt` and follow the link. Use a Google account made for
+  the bot, not your personal one: Google may restrict an account that plays
+  videos automatically from a server. The page signs in through the bot's own
+  browser, including Google's "check your phone" step. If Google refuses, or on
+  ARM where there is no browser, the same page offers importing a session
+  exported from your own browser. When Google ends the session, the bot says so
+  in TeamTalk and `li yt` connects it again.
 - **Spotify:** send `li sp`, then enter the code at `spotify.com/pair`. Playback
   needs Premium. Searching by name additionally needs a Spotify application; `h
   connect sp` walks through it, and a pasted Spotify link works without one.
@@ -175,7 +184,7 @@ that rewrite themselves, and asks for a typed word before anything destructive.
 
 This is not decoration. During development a review of the sign-in pages
 overturned five decisions that had already been settled, the worst of which would
-have made the YouTube code impossible for a screen reader user to copy — for
+have made a sign-in code impossible for a screen reader user to copy — for
 exactly the people who most need to copy it rather than transcribe nine
 characters by ear.
 

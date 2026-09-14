@@ -6,8 +6,14 @@ human who is somewhere else entirely, on a web page. This models that as a job
 with a state, and a queue the worker blocks on while the portal fills it.
 
     queued -> launching -> filling -> awaiting_otp -> success
+                                   -> awaiting_approval -> success
                                    -> awaiting_captcha -> failed
                                    -> failed(reason)
+
+awaiting_approval is Google's "check your phone": nothing is typed on the
+portal, the person taps Yes on another device, and the worker notices the page
+move on. The portal's "I have approved it" button only nudges the worker to
+look again at once.
 
 Deliberately not a thread per state: the worker is one thread that walks the
 sign-in, and the portal thread pokes at this object. Everything mutable is
@@ -40,6 +46,7 @@ class AuthState(Enum):
     Launching = "launching"
     Filling = "filling"
     AwaitingOtp = "awaiting_otp"
+    AwaitingApproval = "awaiting_approval"
     AwaitingCaptcha = "awaiting_captcha"
     Success = "success"
     Failed = "failed"
@@ -64,6 +71,8 @@ class AuthJob:
 
         # Single-slot handoff from the portal thread to the worker thread.
         self._otp_queue: "Queue[str]" = Queue(maxsize=1)
+        # Set by the portal's "I have approved it"; cleared by the worker.
+        self._nudge = threading.Event()
 
     # -- state -------------------------------------------------------------
 
@@ -120,6 +129,8 @@ class AuthJob:
             logger.info(f"Sign-in to {self.service} succeeded")
         elif state is AuthState.AwaitingOtp:
             logger.info(f"Sign-in to {self.service} is waiting for a verification code")
+        elif state is AuthState.AwaitingApproval:
+            logger.info(f"Sign-in to {self.service} is waiting for approval on another device")
         else:
             logger.debug(f"Auth job {self.service} is now {state.value}")
 
@@ -161,6 +172,33 @@ class AuthJob:
         except Exception:
             # Already filled by a double submit; the first one wins.
             return False
+
+    # -- approval on another device ----------------------------------------
+
+    def request_approval(self, heading: str = "", instruction: str = "", number: str = "") -> None:
+        """Called by the worker. Does not block: the worker polls the page itself.
+
+        heading and instruction are Google's own words, relayed so the portal can
+        say which phone and what to tap; number is the number-matching digit,
+        empty when Google shows none.
+        """
+        self.set_state(
+            AuthState.AwaitingApproval,
+            approval_heading=heading, approval_instruction=instruction, approval_number=number,
+        )
+
+    def confirm_approval(self) -> bool:
+        """Called by the portal. False if the job was not waiting for approval."""
+        if self.state is not AuthState.AwaitingApproval:
+            return False
+        self._nudge.set()
+        return True
+
+    def wait_for_nudge(self, timeout: float) -> bool:
+        """Called by the worker between polls. True if the person said they approved."""
+        nudged = self._nudge.wait(timeout)
+        self._nudge.clear()
+        return nudged
 
     def require_captcha(self, url: str = "") -> None:
         """A CAPTCHA appeared. We do not solve these; the user imports a session."""

@@ -72,25 +72,16 @@ class YouTubeBridge:
             time.sleep(0.05)
         return self.health()
 
-    # -- OAuth device-code sign-in -----------------------------------------
+    # -- sign-in state ------------------------------------------------------
     #
-    # Replaces the cookies.txt file the operator used to re-export by hand.
-    # The bridge holds the credentials per bot under
-    # bots/<bot_id>/youtube_auth/ and refreshes them itself.
-
-    def auth_start(self) -> dict[str, Any]:
-        """Begin sign-in. Returns the URL and code the user has to enter.
-
-        The bridge answers as soon as YouTube issues the code, not when the
-        user finishes, so this returns in about a second.
-        """
-        return self._post("/auth/start", timeout=(5, 30))
+    # The device-code sign-in that lived here was retired in Phase 9: YouTube
+    # stopped serving playback to it. The bot now signs in through its own
+    # Chrome and writes the session under data/youtube_auth/ itself (see
+    # bot/modules/youtube_session_keeper.py); the bridge only reads it, and this
+    # asks whether it found one.
 
     def auth_status(self) -> dict[str, Any]:
         return self._post("/auth/status", timeout=(5, 15))
-
-    def auth_signout(self) -> dict[str, Any]:
-        return self._post("/auth/signout", timeout=(5, 15))
 
     def is_signed_in(self) -> bool:
         """Never raises: sign-in state is informational, not load-bearing."""

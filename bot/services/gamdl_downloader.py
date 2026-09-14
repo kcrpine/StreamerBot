@@ -119,35 +119,11 @@ def netscape_cookies(cookies: List[Dict[str, Any]], now: Optional[float] = None)
     account connected with li am is the account that downloads, and nobody has
     to export a file by hand. Only apple.com cookies are written.
 
-    A session cookie has no expiry, and Python's MozillaCookieJar drops a cookie
-    whose expiry is empty or zero unless told otherwise. The file lives only as
-    long as one download, so session cookies are given a day instead.
+    The file lives only as long as one download.
     """
-    import time as _time
+    from bot.auth.cookies import to_netscape
 
-    horizon = int((now if now is not None else _time.time()) + 86400)
-    lines = ["# Netscape HTTP Cookie File", ""]
-    for cookie in cookies:
-        domain = str(cookie.get("domain") or "")
-        name = str(cookie.get("name") or "")
-        if not name or not domain.lstrip(".").endswith("apple.com"):
-            continue
-        value = str(cookie.get("value") or "")
-        # A tab or newline would split the line into different fields.
-        if any(ch in name + value + domain for ch in "\t\r\n"):
-            continue
-        expires = cookie.get("expires")
-        expires = int(expires) if isinstance(expires, (int, float)) and expires > 0 else horizon
-        lines.append("\t".join([
-            domain,
-            "TRUE" if domain.startswith(".") else "FALSE",
-            str(cookie.get("path") or "/"),
-            "TRUE" if cookie.get("secure") else "FALSE",
-            str(expires),
-            name,
-            value,
-        ]))
-    return "\n".join(lines) + "\n"
+    return to_netscape(cookies, ("apple.com",), now=now)
 
 
 def has_media_user_token(cookies: List[Dict[str, Any]]) -> bool:

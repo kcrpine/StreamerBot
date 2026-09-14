@@ -6,6 +6,69 @@ issue or a commit message. Numbering continues across releases.
 
 ## Unreleased
 
+- **[027]** YouTube signs in as a real browser session (Phase 9). A bot on a VPS
+  could not play YouTube at all. Its log from 10 to 13 September shows 3,577 failed
+  attempts to get a stream and not one success. Signed in with the device code,
+  YouTube answered 400 to every request. Signed out, every client answered
+  `LOGIN_REQUIRED: Sign in to confirm you're not a bot`, because YouTube does not
+  trust datacenter addresses. The one thing YouTube still plays for is a real
+  browser session: its cookies, plus a proof-of-origin token tied to the account.
+
+  - **Signing in.** `li yt` now sends a portal link instead of a device code. The
+    page signs a Google account in through the bot's own Chrome, in its own
+    profile. When Google asks for approval on a phone, the page says so, shows the
+    number to tap if there is one, and has an "I have approved it on my phone"
+    button. When Google asks for a typed code, the existing code page is used.
+    Every page recommends a Google account made for the bot, because Google may
+    restrict an account that plays automatically from a server. The Google
+    password is not stored.
+  - **Importing.** When Google refuses the bot's browser (it often refuses
+    automated ones), or on ARM where there is no Chrome, `/import/yt` accepts a
+    cookies.txt file exported from your own browser. You can choose the file or
+    paste its contents. Where Chrome is available, the imported cookies go into
+    the bot's profile, and YouTube is asked whether they are signed in before they
+    are accepted. The pasted text is never shown back on an error.
+  - **Keeping it alive.** Every six hours (`services.yt.session_refresh_hours`)
+    the bot loads youtube.com in that profile, which is what makes Google rotate
+    the session. It asks YouTube itself whether the session is still signed in
+    (`ytcfg.LOGGED_IN`) and stores the new cookies. Cookie expiry dates are not
+    used, because Google ends sessions long before them. The schedule counts from
+    the last check saved on disk, so a bot that restarts often still gets
+    refreshed. A session Google has ended is marked and not retried until someone
+    connects it again.
+  - **The bridge** reads `youtube_auth/cookies.txt` and `session.json`. Signed
+    in, it ties the proof-of-origin token to the account's DataSync ID instead of
+    `visitorData`; a token tied to the wrong one is silently ignored. Its session
+    cache key includes the cookie file's modification time, so a refresh rebuilds
+    that one bot's session and the shared container is never restarted. The file
+    is only rewritten when the cookies actually changed. The device-code routes
+    `/auth/start` and `/auth/signout` are gone.
+  - **What the requester hears.** A request that YouTube refuses for want of a
+    sign-in no longer gets "The selected service is currently unavailable". If the
+    session looks alive, the reply is "Renewing the YouTube sign-in. <request> will
+    start playing when it finishes". The renewal runs in the background, at most
+    once every ten minutes, and exactly one more message follows: the request
+    playing, or why it did not. A request that arrives during a refresh is held
+    and played afterwards, not dropped. A session Google has ended gets "Google
+    signed StreamerBot out of YouTube. To sign in again, send this command: li yt".
+    With no session at all, the reply says how to connect one.
+  - `yl` now only reports the sign-in state and signs the bot out.
+  - The Spotify pairing page's "Check status" button posted to the YouTube page;
+    it now posts to Spotify's.
+
+  The portal pages were reviewed for accessibility before they were written. That
+  review changed how the number to tap is shown: it is a plain readonly number,
+  not spelled out digit by digit like a device code, because the phone's own
+  screen reader says "eighty-eight" and the two must match. It also added the
+  file picker to the import page.
+
+  **Not yet tried against Google or YouTube.** Google's sign-in selectors,
+  exporting the session from Chrome, and the DataSync ID binding all follow
+  Google's and youtubei.js's documented behaviour. The first run on the VPS that
+  answers `LOGIN_REQUIRED` is the test that confirms them. If sign-in fails, the
+  bot's log names the Google page it stopped on. The bot-restart fallback described
+  in the plan was not built, because nothing so far needs it.
+
 - **[026]** Download what Apple Music is playing. `dl` downloads the song playing
   and uploads it to the channel; `dlp` with no link downloads the album or
   playlist being played as one zip. If a single song is playing, `dlp` gets the

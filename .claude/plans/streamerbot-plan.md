@@ -1003,6 +1003,42 @@ account.
   own. The bridge still validates `bot_id` and joins under `BOTS_ROOT` for every cookie read, and
   Duplicate Bot must not copy `data/youtube_auth/` or `data/browser/yt/`.
 
+### What Phase 9 built, and where it departed from the above
+
+Recorded 13 September 2026, when the code was written. None of it has yet run against live Google.
+
+- **The pages were reviewed for accessibility before they were written**, and the review changed three
+  decisions. The number Google shows for number matching is a readonly input that is **not** spelled
+  out, because the phone's own screen reader says "eighty-eight", and a portal reading "8, 8" would not
+  match it. The import page has a **file picker before the paste box**, because choosing a download is
+  far easier with a screen reader than select-all, switch window, paste. Pasted cookies are **never
+  echoed back** on an error; SC 3.3.7 exempts credentials, and Chrome spellcheck and Grammarly are
+  switched off on that field because both send its text to a server.
+- **`yl` survives, reduced**, to status and sign-out. Starting a sign-in from `yl` points to `li yt`.
+- **The Google password is not stored.** Other services keep theirs so they can sign in again. A dead
+  Google session needs the person present for the phone prompt anyway, so a stored password could not
+  sign it in again alone.
+- **No bot-restart path was built.** Nothing so far needs one: the bridge rebuilds a single bot's
+  session when that bot's cookie file changes. Build it only if a live test shows a restart is truly
+  required.
+- **Commands run on the main loop**, which the plan did not account for. A refused request therefore
+  never waits there for a refresh. It gets the renewal message at once, the refresh runs in the
+  background, and exactly one follow-up is sent.
+- **The keeper's schedule counts from `checked_at` in `session.json`**, not from start-up, because bots
+  restart on every update and a timer that restarts with them might never fire.
+- **Imported sessions go into the bot's Chrome profile where there is one**, and YouTube is asked
+  whether they are signed in before they are accepted. That lets the keep-alive take them over, and a
+  dead file is refused at import rather than failing later.
+- **Unverified and worth checking first on the VPS:**
+  - Google's sign-in selectors and challenge URLs, in `bot/services/web/youtube.py`.
+  - Whether the proof-of-origin binding wants the full `DATASYNC_ID` or only the part before `||`.
+    The bridge currently sends the full value.
+  - Whether youtubei.js's `cookie` option signs MWEB player requests in as expected.
+- **Duplicate Bot needed no change.** It already copies only `config.json`, so it never copied
+  `youtube_auth/` or `browser/`.
+- **`h connect youtube` does not exist**, although README mentions `h connect`. The separate-account
+  advice lives in the `li yt` reply and on every portal page instead.
+
 ### Found in the same log, not part of this phase
 
 - **Apple Music now gets past launch** — [016] worked, Chrome starts — and fails one step later with
@@ -1030,7 +1066,7 @@ Each phase has an exit criterion you can actually check.
 | **6** ✅ | Disney+, Apple Music, Amazon Music adapters against a proven engine, plus the **gamdl download wrapper** | Each plays with AD where the service offers it; `dl` on an Apple Music album uploads one zip to the channel |
 | **7** ✅ | `streamerbot.sh` polish, backup exclusions, README/CHANGELOG rewrite, publish to your fork | `git clone` + `./streamerbot.sh` works from a clean host |
 | **8** ✅ | Collapse the inherited history to a single commit, rewrite `README.md` as a fork with its own feature list | `git log` shows only your commits; README describes StreamerBot, not TTMediaBot; `LICENSE` still carries the upstream copyright |
-| **9** | YouTube browser-session sign-in with scheduled per-bot refresh, replacing OAuth for playback (see "Phase 9 — YouTube sign-in through a real browser session") | On the VPS that currently answers `LOGIN_REQUIRED` to every client, a bot signed in through the portal plays a YouTube video and a livestream; a session killed on Google's side produces the renewal message to the requester, not "service unavailable"; two bots on one host hold two different Google sessions |
+| **9** 🔨 | YouTube browser-session sign-in with scheduled per-bot refresh, replacing OAuth for playback (see "Phase 9 — YouTube sign-in through a real browser session") | On the VPS that currently answers `LOGIN_REQUIRED` to every client, a bot signed in through the portal plays a YouTube video and a livestream; a session killed on Google's side produces the renewal message to the requester, not "service unavailable"; two bots on one host hold two different Google sessions. **BUILT, NOT YET VERIFIED LIVE** ([027]) — see "What Phase 9 built" below; the exit criterion needs the VPS |
 
 Phase 0 is the riskiest to skip and the cheapest to verify. Phase 4 gives the engine abstraction its
 first real workout on the *easier* of the two external engines, before Chrome.

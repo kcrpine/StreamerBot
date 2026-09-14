@@ -46,37 +46,11 @@ class PlayPauseCommand(Command):
                 user,
             )
             try:
-                # Search results mode: request more results from the service directly
-                if self.config.general.search_results_mode:
-                    count = self.command_processor.search_results_count
-                    track_list = self.search_tracks(arg, limit=count)
-                    self.command_processor.pending_search_results[user.id] = track_list
-                    lines = [self.translator.translate("Search results:")]
-                    for i, track in enumerate(track_list):
-                        lines.append(f"{i + 1}: {track.name}")
-                    lines.append(self.translator.translate("Use 'sl NUMBER' to select a track"))
-                    return "\n".join(lines)
-
-                # Normal mode: request only 1 result and play immediately
-                track_list = self.search_tracks(arg)
-                self.player.play(
-                    track_list,
-                    timing_context={
-                        "kind": "search",
-                        "started_at": self._last_search_started_at,
-                        "query": self._last_search_query,
-                    },
-                )
-                if self.config.general.send_channel_messages:
-                    self.send_message_async(
-                        self.translator.translate(
-                            "{nickname} requested {request}"
-                        ).format(nickname=user.nickname, request=arg),
-                        type=2,
+                if self.service_manager.service.name in ("yt", "ytm"):
+                    return self.youtube_hold_or_run(
+                        arg, user, lambda: self._search_and_play(arg, user)
                     )
-                return self.translator.translate("Playing {}").format(
-                    track_list[0].name
-                )
+                return self._search_and_play(arg, user)
             except errors.NothingFoundError:
                 return self.translator.translate("Nothing is found for your query")
             except errors.ServiceError:
@@ -88,6 +62,44 @@ class PlayPauseCommand(Command):
                 self.player.pause()
             elif self.player.state == State.Paused:
                 self.player.play()
+
+    def _search_and_play(self, arg: str, user: User) -> Optional[str]:
+        """Search and play, raising ServiceError for the caller to explain.
+
+        Separate from __call__ so a YouTube request held during a session refresh
+        can be run again without repeating the "Searching" message.
+        """
+        # Search results mode: request more results from the service directly
+        if self.config.general.search_results_mode:
+            count = self.command_processor.search_results_count
+            track_list = self.search_tracks(arg, limit=count)
+            self.command_processor.pending_search_results[user.id] = track_list
+            lines = [self.translator.translate("Search results:")]
+            for i, track in enumerate(track_list):
+                lines.append(f"{i + 1}: {track.name}")
+            lines.append(self.translator.translate("Use 'sl NUMBER' to select a track"))
+            return "\n".join(lines)
+
+        # Normal mode: request only 1 result and play immediately
+        track_list = self.search_tracks(arg)
+        self.player.play(
+            track_list,
+            timing_context={
+                "kind": "search",
+                "started_at": self._last_search_started_at,
+                "query": self._last_search_query,
+            },
+        )
+        if self.config.general.send_channel_messages:
+            self.send_message_async(
+                self.translator.translate(
+                    "{nickname} requested {request}"
+                ).format(nickname=user.nickname, request=arg),
+                type=2,
+            )
+        return self.translator.translate("Playing {}").format(
+            track_list[0].name
+        )
 
 
 class PlayUrlCommand(Command):
@@ -102,24 +114,12 @@ class PlayUrlCommand(Command):
                 user,
             )
             try:
-                tracks = self.module_manager.streamer.get(arg, user.is_admin)
-                if not tracks:
-                    return self.translator.translate("Nothing is found for your query")
-                self.player.play(tracks)
-                if self.config.general.send_channel_messages:
-                    self.send_message_async(
-                        self.translator.translate(
-                            "{nickname} requested playing from a URL ({count} tracks)"
-                        ).format(nickname=user.nickname, count=len(tracks)),
-                        type=2,
+                if self._is_youtube_link(arg):
+                    return self.youtube_hold_or_run(
+                        self.translator.translate("Your link"), user,
+                        lambda: self._load_and_play(arg, user),
                     )
-                else:
-                    self.send_message_async(
-                        self.translator.translate(
-                            "Loaded {count} tracks"
-                        ).format(count=len(tracks)),
-                        user,
-                    )
+                return self._load_and_play(arg, user)
             except errors.IncorrectProtocolError:
                 return self.translator.translate("Incorrect protocol")
             except errors.ServiceError:
@@ -128,6 +128,38 @@ class PlayUrlCommand(Command):
                 return self.translator.translate("The path cannot be found")
         else:
             raise errors.InvalidArgumentError
+
+    @staticmethod
+    def _is_youtube_link(arg: str) -> bool:
+        from urllib.parse import urlparse
+
+        try:
+            host = (urlparse(arg.strip()).hostname or "").lower()
+        except ValueError:
+            return False
+        return host in ("youtu.be",) or host == "youtube.com" or host.endswith(".youtube.com")
+
+    def _load_and_play(self, arg: str, user: User) -> Optional[str]:
+        """Resolve and play a link, raising ServiceError for the caller to explain."""
+        tracks = self.module_manager.streamer.get(arg, user.is_admin)
+        if not tracks:
+            return self.translator.translate("Nothing is found for your query")
+        self.player.play(tracks)
+        if self.config.general.send_channel_messages:
+            self.send_message_async(
+                self.translator.translate(
+                    "{nickname} requested playing from a URL ({count} tracks)"
+                ).format(nickname=user.nickname, count=len(tracks)),
+                type=2,
+            )
+        else:
+            self.send_message_async(
+                self.translator.translate(
+                    "Loaded {count} tracks"
+                ).format(count=len(tracks)),
+                user,
+            )
+        return None
 
 
 class StopCommand(Command):
@@ -1489,6 +1521,29 @@ class LoginCommand(Command):
             "With a service (yt, sp, nf, dp, am, az) it starts connecting that one"
         )
 
+    def _youtube_link(self, portal, user: User) -> str:
+        """A portal link for connecting YouTube (Phase 9).
+
+        Not a device code any more: YouTube stopped serving playback to that
+        sign-in. The advice comes before the link, and the link comes last with
+        nothing after it, so a screen reader's review cursor lands on it and a
+        link detector does not swallow a full stop.
+        """
+        keeper = self.youtube_keeper()
+        if keeper is not None and not keeper.browser_available:
+            message = self.translator.translate(
+                "This server cannot run a browser, so connect YouTube by importing a "
+                "session from your own browser. Use a separate Google account made for "
+                "the bot. Open this link: %(url)s"
+            ) % {"url": portal.mint_link(user.username, "/import/yt")}
+        else:
+            message = self.translator.translate(
+                "To connect YouTube, use a separate Google account made for the bot, "
+                "not your personal one. Open this link: %(url)s"
+            ) % {"url": portal.mint_link(user.username, "/connect/yt")}
+        advice = portal.link_advice() if hasattr(portal, "link_advice") else None
+        return message + chr(10) + advice if advice else message
+
     def __call__(self, arg: str, user: User) -> Optional[str]:
         portal = getattr(self.command_processor, "auth_portal", None)
         if portal is None:
@@ -1513,6 +1568,11 @@ class LoginCommand(Command):
                 if state == "connected":
                     lines.append(
                         self.translator.translate("%(service)s: connected")
+                        % {"service": label}
+                    )
+                elif state == "expired":
+                    lines.append(
+                        self.translator.translate("%(service)s: signed out, connect again")
                         % {"service": label}
                     )
                 else:
@@ -1541,9 +1601,12 @@ class LoginCommand(Command):
                 "disconnect it first at %(url)s"
             ) % {"service": label, "url": portal.mint_link(user.username)}
 
-        if service in ("yt", "sp"):
+        if service == "yt":
+            return self._youtube_link(portal, user)
+
+        if service == "sp":
             try:
-                data = portal.youtube_start() if service == "yt" else portal.spotify_start()
+                data = portal.spotify_start()
             except Exception as error:
                 return self.translator.translate(
                     "%(service)s sign-in could not start: %(error)s"

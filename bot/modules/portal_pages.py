@@ -12,7 +12,8 @@ you know what they are avoiding, so those carry comments. The short version:
 - Titles carry state, never the code itself: TTS engines mangle "BCDF-GHJK" as
   an attempted word, differently per synth, across seven shipped languages, and
   a title is announced once and is awkward to replay.
-- Buttons that navigate are links. Only the disconnect POST is a real button.
+- Buttons that navigate are links. Only forms that change state (sign in,
+  disconnect, "I have approved it", import a session) use a real button.
 - Service names are visible, not hidden inside the control, because a hidden
   span both risks "ConnectNetflix" in the accessible name and hands translators
   a bare verb with no object, which is unbuildable in Turkish and Arabic.
@@ -159,7 +160,32 @@ class PageBuilder:
 
     # -- pages -------------------------------------------------------------
 
-    def status_page(self, token: str, statuses: Dict[str, str]) -> str:
+    def youtube_actions(self, token: str, browser_available: bool = True) -> str:
+        """Connect and import, for a YouTube account that is not connected.
+
+        Both names carry the service, so each is unique on the page (SC 2.4.4)
+        and follows the same pattern as every other service's action (SC 3.2.4).
+        Without Chrome only import is offered: a route that cannot work is not
+        an option.
+        """
+        name = service_name("yt")
+        import_link = (
+            f'<a class="button" href="/import/yt?t={esc(token)}">'
+            + esc(self._("Import a %(service)s session") % {"service": name})
+            + "</a>"
+        )
+        if not browser_available:
+            return import_link
+        return (
+            f'<a class="button" href="/connect/yt?t={esc(token)}">'
+            + esc(self._("Connect %(service)s") % {"service": name})
+            + "</a> "
+            + import_link
+        )
+
+    def status_page(
+        self, token: str, statuses: Dict[str, str], youtube_browser: bool = True
+    ) -> str:
         """statuses maps service id to "connected" / "expired" / "disconnected"."""
         connected = sum(1 for s in statuses.values() if s == "connected")
         total = len(statuses)
@@ -190,6 +216,8 @@ class PageBuilder:
                     + esc(self._("Connect %(service)s") % {"service": name})
                     + "</a>"
                 )
+            if service == "yt" and state != "connected":
+                action = self.youtube_actions(token, youtube_browser)
             rows.append(
                 '<li class="service">\n'
                 # h2, not h3: h1 -> h3 skips a level and breaks the outline the
@@ -216,7 +244,7 @@ class PageBuilder:
 
     def device_code_page(
         self, token: str, code: str, url: str, expires_text: str = "",
-        service: str = "yt",
+        service: str = "sp",
     ) -> str:
         spelled = spell_out(code, self.translator)
         expiry = (
@@ -224,8 +252,9 @@ class PageBuilder:
         )
         described = "device-code-spelled device-code-expiry" if expires_text else "device-code-spelled"
 
+        # Spotify pairs with a code now; YouTube stopped using this page in Phase 9.
         body = (
-            f'<h1>{esc(self._("Connect YouTube"))}</h1>\n'
+            f'<h1>{esc(self._("Connect %(service)s") % {"service": service_name(service)})}</h1>\n'
             '<ol class="steps">\n'
             f'<li>{esc(self._("Go to"))} '
             f'<a href="{esc(url)}" target="_blank" rel="noopener noreferrer">'
@@ -249,7 +278,7 @@ class PageBuilder:
             f'aria-describedby="{described}">\n'
             f"{expiry}\n"
             "</div>\n"
-            f'<form method="post" action="/youtube/check?t={esc(token)}">\n'
+            f'<form method="post" action="/connect/{esc(service)}?t={esc(token)}">\n'
             f"{self.token_field(token)}\n"
             f'<button type="submit">{esc(self._("Check status"))}</button>\n'
             "</form>\n"
@@ -272,6 +301,17 @@ class PageBuilder:
         errors = errors or []
         name = service_name(service)
         error_for = dict(errors)
+        is_google = service == "yt"
+
+        # Nobody has a "YouTube password"; the account is a Google account.
+        if is_google:
+            username_label = self._("Google account email address")
+            username_hint = self._("The Google account made for StreamerBot, not your personal one.")
+            password_label = self._("Google account password")
+        else:
+            username_label = self._("%(service)s email address or username") % {"service": name}
+            username_hint = self._("The address you use to sign in to %(service)s.") % {"service": name}
+            password_label = self._("%(service)s password") % {"service": name}
 
         username_input = (
             f'<input id="username" name="username" type="text" '
@@ -292,6 +332,10 @@ class PageBuilder:
         body = (
             f'<h1>{esc(self._("Sign in to %(service)s") % {"service": name})}</h1>\n'
             + self.error_summary(errors)
+            # After the error summary, which is the one thing that takes focus,
+            # and before the form. An h2 is what makes it findable by heading
+            # navigation without a role or live region hijacking anything.
+            + (self.separate_account_notice(token) if is_google else "")
             # novalidate: server-rendered errors are the source of truth. required
             # stays, because it still maps to aria-required.
             + f'<form method="post" action="/connect/{esc(service)}?t={esc(token)}" novalidate>\n'
@@ -299,15 +343,17 @@ class PageBuilder:
             + "\n"
             + self.field(
                 "username",
-                self._("%(service)s email address or username") % {"service": name},
+                username_label,
                 username_input,
-                hint=self._("The address you use to sign in to %(service)s.") % {"service": name},
+                # The notice is skipped by anyone who jumps straight to the
+                # first field, so the hint repeats its one essential point.
+                hint=username_hint,
                 error=error_for.get("username", ""),
             )
             + "\n"
             + self.field(
                 "password",
-                self._("%(service)s password") % {"service": name},
+                password_label,
                 password_input,
                 error=error_for.get("password", ""),
             )
@@ -412,16 +458,231 @@ class PageBuilder:
 
     def failure_page(self, token: str, service: str, reason: str = "") -> str:
         name = service_name(service)
+        try_again = (
+            f'<p><a href="/connect/{esc(service)}?t={esc(token)}">'
+            f'{esc(self._("Try again"))}</a></p>\n'
+        )
+        if service == "yt":
+            # Import first: trying again in the same browser usually fails the
+            # same way, most often because Google refused an automated browser.
+            actions = (
+                f'<p><a href="/import/yt?t={esc(token)}">'
+                + esc(self._("Import a %(service)s session") % {"service": name})
+                + "</a></p>\n"
+                + try_again
+            )
+        else:
+            actions = try_again
         body = (
             f'<h1>{esc(self._("%(service)s could not be connected") % {"service": name})}</h1>\n'
             f'<p>{esc(reason or self._("The sign-in did not complete."))}</p>\n'
-            f'<p><a href="/connect/{esc(service)}?t={esc(token)}">'
-            f'{esc(self._("Try again"))}</a></p>\n'
+            + actions
             + self.back_link(token)
         )
         return self.page(
             self._("%(service)s could not be connected") % {"service": name}, body
         )
+
+    # -- YouTube (Phase 9) -------------------------------------------------
+
+    def separate_account_notice(self, token: str, import_link: bool = True) -> str:
+        """Why to use a Google account made for the bot.
+
+        A plain heading and paragraphs. No role, live region or tabindex: the
+        heading is what makes it findable, and nothing on a page load may take
+        focus except an error summary.
+        """
+        link = (
+            f'<p>{esc(self._("If Google refuses to sign in here, import a session from your own browser instead:"))} '
+            f'<a href="/import/yt?t={esc(token)}">'
+            + esc(self._("Import a %(service)s session") % {"service": service_name("yt")})
+            + "</a></p>\n"
+        ) if import_link else ""
+        return (
+            f'<h2>{esc(self._("Use a separate Google account"))}</h2>\n'
+            f'<p>{esc(self._("Google may restrict an account that plays videos automatically from a server. Make a Google account just for StreamerBot rather than using your personal one."))}</p>\n'
+            + link
+        )
+
+    def approval_page(
+        self,
+        token: str,
+        heading: str = "",
+        instruction: str = "",
+        number: str = "",
+        not_yet: bool = False,
+    ) -> str:
+        """Google's "check your phone" step.
+
+        The number, when Google shows one, is a readonly input so it can be
+        found, reread and copied, and deliberately not spelled out character by
+        character the way a device code is: the phone's own screen reader says
+        "eighty-eight", and the portal must say the same thing for the two to
+        match. It is never in the title.
+
+        Google's words are relayed with lang="en" because the bot asks Google
+        for its sign-in pages in English (hl=en), whatever the portal's locale.
+        """
+        name = service_name("yt")
+        title = self._("Approve the sign-in on your phone")
+        if not_yet:
+            # A changed title is how someone returning here hears that the
+            # check found nothing, before reading a word of the page.
+            title = self._("Not approved yet. Approve the sign-in on your phone")
+
+        number_html = ""
+        if number:
+            number_html = (
+                '<div class="device-code-block">\n'
+                f'<label for="match-number">{esc(self._("Number to tap on your phone"))}</label>\n'
+                f'<input id="match-number" class="device-code" type="text" value="{esc(number)}" '
+                f'readonly size="{max(3, len(number))}" dir="ltr" spellcheck="false" autocorrect="off">\n'
+                "</div>\n"
+            )
+        google_words = [w for w in (heading, instruction) if w]
+        google_html = ""
+        if google_words:
+            google_html = f'<p>{esc(self._("Google says:"))}</p>\n' + "".join(
+                f'<p lang="en">{esc(w)}</p>\n' for w in google_words
+            )
+
+        body = (
+            f"<h1>{esc(self._('Approve the sign-in on your phone'))}</h1>\n"
+            + (f'<p>{esc(self._("Google has not confirmed the approval yet."))}</p>\n' if not_yet else "")
+            + number_html
+            + google_html
+            + f'<p>{esc(self._("Google sent a prompt to a phone or tablet signed in to this account. Tap Yes on it, then come back here."))}</p>\n'
+            + f'<p>{esc(self._("The prompt stops working after a few minutes. If it has gone, cancel and sign in again."))}</p>\n'
+            + f'<form method="post" action="/approve/yt?t={esc(token)}">\n'
+            + self.token_field(token)
+            + "\n"
+            + f'<button type="submit">{esc(self._("I have approved it on my phone"))}</button>\n'
+            + "</form>\n"
+            + f'<p><a href="/import/yt?t={esc(token)}">'
+            + esc(self._("Import a %(service)s session") % {"service": name})
+            + "</a></p>\n"
+            + f'<p><a href="/connect/yt/cancel?t={esc(token)}">'
+            + f'{esc(self._("Cancel this sign-in"))}</a></p>'
+        )
+        return self.page(title, body)
+
+    def import_page(
+        self,
+        token: str,
+        errors: Optional[List[Tuple[str, str]]] = None,
+        browser_available: bool = True,
+    ) -> str:
+        """Import a session exported from the user's own browser.
+
+        A file picker comes first, because choosing a download in the system
+        dialog is far easier with a screen reader than opening the file, selecting
+        all, switching windows and pasting. The paste box stays for anyone who
+        prefers it.
+
+        The pasted text is never put back into the page after an error. It is a
+        full login to a Google account, and text that failed validation is no
+        longer valid, which is the exception SC 3.3.7 makes. spellcheck and the
+        Grammarly opt-outs are there for the same reason: both send field text to
+        a server.
+        """
+        errors = errors or []
+        error_for = dict(errors)
+        name = service_name("yt")
+        has_error = "cookies" in error_for
+
+        file_input = (
+            '<input id="cookies-file" name="cookies_file" type="file" accept=".txt,text/plain"'
+            + (' aria-invalid="true" aria-describedby="cookies-file-error"' if has_error else "")
+            + ">"
+        )
+        # wrap="off" with white-space:pre keeps one cookie per line, so arrowing
+        # reads one cookie at a time. rows is small so a screen reader that
+        # reads the field on focus has little to read. No maxlength, no
+        # placeholder, and no required: either field is enough.
+        textarea = (
+            '<textarea id="cookies" name="cookies" rows="6" dir="ltr" wrap="off" '
+            'spellcheck="false" autocomplete="off" autocapitalize="none" autocorrect="off" '
+            'data-gramm="false" data-enable-grammarly="false" '
+            # One error message, on the first field; the paste box points at it
+            # rather than repeating it.
+            + ('aria-invalid="true" aria-describedby="cookies-file-error cookies-hint"' if has_error
+               else 'aria-describedby="cookies-hint"')
+            + "></textarea>"
+        )
+        error_text = error_for.get("cookies", "")
+
+        body = (
+            f'<h1>{esc(self._("Import a %(service)s session") % {"service": name})}</h1>\n'
+            + self.error_summary([("cookies-file", msg) for _field, msg in errors])
+            + f'<p>{esc(self._("Use this when Google will not sign in from the bot, or when the bot cannot run a browser."))}</p>\n'
+            + '<ol class="steps">\n'
+            + f'<li>{esc(self._("In your own browser, sign in to YouTube with the Google account made for StreamerBot."))}</li>\n'
+            + f'<li>{esc(self._("While on youtube.com, use a cookie export extension to save the cookies in Netscape cookies.txt format."))}</li>\n'
+            + f'<li>{esc(self._("Choose that file below, or open it, copy everything in it, and paste it into the box below."))}</li>\n'
+            + f'<li>{esc(self._("Select Import the session."))}</li>\n'
+            + "</ol>\n"
+            + self.separate_account_notice(token, import_link=False)
+            + f'<p>{esc(self._("Google sometimes ends a session that is used from a different place. If that happens, StreamerBot tells you in TeamTalk and you can import again."))}</p>\n'
+            + (
+                ""
+                if browser_available
+                else f'<p>{esc(self._("This server cannot run a browser, so nothing can keep an imported session alive. Expect to import again from time to time."))}</p>\n'
+            )
+            + f'<form method="post" action="/import/yt?t={esc(token)}" enctype="multipart/form-data" novalidate>\n'
+            + self.token_field(token)
+            + "\n"
+            + self.field(
+                "cookies-file",
+                self._("Your cookies.txt file"),
+                file_input,
+                error=error_text,
+            )
+            + "\n"
+            + '<div class="field">\n'
+            + f'<label for="cookies">{esc(self._("Or paste the contents of the file"))}</label>\n'
+            + f'<p id="cookies-hint" class="hint">{esc(self._("Paste the whole file. It is several lines of text."))}</p>\n'
+            + textarea
+            + "\n"
+            # Present and empty in the initial HTML, so the paste confirmation
+            # below is announced. The page works the same without it.
+            + '<p id="cookies-status" class="hint" role="status"></p>\n'
+            + "</div>\n"
+            + f'<button type="submit">{esc(self._("Import the session"))}</button>\n'
+            + "</form>\n"
+            + "<script>(function(){var t=document.getElementById('cookies'),"
+            + "s=document.getElementById('cookies-status');if(!t||!s)return;"
+            + "t.addEventListener('paste',function(){setTimeout(function(){"
+            + "var n=t.value?t.value.split(/\\r?\\n/).filter(function(l){return l.trim();}).length:0;"
+            + f"s.textContent={self._js_string(self._('Lines pasted: %(count)s'))}.replace('%(count)s',n);"
+            + "},0);});})();</script>\n"
+            + self.back_link(token)
+        )
+        return self.page(
+            self._("Import a %(service)s session") % {"service": name}, body, is_error=bool(errors)
+        )
+
+    def import_problem_message(self, problem) -> str:
+        """What went wrong with an import, as one sentence saying what to do.
+
+        problem is an ImportProblem, matched by value so this module does not
+        depend on the keeper. The same sentence is the summary link and the
+        field error, byte for byte.
+        """
+        value = getattr(problem, "value", problem)
+        return {
+            "empty": self._("Choose your cookies.txt file, or paste its contents"),
+            "too_large": self._("This is too long to be a cookies file. Check you chose only the cookies.txt file."),
+            "not_cookies": self._("This is not a cookies.txt file. Export the cookies again in Netscape cookies.txt format."),
+            "no_google_session": self._("This file has no YouTube sign-in in it. Sign in to YouTube in your browser, then export the cookies again while on youtube.com."),
+            "session_ended": self._("YouTube says this session is already signed out. Sign in to YouTube in your browser again, then export a fresh file."),
+        }.get(value, self._("The session could not be imported."))
+
+    @staticmethod
+    def _js_string(text: str) -> str:
+        """A translated string as a safe JavaScript literal inside a <script>."""
+        import json
+
+        return json.dumps(text).replace("<", "\\u003c").replace(">", "\\u003e")
 
     def disconnect_confirm_page(self, token: str, service: str) -> str:
         name = service_name(service)
@@ -505,6 +766,9 @@ box-shadow:0 0 0 2px var(--focus-inner);border-radius:2px}
 .hint{color:var(--muted);margin-block:.25rem}
 input[type=text],input[type=password]{font-size:1rem;padding:.5rem;
 inline-size:100%;max-inline-size:24rem;box-sizing:border-box}
+textarea{font-family:monospace;font-size:1rem;padding:.5rem;inline-size:100%;
+box-sizing:border-box;white-space:pre;overflow-x:auto}
+input[type=file]{font-size:1rem;min-block-size:44px}
 .device-code{font-family:monospace;font-size:1.5rem;letter-spacing:.15em}
 /* SC 2.5.8 Target Size: 44px comfortably clears the 24px minimum. */
 .button,button{display:inline-block;min-block-size:44px;min-inline-size:44px;

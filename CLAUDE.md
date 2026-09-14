@@ -93,16 +93,37 @@ youtubei.js. Python talks to it over HTTP via `bot/services/youtube_bridge.py`.
 
 - **`bot_id` is the containment boundary.** Every request carries one; it is validated against
   `^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$` and joined under `BOTS_ROOT`. That regex is load-bearing — it is
-  what stops one bot reaching another's OAuth tokens. Do not relax it.
-- The `/bots` mount must be **`:rw`**; tokens are written to `bots/<id>/youtube_auth/`. Both scripts
+  what stops one bot reaching another's YouTube session. Do not relax it.
+- The `/bots` mount must be **`:rw`**; the bridge keeps a session cache in `bots/<id>/youtube_auth/`. Both scripts
   check the mount's RW flag before deciding a container is current, because a read-only container is
   healthy and useless.
-- The process installs `unhandledRejection`/`uncaughtException` handlers on purpose. The OAuth device
-  flow polls Google in the background long after `/auth/start` returns, and Node makes an unhandled
-  rejection fatal — one bot's abandoned sign-in previously killed YouTube for every bot on the host.
+- The process installs `unhandledRejection`/`uncaughtException` handlers on purpose. Node makes an
+  unhandled rejection fatal, and one bot's abandoned OAuth sign-in once killed YouTube for every bot on
+  the host. That flow is gone; the rule is about the shared process, not the flow.
 
-There is no `cookies.txt` anywhere any more. Sign-in is an OAuth device code (`yl` command,
-`/auth/start`), and anonymous use still works exactly as the cookie-less path did.
+### YouTube signs in as a real browser session (Phase 9)
+
+The OAuth device code is **retired**. YouTube answered 400 to every OAuth-authenticated player request
+and refuses anonymous playback from datacenter addresses, so a VPS bot could sign in and play nothing.
+What it still serves is a browser session: cookies plus a proof-of-origin token bound to the account's
+**DataSync ID** (not `visitorData`, which is the signed-out binding — a token bound to the wrong one is
+silently ignored and looks exactly like not being signed in).
+
+- The **bot** owns the session. `bot/services/web/youtube.py` signs Google in through the bot's Chrome
+  profile `data/browser/yt/`; `bot/modules/youtube_session_keeper.py` exports it to
+  `data/youtube_auth/cookies.txt` (0600) with `session.json` (DataSync ID), reloads youtube.com every
+  `services.yt.session_refresh_hours` so Google keeps rotating it, and marks it ended when YouTube's
+  own `ytcfg.LOGGED_IN` says so. Cookie expiry dates mean nothing; only that check does.
+- The **bridge** only reads those files. Its session cache key includes the cookie file's mtime, so a
+  rotation rebuilds that one bot's session and nothing restarts. **Write cookies.txt only when the
+  cookies changed** (`fingerprint` ignores expiry) or every refresh throws away the warm session.
+- Import (`/import/yt`) is a first-class route, not a fallback nobody tests: Google often refuses an
+  automated Chrome, and arm64 has no Chrome at all.
+- Commands run on the main loop, so a refresh never blocks there. A request refused with
+  `LOGIN_REQUIRED` gets one "renewing" message, a background refresh (at most every ten minutes), and
+  then exactly one follow-up. `yl` survives only as status and sign-out.
+- Written against Google's documented flow; the sign-in selectors and the DataSync binding are **not yet
+  measured against the live site**. When it fails, look at the logged page path before changing code.
 
 **Two things about resolving a stream that cost a day each.** Both are in `media.mjs`'s
 `planPlaybackAttempts`, which is where the client chain lives and is pure so it can be tested:
@@ -113,10 +134,11 @@ There is no `cookies.txt` anywhere any more. Sign-in is an OAuth device code (`y
   `ClientType.TV_EMBEDDED` is its **value** (`'TVHTML5_SIMPLY_EMBEDDED_PLAYER'`). Passing the enum
   throws `Invalid client: …` inside the process, so that fallback silently never ran. The two
   parameters look interchangeable and are not.
-- **A signed-in session must be able to fall back to an anonymous one.** YouTube answers **400** to an
-  OAuth-authenticated player request that it serves anonymously, so completing `yl` for age-restricted
-  content otherwise breaks *all* playback. Authenticated attempts come first — they are the only ones
-  that can return age-restricted or member content — and the anonymous session is built lazily. Search
+- **A signed-in session must be able to fall back to an anonymous one.** YouTube answered **400** to an
+  OAuth-authenticated player request that it served anonymously, so signing in for age-restricted
+  content broke *all* playback, and a session Google has just ended fails the same way. Authenticated
+  attempts come first — they are the only ones that can return age-restricted or member content, and
+  the only ones a datacenter address is served at all — and the anonymous session is built lazily. Search
   is unaffected either way, so "search works but nothing plays" is the signature of this class of bug.
 
 A chain of fallbacks is only a fallback if the entries differ. The original read
