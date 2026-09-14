@@ -53,6 +53,9 @@ echo "StreamerBot Auto-Updater started. Checking GitHub every ${UPDATE_INTERVAL}
 
 # Force a GitHub check on the first pass, then every UPDATE_INTERVAL seconds.
 LAST_GITHUB_CHECK=0
+# The last remote commit found to change nothing but documentation, so the same
+# decision is not re-made and re-logged every five minutes.
+LAST_SKIPPED_REMOTE=""
 
 YOUTUBE_BRIDGE_URL="http://127.0.0.1:4417"
 RECOVERY_BACKOFFS=(20 40 80 160 300)
@@ -85,6 +88,27 @@ is_behind_remote() {
     if [ "$local_h" == "$remote_h" ]; then return 1; fi
     # Hashes differ = remote has changed = we need to update
     return 0
+}
+
+# Paths whose changes never reach a running bot. An update rebuilds the image,
+# restarts every bot and announces itself in each channel, so doing all of that
+# because the plan or a README changed interrupts people for nothing.
+#
+#   .claude/   the implementation plan, the hooks and their settings
+#   *.md       CLAUDE.md, CHANGELOG.md, README.md and any other document
+#   .github/   CI workflows and issue forms, which run on GitHub, not here
+#
+# Deliberately short. Tests are not on it: the suite ships in the image, and a
+# needless rebuild is a far cheaper mistake than a skipped one.
+NON_CODE_PATHS_REGEX='^(\.claude/|\.github/)|\.md$'
+
+# True when every file changed between two commits is outside the bot's code.
+# An empty or unreadable diff is treated as code, so any doubt means update.
+only_non_code_changes() {
+    local from="$1" to="$2" changed
+    changed=$(git diff --name-only "$from" "$to" 2>/dev/null) || return 1
+    [ -n "$changed" ] || return 1
+    ! printf '%s\n' "$changed" | grep -Ev "$NON_CODE_PATHS_REGEX" | grep -q .
 }
 
 reset_recovery_backoff() {
@@ -135,8 +159,21 @@ while true; do
 
         if [ -n "$REMOTE_HASH" ]; then
             if is_behind_remote "$LOCAL_HASH" "$REMOTE_HASH"; then
-                echo "$(date): New version detected on GitHub ($REMOTE_HASH). Triggering update..."
-                SHOULD_UPDATE=true
+                # Look at what actually changed before rebuilding. The checkout is
+                # left where it is on a documentation-only push: moving it would
+                # make it differ from the running image's commit label, and the
+                # branch below would then rebuild anyway. The skipped files arrive
+                # with the next push that touches code, or with a manual update.
+                if [ "$REMOTE_HASH" = "$LAST_SKIPPED_REMOTE" ]; then
+                    :
+                elif git fetch --quiet origin "$BRANCH" 2>/dev/null \
+                        && only_non_code_changes "$LOCAL_HASH" "$REMOTE_HASH"; then
+                    echo "$(date): GitHub moved to $REMOTE_HASH, but only the plan, documentation or GitHub settings changed. Not rebuilding or restarting any bot."
+                    LAST_SKIPPED_REMOTE="$REMOTE_HASH"
+                else
+                    echo "$(date): New version detected on GitHub ($REMOTE_HASH). Triggering update..."
+                    SHOULD_UPDATE=true
+                fi
             elif [ "$LOCAL_HASH" != "$RUNNING_HASH" ]; then
                 echo "$(date): Local code ($LOCAL_HASH) does not match running image ($RUNNING_HASH). Syncing..."
                 SHOULD_UPDATE=true
