@@ -6,6 +6,15 @@ issue or a commit message. Numbering continues across releases.
 
 ## Unreleased
 
+- **[028]** Translation catalogs regenerated. They had not been updated since
+  Phase 0, so every string added since then, including all of Phase 9's portal
+  pages and chat messages, never reached translators and appeared in English in
+  every locale. The new strings are now in the `.pot` and all seven `.po` files,
+  still untranslated. The compiled `.mo` files are smaller because they had been
+  built from older `.po` files and held entries the code no longer uses. No
+  translation the code still uses was lost. The one entry that dropped out (the
+  search results count help, in Arabic and Hungarian) was already marked fuzzy,
+  and its translation said the count resets to 5 when it resets to 1.
 - **[027]** YouTube signs in as a real browser session (Phase 9). A bot on a VPS
   could not play YouTube at all. Its log from 10 to 13 September shows 3,577 failed
   attempts to get a stream and not one success. Signed in with the device code,

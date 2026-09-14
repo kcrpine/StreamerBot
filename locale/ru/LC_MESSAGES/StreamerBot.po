@@ -1,13 +1,14 @@
 # Russian translations for StreamerBot.
 # Copyright (C) 2026 StreamerBot-team
-# This file is distributed under the same license as the StreamerBot project.
+# This file is distributed under the same license as the StreamerBot
+# project.
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version:  StreamerBot\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-06-16 13:42+0000\n"
+"POT-Creation-Date: 2026-09-14 04:35+0000\n"
 "PO-Revision-Date: 2023-05-01 20:58+0500\n"
 "Last-Translator: Гумеров Амир Эдуардович <gumerov.amir.e@gmail.com>\n"
 "Language: ru\n"
@@ -17,81 +18,125 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.17.0\n"
+"Generated-By: Babel 2.18.0\n"
 
-#: /home/admin/joao/StreamerBot/bot/__init__.py:121
-msgid "Update completed successfully! I am back online."
-msgstr "Обновление успешно завершено! Я снова в сети."
-
-#: /home/admin/joao/StreamerBot/bot/__init__.py:157
+#: /work/bot/__init__.py:183 /work/bot/__init__.py:246
 msgid ""
-"The bot is starting an update process and will restart shortly. It may go"
-" offline at any moment."
+"This needs Google Chrome, which is not available on this machine's "
+"processor architecture."
 msgstr ""
-"Бот запускает процесс обновления и скоро перезагрузится. Он может "
-"отключиться в любой момент."
 
-#: /home/admin/joao/StreamerBot/bot/__init__.py:189
+#: /work/bot/__init__.py:228
+msgid "Spotify is unavailable: the player could not start."
+msgstr ""
+
+#: /work/bot/__init__.py:261 /work/bot/__init__.py:264
+#: /work/bot/modules/portal_pages.py:478
+msgid "The sign-in did not complete."
+msgstr ""
+
+#: /work/bot/__init__.py:277
+msgid ""
+"The account portal is switched off in this bot's configuration, so "
+"Netflix, Disney Plus, Apple Music and Amazon Music cannot be connected. "
+"Set auth_portal.enabled to true in this bot's config.json and restart it."
+" If the manager switched it off for a port clash, there is a file named "
+"PORT_CONFLICT.txt in the bot's folder explaining it, and Repair Account "
+"Portal and Spotify Ports in the manager turns it back on."
+msgstr ""
+
+#: /work/bot/__init__.py:330
+#, python-format
+msgid ""
+"The account portal could not start because port %(port)s is already in "
+"use, most likely by another bot on this machine. Netflix, Disney Plus, "
+"Apple Music and Amazon Music cannot be connected until that is fixed. Run"
+" the manager, choose Manage Bots, then Repair Account Portal and Spotify "
+"Ports, and restart this bot. YouTube and Spotify are unaffected, because "
+"they sign in with a code in the channel."
+msgstr ""
+
+#: /work/bot/__init__.py:340
+#, python-format
+msgid ""
+"The account portal could not start, so Netflix, Disney Plus, Apple Music "
+"and Amazon Music cannot be connected. The reason is in this bot's log "
+"file: %(reason)s"
+msgstr ""
+
+#: /work/bot/__init__.py:372
+msgid ""
+"Hello! I'm back and ready for you to stream again. Thank you for your "
+"patience!"
+msgstr ""
+
+#: /work/bot/__init__.py:408
+msgid ""
+"Hello there! It's me, the Streamer Bot, just coming in here to let you "
+"know that an update is in progress and I will restart in a few moments to"
+" apply it. Thank you!"
+msgstr ""
+
+#: /work/bot/__init__.py:440
 msgid "The bot is restarting now to apply the update. See you in a moment!"
 msgstr "Бот сейчас перезагружается для установки обновления. До скорой встречи!"
 
-#: /home/admin/joao/StreamerBot/bot/app_vars.py:12
+#: /work/bot/app_vars.py:44
+#, python-brace-format
 msgid ""
-"Hello! I am João Almeida. This is my fork of StreamerBot for TeamTalk 5.\n"
-"This repository focuses on stability and support for YouTube Music.\n"
-"Repository: https://github.com/JoaoDEVWHADS/StreamerBot\n"
-"Original Authors: Amir Gumerov, Vladislav Kopylov, Beqa Gozalishvili, "
-"Kirill Belousov.\n"
+"StreamerBot for TeamTalk 5.\n"
+"Streams YouTube, YouTube Music, Spotify, Apple Music, Amazon Music, "
+"Netflix,\n"
+"Disney Plus and direct links into a channel, with audio description "
+"support.\n"
+"Repository: {repo}\n"
+"TeamTalk SDK {sdk}.\n"
+"Based on TTMediaBot by Amir Gumerov, Vladislav Kopylov, Beqa Gozalishvili"
+" and\n"
+"Kirill Belousov, and on the fork by Joao Almeida.\n"
 msgstr ""
-"Привет! Я Жоао Алмейда. Это мой форк StreamerBot для TeamTalk 5.\n"
-"Этот репозиторий ориентирован на стабильность и поддержку YouTube Music.\n"
-"Репозиторий: https://github.com/JoaoDEVWHADS/StreamerBot\n"
-"Оригинальные авторы: Amir Gumerov, Vladislav Kopylov, Beqa Gozalishvili, "
-"Kirill Belousov.\n"
 
-#: /home/admin/joao/StreamerBot/bot/TeamTalk/__init__.py:173
+#: /work/bot/TeamTalk/__init__.py:173
 msgid "Send \"h\" for help"
 msgstr "Отправьте \"h\" для справки"
 
-#: /home/admin/joao/StreamerBot/bot/commands/__init__.py:144
+#: /work/bot/commands/__init__.py:183
 msgid "Unknown command. Send \"h\" for help."
 msgstr "Неизвестная команда. Отправьте \"h\" для справки."
 
-#: /home/admin/joao/StreamerBot/bot/commands/__init__.py:150
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:724
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:730
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:1130
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:1213
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:1285
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:1359
-#: /home/admin/joao/StreamerBot/bot/modules/playlist_uploader.py:136
-#: /home/admin/joao/StreamerBot/bot/modules/playlist_uploader.py:150
-#: /home/admin/joao/StreamerBot/bot/modules/uploader.py:85
+#: /work/bot/commands/__init__.py:189 /work/bot/commands/user_commands.py:829
+#: /work/bot/commands/user_commands.py:835
+#: /work/bot/commands/user_commands.py:1242
+#: /work/bot/commands/user_commands.py:1324
+#: /work/bot/commands/user_commands.py:1396
+#: /work/bot/commands/user_commands.py:1470
+#: /work/bot/modules/playlist_uploader.py:130
+#: /work/bot/modules/playlist_uploader.py:144 /work/bot/modules/uploader.py:97
 #, python-brace-format
 msgid "Error: {}"
 msgstr "Ошибка: {}"
 
-#: /home/admin/joao/StreamerBot/bot/commands/__init__.py:162
+#: /work/bot/commands/__init__.py:201
 msgid "You are banned"
 msgstr "Вы заблокированы"
 
-#: /home/admin/joao/StreamerBot/bot/commands/__init__.py:166
+#: /work/bot/commands/__init__.py:205
 msgid "You are not in bot's channel"
 msgstr "Вы не в канале бота"
 
-#: /home/admin/joao/StreamerBot/bot/commands/__init__.py:170
+#: /work/bot/commands/__init__.py:209
 msgid "Bot is locked"
 msgstr "Бот заблокирован"
 
-#: /home/admin/joao/StreamerBot/bot/commands/__init__.py:174
+#: /work/bot/commands/__init__.py:213
 msgid "This command is blocked"
 msgstr "Эта команда заблокирована"
 
-#: /home/admin/joao/StreamerBot/bot/commands/__init__.py:198
+#: /work/bot/commands/__init__.py:237
 msgid "Unknown command"
 msgstr "Неизвестная команда"
 
-#: /home/admin/joao/StreamerBot/bot/commands/admin_commands.py:21
+#: /work/bot/commands/admin_commands.py:21
 msgid ""
 "+/-COMMAND Blocks or unblocks commands. +COMMAND adds command to the "
 "blocklist. -COMMAND removes from it. Without a command shows the "
@@ -101,68 +146,68 @@ msgstr ""
 " в список заблокированных команд. -КОМАНДА удаляет из него. Без команды "
 "показывает список заблокированных команд"
 
-#: /home/admin/joao/StreamerBot/bot/commands/admin_commands.py:32
-#: /home/admin/joao/StreamerBot/bot/commands/admin_commands.py:322
-#: /home/admin/joao/StreamerBot/bot/commands/admin_commands.py:352
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:471
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:483
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:539
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:1059
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:1081
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:1145
+#: /work/bot/commands/admin_commands.py:32
+#: /work/bot/commands/admin_commands.py:322
+#: /work/bot/commands/admin_commands.py:352
+#: /work/bot/commands/user_commands.py:564
+#: /work/bot/commands/user_commands.py:576
+#: /work/bot/commands/user_commands.py:632
+#: /work/bot/commands/user_commands.py:1172
+#: /work/bot/commands/user_commands.py:1194
+#: /work/bot/commands/user_commands.py:1257
 msgid "The list is empty"
 msgstr "Список пуст"
 
-#: /home/admin/joao/StreamerBot/bot/commands/admin_commands.py:37
-#: /home/admin/joao/StreamerBot/bot/commands/admin_commands.py:304
-#: /home/admin/joao/StreamerBot/bot/commands/admin_commands.py:336
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:434
+#: /work/bot/commands/admin_commands.py:37
+#: /work/bot/commands/admin_commands.py:304
+#: /work/bot/commands/admin_commands.py:336
+#: /work/bot/commands/user_commands.py:527
 msgid "Added"
 msgstr "Добавлен"
 
-#: /home/admin/joao/StreamerBot/bot/commands/admin_commands.py:39
+#: /work/bot/commands/admin_commands.py:39
 msgid "This command is already added"
 msgstr "Эта команда уже добавлена"
 
-#: /home/admin/joao/StreamerBot/bot/commands/admin_commands.py:45
-#: /home/admin/joao/StreamerBot/bot/commands/admin_commands.py:310
-#: /home/admin/joao/StreamerBot/bot/commands/admin_commands.py:342
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:446
+#: /work/bot/commands/admin_commands.py:45
+#: /work/bot/commands/admin_commands.py:310
+#: /work/bot/commands/admin_commands.py:342
+#: /work/bot/commands/user_commands.py:539
 msgid "Deleted"
 msgstr "Удалено"
 
-#: /home/admin/joao/StreamerBot/bot/commands/admin_commands.py:47
+#: /work/bot/commands/admin_commands.py:47
 msgid "This command is not blocked"
 msgstr "Эта команда не заблокирована"
 
-#: /home/admin/joao/StreamerBot/bot/commands/admin_commands.py:56
+#: /work/bot/commands/admin_commands.py:56
 msgid "GENDER Changes bot's gender. n neutral, m male, f female"
 msgstr "ПОЛ Меняет пол бота. n нейтральный, m мужской, f женский"
 
-#: /home/admin/joao/StreamerBot/bot/commands/admin_commands.py:70
+#: /work/bot/commands/admin_commands.py:70
 msgid "LANGUAGE Changes bot's language"
 msgstr "ЯЗЫК Меняет язык бота"
 
-#: /home/admin/joao/StreamerBot/bot/commands/admin_commands.py:78
+#: /work/bot/commands/admin_commands.py:78
 msgid "The language has been changed"
 msgstr "Язык изменен"
 
-#: /home/admin/joao/StreamerBot/bot/commands/admin_commands.py:80
+#: /work/bot/commands/admin_commands.py:80
 msgid "Incorrect language"
 msgstr "Неправильный язык"
 
-#: /home/admin/joao/StreamerBot/bot/commands/admin_commands.py:83
+#: /work/bot/commands/admin_commands.py:83
 #, python-brace-format
 msgid ""
 "Current language: {current_language}. Available languages: "
 "{available_languages}"
 msgstr "Текущий язык: {current_language}. Доступные языки: {available_languages}"
 
-#: /home/admin/joao/StreamerBot/bot/commands/admin_commands.py:93
+#: /work/bot/commands/admin_commands.py:93
 msgid "NICKNAME Changes bot's nickname"
 msgstr "НИК Меняет ник бота"
 
-#: /home/admin/joao/StreamerBot/bot/commands/admin_commands.py:104
+#: /work/bot/commands/admin_commands.py:104
 msgid ""
 "r/f Clears bot's cache. r clears recents, f clears favorites, without an "
 "option clears the entire cache"
@@ -170,19 +215,19 @@ msgstr ""
 "r/f Очищает кеш бота. r очищает кеш недавно воспроизведенных треков, f "
 "очищает избранное, без опции очищает весь кеш"
 
-#: /home/admin/joao/StreamerBot/bot/commands/admin_commands.py:112
+#: /work/bot/commands/admin_commands.py:112
 msgid "Cache cleared"
 msgstr "Кеш очищен"
 
-#: /home/admin/joao/StreamerBot/bot/commands/admin_commands.py:116
+#: /work/bot/commands/admin_commands.py:116
 msgid "Recents cleared"
 msgstr "Недавние очищены"
 
-#: /home/admin/joao/StreamerBot/bot/commands/admin_commands.py:120
+#: /work/bot/commands/admin_commands.py:120
 msgid "Favorites cleared"
 msgstr "Избранное очищено"
 
-#: /home/admin/joao/StreamerBot/bot/commands/admin_commands.py:127
+#: /work/bot/commands/admin_commands.py:127
 msgid ""
 "Join channel. first argument is channel name or id, second argument is "
 "password, split argument \" | \", if password is undefined, don't type "
@@ -193,77 +238,77 @@ msgstr ""
 "канала, соединитель между аргументами \" | \".\n"
 "Если пароля в канале нет, не пишите второй аргумент"
 
-#: /home/admin/joao/StreamerBot/bot/commands/admin_commands.py:146
+#: /work/bot/commands/admin_commands.py:146
 msgid "This channel does not exist"
 msgstr "Нет такого канала"
 
-#: /home/admin/joao/StreamerBot/bot/commands/admin_commands.py:160
+#: /work/bot/commands/admin_commands.py:160
 #, python-brace-format
 msgid "Error joining channel: {error}"
 msgstr "Ошибка при присоединении к каналу: {error}"
 
-#: /home/admin/joao/StreamerBot/bot/commands/admin_commands.py:208
+#: /work/bot/commands/admin_commands.py:208
 msgid "Enables or disables voice transmission"
 msgstr "Включает или отключает передачу речи"
 
-#: /home/admin/joao/StreamerBot/bot/commands/admin_commands.py:215
-#: /home/admin/joao/StreamerBot/bot/commands/admin_commands.py:217
+#: /work/bot/commands/admin_commands.py:215
+#: /work/bot/commands/admin_commands.py:217
 msgid "Voice transmission enabled"
 msgstr "Передача речи включена"
 
-#: /home/admin/joao/StreamerBot/bot/commands/admin_commands.py:222
+#: /work/bot/commands/admin_commands.py:222
 msgid "Voice transmission disabled"
 msgstr "Передача речи отключена"
 
-#: /home/admin/joao/StreamerBot/bot/commands/admin_commands.py:228
+#: /work/bot/commands/admin_commands.py:228
 msgid "Locks or unlocks the bot"
 msgstr "Блокирует или разблокирует бота"
 
-#: /home/admin/joao/StreamerBot/bot/commands/admin_commands.py:233
+#: /work/bot/commands/admin_commands.py:233
 msgid "Locked"
 msgstr "Заблокирован"
 
-#: /home/admin/joao/StreamerBot/bot/commands/admin_commands.py:235
+#: /work/bot/commands/admin_commands.py:235
 msgid "Unlocked"
 msgstr "Разблокирован"
 
-#: /home/admin/joao/StreamerBot/bot/commands/admin_commands.py:242
+#: /work/bot/commands/admin_commands.py:242
 msgid "STATUS Changes bot's status"
 msgstr "СТАТУС Меняет статус бота"
 
-#: /home/admin/joao/StreamerBot/bot/commands/admin_commands.py:252
+#: /work/bot/commands/admin_commands.py:252
 msgid "Enables or disables event handling"
 msgstr "Включает или отключает обработку событий"
 
-#: /home/admin/joao/StreamerBot/bot/commands/admin_commands.py:259
+#: /work/bot/commands/admin_commands.py:259
 msgid "Event handling is enabled"
 msgstr "Обработка событий включена"
 
-#: /home/admin/joao/StreamerBot/bot/commands/admin_commands.py:261
+#: /work/bot/commands/admin_commands.py:261
 msgid "Event handling is disabled"
 msgstr "Обработка событий отключена"
 
-#: /home/admin/joao/StreamerBot/bot/commands/admin_commands.py:269
+#: /work/bot/commands/admin_commands.py:269
 msgid "Enables or disables sending of channel messages"
 msgstr "Включает или отключает отправку сообщений канала"
 
-#: /home/admin/joao/StreamerBot/bot/commands/admin_commands.py:277
+#: /work/bot/commands/admin_commands.py:277
 msgid "Channel messages enabled"
 msgstr "Сообщения канала включены"
 
-#: /home/admin/joao/StreamerBot/bot/commands/admin_commands.py:279
+#: /work/bot/commands/admin_commands.py:279
 msgid "Channel messages disabled"
 msgstr "Сообщения канала отключены"
 
-#: /home/admin/joao/StreamerBot/bot/commands/admin_commands.py:286
+#: /work/bot/commands/admin_commands.py:286
 msgid "Saves bot's configuration"
 msgstr "Сохраняет конфигурацию бота"
 
-#: /home/admin/joao/StreamerBot/bot/commands/admin_commands.py:290
+#: /work/bot/commands/admin_commands.py:290
 msgid "Configuration saved"
 msgstr "Конфигурация сохранена"
 
-#: /home/admin/joao/StreamerBot/bot/commands/admin_commands.py:297
+#: /work/bot/commands/admin_commands.py:297
 msgid ""
 "+/-USERNAME Manages a list of administrators. +USERNAME adds a user. "
 "-USERNAME removes it. Without an option shows the list"
@@ -272,16 +317,16 @@ msgstr ""
 "добавляет пользователя. -ИМЯ ПОЛЬЗОВАТЕЛЯ удаляет пользователя. Без опции"
 " показывает список"
 
-#: /home/admin/joao/StreamerBot/bot/commands/admin_commands.py:313
+#: /work/bot/commands/admin_commands.py:313
 msgid "This user is not in the admin list"
 msgstr "Этого пользователя нет в списке администраторов"
 
-#: /home/admin/joao/StreamerBot/bot/commands/admin_commands.py:319
-#: /home/admin/joao/StreamerBot/bot/commands/admin_commands.py:349
+#: /work/bot/commands/admin_commands.py:319
+#: /work/bot/commands/admin_commands.py:349
 msgid "<Anonymous>"
 msgstr "<Аноним>"
 
-#: /home/admin/joao/StreamerBot/bot/commands/admin_commands.py:329
+#: /work/bot/commands/admin_commands.py:329
 msgid ""
 "+/-USERNAME Manages a list of banned users. +USERNAME adds a user. "
 "-USERNAME removes it. Without an option shows the list"
@@ -290,36 +335,145 @@ msgstr ""
 " ПОЛЬЗОВАТЕЛЯ добавляет пользователя. -ИМЯ ПОЛЬЗОВАТЕЛЯ удаляет "
 "пользователя. Без опции показывает список"
 
-#: /home/admin/joao/StreamerBot/bot/commands/admin_commands.py:344
+#: /work/bot/commands/admin_commands.py:344
 msgid "This user is not banned"
 msgstr "Этот пользователь не забанен"
 
-#: /home/admin/joao/StreamerBot/bot/commands/admin_commands.py:358
+#: /work/bot/commands/admin_commands.py:358
 msgid "Quits the bot"
 msgstr "Закрывает бота"
 
-#: /home/admin/joao/StreamerBot/bot/commands/admin_commands.py:367
+#: /work/bot/commands/admin_commands.py:367
 msgid "Restarts the bot"
 msgstr "Перезапускает бота"
 
-#: /home/admin/joao/StreamerBot/bot/commands/admin_commands.py:382
+#: /work/bot/commands/admin_commands.py:382
 msgid "Returns current channel's ID"
 msgstr "Выводит id текущего канала"
 
-#: /home/admin/joao/StreamerBot/bot/commands/command.py:28
+#: /work/bot/commands/admin_commands.py:401
+msgid ""
+"[status|out] Shows whether this bot is signed in to YouTube, or signs it "
+"out. To sign in, send li yt"
+msgstr ""
+
+# | msgid "This user is not banned"
+#: /work/bot/commands/admin_commands.py:409
+#: /work/bot/modules/auth_portal.py:268 /work/bot/modules/auth_portal.py:303
+#, fuzzy
+msgid "The YouTube service is not enabled."
+msgstr "Этот пользователь не забанен"
+
+#: /work/bot/commands/admin_commands.py:416
+msgid "This bot is signed in to YouTube."
+msgstr ""
+
+#: /work/bot/commands/admin_commands.py:419
+msgid ""
+"Google signed this bot out of YouTube. To sign in again, send this "
+"command: li yt"
+msgstr ""
+
+#: /work/bot/commands/admin_commands.py:422
+msgid "This bot is not signed in to YouTube. To sign in, send this command: li yt"
+msgstr ""
+
+#: /work/bot/commands/admin_commands.py:427
+msgid "This bot has been signed out of YouTube."
+msgstr ""
+
+#: /work/bot/commands/admin_commands.py:431
+msgid ""
+"YouTube is connected through the account portal now. Send this command: "
+"li yt"
+msgstr ""
+
+#: /work/bot/commands/admin_commands.py:443
+msgid ""
+"[link|rotate|off] Shows the account portal's status, mints a new link, "
+"revokes every existing link, or stops the portal"
+msgstr ""
+
+#: /work/bot/commands/admin_commands.py:450
+#: /work/bot/commands/admin_commands.py:503
+msgid "The account portal is not running."
+msgstr ""
+
+#: /work/bot/commands/admin_commands.py:456
+#, python-format
+msgid ""
+"The portal is listening on %(host)s port %(port)s with %(count)s live "
+"links."
+msgstr ""
+
+#: /work/bot/commands/admin_commands.py:470
+#, python-format
+msgid "That address came from %(source)s."
+msgstr ""
+
+#: /work/bot/commands/admin_commands.py:480
+#, python-format
+msgid "Revoked %(count)s links. Send ap link for a new one."
+msgstr ""
+
+#: /work/bot/commands/admin_commands.py:485
+msgid "The portal has been stopped."
+msgstr ""
+
+#: /work/bot/commands/admin_commands.py:496
+msgid ""
+"SERVICE Disconnects a streaming account and deletes its saved sign-in "
+"(yt, sp, nf, dp, am, az)"
+msgstr ""
+
+#: /work/bot/commands/admin_commands.py:511
+#, python-format
+msgid "%(service)s is not connected."
+msgstr ""
+
+#: /work/bot/commands/admin_commands.py:517
+#, python-format
+msgid "%(service)s has been disconnected and its saved sign-in deleted."
+msgstr ""
+
+#: /work/bot/commands/command.py:30
 msgid "help text not found"
 msgstr "текст справки не найден"
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:20
+#: /work/bot/commands/command.py:82
+#, python-brace-format
+msgid "The YouTube sign-in could not be renewed, so {request} was not played."
+msgstr ""
+
+#: /work/bot/commands/command.py:102
+msgid ""
+"YouTube refused to play this without a signed-in account, which is usual "
+"on a server. To connect one, send this command: li yt"
+msgstr ""
+
+#: /work/bot/commands/command.py:128
+#, python-brace-format
+msgid ""
+"Renewing the YouTube sign-in. {request} will start playing when it "
+"finishes, usually within a minute."
+msgstr ""
+
+#: /work/bot/commands/command.py:137
+msgid ""
+"Google signed StreamerBot out of YouTube. To sign in again, send this "
+"command: li yt"
+msgstr ""
+
+#: /work/bot/commands/user_commands.py:20
 msgid "Shows command help"
 msgstr "Показывает справку по командам"
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:29
+#: /work/bot/commands/user_commands.py:29
 msgid "Shows information about the bot"
 msgstr "Показывает информацию о боте"
 
 # --- Search Results Mode (sr/sl/slc) ---
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:39
+#: /work/bot/commands/user_commands.py:39
 msgid ""
 "QUERY Plays tracks found for the query. If no query is given, plays or "
 "pauses current track. When search results mode (sr) is active, shows a "
@@ -328,95 +482,115 @@ msgstr ""
 "ЗАПРОС Воспроизводит треки по запросу. Без запроса — воспроизводит или "
 "ставит на паузу. В режиме результатов (sr) показывает нумерованный список"
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:46
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:651
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:751
+#: /work/bot/commands/user_commands.py:45
+#: /work/bot/commands/user_commands.py:756
+#: /work/bot/commands/user_commands.py:856
 msgid "Searching..."
 msgstr "Поиск..."
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:55
+#: /work/bot/commands/user_commands.py:55
+#: /work/bot/commands/user_commands.py:146
+#: /work/bot/commands/user_commands.py:764
+#: /work/bot/commands/user_commands.py:863
+#: /work/bot/commands/user_commands.py:1234
+msgid "Nothing is found for your query"
+msgstr "По вашему запросу ничего не найдено"
+
+#: /work/bot/commands/user_commands.py:58
+#: /work/bot/commands/user_commands.py:866
+msgid "The selected service is currently unavailable"
+msgstr "В данный момент выбранный сервис недоступен"
+
+#: /work/bot/commands/user_commands.py:77
 msgid "Search results:"
 msgstr "Результаты поиска:"
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:58
+#: /work/bot/commands/user_commands.py:80
 msgid "Use 'sl NUMBER' to select a track"
 msgstr "Используйте 'sl НОМЕР' для выбора трека"
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:67
+#: /work/bot/commands/user_commands.py:96
 #, python-brace-format
 msgid "{nickname} requested {request}"
 msgstr "{nickname} запросил {request}"
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:72
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:202
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:219
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:769
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:879
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:967
+#: /work/bot/commands/user_commands.py:100
+#: /work/bot/commands/user_commands.py:256
+#: /work/bot/commands/user_commands.py:282
+#: /work/bot/commands/user_commands.py:299
+#: /work/bot/commands/user_commands.py:445
+#: /work/bot/commands/user_commands.py:882
+#: /work/bot/commands/user_commands.py:992
+#: /work/bot/commands/user_commands.py:1080
 #, python-brace-format
 msgid "Playing {}"
 msgstr "Воспроизводится {}"
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:76
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:659
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:758
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:1121
-msgid "Nothing is found for your query"
-msgstr "По вашему запросу ничего не найдено"
-
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:79
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:761
-msgid "The selected service is currently unavailable"
-msgstr "В данный момент выбранный сервис недоступен"
-
 # | msgid "URL Plays a stream from bot given URL"
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:91
+#: /work/bot/commands/user_commands.py:108
 msgid "URL Plays a stream from a given URL"
 msgstr "URL Воспроизводит поток по заданному URL"
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:101
-#, python-brace-format
-msgid "{nickname} requested playing from a URL"
-msgstr "{nickname} запросил воспроизведение по URL"
+#: /work/bot/commands/user_commands.py:113
+msgid "Loading URL / playlist..."
+msgstr "Загрузка URL / плейлиста..."
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:107
+#: /work/bot/commands/user_commands.py:119
+msgid "Your link"
+msgstr ""
+
+#: /work/bot/commands/user_commands.py:124
 msgid "Incorrect protocol"
 msgstr "Неверный протокол"
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:109
+#: /work/bot/commands/user_commands.py:126
 msgid "Cannot process stream URL"
 msgstr "Не удалось обработать URL потока"
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:111
+#: /work/bot/commands/user_commands.py:128
 msgid "The path cannot be found"
 msgstr "Путь не найден"
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:119
+# | msgid "{nickname} requested playing from a URL"
+#: /work/bot/commands/user_commands.py:151
+#, fuzzy, python-brace-format
+msgid "{nickname} requested playing from a URL ({count} tracks)"
+msgstr "{nickname} запросил воспроизведение по URL"
+
+#: /work/bot/commands/user_commands.py:158
+#, python-brace-format
+msgid "Loaded {count} tracks"
+msgstr "Загружено треков: {count}"
+
+#: /work/bot/commands/user_commands.py:168
 msgid "Stops playback"
 msgstr "Останавливает воспроизведение"
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:126
+#: /work/bot/commands/user_commands.py:175
 #, python-brace-format
 msgid "{nickname} stopped playback"
 msgstr "{nickname} остановил воспроизведение"
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:132
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:165
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:184
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:208
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:225
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:374
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:383
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:436
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:454
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:500
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:561
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:582
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:866
+#: /work/bot/commands/user_commands.py:181
+#: /work/bot/commands/user_commands.py:214
+#: /work/bot/commands/user_commands.py:233
+#: /work/bot/commands/user_commands.py:260
+#: /work/bot/commands/user_commands.py:276
+#: /work/bot/commands/user_commands.py:288
+#: /work/bot/commands/user_commands.py:305
+#: /work/bot/commands/user_commands.py:449
+#: /work/bot/commands/user_commands.py:465
+#: /work/bot/commands/user_commands.py:476
+#: /work/bot/commands/user_commands.py:529
+#: /work/bot/commands/user_commands.py:547
+#: /work/bot/commands/user_commands.py:593
+#: /work/bot/commands/user_commands.py:659
+#: /work/bot/commands/user_commands.py:680
+#: /work/bot/commands/user_commands.py:979
 msgid "Nothing is playing"
 msgstr "Ничего не воспроизводится"
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:139
+#: /work/bot/commands/user_commands.py:188
 #, python-brace-format
 msgid ""
 "VOLUME Sets the volume to a value between 0 and {max_volume}. If no "
@@ -425,34 +599,59 @@ msgstr ""
 "ГРОМКОСТЬ Устанавливает для громкости значение от 0 до {max_volume}. Если"
 " громкость не указана, отображается текущий уровень громкости"
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:160
+#: /work/bot/commands/user_commands.py:209
 #, python-brace-format
 msgid "STEP Seeks current track backward. the default step is {seek_step} seconds"
 msgstr "ШАГ Прокручивает текущий трек назад. шаг по умолчанию {seek_step} секунды"
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:179
+#: /work/bot/commands/user_commands.py:228
 #, python-brace-format
 msgid "STEP Seeks current track forward. the default step is {seek_step} seconds"
 msgstr "ШАГ Прокручивает текущий трек вперед. шаг по умолчанию {seek_step} секунды"
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:197
-msgid "Plays next track"
-msgstr "Воспроизводит следующий трек"
+#: /work/bot/commands/user_commands.py:246
+msgid ""
+"[NUMBER|?] Plays next track, jumps to track number, or shows current "
+"position with ?"
+msgstr ""
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:206
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:883
+#: /work/bot/commands/user_commands.py:268
+#: /work/bot/commands/user_commands.py:457
+msgid "Incorrect number"
+msgstr "Неверный номер"
+
+#: /work/bot/commands/user_commands.py:270
+#: /work/bot/commands/user_commands.py:459
+#: /work/bot/commands/user_commands.py:472
+#, python-brace-format
+msgid "Playing {} {}"
+msgstr "Воспроизводится {} {}"
+
+#: /work/bot/commands/user_commands.py:274
+#: /work/bot/commands/user_commands.py:463
+#: /work/bot/commands/user_commands.py:541
+#: /work/bot/commands/user_commands.py:574
+#: /work/bot/commands/user_commands.py:613
+#: /work/bot/commands/user_commands.py:947
+#: /work/bot/commands/user_commands.py:1064
+#: /work/bot/commands/user_commands.py:1201
+msgid "Out of list"
+msgstr "Вне списка"
+
+#: /work/bot/commands/user_commands.py:286
+#: /work/bot/commands/user_commands.py:996
 msgid "No next track"
 msgstr "Нет следующего трека"
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:214
+#: /work/bot/commands/user_commands.py:294
 msgid "Plays previous track"
 msgstr "Воспроизводит предыдущий трек"
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:223
+#: /work/bot/commands/user_commands.py:303
 msgid "No previous track"
 msgstr "Нет предыдущего трека"
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:232
+#: /work/bot/commands/user_commands.py:312
 msgid ""
 "MODE Sets the playback mode. If no mode is specified, the current mode "
 "and a list of modes are displayed"
@@ -460,27 +659,27 @@ msgstr ""
 "РЕЖИМ Устанавливает режим воспроизведения. Если режим не указан, "
 "отображается текущий режим и список режимов"
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:237
+#: /work/bot/commands/user_commands.py:317
 msgid "Single Track"
 msgstr "Один трек"
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:238
+#: /work/bot/commands/user_commands.py:318
 msgid "Repeat Track"
 msgstr "Повтор трека"
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:239
+#: /work/bot/commands/user_commands.py:319
 msgid "Track list"
 msgstr "Список треков"
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:240
+#: /work/bot/commands/user_commands.py:320
 msgid "Repeat track list"
 msgstr "Повтор списка треков"
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:241
+#: /work/bot/commands/user_commands.py:321
 msgid "Random"
 msgstr "Случайный трек"
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:244
+#: /work/bot/commands/user_commands.py:324
 #, python-brace-format
 msgid ""
 "Current mode: {current_mode}\n"
@@ -489,16 +688,16 @@ msgstr ""
 "Текущий_ режим: {current_mode}\n"
 "{modes}"
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:262
+#: /work/bot/commands/user_commands.py:342
 #, python-brace-format
 msgid "Current mode: {mode}"
 msgstr "Текущий режим: {mode}"
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:266
+#: /work/bot/commands/user_commands.py:346
 msgid "Incorrect mode"
 msgstr "Неверный режим"
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:275
+#: /work/bot/commands/user_commands.py:355
 msgid ""
 "SERVICE Selects the service to play from, sv SERVICE h returns additional"
 " help. If no service is specified, the current service and a list of "
@@ -508,7 +707,7 @@ msgstr ""
 "показывает текущий сервис и список доступных\n"
 "Если набрать \"sv имя сервиса h\", покажет справку"
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:283
+#: /work/bot/commands/user_commands.py:363
 #, python-brace-format
 msgid ""
 "Unknown service.\n"
@@ -517,7 +716,7 @@ msgstr ""
 "Неизвестный сервис.\n"
 "{}"
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:292
+#: /work/bot/commands/user_commands.py:372
 #, python-brace-format
 msgid ""
 "Current service: {}\n"
@@ -526,12 +725,12 @@ msgstr ""
 "Текущий сервис: {}\n"
 "Предупреждение: {}"
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:294
+#: /work/bot/commands/user_commands.py:374
 #, python-brace-format
 msgid "Current service: {}"
 msgstr "Текущий сервис: {}"
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:300
+#: /work/bot/commands/user_commands.py:380
 #, python-brace-format
 msgid ""
 "Error: {error}\n"
@@ -540,26 +739,26 @@ msgstr ""
 "Ошибка: {error}\n"
 "{service} отключён"
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:307
+#: /work/bot/commands/user_commands.py:387
 #, python-brace-format
 msgid "{service} is disabled"
 msgstr "{service} отключён"
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:314
+#: /work/bot/commands/user_commands.py:394
 msgid "This service has no additional help"
 msgstr "Этот сервис не содержит дополнительной справки"
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:331
+#: /work/bot/commands/user_commands.py:411
 #, python-brace-format
 msgid "{} (Error)"
 msgstr "{} (Ошибка)"
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:335
+#: /work/bot/commands/user_commands.py:415
 #, python-brace-format
 msgid "{} (Warning: {})"
 msgstr "{} (Предупреждение: {})"
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:342
+#: /work/bot/commands/user_commands.py:422
 #, python-brace-format
 msgid ""
 "Current service: {current_service}\n"
@@ -572,34 +771,16 @@ msgstr ""
 "Отправьте \"sv имя сервиса h\" для дополнительной справки по конкретному "
 "сервису"
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:354
-msgid "NUMBER Selects track by number from the list of current results"
+# | msgid "NUMBER Selects track by number from the list of current results"
+#: /work/bot/commands/user_commands.py:434
+#, fuzzy
+msgid "[NUMBER|?] Selects track by number, or shows current position with ?"
 msgstr "НОМЕР Выбирает трек по номеру из списка текущих результатов"
-
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:366
-msgid "Incorrect number"
-msgstr "Неверный номер"
-
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:368
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:379
-#, python-brace-format
-msgid "Playing {} {}"
-msgstr "Воспроизводится {} {}"
-
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:372
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:448
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:481
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:520
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:834
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:951
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:1088
-msgid "Out of list"
-msgstr "Вне списка"
 
 # | msgid "" "SPEED Sets playback speed from bot.25 to 4. If no speed is
 # given,
 # | shows " "current speed"
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:390
+#: /work/bot/commands/user_commands.py:483
 msgid ""
 "SPEED Sets playback speed from 0.25 to 4. If no speed is given, shows "
 "current speed"
@@ -607,12 +788,12 @@ msgstr ""
 "СКОРОСТЬ Устанавливает скорость воспроизведения от 0.25 до 4. Если "
 "скорость не указана, показывает текущую скорость"
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:395
+#: /work/bot/commands/user_commands.py:488
 #, python-brace-format
 msgid "Current rate: {}"
 msgstr "Текущая скорость: {}"
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:409
+#: /work/bot/commands/user_commands.py:502
 msgid ""
 "+/-NUMBER Manages favorite tracks. + adds the current track to favorites."
 " - removes a track requested from favorites. If a number is specified "
@@ -622,31 +803,31 @@ msgstr ""
 "избранное. - удаляет запрошенный трек из избранного. Если номер указан "
 "после +/-, добавляет/удаляет трек с этим номером"
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:415
+#: /work/bot/commands/user_commands.py:508
 msgid "This command is not available for guest users"
 msgstr "Эта команда недоступна для анонимных пользователей"
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:452
+#: /work/bot/commands/user_commands.py:545
 msgid "This track is not in favorites"
 msgstr "Этого трека нет в избранном"
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:461
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:526
+#: /work/bot/commands/user_commands.py:554
+#: /work/bot/commands/user_commands.py:619
 #, python-brace-format
 msgid "{number}: {track_name}"
 msgstr "{number}: {track_name}"
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:489
+#: /work/bot/commands/user_commands.py:582
 msgid "Gets a direct link to the current track"
 msgstr "Получает прямую ссылку на текущий трек"
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:498
+#: /work/bot/commands/user_commands.py:591
 msgid "URL is not available"
 msgstr "Поток не доступен"
 
 # | msgid "" "NUMBER Plays a track with  the given number from bot list of
 # | recent " "tracks. Without a number shows recent tracks"
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:507
+#: /work/bot/commands/user_commands.py:600
 msgid ""
 "NUMBER Plays a track with  the given number from a list of recent tracks."
 " Without a number shows recent tracks"
@@ -654,74 +835,83 @@ msgstr ""
 "НОМЕР Воспроизводит трек с заданным номером из списка последних треков. "
 "Без номера показывает последние треки"
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:532
+#: /work/bot/commands/user_commands.py:625
 #, python-brace-format
 msgid "{number}: {track_url}"
 msgstr "{number}: {track_url}"
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:547
+#: /work/bot/commands/user_commands.py:640
 msgid "Downloads the current track and uploads it to the channel."
 msgstr "Скачивает проигрываемый трек и выгружает его в канал."
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:557
+#: /work/bot/commands/user_commands.py:655
 msgid "Downloading..."
 msgstr "Скачивание..."
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:559
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:580
+#: /work/bot/commands/user_commands.py:657
+#: /work/bot/commands/user_commands.py:678
 msgid "Live streams cannot be downloaded"
 msgstr "Прямые трансляции не могут быть загружены"
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:568
+#: /work/bot/commands/user_commands.py:666
 msgid "Downloads the current track as video and uploads it to the channel."
 msgstr "Скачивает текущий трек как видео и загружает его в канал."
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:578
+#: /work/bot/commands/user_commands.py:676
 msgid "Downloading video..."
 msgstr "Скачивание видео..."
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:588
+#: /work/bot/commands/user_commands.py:686
 msgid "Makes the bot join your current channel"
 msgstr "Бот заходит в ваш текущий канал"
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:609
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:626
+#: /work/bot/commands/user_commands.py:707
+#: /work/bot/commands/user_commands.py:724
 #, python-brace-format
 msgid "Joining channel: {}"
 msgstr "Вход в канал: {}"
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:618
+#: /work/bot/commands/user_commands.py:716
 #, python-brace-format
 msgid "Failed to join channel. Error: {}"
 msgstr "Не удалось зайти в канал. Ошибка: {}"
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:629
+#: /work/bot/commands/user_commands.py:727
 #, python-brace-format
 msgid "Failed to join channel: {}"
 msgstr "Не удалось зайти в канал: {}"
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:636
+# | msgid "" "Downloads all tracks from a playlist/album URL, zips them, and
+# | uploads to" " the channel."
+#: /work/bot/commands/user_commands.py:734
+#, fuzzy
 msgid ""
 "Downloads all tracks from a playlist/album URL, zips them, and uploads to"
-" the channel."
+" the channel. Without a link while Apple Music is playing, downloads the "
+"album or playlist being played."
 msgstr ""
 "Скачивает все треки из URL плейлиста/альбома, архивирует в ZIP и "
 "загружает в канал."
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:644
+#: /work/bot/commands/user_commands.py:743
 #, python-brace-format
 msgid "Current progress: {}"
 msgstr "Текущий прогресс: {}"
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:648
+#: /work/bot/commands/user_commands.py:753
 msgid "Please send the link to the playlist or album."
 msgstr "Пожалуйста, отправьте ссылку на плейлист или альбом."
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:667
-msgid "This command is for playlists and albums. For single tracks, use 'dl'."
+# | msgid "This command is for playlists and albums. For single tracks, use
+# | 'dl'."
+#: /work/bot/commands/user_commands.py:772
+#, fuzzy
+msgid ""
+"This command is for playlists, albums, and channels. For single tracks, "
+"use 'dl'."
 msgstr "Эта команда для плейлистов. Для одного трека используйте 'dl'."
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:742
+#: /work/bot/commands/user_commands.py:847
 msgid ""
 "QUERY Searches for a track and adds it to the queue. If nothing is "
 "playing, starts immediately"
@@ -729,51 +919,51 @@ msgstr ""
 "ЗАПРОС Ищет трек и добавляет его в очередь. Если ничего не "
 "воспроизводится, начинает немедленно"
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:778
+#: /work/bot/commands/user_commands.py:891
 #, python-brace-format
 msgid "{nickname} added to queue: {track}"
 msgstr "{nickname} добавил в очередь: {track}"
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:784
+#: /work/bot/commands/user_commands.py:897
 #, python-brace-format
 msgid "Added to queue [{position}]: {track}"
 msgstr "Добавлено в очередь [{position}]: {track}"
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:791
+#: /work/bot/commands/user_commands.py:904
 msgid "Lists all tracks in the queue"
 msgstr "Список всех треков в очереди"
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:797
+#: /work/bot/commands/user_commands.py:910
 msgid "The queue is empty"
 msgstr "Очередь пуста"
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:805
+#: /work/bot/commands/user_commands.py:918
 #, python-brace-format
 msgid "Queue ({count} track(s)):"
 msgstr "Очередь ({count} трек(ов)):"
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:815
+#: /work/bot/commands/user_commands.py:928
 msgid "NUMBER Removes track number NUMBER from the queue"
 msgstr "NUMBER Удаляет трек под номером NUMBER из очереди"
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:840
+#: /work/bot/commands/user_commands.py:953
 #, python-brace-format
 msgid "Removed from queue: {track}"
 msgstr "Удалено из очереди: {track}"
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:847
+#: /work/bot/commands/user_commands.py:960
 msgid "Clears the entire queue"
 msgstr "Очистить всю очередь"
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:851
+#: /work/bot/commands/user_commands.py:964
 msgid "The queue is already empty"
 msgstr "Очередь уже пуста"
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:854
+#: /work/bot/commands/user_commands.py:967
 msgid "Queue cleared"
 msgstr "Очередь очищена"
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:861
+#: /work/bot/commands/user_commands.py:974
 msgid ""
 "Skips current track and plays the next one from the queue. Falls back to "
 "normal next if queue is empty"
@@ -781,12 +971,12 @@ msgstr ""
 "Пропускает текущий трек и воспроизводит следующий из очереди. Если "
 "очередь пуста, переходит к обычному следующему"
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:872
+#: /work/bot/commands/user_commands.py:985
 #, python-brace-format
 msgid "Playing next from queue: {}"
 msgstr "Следующий из очереди: {}"
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:896
+#: /work/bot/commands/user_commands.py:1009
 msgid ""
 "Toggles search results mode. When active, 'p QUERY' shows a numbered "
 "list. Use 'sr on' or 'sr off' to set explicitly. Save permanently with "
@@ -796,17 +986,17 @@ msgstr ""
 " список. Используйте 'sr on' или 'sr off'. Сохраните постоянно с помощью "
 "'sc'"
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:904
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:914
+#: /work/bot/commands/user_commands.py:1017
+#: /work/bot/commands/user_commands.py:1027
 msgid "Search results mode: ON"
 msgstr "Режим результатов поиска: ВКЛЮЧЁН"
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:908
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:916
+#: /work/bot/commands/user_commands.py:1021
+#: /work/bot/commands/user_commands.py:1029
 msgid "Search results mode: OFF"
 msgstr "Режим результатов поиска: ВЫКЛЮЧЕН"
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:928
+#: /work/bot/commands/user_commands.py:1041
 msgid ""
 "NUMBER Selects and plays result NUMBER from the last search list "
 "(requires search results mode to be active)"
@@ -814,11 +1004,11 @@ msgstr ""
 "НОМЕР Выбирает и воспроизводит результат НОМЕР из последнего поиска "
 "(требует активного режима результатов)"
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:947
+#: /work/bot/commands/user_commands.py:1060
 msgid "No search results available. Use 'p QUERY' to search first"
 msgstr "Нет доступных результатов. Сначала выполните 'p ЗАПРОС'"
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:961
+#: /work/bot/commands/user_commands.py:1074
 #, python-brace-format
 msgid "{nickname} selected: {track}"
 msgstr "{nickname} выбрал: {track}"
@@ -826,7 +1016,7 @@ msgstr "{nickname} выбрал: {track}"
 # | msgid "" "NUMBER Sets how many results are shown when search results mode
 # is
 # | " "active. Without a number shows current count. Resets to 5 on restart"
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:978
+#: /work/bot/commands/user_commands.py:1091
 #, fuzzy
 msgid ""
 "NUMBER Sets how many results are shown when search results mode is "
@@ -835,68 +1025,68 @@ msgstr ""
 "НОМЕР Задаёт количество результатов в режиме поиска. Без числа показывает"
 " текущее значение. Сбрасывается до 5 при перезапуске"
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:984
+#: /work/bot/commands/user_commands.py:1097
 #, python-brace-format
 msgid "Search results count: {count}"
 msgstr "Количество результатов: {count}"
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:994
+#: /work/bot/commands/user_commands.py:1107
 msgid "Invalid count. Please enter a number greater than 0"
 msgstr "Неверное значение. Введите число больше 0"
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:999
+#: /work/bot/commands/user_commands.py:1112
 #, python-brace-format
 msgid "Search results count set to {count}"
 msgstr "Количество результатов установлено: {count}"
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:1007
+#: /work/bot/commands/user_commands.py:1120
 msgid "LINK Adds a link to the download list."
 msgstr "LINK Добавляет ссылку в список загрузки."
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:1019
+#: /work/bot/commands/user_commands.py:1132
 #, python-brace-format
 msgid "Added link to the list. Total: {count}"
 msgstr "Ссылка добавлена в список. Всего: {count}"
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:1028
+#: /work/bot/commands/user_commands.py:1141
 msgid "LINK1 LINK2 ... Adds multiple space-separated links to the download list."
 msgstr ""
 "LINK1 LINK2 ... Добавляет несколько ссылок, разделенных пробелами, в "
 "список загрузки."
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:1043
+#: /work/bot/commands/user_commands.py:1156
 #, python-brace-format
 msgid "Added {added_count} links. Total list size: {count}"
 msgstr "Добавлено ссылок: {added_count}. Общий размер списка: {count}"
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:1053
+#: /work/bot/commands/user_commands.py:1166
 msgid "Lists all links in the download list."
 msgstr "Выводит список всех ссылок в списке загрузки."
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:1072
+#: /work/bot/commands/user_commands.py:1185
 msgid "NUMBER_OR_LINK Removes a link from the download list by its index or URL."
 msgstr ""
 "НОМЕР_ИЛИ_ССЫЛКА Удаляет ссылку из списка загрузки по ее индексу или "
 "URL-адресу."
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:1097
+#: /work/bot/commands/user_commands.py:1210
 msgid "Link not found in the list"
 msgstr "Ссылка не найдена в списке"
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:1099
+#: /work/bot/commands/user_commands.py:1212
 #, python-brace-format
 msgid "Removed link: {link}"
 msgstr "Ссылка удалена: {link}"
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:1106
+#: /work/bot/commands/user_commands.py:1219
 msgid "LINK Downloads a link directly and uploads it to the channel."
 msgstr "LINK Загружает ссылку напрямую и отправляет ее в канал."
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:1114
+#: /work/bot/commands/user_commands.py:1227
 msgid "Searching and downloading..."
 msgstr "Поиск и загрузка..."
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:1139
+#: /work/bot/commands/user_commands.py:1251
 msgid ""
 "Downloads all links in your list and uploads them to the channel. Can "
 "download normally or as a ZIP archive."
@@ -904,7 +1094,7 @@ msgstr ""
 "Загружает все ссылки из вашего списка и отправляет их в канал. Можно "
 "загрузить обычно или в виде ZIP-архива."
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:1151
+#: /work/bot/commands/user_commands.py:1263
 msgid ""
 "How do you want to download these links?\n"
 "1. Download individually (Normal)\n"
@@ -916,74 +1106,74 @@ msgstr ""
 "2. Сжать всё в ZIP-архив\n"
 "Ответьте только 1 или 2."
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:1162
+#: /work/bot/commands/user_commands.py:1274
 #, python-brace-format
 msgid "Starting local download of {count} links..."
 msgstr "Запуск локальной загрузки {count} ссылок..."
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:1165
+#: /work/bot/commands/user_commands.py:1277
 #, python-brace-format
 msgid "Starting download of {count} links..."
 msgstr "Запуск загрузки {count} ссылок..."
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:1171
+#: /work/bot/commands/user_commands.py:1283
 #, python-brace-format
 msgid "Resolving and zipping locally {count} links..."
 msgstr "Локальное разрешение и упаковка в ZIP {count} ссылок..."
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:1174
+#: /work/bot/commands/user_commands.py:1286
 #, python-brace-format
 msgid "Resolving and zipping {count} links..."
 msgstr "Разрешение и упаковка в ZIP {count} ссылок..."
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:1176
+#: /work/bot/commands/user_commands.py:1288
 msgid "Invalid option. Please send 'ads' again to select."
 msgstr "Неверный вариант. Пожалуйста, отправьте команду 'ads' снова для выбора."
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:1182
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:1221
+#: /work/bot/commands/user_commands.py:1294
+#: /work/bot/commands/user_commands.py:1332
 #, python-brace-format
 msgid "Processing link {number}/{total}: {link}"
 msgstr "Обработка ссылки {number}/{total}: {link}"
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:1190
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:1229
+#: /work/bot/commands/user_commands.py:1302
+#: /work/bot/commands/user_commands.py:1340
 #, python-brace-format
 msgid "Nothing is found for: {link}"
 msgstr "Ничего не найдено для: {link}"
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:1199
+#: /work/bot/commands/user_commands.py:1310
 #, python-brace-format
 msgid "Error downloading {link}: {error}"
 msgstr "Ошибка загрузки {link}: {error}"
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:1249
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:1366
+#: /work/bot/commands/user_commands.py:1360
+#: /work/bot/commands/user_commands.py:1477
 msgid "All downloads completed successfully!"
 msgstr "Все загрузки успешно завершены!"
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:1254
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:1371
+#: /work/bot/commands/user_commands.py:1365
+#: /work/bot/commands/user_commands.py:1482
 #, python-brace-format
 msgid "Downloads completed with {error_count} error(s)."
 msgstr "Загрузка завершена с {error_count} ошибкой(ами)."
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:1263
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:1293
+#: /work/bot/commands/user_commands.py:1374
+#: /work/bot/commands/user_commands.py:1404
 msgid "Resolving links..."
 msgstr "Разрешение ссылок..."
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:1277
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:1310
+#: /work/bot/commands/user_commands.py:1388
+#: /work/bot/commands/user_commands.py:1421
 msgid "Error: No valid tracks found to download."
 msgstr "Ошибка: Не найдено подходящих треков для загрузки."
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:1330
-#: /home/admin/joao/StreamerBot/bot/modules/playlist_uploader.py:94
+#: /work/bot/commands/user_commands.py:1441
+#: /work/bot/modules/playlist_uploader.py:88
 msgid "Error: Failed to download any tracks from this playlist."
 msgstr "Ошибка: Не удалось скачать ни одного трека из этого плейлиста."
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:1382
+#: /work/bot/commands/user_commands.py:1493
 msgid ""
 "Toggles local download mode for the 'ads' command. When active, files are"
 " saved locally to the VPS instead of uploaded to TeamTalk."
@@ -991,68 +1181,869 @@ msgstr ""
 "Переключает режим локальной загрузки для команды 'ads'. Когда он активен,"
 " файлы сохраняются локально на VPS, а не отправляются в TeamTalk."
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:1388
+#: /work/bot/commands/user_commands.py:1499
 msgid "Local download mode (adsc) enabled."
 msgstr "Режим локальной загрузки (adsc) включен."
 
-#: /home/admin/joao/StreamerBot/bot/commands/user_commands.py:1390
+#: /work/bot/commands/user_commands.py:1501
 msgid "Local download mode (adsc) disabled."
 msgstr "Режим локальной загрузки (adsc) выключен."
 
-#: /home/admin/joao/StreamerBot/bot/connectors/tt_player_connector.py:36
+#: /work/bot/commands/user_commands.py:1520
+msgid ""
+"[service] Shows which streaming accounts are connected. With a service "
+"(yt, sp, nf, dp, am, az) it starts connecting that one"
+msgstr ""
+
+#: /work/bot/commands/user_commands.py:1535
+#, python-format
+msgid ""
+"This server cannot run a browser, so connect YouTube by importing a "
+"session from your own browser. Use a separate Google account made for the"
+" bot. Open this link: %(url)s"
+msgstr ""
+
+#: /work/bot/commands/user_commands.py:1541
+#, python-format
+msgid ""
+"To connect YouTube, use a separate Google account made for the bot, not "
+"your personal one. Open this link: %(url)s"
+msgstr ""
+
+#: /work/bot/commands/user_commands.py:1556
+msgid ""
+"The account portal is not running, so Netflix, Disney Plus, Apple Music "
+"and Amazon Music cannot be connected. The reason is in this bot's log "
+"file."
+msgstr ""
+
+#: /work/bot/commands/user_commands.py:1565
+msgid "Your streaming accounts:"
+msgstr ""
+
+#: /work/bot/commands/user_commands.py:1570
+#, python-format
+msgid "%(service)s: connected"
+msgstr ""
+
+#: /work/bot/commands/user_commands.py:1575
+#, python-format
+msgid "%(service)s: signed out, connect again"
+msgstr ""
+
+#: /work/bot/commands/user_commands.py:1580
+#, python-format
+msgid "%(service)s: not connected"
+msgstr ""
+
+#: /work/bot/commands/user_commands.py:1600
+#, python-format
+msgid ""
+"%(service)s is already connected. To use a different account, disconnect "
+"it first at %(url)s"
+msgstr ""
+
+#: /work/bot/commands/user_commands.py:1612
+#, python-format
+msgid "%(service)s sign-in could not start: %(error)s"
+msgstr ""
+
+#: /work/bot/commands/user_commands.py:1618
+#, python-format
+msgid ""
+"To connect %(service)s, go to %(url)s and enter the code %(code)s. "
+"Character by character, that is %(spelled)s. Send li on its own to check "
+"whether it worked."
+msgstr ""
+
+#: /work/bot/commands/user_commands.py:1624
+#, python-format
+msgid "To connect %(service)s, open %(url)s"
+msgstr ""
+
+#: /work/bot/commands/user_commands.py:1643
+msgid ""
+"[on|off|ask] Plays films and shows with audio description when it is "
+"available. With no argument, says what the current setting is"
+msgstr ""
+
+#: /work/bot/commands/user_commands.py:1651
+msgid "Audio description is not available in this bot."
+msgstr ""
+
+#: /work/bot/commands/user_commands.py:1659
+msgid ""
+"Audio description is on. Films play with the description when there is "
+"one."
+msgstr ""
+
+#: /work/bot/commands/user_commands.py:1662
+msgid "Audio description is off. Send da on to turn it on."
+msgstr ""
+
+#: /work/bot/commands/user_commands.py:1665
+msgid "The bot asks each time. Send da on or da off to stop being asked."
+msgstr ""
+
+#: /work/bot/commands/user_commands.py:1679
+msgid "Audio description is on. You will not be asked again."
+msgstr ""
+
+#: /work/bot/commands/user_commands.py:1682
+msgid "Audio description is off. You will not be asked again."
+msgstr ""
+
+#: /work/bot/commands/user_commands.py:1685
+msgid "The bot will ask each time."
+msgstr ""
+
+#: /work/bot/commands/user_commands.py:1699
+msgid ""
+"[number] Lists the profiles for the current service, or selects one by "
+"number"
+msgstr ""
+
+#: /work/bot/commands/user_commands.py:1706
+#, python-format
+msgid "%(service)s does not have profiles."
+msgstr ""
+
+#: /work/bot/commands/user_commands.py:1712
+msgid "No profiles were found. The account may not be connected yet."
+msgstr ""
+
+#: /work/bot/commands/user_commands.py:1718
+#, python-format
+msgid "%(count)s profiles:"
+msgstr ""
+
+#: /work/bot/commands/user_commands.py:1722
+msgid "Send pf and a number to choose one."
+msgstr ""
+
+#: /work/bot/commands/user_commands.py:1734
+#, python-format
+msgid "Now using the profile %(name)s."
+msgstr ""
+
+#: /work/bot/commands/user_commands.py:1737
+msgid "That profile could not be selected."
+msgstr ""
+
+#: /work/bot/connectors/tt_player_connector.py:36
 #, python-brace-format
 msgid "Playing: {track_name}"
 msgstr "Воспроизводится: {track_name}"
 
-#: /home/admin/joao/StreamerBot/bot/connectors/tt_player_connector.py:42
+#: /work/bot/connectors/tt_player_connector.py:42
 #, python-brace-format
 msgid "Playing: {stream_url}"
 msgstr "Воспроизводится: {stream_url}"
 
-#: /home/admin/joao/StreamerBot/bot/connectors/tt_player_connector.py:53
+#: /work/bot/connectors/tt_player_connector.py:53
 #, python-brace-format
 msgid "Paused: {track_name}"
 msgstr "Приостановлено: {track_name}"
 
-#: /home/admin/joao/StreamerBot/bot/connectors/tt_player_connector.py:59
+#: /work/bot/connectors/tt_player_connector.py:59
 #, python-brace-format
 msgid "Paused: {stream_url}"
 msgstr "Приостановлено: {stream_url}"
 
-#: /home/admin/joao/StreamerBot/bot/modules/playlist_uploader.py:51
-#, python-brace-format
-msgid "Error: This playlist is too large (max {} tracks)."
-msgstr "Ошибка: Этот плейлист слишком велик (макс. {} треков)."
+#: /work/bot/modules/apple_music_downloader.py:75
+msgid "Apple Music is not available on this bot."
+msgstr ""
 
-#: /home/admin/joao/StreamerBot/bot/modules/playlist_uploader.py:61
+#: /work/bot/modules/apple_music_downloader.py:90
+msgid "What is playing is not an album or playlist that can be downloaded."
+msgstr ""
+
+#: /work/bot/modules/apple_music_downloader.py:93
+msgid "the playlist"
+msgstr ""
+
+#: /work/bot/modules/apple_music_downloader.py:95
+#, python-brace-format
+msgid ""
+"Downloading the playlist {name}. It will be uploaded to the channel as "
+"one zip file when it is ready, which can take several minutes."
+msgstr ""
+
+#: /work/bot/modules/apple_music_downloader.py:101
+#, python-brace-format
+msgid ""
+"Downloading the album {name}. It will be uploaded to the channel as one "
+"zip file when it is ready, which can take several minutes."
+msgstr ""
+
+#: /work/bot/modules/apple_music_downloader.py:107
+msgid "Apple Music is not playing a song right now."
+msgstr ""
+
+#: /work/bot/modules/apple_music_downloader.py:112
+msgid "This song is not in the Apple Music catalog, so it cannot be downloaded."
+msgstr ""
+
+#: /work/bot/modules/apple_music_downloader.py:116
+#, python-brace-format
+msgid "Downloading {name}. It will be uploaded to the channel when it is ready."
+msgstr ""
+
+#: /work/bot/modules/apple_music_downloader.py:121
+msgid "To download the whole album or playlist instead, send dlp."
+msgstr ""
+
+#: /work/bot/modules/apple_music_downloader.py:126
+msgid ""
+"An Apple Music download is already running. Please send this again when "
+"it has finished."
+msgstr ""
+
+#: /work/bot/modules/apple_music_downloader.py:157
+#, python-brace-format
+msgid "{name} is in the channel: one zip file with {count} tracks."
+msgstr ""
+
+#: /work/bot/modules/apple_music_downloader.py:160
+#, python-brace-format
+msgid "{name} is in the channel."
+msgstr ""
+
+#: /work/bot/modules/apple_music_downloader.py:164
+#, python-brace-format
+msgid "Could not download {name}: {reason}"
+msgstr ""
+
+#: /work/bot/modules/apple_music_downloader.py:173
+#, python-brace-format
+msgid "Could not download {name}."
+msgstr ""
+
+#: /work/bot/modules/apple_music_downloader.py:187
+msgid "Apple Music is not signed in on this bot. Send li am to connect it."
+msgstr ""
+
+#: /work/bot/modules/audio_description.py:129
+#, python-format
+msgid "%(title)s has audio description. Play it with the description?"
+msgstr ""
+
+#: /work/bot/modules/audio_description.py:132
+msgid "This has audio description. Play it with the description?"
+msgstr ""
+
+#: /work/bot/modules/audio_description.py:136
+msgid "1. Yes. 2. No. 3. Yes, and remember. 4. No, and remember."
+msgstr ""
+
+#: /work/bot/modules/auth_portal.py:347
+msgid "Enter the Google account email address"
+msgstr ""
+
+#: /work/bot/modules/auth_portal.py:349
+#, python-format
+msgid "Enter your %(service)s email address or username"
+msgstr ""
+
+#: /work/bot/modules/auth_portal.py:354
+msgid "Enter the Google account password"
+msgstr ""
+
+#: /work/bot/modules/auth_portal.py:356
+#, python-format
+msgid "Enter your %(service)s password"
+msgstr ""
+
+#: /work/bot/modules/auth_portal.py:398
+msgid "Enter the verification code"
+msgstr ""
+
+#: /work/bot/modules/auth_portal.py:604
+msgid "Signing in to this service is not available yet."
+msgstr ""
+
+# | msgid "Cache cleared"
+#: /work/bot/modules/auth_portal.py:621
+#, fuzzy
+msgid "Cancelled."
+msgstr "Кеш очищен"
+
+#: /work/bot/modules/playlist_uploader.py:55
 #, python-brace-format
 msgid "Downloading playlist: {}"
 msgstr "Загрузка плейлиста: {}"
 
-#: /home/admin/joao/StreamerBot/bot/modules/playlist_uploader.py:68
+#: /work/bot/modules/playlist_uploader.py:62
 #, python-brace-format
 msgid "Downloading track {}: {}"
 msgstr "Загрузка трека {}: {}"
 
-#: /home/admin/joao/StreamerBot/bot/modules/playlist_uploader.py:100
+#: /work/bot/modules/playlist_uploader.py:94
 msgid "Zipping tracks..."
 msgstr "Архивация треков..."
 
-#: /home/admin/joao/StreamerBot/bot/modules/playlist_uploader.py:115
+#: /work/bot/modules/playlist_uploader.py:109
 #, python-brace-format
 msgid "Uploading ZIP: {}"
 msgstr "Загрузка ZIP: {}"
 
-#: /home/admin/joao/StreamerBot/bot/modules/uploader.py:64
+#: /work/bot/modules/portal_pages.py:45
+msgid "dash"
+msgstr ""
+
+#: /work/bot/modules/portal_pages.py:46
+msgid "underscore"
+msgstr ""
+
+#: /work/bot/modules/portal_pages.py:47
+msgid "dot"
+msgstr ""
+
+#: /work/bot/modules/portal_pages.py:48
+msgid "space"
+msgstr ""
+
+# | msgid "Error: {}"
+#: /work/bot/modules/portal_pages.py:73 /work/bot/modules/portal_pages.py:145
+#, fuzzy
+msgid "Error:"
+msgstr "Ошибка: {}"
+
+#: /work/bot/modules/portal_pages.py:118
+msgid "There is a problem"
+msgstr ""
+
+#: /work/bot/modules/portal_pages.py:158
+msgid "Back to your accounts"
+msgstr ""
+
+#: /work/bot/modules/portal_pages.py:174 /work/bot/modules/portal_pages.py:470
+#: /work/bot/modules/portal_pages.py:498 /work/bot/modules/portal_pages.py:562
+#: /work/bot/modules/portal_pages.py:615 /work/bot/modules/portal_pages.py:661
+#, python-format
+msgid "Import a %(service)s session"
+msgstr ""
+
+#: /work/bot/modules/portal_pages.py:181 /work/bot/modules/portal_pages.py:209
+#: /work/bot/modules/portal_pages.py:216 /work/bot/modules/portal_pages.py:257
+#, python-format
+msgid "Connect %(service)s"
+msgstr ""
+
+#: /work/bot/modules/portal_pages.py:197
+msgid "Connected"
+msgstr ""
+
+#: /work/bot/modules/portal_pages.py:202 /work/bot/modules/portal_pages.py:699
+#, python-format
+msgid "Disconnect %(service)s"
+msgstr ""
+
+#: /work/bot/modules/portal_pages.py:206
+msgid "Expired. Connect again to keep streaming."
+msgstr ""
+
+#: /work/bot/modules/portal_pages.py:213
+msgid "Not connected"
+msgstr ""
+
+#: /work/bot/modules/portal_pages.py:235
+msgid "Your streaming accounts"
+msgstr ""
+
+#: /work/bot/modules/portal_pages.py:236
+#, python-format
+msgid "%(connected)s of %(total)s services connected."
+msgstr ""
+
+#: /work/bot/modules/portal_pages.py:240
+#, python-format
+msgid "%(connected)s of %(total)s services connected"
+msgstr ""
+
+#: /work/bot/modules/portal_pages.py:259
+msgid "Go to"
+msgstr ""
+
+#: /work/bot/modules/portal_pages.py:264
+msgid "(opens in a new tab)"
+msgstr ""
+
+#: /work/bot/modules/portal_pages.py:265
+msgid "Enter the code below."
+msgstr ""
+
+#: /work/bot/modules/portal_pages.py:266
+msgid "Come back here and select Check status."
+msgstr ""
+
+#: /work/bot/modules/portal_pages.py:269
+msgid "Your device code"
+msgstr ""
+
+#: /work/bot/modules/portal_pages.py:283
+msgid "Check status"
+msgstr ""
+
+#: /work/bot/modules/portal_pages.py:289
+#, python-format
+msgid "Connect %(service)s: enter your code"
+msgstr ""
+
+#: /work/bot/modules/portal_pages.py:308
+msgid "Google account email address"
+msgstr ""
+
+#: /work/bot/modules/portal_pages.py:309
+msgid "The Google account made for StreamerBot, not your personal one."
+msgstr ""
+
+#: /work/bot/modules/portal_pages.py:310
+msgid "Google account password"
+msgstr ""
+
+#: /work/bot/modules/portal_pages.py:312
+#, python-format
+msgid "%(service)s email address or username"
+msgstr ""
+
+#: /work/bot/modules/portal_pages.py:313
+#, python-format
+msgid "The address you use to sign in to %(service)s."
+msgstr ""
+
+#: /work/bot/modules/portal_pages.py:314
+#, python-format
+msgid "%(service)s password"
+msgstr ""
+
+#: /work/bot/modules/portal_pages.py:333 /work/bot/modules/portal_pages.py:361
+#: /work/bot/modules/portal_pages.py:366
+#, python-format
+msgid "Sign in to %(service)s"
+msgstr ""
+
+#: /work/bot/modules/portal_pages.py:363
+msgid "Cancel and go back"
+msgstr ""
+
+#: /work/bot/modules/portal_pages.py:396
+#, python-format
+msgid "Signing in as %(username)s."
+msgstr ""
+
+#: /work/bot/modules/portal_pages.py:402 /work/bot/modules/portal_pages.py:427
+#, python-format
+msgid "Enter your %(service)s verification code"
+msgstr ""
+
+#: /work/bot/modules/portal_pages.py:410
+msgid "Verification code"
+msgstr ""
+
+#: /work/bot/modules/portal_pages.py:414
+msgid "Type or paste the whole code into the box below. Spaces do not matter."
+msgstr ""
+
+#: /work/bot/modules/portal_pages.py:419
+msgid "Verify code"
+msgstr ""
+
+#: /work/bot/modules/portal_pages.py:422
+msgid "Send a new code"
+msgstr ""
+
+#: /work/bot/modules/portal_pages.py:424 /work/bot/modules/portal_pages.py:444
+#: /work/bot/modules/portal_pages.py:565
+msgid "Cancel this sign-in"
+msgstr ""
+
+#: /work/bot/modules/portal_pages.py:435 /work/bot/modules/portal_pages.py:447
+#, python-format
+msgid "Signing in to %(service)s"
+msgstr ""
+
+#: /work/bot/modules/portal_pages.py:436
+msgid "Waiting for the service to confirm. This usually takes 10 to 30 seconds."
+msgstr ""
+
+#: /work/bot/modules/portal_pages.py:442
+msgid "Check again"
+msgstr ""
+
+#: /work/bot/modules/portal_pages.py:453 /work/bot/modules/portal_pages.py:457
+#, python-format
+msgid "%(service)s connected"
+msgstr ""
+
+#: /work/bot/modules/portal_pages.py:454
+#, python-format
+msgid "StreamerBot can now stream from your %(service)s account."
+msgstr ""
+
+#: /work/bot/modules/portal_pages.py:463
+msgid "Try again"
+msgstr ""
+
+#: /work/bot/modules/portal_pages.py:477 /work/bot/modules/portal_pages.py:483
+#, python-format
+msgid "%(service)s could not be connected"
+msgstr ""
+
+#: /work/bot/modules/portal_pages.py:496
+msgid ""
+"If Google refuses to sign in here, import a session from your own browser"
+" instead:"
+msgstr ""
+
+#: /work/bot/modules/portal_pages.py:502
+msgid "Use a separate Google account"
+msgstr ""
+
+#: /work/bot/modules/portal_pages.py:503
+msgid ""
+"Google may restrict an account that plays videos automatically from a "
+"server. Make a Google account just for StreamerBot rather than using your"
+" personal one."
+msgstr ""
+
+#: /work/bot/modules/portal_pages.py:527 /work/bot/modules/portal_pages.py:550
+msgid "Approve the sign-in on your phone"
+msgstr ""
+
+#: /work/bot/modules/portal_pages.py:531
+msgid "Not approved yet. Approve the sign-in on your phone"
+msgstr ""
+
+#: /work/bot/modules/portal_pages.py:537
+msgid "Number to tap on your phone"
+msgstr ""
+
+#: /work/bot/modules/portal_pages.py:545
+msgid "Google says:"
+msgstr ""
+
+#: /work/bot/modules/portal_pages.py:551
+msgid "Google has not confirmed the approval yet."
+msgstr ""
+
+#: /work/bot/modules/portal_pages.py:554
+msgid ""
+"Google sent a prompt to a phone or tablet signed in to this account. Tap "
+"Yes on it, then come back here."
+msgstr ""
+
+#: /work/bot/modules/portal_pages.py:555
+msgid ""
+"The prompt stops working after a few minutes. If it has gone, cancel and "
+"sign in again."
+msgstr ""
+
+#: /work/bot/modules/portal_pages.py:559
+msgid "I have approved it on my phone"
+msgstr ""
+
+#: /work/bot/modules/portal_pages.py:617
+msgid ""
+"Use this when Google will not sign in from the bot, or when the bot "
+"cannot run a browser."
+msgstr ""
+
+#: /work/bot/modules/portal_pages.py:619
+msgid ""
+"In your own browser, sign in to YouTube with the Google account made for "
+"StreamerBot."
+msgstr ""
+
+#: /work/bot/modules/portal_pages.py:620
+msgid ""
+"While on youtube.com, use a cookie export extension to save the cookies "
+"in Netscape cookies.txt format."
+msgstr ""
+
+#: /work/bot/modules/portal_pages.py:621
+msgid ""
+"Choose that file below, or open it, copy everything in it, and paste it "
+"into the box below."
+msgstr ""
+
+#: /work/bot/modules/portal_pages.py:622
+msgid "Select Import the session."
+msgstr ""
+
+#: /work/bot/modules/portal_pages.py:625
+msgid ""
+"Google sometimes ends a session that is used from a different place. If "
+"that happens, StreamerBot tells you in TeamTalk and you can import again."
+msgstr ""
+
+#: /work/bot/modules/portal_pages.py:629
+msgid ""
+"This server cannot run a browser, so nothing can keep an imported session"
+" alive. Expect to import again from time to time."
+msgstr ""
+
+#: /work/bot/modules/portal_pages.py:636
+msgid "Your cookies.txt file"
+msgstr ""
+
+#: /work/bot/modules/portal_pages.py:642
+msgid "Or paste the contents of the file"
+msgstr ""
+
+#: /work/bot/modules/portal_pages.py:643
+msgid "Paste the whole file. It is several lines of text."
+msgstr ""
+
+#: /work/bot/modules/portal_pages.py:650
+msgid "Import the session"
+msgstr ""
+
+#: /work/bot/modules/portal_pages.py:656
+#, python-format
+msgid "Lines pasted: %(count)s"
+msgstr ""
+
+#: /work/bot/modules/portal_pages.py:673
+msgid "Choose your cookies.txt file, or paste its contents"
+msgstr ""
+
+#: /work/bot/modules/portal_pages.py:674
+msgid ""
+"This is too long to be a cookies file. Check you chose only the "
+"cookies.txt file."
+msgstr ""
+
+#: /work/bot/modules/portal_pages.py:675
+msgid ""
+"This is not a cookies.txt file. Export the cookies again in Netscape "
+"cookies.txt format."
+msgstr ""
+
+#: /work/bot/modules/portal_pages.py:676
+msgid ""
+"This file has no YouTube sign-in in it. Sign in to YouTube in your "
+"browser, then export the cookies again while on youtube.com."
+msgstr ""
+
+#: /work/bot/modules/portal_pages.py:677
+msgid ""
+"YouTube says this session is already signed out. Sign in to YouTube in "
+"your browser again, then export a fresh file."
+msgstr ""
+
+#: /work/bot/modules/portal_pages.py:678
+msgid "The session could not be imported."
+msgstr ""
+
+#: /work/bot/modules/portal_pages.py:690 /work/bot/modules/portal_pages.py:705
+#, python-format
+msgid "Disconnect %(service)s?"
+msgstr ""
+
+#: /work/bot/modules/portal_pages.py:691
+#, python-format
+msgid ""
+"StreamerBot will stop streaming from your %(service)s account. Your "
+"%(service)s account itself is not affected. You can connect again at any "
+"time."
+msgstr ""
+
+#: /work/bot/modules/portal_pages.py:702
+#, python-format
+msgid "Cancel, keep %(service)s connected"
+msgstr ""
+
+# | msgid "help text not found"
+#: /work/bot/modules/portal_pages.py:721
+#, fuzzy
+msgid "Page not found"
+msgstr "текст справки не найден"
+
+# | msgid "This user is not in the admin list"
+#: /work/bot/modules/portal_pages.py:722
+#, fuzzy
+msgid "This address is not quite right."
+msgstr "Этого пользователя нет в списке администраторов"
+
+#: /work/bot/modules/portal_pages.py:723 /work/bot/modules/portal_pages.py:730
+msgid "To get a new link, send the li command to StreamerBot in TeamTalk."
+msgstr ""
+
+#: /work/bot/modules/portal_pages.py:728
+msgid "Link expired"
+msgstr ""
+
+#: /work/bot/modules/portal_pages.py:729
+msgid "This link has expired."
+msgstr ""
+
+#: /work/bot/modules/portal_pages.py:735
+msgid "Something went wrong"
+msgstr ""
+
+#: /work/bot/modules/portal_pages.py:736
+msgid "StreamerBot could not finish that request."
+msgstr ""
+
+#: /work/bot/modules/portal_pages.py:737
+msgid "Try again in a moment. If it keeps happening, check the bot's log."
+msgstr ""
+
+#: /work/bot/modules/uploader.py:63
 msgid "Error: Downloaded file not found."
 msgstr "Ошибка: Загруженный файл не найден."
 
-#: /home/admin/joao/StreamerBot/bot/services/yt.py:290
-#: /home/admin/joao/StreamerBot/bot/services/yt.py:542
+#: /work/bot/modules/youtube_session_keeper.py:256
+#: /work/bot/modules/youtube_session_keeper.py:263
+msgid ""
+"Google signed in, but YouTube did not recognise the session. Please try "
+"again."
+msgstr ""
+
+#: /work/bot/services/browser_service.py:66
+#, python-format
+msgid "%(service)s is not ready yet."
+msgstr ""
+
+#: /work/bot/services/browser_service.py:78
+#, python-format
+msgid ""
+"%(service)s needs Google Chrome, which is not available on this machine's"
+" processor architecture."
+msgstr ""
+
+#: /work/bot/services/browser_service.py:89
+#, python-format
+msgid "%(service)s is not connected. Send li %(code)s to connect an account."
+msgstr ""
+
+#: /work/bot/services/browser_service.py:140
+#, python-format
+msgid "%(count)s %(kind)s"
+msgstr ""
+
+#: /work/bot/services/browser_service.py:155
+#, python-format
+msgid "That is not a %(service)s link."
+msgstr ""
+
+# | msgid "Live streams cannot be downloaded"
+#: /work/bot/services/browser_service.py:171
+#, fuzzy, python-format
+msgid "%(service)s cannot be downloaded."
+msgstr "Прямые трансляции не могут быть загружены"
+
+#: /work/bot/services/gamdl_downloader.py:158
+msgid "The Apple Music downloader is not installed in this image."
+msgstr ""
+
+#: /work/bot/services/gamdl_downloader.py:165
+msgid ""
+"Downloading from Apple Music needs a subscription. Connect the account "
+"first with li am."
+msgstr ""
+
+#: /work/bot/services/gamdl_downloader.py:199
+msgid "That is not an Apple Music link."
+msgstr ""
+
+#: /work/bot/services/gamdl_downloader.py:216
+msgid "The download took too long and was stopped."
+msgstr ""
+
+#: /work/bot/services/gamdl_downloader.py:230
+msgid "The download produced no audio files."
+msgstr ""
+
+#: /work/bot/services/gamdl_downloader.py:252
+msgid "That needs an active Apple Music subscription."
+msgstr ""
+
+#: /work/bot/services/gamdl_downloader.py:255
+msgid "Apple Music did not have that."
+msgstr ""
+
+#: /work/bot/services/gamdl_downloader.py:258
+msgid "That track needs a decryption device file the bot does not have."
+msgstr ""
+
+#: /work/bot/services/gamdl_downloader.py:262
+msgid "The Apple Music sign-in has expired. Connect it again with li am."
+msgstr ""
+
+# | msgid "Error: Downloaded file not found."
+#: /work/bot/services/gamdl_downloader.py:265
+#, fuzzy
+msgid "The download failed."
+msgstr "Ошибка: Загруженный файл не найден."
+
+#: /work/bot/services/netflix.py:50
+msgid "Netflix is not ready yet."
+msgstr ""
+
+#: /work/bot/services/netflix.py:60
+msgid ""
+"Netflix needs Google Chrome, which is not available on this machine's "
+"processor architecture."
+msgstr ""
+
+#: /work/bot/services/netflix.py:72
+msgid "Netflix is not connected. Send li nf to connect an account."
+msgstr ""
+
+#: /work/bot/services/netflix.py:96
+msgid "That is not a Netflix link."
+msgstr ""
+
+# | msgid "Live streams cannot be downloaded"
+#: /work/bot/services/netflix.py:110
+#, fuzzy
+msgid "Netflix titles cannot be downloaded."
+msgstr "Прямые трансляции не могут быть загружены"
+
+#: /work/bot/services/spotify.py:79
+msgid "Spotify is not connected yet. Send li sp to connect an account."
+msgstr ""
+
+#: /work/bot/services/spotify.py:118
+msgid ""
+"Spotify search needs a Spotify application. Add a client ID and secret in"
+" the bot's configuration, then try again. Playing a pasted Spotify link "
+"does not need one."
+msgstr ""
+
+#: /work/bot/services/spotify.py:180
+msgid "The Spotify session expired. Try again."
+msgstr ""
+
+#: /work/bot/services/spotify.py:185
+msgid "Spotify refused that request. Playback needs a Premium account."
+msgstr ""
+
+#: /work/bot/services/spotify.py:190
+msgid "Spotify is rate limiting us. Try again shortly."
+msgstr ""
+
+#: /work/bot/services/spotify.py:233
+msgid "That is not a Spotify link."
+msgstr ""
+
+#: /work/bot/services/spotify.py:261
+msgid "That kind of Spotify link is not supported."
+msgstr ""
+
+# | msgid "Live streams cannot be downloaded"
+#: /work/bot/services/spotify.py:275
+#, fuzzy
+msgid "Spotify tracks cannot be downloaded."
+msgstr "Прямые трансляции не могут быть загружены"
+
+#: /work/bot/services/yt.py:170 /work/bot/services/yt.py:442
 msgid "Unknown Title"
 msgstr "Неизвестное название"
 
-#: /home/admin/joao/StreamerBot/bot/services/ytm.py:357
+#: /work/bot/services/yt.py:200 /work/bot/services/ytm.py:115
 msgid "Unknown"
 msgstr "Неизвестно"
 
@@ -1081,9 +2072,39 @@ msgstr "Неизвестно"
 #~ msgid "Not authorized to upload files to this channel"
 #~ msgstr "Нет прав для загрузки файлов в этот канал"
 
+#~ msgid "Update completed successfully! I am back online."
+#~ msgstr "Обновление успешно завершено! Я снова в сети."
 
-msgid "Loading URL / playlist..."
-msgstr "Загрузка URL / плейлиста..."
+#~ msgid ""
+#~ "The bot is starting an update "
+#~ "process and will restart shortly. It "
+#~ "may go offline at any moment."
+#~ msgstr ""
+#~ "Бот запускает процесс обновления и скоро"
+#~ " перезагрузится. Он может отключиться в "
+#~ "любой момент."
 
-msgid "Loaded {count} tracks"
-msgstr "Загружено треков: {count}"
+#~ msgid ""
+#~ "Hello! I am João Almeida. This is"
+#~ " my fork of StreamerBot for TeamTalk"
+#~ " 5.\n"
+#~ "This repository focuses on stability and support for YouTube Music.\n"
+#~ "Repository: https://github.com/JoaoDEVWHADS/StreamerBot\n"
+#~ "Original Authors: Amir Gumerov, Vladislav "
+#~ "Kopylov, Beqa Gozalishvili, Kirill Belousov."
+#~ "\n"
+#~ msgstr ""
+#~ "Привет! Я Жоао Алмейда. Это мой форк StreamerBot для TeamTalk 5.\n"
+#~ "Этот репозиторий ориентирован на стабильность"
+#~ " и поддержку YouTube Music.\n"
+#~ "Репозиторий: https://github.com/JoaoDEVWHADS/StreamerBot\n"
+#~ "Оригинальные авторы: Amir Gumerov, Vladislav"
+#~ " Kopylov, Beqa Gozalishvili, Kirill "
+#~ "Belousov.\n"
+
+#~ msgid "Plays next track"
+#~ msgstr "Воспроизводит следующий трек"
+
+#~ msgid "Error: This playlist is too large (max {} tracks)."
+#~ msgstr "Ошибка: Этот плейлист слишком велик (макс. {} треков)."
+
