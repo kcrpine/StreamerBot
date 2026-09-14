@@ -853,6 +853,168 @@ profiles break.
 
 ---
 
+## Phase 9 — YouTube sign-in through a real browser session
+
+Added 13 September 2026, after testing on a VPS. **This overturns a Phase 2 decision** — "no more cookie
+files, YouTube signs in with an OAuth device code" — so the reasons it no longer holds are written down
+first.
+
+### Why the OAuth device code is being retired for playback
+
+The test bot's log from 10 to 13 September records 3,577 failed stream resolution attempts, counting retries,
+and not one successful stream fetch. After [012], [015] and [019]–[021], the pattern is stable and has two halves:
+
+- **Signed in with the device code:** the player endpoint answers **400** to every OAuth-authenticated
+  request. This is not a bug in how youtubei.js reads the sign-in. YouTube stopped serving playback to
+  the TV-client OAuth grant that device-code sign-in produces, and yt-dlp removed its own OAuth login for
+  the same reason. There is nothing to fix on our side.
+- **Anonymous:** every client answers `LOGIN_REQUIRED: Sign in to confirm you're not a bot`. The host is
+  on a datacenter address YouTube does not trust, and from such an address anonymous playback is
+  refused.
+
+So the device code signs the account in and then cannot be used to play anything, and anonymous use
+cannot play anything from a VPS. That leaves the one credential YouTube still accepts for playback from
+an untrusted address: **the cookies of a real, signed-in browser session, sent together with a
+proof-of-origin token.** That is what this phase builds.
+
+One caveat on the evidence, recorded so it is not over-read: the bot log cannot show which build the
+*shared* YouTube container is running. Before starting, confirm with
+`curl -s http://127.0.0.1:4417/health` that the bridge reports `pot_provider.reachable: true`. If it does
+not, the container predates [015] and must be recreated first, since a missing token produces the same
+`LOGIN_REQUIRED` and would make this phase look like it failed.
+
+### What replaces what was asked for, and why
+
+The request was: a text browser such as Lynx extracts the user's YouTube cookie, a scheduled task checks
+whether it has expired and renews it, per bot; a user who plays a link while that is happening is told to
+wait; and if a restart is needed, the bot restarts itself and asks them to resend the link. Most of that
+stands. Four parts change, each for a reason that would otherwise surface as a failure in testing:
+
+1. **Chrome, not Lynx.** Lynx runs no JavaScript, and Google's sign-in page does not work at all without
+   it. Google also refuses sign-in from browsers it does not recognise. The image already ships real
+   Google Chrome with a persistent profile per service per bot, driven by the browser engine from
+   Phase 5, and signing in to Apple Music already works this way through the portal. YouTube becomes one
+   more profile, at `data/browser/yt/`.
+2. **The session is kept alive, not "renewed".** Nothing can renew a Google session on the user's
+   behalf once Google has ended it; if that were possible it would be a security hole in Google. What
+   *can* be done is to stop it ending unnecessarily. Google rotates part of the session
+   (`__Secure-1PSIDTS` and `__Secure-3PSIDTS`) and treats a session that stops rotating as stale, and a
+   live browser rotates them just by loading youtube.com. So the scheduled task loads youtube.com in the
+   bot's own profile, lets the rotation happen, and exports the fresh cookies. A session Google really
+   has ended — password changed, signed out elsewhere, a security check — can only be restored by the
+   user signing in again, and the bot tells them so.
+3. **The check is "does YouTube say we are signed in", not "has the cookie expired".** Google's cookie
+   expiry dates are years away and mean nothing; sessions are ended server-side long before. A cookie
+   that is unexpired on paper and dead in practice is exactly the failure a date check would miss.
+4. **Cookies go in the bot's `data/`, not in `config.json`.** A cookie file is a full login to someone's
+   Google account. The Phase 3 rule is that credentials live only under the bot's own `data/`, encrypted
+   where possible, and never in `config.json`, which is copied by Duplicate Bot, read by the
+   configuration check, and handled far more casually. `config.json` gets settings only — whether
+   browser sign-in is enabled and how often to refresh — and never the cookies.
+
+On restarts: the design should need none, and the restart path is kept as a last resort rather than the
+normal route. That matters for a reason specific to this architecture: the YouTube bridge is **one
+container shared by every bot on the host**, so restarting it to pick up one bot's new cookies would
+interrupt playback for everyone. The bridge instead watches each bot's cookie file and rebuilds only that
+bot's session when the file changes, the way it already watches `youtube_auth/credentials.json` today.
+
+### The flow
+
+**Signing in, once per bot.** `li yt` stops starting a device code and instead sends a portal link, the
+same as `li am`. The portal page drives the bot's Chrome through Google's sign-in: email, password, then
+whatever second step the account uses. Google's second step is usually a prompt on the user's phone
+rather than a typed code, so the portal page has to say "approve the sign-in on your phone" and wait,
+with a manual "I have approved it" button in keeping with the portal's no-auto-refresh rule, not only the
+existing typed-code box. Once signed in, cookies are exported to `data/youtube_auth/cookies.txt` (mode
+0600, directory 0700) and the bridge picks them up.
+
+**The session-import page.** Phase 3's plan promised an "import session" escape hatch for when a CAPTCHA
+blocks automated sign-in. **It was never built** — nothing in `bot/` implements it. It is now required,
+because Google is more likely than Apple to refuse an automated Chrome outright ("This browser or app may
+not be secure"). The page accepts a `cookies.txt` exported from the user's own browser, pasted into one
+text area (the paste-with-Ctrl-D habit from the old TTMediaBot, adapted to a form), validates that it
+contains a Google session, and stores it in the same place. It is not a failure mode that makes the
+feature useless; it is the path that works when the automated one does not.
+
+**Keeping it alive, per bot.** A thread in the bot process, alongside the existing periodic pre-warm, not
+a cron job or a systemd timer. It runs inside the container where that bot's Chrome and profile already
+are, so "per bot" comes free and nothing has to reach into another bot's directory. Every six hours
+(configurable, `services.yt.session_refresh_hours`) it:
+
+1. loads youtube.com in the bot's `yt` profile and waits for the page to settle;
+2. asks the page whether it is signed in (`ytcfg` `LOGGED_IN`), which is the real check;
+3. if signed in, exports the cookies, writes the file only if they changed, and logs one INFO line;
+4. if not, marks the session as needing sign-in, logs a WARNING naming the bot, and stops trying until
+   the user signs in again rather than retrying forever against a dead session.
+
+It also runs **on demand** the first time a resolution fails with `LOGIN_REQUIRED` while a session
+exists, rate-limited to once per ten minutes, because that failure is the most direct evidence the
+session just went stale.
+
+**The bridge.** Given a cookie file, `getSession` passes it as youtubei.js's `cookie` option. The
+proof-of-origin binding changes with it: [015] binds the token to `visitorData`, which is correct for a
+signed-out session, but a signed-in session is identified by its **DataSync ID**, and the token must be
+bound to that instead. The signed-in-with-cookies attempts replace the OAuth attempts at the head of
+`planPlaybackAttempts`, and the anonymous fallback stays behind them for hosts that do not need a
+session at all.
+
+**What the requester hears.** Per the TeamTalk chat rules: plain text, one message per event, to the
+person who asked rather than the channel, because the channel does not need to know about someone's
+account.
+
+- A play or link request arrives while a refresh is running: *"YouTube sign-in is being renewed. Please
+  wait, playback will start when it finishes."* The request is **held and played automatically** when the
+  refresh completes, not dropped. Asking someone to resend a link they have already sent is avoidable
+  work, and for a screen reader user retyping or re-pasting a URL is not trivial.
+- The refresh finds the session dead: *"YouTube needs you to sign in again. Send li yt to get a link."*
+  Not "service unavailable", which is what every one of these failures says today and which tells the
+  user nothing they can act on.
+- Only if a restart genuinely proves necessary, which the design above is meant to prevent: the bot
+  restarts **itself**, not the shared bridge, and after reconnecting sends *"I restarted to finish
+  renewing YouTube sign-in. Please send your link again."* — the only case where resending is asked for,
+  because the held request did not survive the restart. The restart is logged with the reason.
+
+### Risks, stated before building
+
+- **Accounts can be flagged.** Using a real Google account's session for automated playback from a
+  datacenter address is exactly what Google's abuse systems look for. yt-dlp's documentation warns that
+  accounts used this way can be restricted. The portal page and `h connect youtube` must recommend a
+  separate Google account made for the bot, not anyone's personal one, and say why.
+- **Automated sign-in may simply be refused.** That is why the import page is part of this phase and not
+  a later nice-to-have.
+- **arm64 has no Chrome**, so browser sign-in and the keep-alive cannot run on a Raspberry Pi. There the
+  import page is the only route, and without a live browser the imported session will go stale on
+  Google's schedule. `li yt` on arm64 must say so rather than offering a sign-in that cannot work.
+- **Sessions tied to an address.** A cookie exported from a browser at home and imported on a VPS is
+  sometimes invalidated because Google sees the same session from two very different places. Browser
+  sign-in on the bot's own host avoids this, which is another reason it is the primary path.
+
+### Relationship to earlier decisions
+
+- The migration's deletion of `cookies.txt` from old TTMediaBot backups **stays**. Those files are stale,
+  sit in the wrong place, and nothing refreshes them — every reason given for deleting them still holds.
+  The new file lives at `data/youtube_auth/cookies.txt`, is created only by this flow, and is refreshed.
+- Create-bot's guarantee that no `cookies.txt` is placed in a new bot's folder **stays**. A new bot starts
+  signed out and signs in through `li yt`.
+- The OAuth device-code code paths are removed from playback. Whether `yl` survives for anything else is
+  decided during implementation; if nothing needs it, it goes, rather than lingering as a sign-in that
+  succeeds and then plays nothing.
+- **Per-bot isolation is unchanged and binding.** Each bot's cookies, profile and refresh thread are its
+  own. The bridge still validates `bot_id` and joins under `BOTS_ROOT` for every cookie read, and
+  Duplicate Bot must not copy `data/youtube_auth/` or `data/browser/yt/`.
+
+### Found in the same log, not part of this phase
+
+- **Apple Music now gets past launch** — [016] worked, Chrome starts — and fails one step later with
+  "The Apple sign-in form did not appear". That is the adapter not finding Apple's sign-in iframe, which
+  is issue #2 and belongs there.
+- **An abandoned Spotify sign-in restarts go-librespot every hour, forever**:
+  `failed exchanging device code: context deadline exceeded`. The daemon waits for a device code nobody
+  entered, times out, exits, and the supervisor starts it waiting again. Unused device auth should stop
+  until someone runs `li sp`, not loop.
+
+---
+
 ## Delivery order
 
 Each phase has an exit criterion you can actually check.
@@ -868,6 +1030,7 @@ Each phase has an exit criterion you can actually check.
 | **6** ✅ | Disney+, Apple Music, Amazon Music adapters against a proven engine, plus the **gamdl download wrapper** | Each plays with AD where the service offers it; `dl` on an Apple Music album uploads one zip to the channel |
 | **7** ✅ | `streamerbot.sh` polish, backup exclusions, README/CHANGELOG rewrite, publish to your fork | `git clone` + `./streamerbot.sh` works from a clean host |
 | **8** ✅ | Collapse the inherited history to a single commit, rewrite `README.md` as a fork with its own feature list | `git log` shows only your commits; README describes StreamerBot, not TTMediaBot; `LICENSE` still carries the upstream copyright |
+| **9** | YouTube browser-session sign-in with scheduled per-bot refresh, replacing OAuth for playback (see "Phase 9 — YouTube sign-in through a real browser session") | On the VPS that currently answers `LOGIN_REQUIRED` to every client, a bot signed in through the portal plays a YouTube video and a livestream; a session killed on Google's side produces the renewal message to the requester, not "service unavailable"; two bots on one host hold two different Google sessions |
 
 Phase 0 is the riskiest to skip and the cheapest to verify. Phase 4 gives the engine abstraction its
 first real workout on the *easier* of the two external engines, before Chrome.

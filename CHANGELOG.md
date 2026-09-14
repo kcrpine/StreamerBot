@@ -6,6 +6,18 @@ issue or a commit message. Numbering continues across releases.
 
 ## Unreleased
 
+- **[022]** Planned, not built: Phase 9, YouTube sign-in through a real browser
+  session. The test bot's log from 10 to 13 September has 3,577 failed stream
+  resolution attempts and no successful fetch: the OAuth device code gets a 400
+  on every playback request, and anonymous playback is refused as bot traffic
+  from the VPS address. The plan replaces device-code sign-in with a Chrome
+  session per bot, kept alive by a scheduled per-bot refresh, with a cookie import
+  page for when Google refuses automated sign-in. It records why Chrome rather
+  than a text browser, why the session is kept alive rather than "renewed", why
+  cookies stay out of `config.json`, and why holding a request beats asking the
+  user to resend it. It also records that this reverses the Phase 2 decision
+  against cookie files.
+
 - **[021]** YouTube and YouTube Music playback no longer hands mpv a googlevideo.com URL directly.
   A new loopback relay (`bot/services/stream_proxy.py`, port `player.stream_proxy_port`, default
   4420) fetches the stream in bounded byte-range windows and hands mpv a local URL instead, because
