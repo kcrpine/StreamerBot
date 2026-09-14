@@ -6,6 +6,40 @@ issue or a commit message. Numbering continues across releases.
 
 ## Unreleased
 
+- **[025]** Apple Music plays what you search for. With sign-in working,
+  every request failed with "Apple Music did not start playing:
+  Page.wait_for_function: Timeout 30000ms exceeded", and a search for "adventure
+  of a Lifetime" tried to play the account's "Favorite Songs" playlist. Three
+  faults, each measured against Apple's live site in the bot's own Chrome:
+
+  - **Nothing was ever queued.** `play()` opened the item's page and called
+    MusicKit's `play()` with an empty queue, which does nothing, so the 30-second
+    wait always ran out. `setQueue({url})` then `play()` started a song and an
+    album at once. An empty queue now fails immediately with a reason; an artist
+    measured 39 seconds before and under 8 now.
+  - **The search address had no storefront.** `music.apple.com/search?term=...`
+    redirects to `/us/search` and turns every space into a literal plus sign, so
+    Apple searched for "adventure+of+a+lifetime" and ranked an artist named
+    Chubb+Bits first. The storefront is now read from MusicKit, which is the
+    signed-in account's own country, and put in the address directly: the
+    Coldplay song came first, "AC/DC" kept its slash and "C++" its plus signs.
+  - **The scraper took every link on the page**, including the signed-in
+    sidebar's library, which is where "Favorite Songs" came from. Only result
+    links inside `main` are taken now, never navigation, `/library/` or music
+    videos.
+
+  Apple's own Top Results now lead, in Apple's order, each saying what it is
+  ("Top result: Song: Adventure of a Lifetime, by Coldplay"), since that group's
+  label alone does not. An artist never leads, because `p <query>` plays the first
+  result and an artist cannot be queued. The scrape waits for the results to stop
+  changing rather than a fixed delay. A playback timeout names the likely cause —
+  subscription, or a signed-out session and `li am` — instead of passing a
+  Playwright error to the channel.
+
+  Verified live signed out, where Apple plays 30-second previews: `p adventure of
+  a LIfetime` played Coldplay's song in 1.4 seconds and an album played. Full
+  tracks need the signed-in bot, which is the test that confirms it.
+
 - **[024]** The auto-updater no longer rebuilds and restarts every bot for a push
   that changes no bot code. When GitHub moves, it fetches and checks which files
   changed; if all of them are under `.claude/` (the plan and hooks), `.github/`

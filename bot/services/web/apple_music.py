@@ -16,6 +16,7 @@ declared false rather than left to fail at the point of use.
 from __future__ import annotations
 
 import logging
+import re
 import time
 from typing import Any, Dict, List, Optional
 
@@ -417,6 +418,193 @@ class AppleMusicAdapter(WebServiceAdapter):
 
     # -- finding things ----------------------------------------------------
 
+    # What Apple's search page is made of, measured on 14 September 2026 for
+    # "adventure of a lifetime":
+    #
+    # - Top Results come first, as <a data-testid="click-action"> whose
+    #   aria-label carries the kind: "Adventure of a Lifetime · Song · Coldplay",
+    #   "Coldplay · Artist", "A Head Full of Dreams · Album · Coldplay". This is
+    #   Apple's own answer to the query, in Apple's own order.
+    # - Shelves of albums and singles follow, as <a data-testid="product-lockup-link">
+    #   labelled "Title, Artist", each repeated by a -title and a -subtitle link.
+    # - Song rows are click-action links to /album/...?i=<song id>.
+    #
+    # The old scraper took every album, playlist and artist link anywhere on the
+    # page. Signed in, that includes the sidebar's own library, which is how a
+    # search for a Coldplay song played the user's "Favorite Songs" playlist.
+    # Only result links inside <main> are taken now, never navigation or /library/.
+    SEARCH_SCRAPE_JS = """() => {
+        const main = document.querySelector('main') || document.body;
+        const out = [];
+        const seen = new Set();
+        const KINDS = {song: 'track', album: 'album', artist: 'artist', playlist: 'playlist'};
+
+        const absolute = (href) => href.startsWith('http') ? href : 'https://music.apple.com' + href;
+        const excluded = (a, href) =>
+            !href || href.includes('/library/') || href.includes('/music-video/')
+            || a.closest('nav, aside, [role="navigation"]');
+        const kindFromHref = (href) => {
+            if (href.includes('?i=')) return 'track';
+            if (href.includes('/playlist/')) return 'playlist';
+            if (href.includes('/artist/')) return 'artist';
+            if (href.includes('/album/')) return 'album';
+            return null;
+        };
+        const add = (item) => {
+            if (seen.has(item.url)) return;
+            seen.add(item.url);
+            out.push(item);
+        };
+
+        // 1. Top Results, which name their own kind.
+        main.querySelectorAll('a[data-testid="click-action"][aria-label]').forEach(a => {
+            const href = a.getAttribute('href') || '';
+            if (excluded(a, href)) return;
+            const parts = a.getAttribute('aria-label').split('\\u00b7').map(s => s.trim()).filter(Boolean);
+            if (parts.length < 2) return;
+            const kind = KINDS[parts[1].toLowerCase()];
+            if (!kind) return;  // music videos, stations and anything else not playable here
+            add({
+                id: absolute(href), url: absolute(href), kind: 'top', top_kind: kind,
+                title: parts[0], artist: parts[2] || '',
+            });
+        });
+
+        // 2. Albums, singles and playlists on the result shelves.
+        main.querySelectorAll('a[data-testid="product-lockup-link"]').forEach(a => {
+            const href = a.getAttribute('href') || '';
+            if (excluded(a, href)) return;
+            const kind = kindFromHref(href);
+            if (!kind) return;
+            const label = (a.getAttribute('aria-label') || '').trim();
+            const comma = label.lastIndexOf(', ');
+            add({
+                id: absolute(href), url: absolute(href), kind,
+                title: comma > 0 ? label.slice(0, comma) : label,
+                artist: comma > 0 ? label.slice(comma + 2) : '',
+            });
+        });
+
+        // 3. Song rows, with the artist read from the same row where there is one.
+        main.querySelectorAll('a[data-testid="click-action"][href*="?i="]').forEach(a => {
+            const href = a.getAttribute('href') || '';
+            if (excluded(a, href)) return;
+            const title = (a.getAttribute('aria-label') || a.textContent || '').trim();
+            if (!title || title.includes('\\u00b7')) return;
+            let artist = '';
+            const row = a.closest('li, [role="row"], [data-testid*="track"]');
+            if (row) {
+                const artistLink = row.querySelector('a[href*="/artist/"]');
+                if (artistLink) artist = (artistLink.textContent || '').trim();
+            }
+            add({id: absolute(href), url: absolute(href), kind: 'track', title, artist});
+        });
+
+        return out.slice(0, 25);
+    }"""
+
+    @staticmethod
+    def spoken_title(item: Dict[str, Any]) -> str:
+        """The title as read out in a result list.
+
+        A top result says what it is, because its group label only says "Top
+        result": "Song: Adventure of a Lifetime, by Coldplay". Other results
+        already have their kind as the group label, so they only add the artist.
+        """
+        title = (item.get("title") or "").strip()
+        artist = (item.get("artist") or "").strip()
+        by = f", by {artist}" if artist and artist != title else ""
+        if item.get("kind") == "top":
+            kind_word = {"track": "Song", "album": "Album", "artist": "Artist",
+                         "playlist": "Playlist"}.get(item.get("top_kind", ""), "")
+            if item.get("top_kind") == "artist":
+                return f"{kind_word}: {title}" if kind_word else title
+            return f"{kind_word}: {title}{by}" if kind_word else f"{title}{by}"
+        return f"{title}{by}"
+
+    SETTLE_POLL_MS = 1000
+    SETTLE_MAX_MS = 12000
+
+    def _settled_results(self, page) -> List[Dict[str, Any]]:
+        """Scrape once the result list has stopped changing.
+
+        Apple renders a first set of results and then replaces it as the search
+        completes. Reading on the first result that appears captured that
+        intermediate set: measured, a search whose settled top result is the
+        Coldplay song returned five results that did not include Coldplay at all.
+        So read repeatedly and return the first list that matches the one before.
+        """
+        previous = None
+        waited = 0
+        while True:
+            try:
+                current = page.evaluate(self.SEARCH_SCRAPE_JS) or []
+            except Exception as error:
+                logger.debug(f"[apple music] search scrape failed: {error}")
+                current = []
+            fingerprint = [item.get("url") for item in current]
+            if current and fingerprint == previous:
+                return current
+            if waited >= self.SETTLE_MAX_MS:
+                return current
+            previous = fingerprint
+            page.wait_for_timeout(self.SETTLE_POLL_MS)
+            waited += self.SETTLE_POLL_MS
+
+    STOREFRONT_RE = re.compile(r"^https://music\.apple\.com/([a-z]{2})(?:/|$|\?)")
+
+    @classmethod
+    def storefront_from_url(cls, url: str) -> Optional[str]:
+        match = cls.STOREFRONT_RE.match(url or "")
+        return match.group(1) if match else None
+
+    def _storefront(self, page) -> str:
+        """The account's two-letter storefront, such as "us" or "gb".
+
+        Needed in every search URL: see search() for what happens without it.
+        Read from MusicKit first, because that is the signed-in account's own
+        country; then from the address Apple redirected to; then a default.
+        """
+        if self._musickit_ready(page, timeout=2000):
+            try:
+                code = page.evaluate(
+                    "() => { const k = MusicKit.getInstance();"
+                    " return (k.storefrontCountryCode || k.storefrontId || '').toLowerCase(); }"
+                )
+                # Lowercased here as well as in the page, so a storefront that
+                # arrives as "GB" is used rather than silently replaced by "us".
+                code = code.strip().lower() if isinstance(code, str) else ""
+                if re.fullmatch(r"[a-z]{2}", code):
+                    return code
+            except Exception:
+                pass
+        code = self.storefront_from_url(getattr(page, "url", ""))
+        if code:
+            return code
+        try:
+            page.goto(self.home_url, wait_until="domcontentloaded", timeout=45000)
+            code = self.storefront_from_url(page.url)
+        except Exception as error:
+            logger.debug(f"[apple music] could not load Apple Music to find the storefront: {error}")
+        return code or "us"
+
+    @classmethod
+    def search_url(cls, storefront: str, query: str) -> str:
+        """The search address, storefront included.
+
+        Measured on 14 September 2026: music.apple.com/search?term=adventure%20of%20a%20lifetime
+        redirects to /us/search?term=adventure%2Bof%2Ba%2Blifetime, turning every
+        space into a literal plus sign. Apple then searches for
+        "adventure+of+a+lifetime", and the top results were Chubb+Bits — an artist
+        with a plus in its name — instead of Coldplay. Asking for /us/search
+        directly skips the redirect, keeps the spaces, and puts the Coldplay song
+        first. quote() encodes a space as %20, never +, and a literal + in the
+        query as %2B, so both survive.
+        """
+        from urllib.parse import quote
+
+        return f"{HOME}/{storefront}/search?term={quote(query, safe='')}"
+
     def search(self, page, query: str) -> List[Dict[str, Any]]:
         """Scraped, because MusicKit's catalog search needs a developer token.
 
@@ -424,76 +612,141 @@ class AppleMusicAdapter(WebServiceAdapter):
         considers the best match, and re-sorting that produces worse answers.
         """
         try:
-            page.goto(f"{HOME}/search?term={query}", wait_until="domcontentloaded", timeout=45000)
-            page.wait_for_timeout(2500)
+            page.goto(self.search_url(self._storefront(page), query),
+                      wait_until="domcontentloaded", timeout=45000)
+            # The results render after the page loads. Wait for them rather than
+            # for a fixed delay, which returned an empty page on a slow host.
+            try:
+                page.wait_for_selector(
+                    'main a[data-testid="click-action"], main a[data-testid="product-lockup-link"]',
+                    timeout=20000,
+                )
+            except Exception:
+                page.wait_for_timeout(2500)
         except Exception as error:
             logger.debug(f"[apple music] search navigation failed: {error}")
             return []
-        try:
-            return page.evaluate(
-                """() => {
-                    const out = [];
-                    const seen = new Set();
-                    document.querySelectorAll('a[href*="/album/"], a[href*="/playlist/"], a[href*="/artist/"]')
-                      .forEach(a => {
-                        const href = a.getAttribute('href') || '';
-                        if (!href || seen.has(href)) return;
-                        const title = (a.getAttribute('aria-label')
-                            || a.textContent || '').trim();
-                        if (!title) return;
-                        seen.add(href);
-                        let kind = 'album';
-                        if (href.includes('/playlist/')) kind = 'playlist';
-                        else if (href.includes('/artist/')) kind = 'artist';
-                        else if (href.includes('?i=')) kind = 'track';
-                        out.push({
-                            id: href, title, kind,
-                            url: href.startsWith('http') ? href : 'https://music.apple.com' + href
-                        });
-                    });
-                    return out.slice(0, 25);
-                }"""
-            ) or []
-        except Exception as error:
-            logger.debug(f"[apple music] search scrape failed: {error}")
-            return []
+
+        results = self._settled_results(page)
+
+        # A top result that is an artist cannot be queued and played directly,
+        # and `p <query>` plays the first result. So artists never lead: they
+        # stay in the list under their own kind, where choosing one is deliberate.
+        for item in results:
+            if item.get("kind") == "top" and item.get("top_kind") == "artist":
+                item["kind"] = "artist"
+            item["title"] = self.spoken_title(item)
+        return results
 
     # -- playback, through MusicKit ---------------------------------------
 
+    PLAYBACK_STATE_JS = (
+        "() => { const k = window.MusicKit && MusicKit.getInstance();"
+        " if (!k) return null;"
+        " return {isPlaying: !!k.isPlaying, state: k.playbackState,"
+        " queue: k.queue ? k.queue.length : 0, authorized: !!k.isAuthorized}; }"
+    )
+
     def play(self, page, track) -> None:
+        """Queue the item, then play it.
+
+        The old version opened the item's page and called MusicKit's play() with
+        nothing queued. Measured against Apple Music on 14 September 2026, that
+        leaves the queue at 0 and playback never starts, for a song and an album
+        alike — the 30-second "did not start playing" timeout every time.
+        setQueue({url}) then play() started both: the song with a queue of 1 and
+        the album with its 11 tracks.
+        """
         url = getattr(track, "url", "") or ""
         if not url:
             raise ValueError("No Apple Music URL on that track.")
-        page.goto(url, wait_until="domcontentloaded", timeout=60000)
-        if not self._musickit_ready(page):
-            raise RuntimeError("Apple Music's player did not load.")
+
+        # setQueue takes a URL, so there is no need to open the item's own page.
+        # Only load Apple Music if MusicKit is not already on the current page.
+        on_apple_music = (getattr(page, "url", "") or "").startswith(HOME)
+        if not (on_apple_music and self._musickit_ready(page, timeout=2000)):
+            page.goto(self.home_url, wait_until="domcontentloaded", timeout=60000)
+            if not self._musickit_ready(page):
+                raise RuntimeError(
+                    "Apple Music's player did not load. Please try again in a moment."
+                )
+
         try:
-            page.evaluate(
-                """async () => {
-                    const k = window.MusicKit.getInstance();
+            queued = page.evaluate(
+                """async (u) => {
+                    const k = MusicKit.getInstance();
+                    await k.setQueue({ url: u, startPlaying: false });
+                    if (!k.queue || !k.queue.length) return 0;
                     await k.play();
-                }"""
+                    return k.queue.length;
+                }""",
+                url,
             )
-        except Exception:
-            # setQueue/play sometimes needs the page's own play control to have
-            # been used once; fall back to it rather than giving up.
-            button = self.first_visible(
-                page,
-                ('button[aria-label*="Play" i]', ".play-button", '[data-testid="play-button"]'),
-                timeout=10000,
+        except Exception as error:
+            logger.warning(f"[apple music] setQueue/play failed for {url}: {error}")
+            if "/artist/" in url:
+                raise RuntimeError(
+                    "Apple Music cannot play an artist directly. Search again and "
+                    "choose one of their songs or albums."
+                ) from error
+            raise RuntimeError(
+                "Apple Music would not queue that. It may not be available in "
+                "your country, or it may have been removed."
+            ) from error
+
+        # An empty queue will never start, so say so now rather than after the
+        # 30-second playback wait. Measured: an artist page queues nothing, and
+        # the message used to arrive 39 seconds after the request.
+        if not queued:
+            logger.warning(f"[apple music] nothing was queued for {url}")
+            if "/artist/" in url:
+                raise RuntimeError(
+                    "Apple Music cannot play an artist directly. Search again and "
+                    "choose one of their songs or albums."
+                )
+            raise RuntimeError(
+                "Apple Music found nothing to play there. Search again and "
+                "choose a song, album or playlist."
             )
-            if button is None:
-                raise RuntimeError("Apple Music would not start playing.")
-            button.click()
 
         try:
             page.wait_for_function(
-                "() => { const k = window.MusicKit.getInstance();"
-                " return k && k.isPlaying; }",
+                "() => { const k = window.MusicKit && MusicKit.getInstance();"
+                " return !!(k && k.isPlaying); }",
                 timeout=30000,
             )
         except Exception as error:
-            raise RuntimeError(f"Apple Music did not start playing: {error}") from error
+            state = None
+            try:
+                state = page.evaluate(self.PLAYBACK_STATE_JS)
+            except Exception:
+                pass
+            # The state is what tells the next person reading the log whether this
+            # was an empty queue, a subscription problem, or playback stalling.
+            logger.warning(f"[apple music] did not start playing {url}: state={state}")
+            if state and not state.get("queue"):
+                raise RuntimeError(
+                    "Apple Music found nothing to play there. Search again and "
+                    "choose a song, album or playlist."
+                ) from error
+            if state and not state.get("authorized"):
+                raise RuntimeError(
+                    "Apple Music is not signed in on this bot, so it cannot play "
+                    "full songs. Send li am to connect it again."
+                ) from error
+            raise RuntimeError(
+                "Apple Music did not start playing. Check that the account has an "
+                "active Apple Music subscription, then try again."
+            ) from error
+
+        try:
+            if not page.evaluate("() => !!MusicKit.getInstance().isAuthorized"):
+                logger.warning(
+                    "[apple music] playing without a signed-in session, which plays "
+                    "30-second previews only"
+                )
+        except Exception:
+            pass
 
     def pause(self, page) -> None:
         try:
