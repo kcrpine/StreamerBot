@@ -37,7 +37,6 @@ class Uploader:
 
     def run(self, track: Track, user: User, video: bool = False) -> None:
         logging.info(f"Uploader started for track '{track.name}' (Type: {track.type}, Video: {video}) requested by {user.username}")
-        error_exit = False
         temp_dir = None
         try:
             if track.type == TrackType.Default or track.service in ['yt', 'ytm']:
@@ -64,41 +63,46 @@ class Uploader:
                     self.ttclient.send_message(self.translator.translate("Error: Downloaded file not found."), user)
                     return
 
-            logging.info(f"Uploader: Sending file '{file_path}' to channel {self.ttclient.channel.id}")
-            command_id = self.ttclient.send_file(self.ttclient.channel.id, file_path)
-            file_name = os.path.basename(file_path)
-            while True:
-                try:
-                    file = self.ttclient.uploaded_files_queue.get_nowait()
-                    if file.name == file_name:
-                        logging.info(f"Uploader: File '{file_name}' successfully uploaded")
-                        break
-                    else:
-                        self.ttclient.uploaded_files_queue.put(file)
-                except Empty:
-                    pass
-                try:
-                    error = self.ttclient.errors_queue.get_nowait()
-                    if error.command_id == command_id:
-                        logging.error(f"Uploader: Error uploading file: {error.message} (Type: {error.type})")
-                        self.ttclient.send_message(
-                            self.translator.translate("Error: {}").format(error.message),
-                            user,
-                        )
-                        error_exit = True
-                        break
-                    else:
-                        self.ttclient.errors_queue.put(error)
-                except Empty:
-                    pass
-                time.sleep(app_vars.loop_timeout)
+            self.upload_file(file_path, user)
         finally:
             if temp_dir:
                 logging.debug("Uploader: Cleaning up local temporary directory")
                 temp_dir.cleanup()
 
-        if error_exit:
-            return
+    def upload_file(self, file_path: str, user: User) -> bool:
+        """Send a file that is already on disk to the bot's channel. Blocks until done.
+
+        Returns whether it arrived. On failure the user has already been told why.
+        The file must stay on disk until this returns: TeamTalk reads it while
+        uploading.
+        """
+        logging.info(f"Uploader: Sending file '{file_path}' to channel {self.ttclient.channel.id}")
+        command_id = self.ttclient.send_file(self.ttclient.channel.id, file_path)
+        file_name = os.path.basename(file_path)
+        while True:
+            try:
+                file = self.ttclient.uploaded_files_queue.get_nowait()
+                if file.name == file_name:
+                    logging.info(f"Uploader: File '{file_name}' successfully uploaded")
+                    break
+                else:
+                    self.ttclient.uploaded_files_queue.put(file)
+            except Empty:
+                pass
+            try:
+                error = self.ttclient.errors_queue.get_nowait()
+                if error.command_id == command_id:
+                    logging.error(f"Uploader: Error uploading file: {error.message} (Type: {error.type})")
+                    self.ttclient.send_message(
+                        self.translator.translate("Error: {}").format(error.message),
+                        user,
+                    )
+                    return False
+                else:
+                    self.ttclient.errors_queue.put(error)
+            except Empty:
+                pass
+            time.sleep(app_vars.loop_timeout)
 
         if self.config.general.delete_uploaded_files_after > 0:
             timeout = self.config.general.delete_uploaded_files_after
@@ -110,4 +114,5 @@ class Uploader:
                     logging.error(f"Uploader: Failed to delete file {file.id}: {e}")
 
             threading.Thread(target=delete_after_timeout, daemon=True).start()
+        return True
 

@@ -24,7 +24,11 @@ from bot.services.browser_service import (
 )
 from bot.services.gamdl_downloader import (
     GamdlDownloader,
+    collection_url,
+    has_media_user_token,
     is_apple_music_url,
+    netscape_cookies,
+    song_url,
     url_kind,
 )
 from bot.services.web.amazon_music import AmazonMusicAdapter
@@ -336,6 +340,158 @@ class GamdlTests(TestCase):
                 self.assertFalse(os.path.isabs(entry), entry)
                 self.assertNotIn("..", entry)
 
+
+class DownloadingWhatIsPlayingTests(TestCase):
+    """dl downloads the song MusicKit is playing; dlp the album or playlist."""
+
+    SONG = "https://music.apple.com/us/album/a-head-full-of-dreams/1053933969?i=1053934216"
+    ALBUM = "https://music.apple.com/us/album/a-head-full-of-dreams/1053933969"
+    PLAYLIST = "https://music.apple.com/us/playlist/todays-hits/pl.f4d106fed2bd41149aaacabb233eb5eb"
+
+    def test_the_playing_song_is_its_catalog_url(self):
+        self.assertEqual(song_url({"url": self.SONG, "catalog_id": "1053934216"}), self.SONG)
+
+    def test_a_library_song_falls_back_to_its_catalog_id(self):
+        """A library item's own id (i.…) is not something gamdl can fetch."""
+        url = song_url({"id": "i.abc", "url": "", "catalog_id": "1053934216", "storefront": "gb"})
+
+        self.assertEqual(url_kind(url), "song")
+        self.assertTrue(url.startswith("https://music.apple.com/gb/song/"))
+        self.assertTrue(url.endswith("/1053934216"))
+
+    def test_a_song_with_no_catalog_id_cannot_be_downloaded(self):
+        self.assertIsNone(song_url({"id": "i.abc", "url": "", "catalog_id": "", "storefront": "us"}))
+        self.assertIsNone(song_url(None))
+
+    def test_an_album_or_playlist_being_played_is_itself(self):
+        self.assertEqual(collection_url(self.ALBUM), (self.ALBUM, "album"))
+        self.assertEqual(collection_url(self.PLAYLIST), (self.PLAYLIST, "playlist"))
+
+    def test_a_single_song_being_played_gives_the_album_it_is_on(self):
+        self.assertEqual(collection_url(self.SONG), (self.ALBUM, "album"))
+
+    def test_an_artist_falls_back_to_the_playing_song_album(self):
+        artist = "https://music.apple.com/us/artist/coldplay/471744"
+
+        self.assertEqual(collection_url(artist), (None, None))
+        self.assertEqual(collection_url(artist, {"url": self.SONG}), (self.ALBUM, "album"))
+
+    def test_cookies_load_as_gamdl_reads_them(self):
+        from http.cookiejar import MozillaCookieJar
+
+        cookies = [
+            {"name": "media-user-token", "value": "tok", "domain": ".music.apple.com",
+             "path": "/", "expires": 2000000000, "secure": True},
+            # A session cookie: Playwright reports its expiry as -1.
+            {"name": "itspod", "value": "30", "domain": ".apple.com",
+             "path": "/", "expires": -1, "secure": True},
+            {"name": "other", "value": "x", "domain": ".example.com", "path": "/", "expires": -1},
+        ]
+        path = os.path.join(tempfile.mkdtemp(), "cookies.txt")
+        with open(path, "w", encoding="utf-8") as f:
+            f.write(netscape_cookies(cookies, now=1900000000))
+
+        jar = MozillaCookieJar(path)
+        jar.load()
+        loaded = {c.name: c.value for c in jar}
+
+        self.assertTrue(has_media_user_token(cookies))
+        self.assertEqual(loaded, {"media-user-token": "tok", "itspod": "30"})
+
+    def test_signed_out_cookies_have_no_token(self):
+        self.assertFalse(has_media_user_token([{"name": "itspod", "value": "30"}]))
+        self.assertFalse(has_media_user_token([{"name": "media-user-token", "value": ""}]))
+
+
+class AppleMusicDownloaderTests(TestCase):
+    """What dl and dlp choose while Apple Music plays, without Chrome or gamdl."""
+
+    ALBUM = DownloadingWhatIsPlayingTests.ALBUM
+    SONG = DownloadingWhatIsPlayingTests.SONG
+
+    def make(self, now_playing):
+        from bot.modules.apple_music_downloader import AppleMusicDownloader
+
+        service = SimpleNamespace(now_playing=lambda: now_playing, cookies=lambda: [])
+        bot = SimpleNamespace(
+            translator=SimpleNamespace(translate=lambda s: s),
+            ttclient=Mock(),
+            service_manager=SimpleNamespace(services={"am": service}),
+            config_manager=SimpleNamespace(config_dir=tempfile.mkdtemp()),
+        )
+        downloader = AppleMusicDownloader(bot, uploader=Mock())
+        downloader._run = Mock()
+        return downloader
+
+    def started_url(self, downloader):
+        # _run is started on a thread; wait for it so the call is recorded.
+        import threading
+
+        for thread in threading.enumerate():
+            if thread.name == "AppleMusicDownload":
+                thread.join(timeout=5)
+        return downloader._run.call_args[0][0]
+
+    PLAYING = {"title": "Birds", "artist": "Coldplay", "album": "A Head Full of Dreams",
+               "url": SONG, "catalog_id": "1053934216", "storefront": "us"}
+
+    def test_dl_during_an_album_downloads_the_song_playing_not_the_album(self):
+        downloader = self.make(self.PLAYING)
+        track = SimpleNamespace(url=self.ALBUM, name="A Head Full of Dreams")
+
+        message = downloader.start(track, SimpleNamespace(), whole=False)
+
+        self.assertEqual(self.started_url(downloader), self.SONG)
+        self.assertIn("Birds, by Coldplay", message)
+        self.assertIn("dlp", message)
+
+    def test_dlp_during_a_song_downloads_its_album(self):
+        downloader = self.make(self.PLAYING)
+        track = SimpleNamespace(url=self.SONG, name="Birds")
+
+        message = downloader.start(track, SimpleNamespace(), whole=True)
+
+        self.assertEqual(self.started_url(downloader), self.ALBUM)
+        self.assertIn("A Head Full of Dreams", message)
+
+    def test_a_second_download_is_refused_while_one_runs(self):
+        downloader = self.make(self.PLAYING)
+        track = SimpleNamespace(url=self.ALBUM, name="")
+        downloader._busy.acquire()
+
+        message = downloader.start(track, SimpleNamespace(), whole=True)
+
+        downloader._run.assert_not_called()
+        self.assertIn("already running", message)
+
+    def test_nothing_playing_in_musickit_is_said_plainly(self):
+        downloader = self.make(None)
+
+        message = downloader.start(SimpleNamespace(url=self.ALBUM, name=""), SimpleNamespace(), whole=False)
+
+        downloader._run.assert_not_called()
+        self.assertIn("not playing", message)
+
+    def test_a_failed_download_cleans_up_and_frees_the_next_one(self):
+        """The job directory holds the account's cookies, so it must go however the job ends."""
+        from bot.modules.apple_music_downloader import AppleMusicDownloader
+
+        downloader = self.make(self.PLAYING)
+        del downloader._run  # the real one
+        downloader._busy.acquire()
+        cookies = [{"name": "media-user-token", "value": "tok", "domain": ".music.apple.com"}]
+        downloader.bot.service_manager.services["am"].cookies = lambda: cookies
+        user = SimpleNamespace()
+
+        with patch.object(GamdlDownloader, "download", side_effect=errors.ServiceError("The download failed.")):
+            AppleMusicDownloader._run(downloader, self.SONG, "Birds, by Coldplay", user)
+
+        root = os.path.join(downloader.bot.config_manager.config_dir, "downloads")
+        self.assertEqual(os.listdir(root), [])
+        self.assertTrue(downloader._busy.acquire(blocking=False))
+        sent = downloader.ttclient.send_message.call_args[0][0]
+        self.assertIn("The download failed.", sent)
+        downloader.uploader.upload_file.assert_not_called()
 
 if __name__ == "__main__":
     unittest.main()

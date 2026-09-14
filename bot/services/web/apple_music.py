@@ -748,6 +748,34 @@ class AppleMusicAdapter(WebServiceAdapter):
         except Exception:
             pass
 
+    # The song inside the queue, not the queue. `p <album>` queues one Track in
+    # the bot but eleven songs in MusicKit, so only MusicKit can say which one is
+    # playing. A library song's id is "i.…" and its catalog id is in playParams.
+    NOW_PLAYING_JS = """() => {
+        const k = window.MusicKit && MusicKit.getInstance && MusicKit.getInstance();
+        const item = k && k.nowPlayingItem;
+        if (!item) return null;
+        const a = item.attributes || {};
+        const pp = a.playParams || item.playParams || {};
+        const id = String(item.id || '');
+        return {
+            id,
+            catalog_id: String(pp.catalogId || (/^\\d+$/.test(id) ? id : '')),
+            title: a.name || item.title || '',
+            artist: a.artistName || item.artistName || '',
+            album: a.albumName || item.albumName || '',
+            url: a.url || '',
+            storefront: String(k.storefrontCountryCode || k.storefrontId || '').toLowerCase(),
+        };
+    }"""
+
+    def now_playing(self, page) -> Optional[Dict[str, Any]]:
+        try:
+            return page.evaluate(self.NOW_PLAYING_JS)
+        except Exception as error:
+            logger.debug(f"[apple music] could not read the playing item: {error}")
+            return None
+
     def pause(self, page) -> None:
         try:
             page.evaluate("() => window.MusicKit.getInstance().pause()")

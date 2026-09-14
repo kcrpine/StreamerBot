@@ -2,6 +2,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from bot.modules.uploader import Uploader
+from bot.modules.apple_music_downloader import AppleMusicDownloader
 from bot.modules.playlist_uploader import PlaylistUploader
 from bot.modules.shortener import Shortener
 from bot.modules.streamer import Streamer
@@ -22,4 +23,5 @@ class ModuleManager:
         self.streamer = Streamer(bot)
         # self.task_scheduler = TaskScheduler(bot)
         self.uploader = Uploader(bot)
+        self.apple_music_downloader = AppleMusicDownloader(bot, self.uploader)
         self.playlist_uploader = PlaylistUploader(bot)

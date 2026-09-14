@@ -611,6 +611,11 @@ class DownloadCommand(Command):
     def __call__(self, arg: str, user: User) -> Optional[str]:
         if self.player.state != State.Stopped:
             track = self.player.track
+            if track.service == "am":
+                # The song playing, which inside an album is not the queued track.
+                return self.module_manager.apple_music_downloader.start(
+                    track, user, whole=False
+                )
             if track.url and (
                 track.type == TrackType.Default or track.type == TrackType.Local
             ):
@@ -694,7 +699,8 @@ class DownloadPlaylistCommand(Command):
     @property
     def help(self) -> str:
         return self.translator.translate(
-            "Downloads all tracks from a playlist/album URL, zips them, and uploads to the channel."
+            "Downloads all tracks from a playlist/album URL, zips them, and uploads to the channel. "
+            "Without a link while Apple Music is playing, downloads the album or playlist being played."
         )
 
     def __call__(self, arg: str, user: User) -> Optional[str]:
@@ -704,6 +710,12 @@ class DownloadPlaylistCommand(Command):
             if status:
                 return self.translator.translate("Current progress: {}").format(status)
             
+            # With Apple Music playing, the album or playlist it is playing.
+            if self.player.state != State.Stopped and self.player.track.service == "am":
+                return self.module_manager.apple_music_downloader.start(
+                    self.player.track, user, whole=True
+                )
+
             # Set state to wait for link from this user
             self.command_processor.pending_playlist_download[user.id] = True
             return self.translator.translate("Please send the link to the playlist or album.")

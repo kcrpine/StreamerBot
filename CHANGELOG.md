@@ -6,6 +6,37 @@ issue or a commit message. Numbering continues across releases.
 
 ## Unreleased
 
+- **[026]** Download what Apple Music is playing. `dl` downloads the song playing
+  and uploads it to the channel; `dlp` with no link downloads the album or
+  playlist being played as one zip. If a single song is playing, `dlp` gets the
+  album that song is on. Before this, `dl` answered "Live streams cannot be
+  downloaded", because an Apple Music track is the browser playing, not a file,
+  and the gamdl wrapper from Phase 6 was never called by any command.
+
+  - **The song comes from MusicKit, not the bot's queue.** `p <album>` puts one
+    track in the bot's queue but eleven in MusicKit's, so only MusicKit's
+    `nowPlayingItem` knows which song is playing. A song from the account's
+    library has an id gamdl cannot use, so its catalog id is used instead.
+  - **gamdl uses the bot's own sign-in.** It needs a cookies.txt with Apple's
+    `media-user-token`. That file is now written from the signed-in Apple Music
+    browser profile, so the account connected with `li am` is the one that
+    downloads, and nobody exports a file by hand. It goes in a job folder under
+    the bot's `data/`, readable only by the bot, and is deleted when the job ends,
+    even if the download fails. With no token, the user is told to send `li am`.
+  - **One message at the start, one at the end**, following the chat rules: the
+    first names what is downloading (and mentions `dlp` while an album or
+    playlist plays), and the last says it is in the channel or why it failed.
+  - **One Apple Music download at a time per bot.** Decrypting a long album is
+    heavy on a small VPS, so a second request is refused and the user is told to
+    try again when the first finishes.
+
+  `Uploader.upload_file` is now separate from downloading, so a file already on
+  disk can be uploaded with the same wait, error reporting and
+  `delete_uploaded_files_after` handling. Not yet tested against Apple's live
+  site: the MusicKit fields and the cookie export follow Apple's and
+  Playwright's documented shapes, and the first real `dl` on a signed-in bot is
+  the test that confirms them.
+
 - **[025]** Apple Music plays what you search for. With sign-in working,
   every request failed with "Apple Music did not start playing:
   Page.wait_for_function: Timeout 30000ms exceeded", and a search for "adventure

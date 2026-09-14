@@ -200,6 +200,14 @@ class AppleMusicService(BrowserService):
     # Music, not video: there is no described track to offer.
     supports_audio_description = False
 
+    def now_playing(self) -> Optional[Dict[str, Any]]:
+        """The song MusicKit is playing, which inside an album is not the queued Track."""
+        return self._require_engine().now_playing(self.name)
+
+    def cookies(self) -> List[Dict[str, Any]]:
+        """The signed-in browser profile's cookies, which gamdl downloads with."""
+        return self._require_engine().cookies(self.name)
+
 
 class AmazonMusicService(BrowserService):
     name = "az"

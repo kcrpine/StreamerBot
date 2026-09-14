@@ -427,6 +427,27 @@ class BrowserEngine(PlaybackEngine):
             timeout=90, name="search",
         )
 
+    def now_playing(self, service: str) -> Optional[Dict[str, Any]]:
+        """What the service's own player reports is playing, for adapters that can say."""
+        adapter = self._adapter(service)
+        if not hasattr(adapter, "now_playing"):
+            return None
+        return self.submit(
+            lambda: adapter.now_playing(self._page_for(service)),
+            timeout=30, name="now_playing",
+        )
+
+    def cookies(self, service: str) -> List[Dict[str, Any]]:
+        """The service profile's cookies, for a downloader acting as the same account.
+
+        Contains the sign-in. The caller must keep it inside the bot's data
+        directory and delete it when done, and nothing may log it.
+        """
+        return self.submit(
+            lambda: self._context_for(service).cookies(),
+            timeout=30, name="cookies",
+        )
+
     def sign_out(self, service: str) -> None:
         """Drop the whole browser profile: cookies live in it."""
         def job():

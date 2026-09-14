@@ -67,6 +67,96 @@ def url_kind(url: str) -> Optional[str]:
     return kind
 
 
+# -- what is playing, as something gamdl can fetch --------------------------
+
+def song_url(now_playing: Optional[Dict[str, Any]]) -> Optional[str]:
+    """A link to the one song MusicKit is playing, or None.
+
+    The bot's queue holds whatever was searched for, which may be a whole album;
+    only MusicKit knows which song inside it is playing. Its catalog URL is used
+    when it has one. A song added from the account's library carries a library
+    id ("i.…") that gamdl cannot fetch, so its catalog id is used instead, in
+    Apple's /song/<name>/<id> form. gamdl reads the id from the last segment and
+    Apple ignores the name, but gamdl needs one there to find the id at all.
+    """
+    if not now_playing:
+        return None
+    url = (now_playing.get("url") or "").strip()
+    if is_apple_music_url(url):
+        return url
+    catalog_id = str(now_playing.get("catalog_id") or "").strip()
+    storefront = str(now_playing.get("storefront") or "").strip().lower()
+    if not catalog_id.isdigit() or not re.fullmatch(r"[a-z]{2}", storefront):
+        return None
+    return f"https://music.apple.com/{storefront}/song/song/{catalog_id}"
+
+
+def collection_url(
+    queued_url: str, now_playing: Optional[Dict[str, Any]] = None
+) -> Tuple[Optional[str], Optional[str]]:
+    """The album or playlist being played. Returns (url, kind).
+
+    What was queued decides it: an album or playlist is itself. A single song was
+    queued as /album/<album>?i=<song>, so dropping the query gives the album it
+    is on, which is the useful answer to "download the album" while one song
+    plays. Failing that, the playing song's own catalog URL has the same shape.
+    An artist or a library link has no downloadable collection.
+    """
+    for candidate in (queued_url, (now_playing or {}).get("url") or ""):
+        candidate = (candidate or "").strip()
+        kind = url_kind(candidate)
+        if kind in ("album", "playlist"):
+            return candidate.split("?", 1)[0], kind
+        if kind == "song" and "/album/" in candidate:
+            return candidate.split("?", 1)[0], "album"
+    return None, None
+
+
+def netscape_cookies(cookies: List[Dict[str, Any]], now: Optional[float] = None) -> str:
+    """Browser cookies, as the cookies.txt file gamdl reads.
+
+    Taken from the bot's own signed-in Apple Music browser profile, so the
+    account connected with li am is the account that downloads, and nobody has
+    to export a file by hand. Only apple.com cookies are written.
+
+    A session cookie has no expiry, and Python's MozillaCookieJar drops a cookie
+    whose expiry is empty or zero unless told otherwise. The file lives only as
+    long as one download, so session cookies are given a day instead.
+    """
+    import time as _time
+
+    horizon = int((now if now is not None else _time.time()) + 86400)
+    lines = ["# Netscape HTTP Cookie File", ""]
+    for cookie in cookies:
+        domain = str(cookie.get("domain") or "")
+        name = str(cookie.get("name") or "")
+        if not name or not domain.lstrip(".").endswith("apple.com"):
+            continue
+        value = str(cookie.get("value") or "")
+        # A tab or newline would split the line into different fields.
+        if any(ch in name + value + domain for ch in "\t\r\n"):
+            continue
+        expires = cookie.get("expires")
+        expires = int(expires) if isinstance(expires, (int, float)) and expires > 0 else horizon
+        lines.append("\t".join([
+            domain,
+            "TRUE" if domain.startswith(".") else "FALSE",
+            str(cookie.get("path") or "/"),
+            "TRUE" if cookie.get("secure") else "FALSE",
+            str(expires),
+            name,
+            value,
+        ]))
+    return "\n".join(lines) + "\n"
+
+
+def has_media_user_token(cookies: List[Dict[str, Any]]) -> bool:
+    """Apple's signed-in subscription cookie; without it gamdl cannot download."""
+    return any(
+        c.get("name") == "media-user-token" and c.get("value") for c in cookies
+    )
+
+
 class GamdlDownloader:
     """Wraps the gamdl command line."""
 
@@ -237,4 +327,12 @@ class GamdlDownloader:
         return cleaned[:120] or "apple-music"
 
 
-__all__ = ["GamdlDownloader", "is_apple_music_url", "url_kind"]
+__all__ = [
+    "GamdlDownloader",
+    "collection_url",
+    "has_media_user_token",
+    "is_apple_music_url",
+    "netscape_cookies",
+    "song_url",
+    "url_kind",
+]
