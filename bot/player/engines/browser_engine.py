@@ -398,7 +398,12 @@ class BrowserEngine(PlaybackEngine):
         adapter = self._adapter(service)
         self.submit(
             lambda: adapter.login(self._page_for(service), username, password, job),
-            timeout=300, name=f"login:{service}",
+            # Must exceed the slowest honest sign-in: Apple's form was measured
+            # taking up to 20 seconds to load and is allowed a minute, the
+            # password step 30 seconds, and the verification code alone may wait
+            # OTP_TIMEOUT_SECONDS (300). At 300 this gave up on a user who was
+            # still typing their code, while the worker carried on underneath.
+            timeout=600, name=f"login:{service}",
         )
 
     def list_profiles(self, service: str) -> List[Dict[str, Any]]:

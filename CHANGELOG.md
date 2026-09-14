@@ -6,6 +6,43 @@ issue or a commit message. Numbering continues across releases.
 
 ## Unreleased
 
+- **[024]** The auto-updater no longer rebuilds and restarts every bot for a push
+  that changes no bot code. When GitHub moves, it fetches and checks which files
+  changed; if all of them are under `.claude/` (the plan and hooks), `.github/`
+  (CI and issue forms, which run on GitHub) or are Markdown documents, it skips
+  the rebuild, the restart and the announcement in every channel, and logs that it
+  did so once rather than every five minutes. A push that changes code and a
+  CHANGELOG entry together still updates, a skipped push followed by a code push
+  updates with both, and any doubt — an unreadable or empty diff — means update.
+  Tests are deliberately not on the skip list, since a needless rebuild is a far
+  cheaper mistake than a skipped one. Manual updates are unchanged.
+
+- **[023]** Apple Music sign-in finds Apple's real form. It failed every time with
+  "The Apple sign-in form did not appear", because the adapter was written against
+  a guess of the page and never checked. Measured in the bot's own Chrome:
+  `music.apple.com/login` opens a dialog that spins for 10 to 20 seconds, then shows
+  "Continue with Email" — one box and a Continue button — in a
+  `commerce/authenticate` frame. Apple's own password form sits inside that on
+  `idmsa.apple.com`, zero pixels tall, with the password step marked `aria-hidden`
+  and its button disabled, while Playwright still calls those fields visible.
+
+  The old code took the first frame whose address contained "auth" — on the live
+  page that was a frame with no form in it at all — and gave up after 10 seconds.
+  The new code waits up to a minute, looks only at fields a person could actually
+  see (not inside `aria-hidden`, not `tabindex="-1"`, and in frames with real size
+  on screen), types the email and presses Continue, waits for the password step to
+  be exposed rather than merely present, and presses that step's own button. Checked
+  against Apple's live page, typing nothing: it finds the email box, correctly does
+  not report the hidden password box yet, and chooses Continue.
+
+  Apple's error text is passed on instead of a generic failure, an address Apple does
+  not recognise is explained, split six-box verification codes are typed rather than
+  pasted into the first box, and "trust this browser" is accepted so the saved sign-in
+  lasts. The steps after Continue could not be observed without a real Apple Account
+  and are pinned by tests; the first real sign-in is what confirms them. The overall
+  sign-in limit rose from 300 to 600 seconds, because the verification code alone may
+  wait 300 and the old limit gave up on someone still typing it.
+
 - **[022]** Planned, not built: Phase 9, YouTube sign-in through a real browser
   session. The test bot's log from 10 to 13 September has 3,577 failed stream
   resolution attempts and no successful fetch: the OAuth device code gets a 400
