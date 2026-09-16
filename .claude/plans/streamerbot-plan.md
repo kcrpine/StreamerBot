@@ -1068,6 +1068,8 @@ Each phase has an exit criterion you can actually check.
 | **8** ✅ | Collapse the inherited history to a single commit, rewrite `README.md` as a fork with its own feature list | `git log` shows only your commits; README describes StreamerBot, not TTMediaBot; `LICENSE` still carries the upstream copyright |
 | **9** 🔨 | YouTube browser-session sign-in with scheduled per-bot refresh, replacing OAuth for playback (see "Phase 9 — YouTube sign-in through a real browser session") | On the VPS that currently answers `LOGIN_REQUIRED` to every client, a bot signed in through the portal plays a YouTube video and a livestream; a session killed on Google's side produces the renewal message to the requester, not "service unavailable"; two bots on one host hold two different Google sessions. **BUILT, NOT YET VERIFIED LIVE** ([027]) — see "What Phase 9 built" below; the exit criterion needs the VPS |
 
+| **10** 🔨 | Adopt bot folders copied into `bots/` by hand, and decide foreign lineage by shape in the shell as well as in Python (see "Phase 10 — adopting a folder somebody copied in") | On a host with Docker, a TTMediaBot folder copied into `bots/` over scp is found by the scan, reported with its own nickname and server, adopted, and the resulting bot joins its channel under the name it had before. **BUILT, VERIFIED IN CI, NOT YET RUN AGAINST A REAL DOCKER HOST** ([029], [030]) — every `docker` call in the tests is a stub, so container creation is pinned by its flags rather than by a container existing |
+
 Phase 0 is the riskiest to skip and the cheapest to verify. Phase 4 gives the engine abstraction its
 first real workout on the *easier* of the two external engines, before Chrome.
 
@@ -1266,3 +1268,128 @@ The new one covers, in this order:
 Everything else from the old README goes: the TTMediaBot name, the old install instructions, the old
 service list, the contributor section and the old screenshots.
 
+---
+
+## Phase 10 — adopting a folder somebody copied in
+
+Not in the original plan. It came from a user describing what they had actually done: taken a bot
+folder from the old TTMediaBot, copied it into this project's `bots/`, and expected the manager to pick
+it up.
+
+### The failure was that nothing happened
+
+Backup and Restore is the supported route and it works. But copying the folder straight in is the
+obvious thing to do when the folder is right there, and it produced no error, no log line and no bot.
+Every menu item in `streamerbot.sh` enumerates work from
+`docker ps -a -f label=role=streamerbot`, so a directory with no container is absent from all of them.
+Start All starts nothing extra, the bot list does not show it, the configuration check never reads it.
+No code ran for that folder at all, which is why nothing could report on it.
+
+This is worth recording as a shape, not just an incident: **anything keyed off the container list is
+blind to a bot directory that has no container.** The same blindness would hide a bot whose container
+was removed by hand, or one whose creation failed halfway through an earlier run.
+
+The consequence for the design is that a scan is not enough on its own — the manager also says on
+startup that such folders exist. A feature nobody knows to look for does not fix an invisible failure.
+It only moves where the silence is.
+
+### What it does
+
+One menu item, Manage Bots → "Adopt Bot Folders Copied Into bots/":
+
+1. Scan `bots/` for directories with no container.
+2. Report each one — nickname, server, whether it came from an older version or another fork — with
+   nothing written yet.
+3. Ask once, for the whole batch.
+4. Migrate, check the configuration, create the container, start it.
+
+Reporting on every candidate before asking anything is deliberate. Asking folder by folder interleaves
+a question with a report, and the answer then scrolls away from the thing it was about — the same
+reasoning behind the one-message-at-start-and-finish rule for chat.
+
+### It calls `migrate_one_bot`, it does not reimplement it
+
+A copied folder and a restored one are the same problem arriving by different routes. Two copies of the
+migration rules drifting apart is exactly what produced a `config.json` declaring `config_version` 2
+against a `ConfigManager` that understood 1, which stopped every newly created bot before it reached
+TeamTalk. So adoption reuses the restore path's migration wholesale, and the only new code is the
+scanning, the reporting and the container creation.
+
+The per-bot ports matter here for the same reason they do on restore, and slightly more sharply: a
+copied folder arrives holding the ports it had **on the machine it came from**, which is a machine
+where they were free. Dropped next to a running bot they collide silently, in the three ways recorded
+under "Per-bot isolation".
+
+### Three things it refuses rather than guesses at
+
+- **A folder name that cannot be a bot name.** The name becomes the container name *and* the `bot_id`,
+  and `bot_id` is the containment boundary that stops one bot reaching another's YouTube session. The
+  pressure here runs the wrong way by default: the obvious fix for "my folder is called `My Bot`" is to
+  loosen the validation. It must not be. The folder gets renamed, or it is not adopted. A space is by
+  far the most common cause, since these folders usually arrive from a Windows machine, so the message
+  names spaces specifically instead of only restating the rule.
+- **A `config.json` that is not valid JSON.** `jq` would otherwise fail partway through the migration
+  and leave the folder half converted, which is worse than not starting.
+- **Several `config.json` files in one folder.** Choosing one is a guess about which bot the user
+  meant, and getting it wrong brings up a bot under somebody else's identity.
+
+### Whole installations get copied, not just data folders
+
+People copy the entire old install directory, so `config.json` sits among the source tree rather than
+at the top. That case is handled by lifting **named** files up — config, cache, log, and the credential
+directories — never by moving everything. Hoisting the lot would put a second copy of the bot's own
+source into `bots/<name>/`, which is then mounted over the container's data directory.
+
+### A stopped container is not an orphan
+
+The scan uses `docker ps -a`, so a bot that exists but is stopped is never a candidate. Treating it as
+one would destroy and recreate a container somebody had deliberately stopped. This is the same
+distinction the port allocator draws between "no bot owns this" and "this bot owns it and is using it",
+and it is easy to get wrong in the same direction.
+
+### Two bugs found while building it
+
+Both let a configuration from another fork through while looking fine, and both are in the shell's half
+of a rule Python already had right.
+
+- **Lineage was judged by filename.** `bot_dir_is_legacy` looked for TTMediaBot's cache and log names,
+  so a fork that had renamed those but still carried `services.vk` was reported to the user as *already
+  current*. `bot/migrators/config_migrator.py` has always decided lineage by shape, for the reason
+  recorded there — a fork that reached its own version 2 means something entirely different by it — and
+  the shell now decides it the same way. The general rule: **a version number is only comparable within
+  one lineage**, so anything that compares one must establish lineage first.
+- **`services.default_service` was never migrated by the shell.** A restored or copied bot kept `"vk"`,
+  which `ServiceManager` looks up in a plain dict — so the bot died during startup with a `KeyError`
+  traceback rather than anything a user could act on. The bot's own migration repaired this, but only
+  on the next start and only in memory until the config was rewritten, so the failure was survivable
+  and therefore easy to leave in place. It is now fixed on disk when the migration runs, and named out
+  loud, because it changes which service a bare search uses.
+
+### One thing the smoke test caught that the unit tests would not have
+
+`tools/check_config.py` takes the bot name it reports from the **parent directory of the config file**.
+Mounted at a fixed `/bot`, every bot was reported as a bot called `bot` — harmless with one folder,
+useless in a run adopting several. Each bot is now mounted at `/bots/<name>:ro`. Read-only for the
+usual reason: a running bot holds a lock on its own `config.json`, and a check must never write to what
+it is inspecting.
+
+This is an argument for driving the whole flow once end to end, not only its parts. Every individual
+function was correct; the defect was in what the composition printed.
+
+### Verification, and what is still unverified
+
+Tests run the real shell functions against real `bash` and `jq` rather than asserting that a line
+appears in the script, because the bug being prevented is in what the code does to a folder. 43 tests
+in `tests/deployment/test_adopt_copied_bots.py`, all passing on the CI host runner; the full deployment
+suite is 153. They skip inside the image, like the rest of `tests/deployment/`, because `.dockerignore`
+keeps `streamerbot.sh` out of it by design.
+
+**Every `docker` call in those tests is a stub.** Container creation is pinned by its flags — the label,
+`--network host`, `--restart always`, the data mount — so an adopted bot is the same kind of container
+as one from Create Bot and does not drop out of the menus that filter on the label. What is *not*
+tested is that the container then exists, starts, and connects. That needs a host with Docker, and it
+is the exit criterion in the delivery table.
+
+The local development host for this phase had neither Docker nor `jq`, so the behaviour tests silently
+skipped there and the first full run was in WSL. Worth knowing for anyone working on the shell scripts
+from Windows: **a green run on that host may mean the tests did not execute.** Check the skip count.
