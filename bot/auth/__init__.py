@@ -12,6 +12,9 @@ SERVICES = ("yt", "sp", "nf", "dp", "am", "az")
 
 SERVICE_NAMES = {
     "yt": "YouTube",
+    # Not in SERVICES: it has no account of its own and plays through YouTube's
+    # session. It is here so anything naming a service can name this one too.
+    "ytm": "YouTube Music",
     "sp": "Spotify",
     "nf": "Netflix",
     "dp": "Disney Plus",

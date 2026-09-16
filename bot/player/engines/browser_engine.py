@@ -32,7 +32,7 @@ import os
 import queue
 import threading
 import time
-from typing import Any, Callable, Dict, List, Optional, TYPE_CHECKING
+from typing import Any, Callable, Dict, List, Optional, Tuple, TYPE_CHECKING
 
 from bot import errors
 from bot.player.engines import PlaybackEngine
@@ -47,6 +47,13 @@ BROWSER_MARKER = "/etc/streamerbot-browser-available"
 # Generous: a cold Chrome start on a small VPS plus a Netflix page load.
 DEFAULT_JOB_TIMEOUT = 120
 STARTUP_TIMEOUT = 90
+
+# The two tabs each service gets. PLAYER is where the audio is, and only
+# playback may navigate it; AUX is for everything that loads a page for its own
+# reasons — searching, checking the sign-in, the login form, profiles, sessions.
+# They share the service's persistent context, so they share its cookies.
+PLAYER = "player"
+AUX = "aux"
 
 
 class _Job:
@@ -81,7 +88,7 @@ class BrowserEngine(PlaybackEngine):
         # Owned by the worker thread only. Nothing else may touch these.
         self._playwright = None
         self._contexts: Dict[str, Any] = {}
-        self._pages: Dict[str, Any] = {}
+        self._pages: Dict[Tuple[str, str], Any] = {}
 
         self._adapters: Dict[str, Any] = {}
         self._active_service: Optional[str] = None
@@ -243,18 +250,42 @@ class BrowserEngine(PlaybackEngine):
         self._contexts[service] = context
         return context
 
-    def _page_for(self, service: str):
-        page = self._pages.get(service)
+    def _page_for(self, service: str, role: str = PLAYER):
+        """A tab for one service and one role. Worker thread only.
+
+        Two roles, because a tab that is producing audio is a playback device
+        rather than a browser tab: navigating it ends the audio, with no error,
+        no event and nothing in Player.state to say the music stopped. Apple
+        Music's search and its is_logged_in both goto() a page, so before this
+        split, searching for the next song stopped the current one.
+
+        Both roles share the service's persistent context, so cookies — and
+        therefore the sign-in — are the same on both.
+        """
+        key = (service, role)
+        page = self._pages.get(key)
         if page is not None and not page.is_closed():
             return page
         context = self._context_for(service)
-        page = context.pages[0] if context.pages else context.new_page()
-        self._pages[service] = page
+        # A page already handed to another role is spoken for. The persistent
+        # context opens with one blank tab, which the first role to ask adopts.
+        taken = {
+            id(other)
+            for (name, _), other in self._pages.items()
+            if name == service and other is not None and not other.is_closed()
+        }
+        page = next(
+            (p for p in context.pages if id(p) not in taken and not p.is_closed()),
+            None,
+        )
+        if page is None:
+            page = context.new_page()
+        self._pages[key] = page
         return page
 
-    def page(self, service: str):
+    def page(self, service: str, role: str = PLAYER):
         """A page for an adapter to drive. Call only from the browser thread."""
-        return self._page_for(service)
+        return self._page_for(service, role)
 
     # -- playback ----------------------------------------------------------
 
@@ -388,7 +419,7 @@ class BrowserEngine(PlaybackEngine):
         adapter = self._adapter(service)
         try:
             return self.submit(
-                lambda: adapter.is_logged_in(self._page_for(service)),
+                lambda: adapter.is_logged_in(self._page_for(service, AUX)),
                 timeout=60, name="is_logged_in",
             )
         except Exception:
@@ -397,7 +428,7 @@ class BrowserEngine(PlaybackEngine):
     def login(self, service: str, username: str, password: str, job) -> None:
         adapter = self._adapter(service)
         self.submit(
-            lambda: adapter.login(self._page_for(service), username, password, job),
+            lambda: adapter.login(self._page_for(service, AUX), username, password, job),
             # Must exceed the slowest honest sign-in: Apple's form was measured
             # taking up to 20 seconds to load and is allowed a minute, the
             # password step 30 seconds, and the verification code alone may wait
@@ -409,21 +440,21 @@ class BrowserEngine(PlaybackEngine):
     def list_profiles(self, service: str) -> List[Dict[str, Any]]:
         adapter = self._adapter(service)
         return self.submit(
-            lambda: adapter.list_profiles(self._page_for(service)),
+            lambda: adapter.list_profiles(self._page_for(service, AUX)),
             timeout=60, name="list_profiles",
         )
 
     def select_profile(self, service: str, profile_id: str) -> bool:
         adapter = self._adapter(service)
         return self.submit(
-            lambda: adapter.select_profile(self._page_for(service), profile_id),
+            lambda: adapter.select_profile(self._page_for(service, AUX), profile_id),
             timeout=60, name="select_profile",
         )
 
     def search(self, service: str, query: str) -> List[Dict[str, Any]]:
         adapter = self._adapter(service)
         return self.submit(
-            lambda: adapter.search(self._page_for(service), query),
+            lambda: adapter.search(self._page_for(service, AUX), query),
             timeout=90, name="search",
         )
 
@@ -456,7 +487,7 @@ class BrowserEngine(PlaybackEngine):
         """
         adapter = self._adapter(service)
         return self.submit(
-            lambda: adapter.export_session(self._page_for(service), self._context_for(service)),
+            lambda: adapter.export_session(self._page_for(service, AUX), self._context_for(service)),
             timeout=120, name=f"export_session:{service}",
         )
 
@@ -465,7 +496,7 @@ class BrowserEngine(PlaybackEngine):
         adapter = self._adapter(service)
         return self.submit(
             lambda: adapter.import_session(
-                self._page_for(service), self._context_for(service), cookies
+                self._page_for(service, AUX), self._context_for(service), cookies
             ),
             timeout=120, name=f"import_session:{service}",
         )
@@ -474,7 +505,8 @@ class BrowserEngine(PlaybackEngine):
         """Drop the whole browser profile: cookies live in it."""
         def job():
             context = self._contexts.pop(service, None)
-            self._pages.pop(service, None)
+            for key in [k for k in self._pages if k[0] == service]:
+                self._pages.pop(key, None)
             if context is not None:
                 try:
                     context.close()

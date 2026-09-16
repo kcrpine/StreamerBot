@@ -43,7 +43,7 @@ def make_service(cls, engine=None):
     service.is_enabled = True
     service.error_message = ""
     service.warning_message = ""
-    service.help = ""
+    # help is a property now, computed from the translator, so it is not set here.
     service._engine = engine
     return service
 
@@ -165,7 +165,9 @@ class SearchOrderingTests(TestCase):
             [{"title": "a", "kind": "album"}, {"title": "b", "kind": "album"}]
         )
 
-        self.assertTrue(text.split("\n")[0].startswith("2 Album"))
+        # Plural, because the summary is counting and "2 Album" read aloud is
+        # wrong in a way a written list gets away with.
+        self.assertTrue(text.split("\n")[0].startswith("2 Albums"))
 
 
 class ServiceGuardTests(TestCase):

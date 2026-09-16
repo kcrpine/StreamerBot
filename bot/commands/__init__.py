@@ -41,8 +41,14 @@ class CommandProcessor:
         self.pending_ads_option = {}
         self.download_links = {}
         self.adsc_enabled = False
-        # Volatile search results state (reset on restart)
-        self.search_results_count: int = 1
+        # Volatile search results state (reset on restart).
+        #
+        # Not 1. It used to be, and search results mode then offered a choice of
+        # one thing: `p QUERY` asked the service for a single result and read it
+        # back as a numbered list with one entry. `services.*.search_results` is
+        # separately 1 and stays that way, because that one is the bare `p` that
+        # plays the best match and has no list to show.
+        self.search_results_count: int = app_vars.search_results_mode_count
         self.pending_search_results: Dict[int, List] = {}
         # Audio description: per-user preference, plus any outstanding prompt.
         # Keyed by user id, because two people in a channel can be mid-answer at

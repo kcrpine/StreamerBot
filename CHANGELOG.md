@@ -6,6 +6,91 @@ issue or a commit message. Numbering continues across releases.
 
 ## Unreleased
 
+- **[036]** Every coding task now publishes an auto-updating Artifact page and
+  hands back the link, recorded as a convention in `CLAUDE.md` and the plan.
+  Terminal scrollback is the worst medium for this project's users: it cannot be
+  navigated by heading, a long tool result buries the one sentence that matters,
+  and re-reading it means arrowing through output written for a machine. The
+  page is republished to the same URL as the work moves, is held to the same
+  screen reader standard as the web portal, names what is still unverified
+  rather than only what passed, and ends with a summary that stands on its own.
+  It is a view of the work; `CHANGELOG.md` and the plan remain the record.
+
+- **[035]** `python tools/compile_locales.py` works again on a checkout whose
+  path contains a space. It built one interpolated string per babel command and
+  ran it with `shell=True`, so the shell split the path and babel was handed
+  half a directory name; it exited non-zero and the script reported "Bable is
+  not installed" for a babel that was installed and working. The commands are
+  now argument lists run without a shell. Found while regenerating the catalogs
+  for the strings below, which is the documented workflow, so on such a host the
+  documented workflow could not be run at all.
+
+  The same script also wrote absolute paths into every `#:` source reference in
+  the `.pot` and `.po` files. Catalogs generated inside the image said
+  `/work/bot/__init__.py`, and running the documented command on a developer's
+  machine rewrote all 390 of them to that machine's own path — an unreadable
+  diff, and a local path committed to the repository. Babel additionally wraps a
+  path containing a space in bidi isolate characters, so on such a host the
+  references stopped being plain text. Paths are relative now and every babel
+  command runs from the repository root, so the output is the same wherever it
+  is generated. Normalising the existing `/work/` prefixes is a one-time part of
+  this change and accounts for most of its diff.
+
+- **[034]** `sv SERVICE h` now explains the service. Every service set
+  `self.help = ""` in its constructor and nothing ever set it to anything else,
+  so `sv am h`, `sv yt h` and `sv az h` all answered "This service has no
+  additional help" — while the `sv` listing was telling users to send exactly
+  that command. Each service now says what it plays, what it needs, what it
+  cannot do, and the command that connects it, with its current status on the
+  first line so the answer is about this bot rather than the service in general.
+  Spotify's says plainly that pairing the account and being able to search by
+  name are two separate things, which is the case most likely to leave someone
+  concluding their pairing failed when it did not.
+
+- **[033]** `sv` now works out whether a service is ready at the moment it is
+  asked, instead of repeating a string left behind by startup. `initialize()`
+  set "Apple Music is not ready yet." when no browser engine was attached yet —
+  true at that instant, because the services are built before the engine exists
+  — but `attach_engine()` never cleared it and nothing else ever wrote to that
+  field. The warning therefore outlived its condition for the whole life of the
+  process, and `sv am` reported Apple Music as not ready in the same minute
+  Apple Music was streaming into the channel. `sv SERVICE` now reports disabled
+  with the reason, not connected with the command that fixes it, or connected
+  and ready; the sign-in state comes from the same portal lookup `li` uses, so
+  the command still answers instantly. Deliberately not a live browser check:
+  that is several seconds, and until [031] it would also have stopped the music
+  to answer. Netflix and Spotify had the same uncleared warning and are fixed
+  with it.
+
+- **[032]** Search results mode lists every result, each named by what it is.
+  Two separate limits were both 1: the `slc` count defaulted to 1, so `p QUERY`
+  asked the service for a single result and read it back as a numbered list with
+  one entry in it, which is not a choice. `slc` now defaults to 25 and `slc 0`
+  means as many as the service returns; `services.*.search_results` keeps its
+  value of 1, because that one is the bare `p` that plays the best match and
+  genuinely wants one. The list also says what each entry is — "1. Album: Abbey
+  Road", "2. Track: A Song" — from a formatter that was written in Phase 6,
+  tested, and never actually called: the command printed bare titles, so an
+  album, an artist and the song on that album were three identical-looking
+  lines. Netflix is its own class rather than a browser service and its results
+  carry the same kind, so it borrows the same labelling instead of being the one
+  service whose list still read back as bare titles. Services whose results
+  genuinely have no kinds — YouTube, Spotify — still get a plain list rather
+  than every line labelled identically.
+
+- **[031]** Searching no longer stops the music on Apple Music, Amazon Music,
+  Netflix and Disney+. The browser engine kept one Chrome tab per service, and
+  that tab is where the audio is: Apple Music's search navigates to the search
+  page, and checking whether the service is signed in navigates to the home
+  page, so both ended whatever was playing. Nothing reported it, because nothing
+  failed — no exception, no end-of-track event, and `Player.state` still said
+  Playing, so it could only be noticed as behaviour and described in prose. Each
+  service now has a player tab that only playback may navigate and an auxiliary
+  tab for search, sign-in checks, the login form, profiles and session
+  export/import. Both live in the same browser profile, so they share the
+  sign-in. In search results mode this is what lets `p QUERY` read out a list
+  while the current track keeps playing until `sl NUMBER` picks from it.
+
 - **[030]** Restoring or adopting a configuration from TTMediaBot now recognises
   it by shape rather than by its version number, and repairs its default service
   on disk. Two gaps, both of which let a foreign configuration through looking

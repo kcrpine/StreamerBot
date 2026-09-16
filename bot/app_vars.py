@@ -57,3 +57,11 @@ loop_timeout = 0.01
 max_message_length = 256
 recents_max_lenth = 32
 tt_event_timeout = 2
+
+# How many results `p QUERY` lists when search results mode (sr) is on, and the
+# ceiling `slc 0` means. Separate from `services.*.search_results`, which is the
+# bare `p` that plays the best match and wants exactly one. The services cap
+# themselves lower than the ceiling — the browser scrapers stop at 25 — so this
+# is a bound on the message, not a promise about the count.
+search_results_mode_count = 25
+search_results_mode_max = 50

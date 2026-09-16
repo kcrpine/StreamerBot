@@ -25,12 +25,38 @@ class YtmService(_Service):
         self.is_enabled = self.config.enabled
         self.error_message = ""
         self.warning_message = ""
-        self.help = ""
         self.hidden = False
         self.yt_config = bot.config.services.yt
         self._warm_lock = threading.Lock()
         self._is_warmed = False
-        
+
+    @property
+    def help(self) -> str:
+        """What `sv ytm h` answers, above the live status line the command adds.
+
+        It shares YouTube's session deliberately: one account, one sign-in. Say
+        that plainly, or `li ytm` looks like a command that ought to exist.
+        """
+        t = self.bot.translator.translate
+        return chr(10).join(
+            [
+                t(
+                    "YouTube Music plays songs, albums and playlists from YouTube "
+                    "Music, with the music rather than the video ranking, so a "
+                    "search for a song finds the song and not a reaction to it."
+                ),
+                t(
+                    "When a song ends and nothing is queued, it keeps going with "
+                    "what YouTube Music would play next."
+                ),
+                t(
+                    "It signs in as YouTube does and shares the same account, so "
+                    "connecting one connects both. There is no separate ytm sign-in."
+                ),
+                t("To connect an account, send this command: li yt"),
+            ]
+        )
+
     def _fetch_and_queue_autoplay(self, video_id: str, original_url: str):
         """Background task to fetch Watch Playlist and add to queue."""
         try:

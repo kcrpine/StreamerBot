@@ -287,6 +287,30 @@ Work proceeds in numbered phases from the plan; the plan's delivery table record
 actually found, including where reality contradicted it. When a phase finishes, update that table —
 future instances rely on it to know what is real versus planned.
 
+### Every coding task publishes an auto-updating artifact page
+
+**Not optional, and not only at the end.** Terminal scrollback is the worst possible medium for the
+person this project is built for: it cannot be navigated by heading, a long tool result buries the one
+sentence that matters, and re-reading it means arrowing through hundreds of lines that were only ever
+meant for the machine. Publish the work as an Artifact instead, and hand back the link.
+
+- **Publish early, then keep republishing to the same URL.** The page goes up as soon as there is
+  something to say — what is being changed and why — and is republished as the work moves, so it is a
+  live view rather than a report written afterwards. Pass the artifact's `url` to update it in place;
+  a new URL is a new page and loses whatever the person had open.
+- **Structure it for a screen reader, because that is the point of publishing it.** Real headings in
+  order, a `<main>`, tables with a `<caption>` and `<th scope>`, state given in words and not only in
+  colour, and a skip link. This is the same standard the web portal is held to; see "Accessibility is
+  binding". Route the page through the `accessibility-lead` agent before publishing it, exactly as the
+  hooks require for the portal.
+- **Say what changed, what it replaces, and what is still unverified.** A status page that only lists
+  green ticks is worth nothing. Name the parts that were not run, and why — no Docker on the host, no
+  live account to test against, a test that exercises a stand-in rather than the real dependency.
+- **End with a summary section.** Last on the page, so the review cursor lands on it, and written so it
+  stands on its own for someone who reads nothing else.
+- **The page is a view of the work, never the record of it.** `CHANGELOG.md` and the plan remain the
+  source of truth and are still updated in the same commit. The artifact is not committed.
+
 ### First run in a fresh clone
 
 If `~/.claude/plans/` has no copy of this project's plan, **seed it before doing anything else** —

@@ -27,13 +27,37 @@ class YtService(_Service):
         self.is_enabled = self.config.enabled
         self.error_message = ""
         self.warning_message = ""
-        self.help = ""
         self.hidden = False
         self._cookie_lock = threading.Lock()
         self._warm_lock = threading.Lock()
         self._is_warmed = False
         self._max_retries = 2
         self._TRANSIENT_RETRY_BACKOFF_SECONDS = 1.0
+
+    @property
+    def help(self) -> str:
+        """What `sv yt h` answers, above the live status line the command adds."""
+        t = self.bot.translator.translate
+        return chr(10).join(
+            [
+                t(
+                    "YouTube plays videos and live streams as audio. u and a link "
+                    "plays one directly; p and a few words searches for it."
+                ),
+                t(
+                    "Signing in is not a password: the bot keeps a browser session "
+                    "of its own. Use a separate Google account made for the bot, "
+                    "not your personal one."
+                ),
+                t(
+                    "From a hosted server YouTube usually refuses to play to nobody, "
+                    "so an account is needed there even though searching works "
+                    "without one. Google ends these sessions from time to time, and "
+                    "the bot says so and renews it rather than going quiet."
+                ),
+                t("To connect an account, send this command: li yt"),
+            ]
+        )
 
     def initialize(self):
         self._bridge = YouTubeBridge(client="YTMUSIC")

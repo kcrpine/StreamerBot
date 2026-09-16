@@ -69,16 +69,24 @@ class PlayPauseCommand(Command):
         Separate from __call__ so a YouTube request held during a session refresh
         can be run again without repeating the "Searching" message.
         """
-        # Search results mode: request more results from the service directly
+        # Search results mode: ask the service for a list, read it out, and play
+        # nothing. Whatever is playing keeps playing until sl picks from it.
         if self.config.general.search_results_mode:
             count = self.command_processor.search_results_count
-            track_list = self.search_tracks(arg, limit=count)
+            track_list = self.search_tracks(
+                arg, limit=count or app_vars.search_results_mode_max
+            )
             self.command_processor.pending_search_results[user.id] = track_list
-            lines = [self.translator.translate("Search results:")]
-            for i, track in enumerate(track_list):
-                lines.append(f"{i + 1}: {track.name}")
-            lines.append(self.translator.translate("Use 'sl NUMBER' to select a track"))
-            return "\n".join(lines)
+            # The service formats the list: only it knows whether its results
+            # have kinds, and an album, an artist and the song on that album are
+            # three identical lines without them.
+            return chr(10).join(
+                [
+                    self.translator.translate("Search results:"),
+                    self.service_manager.service.describe_tracks(track_list),
+                    self.translator.translate("Use 'sl NUMBER' to select a track"),
+                ]
+            )
 
         # Normal mode: request only 1 result and play immediately
         track_list = self.search_tracks(arg)
@@ -360,71 +368,133 @@ class ServiceCommand(Command):
         if args[0]:
             service_name = args[0].lower()
             if service_name not in self.service_manager.services:
-                return self.translator.translate("Unknown service.\n{}").format(
-                    self.service_help
+                return self.translator.translate("Unknown service.{newline}{help}").format(
+                    newline=chr(10), help=self.service_help
                 )
             service = self.service_manager.services[service_name]
             if len(args) == 1:
                 if not service.hidden and service.is_enabled:
                     self.service_manager.service = service
-                    if service.warning_message:
-                        return self.translator.translate(
-                            "Current service: {}\nWarning: {}"
-                        ).format(service.name, service.warning_message)
-                    return self.translator.translate("Current service: {}").format(
-                        service.name
+                    return self.translator.translate(
+                        "Current service: {service}{newline}{status}"
+                    ).format(
+                        service=service.name,
+                        newline=chr(10),
+                        status=self.status_line(service),
                     )
                 elif not service.is_enabled:
                     if service.error_message:
                         return self.translator.translate(
-                            "Error: {error}\n{service} is disabled".format(
-                                error=service.error_message,
-                                service=service.name,
-                            )
+                            "Error: {error}{newline}{service} is disabled"
+                        ).format(
+                            error=service.error_message,
+                            newline=chr(10),
+                            service=service.name,
                         )
                     else:
-                        return self.translator.translate(
-                            "{service} is disabled".format(service=service.name)
+                        return self.translator.translate("{service} is disabled").format(
+                            service=service.name
                         )
             elif len(args) >= 1:
+                # The status goes first, because "how do I connect this" and "is
+                # this connected" are the same question asked twice, and the
+                # answer to the second one changes what the first one means.
+                lines = [self.status_line(service)]
                 if service.help:
-                    return service.help
-                else:
-                    return self.translator.translate(
-                        "This service has no additional help"
-                    )
+                    lines.append(service.help)
+                return chr(10).join(lines)
         else:
             return self.service_help
+
+    # -- readiness ---------------------------------------------------------
+    #
+    # Asked at the moment of asking, not read back from a string startup left
+    # behind. `warning_message` was set during initialize() when no engine was
+    # attached yet and never cleared, so `sv am` reported Apple Music "not ready
+    # yet" in the same minute Apple Music was streaming into the channel.
+
+    def _display_name(self, service) -> str:
+        return getattr(service, "display_name", "") or auth.service_name(service.name)
+
+    def _connected(self, service) -> Optional[bool]:
+        """True, False, or None when this bot cannot tell.
+
+        The portal's statuses() is what `li` already reports and is a local
+        lookup, so `sv` keeps answering immediately. Deliberately not
+        engine.is_logged_in(), which is a browser round trip of several seconds.
+        A stored account the service has since signed out still fails at `p`,
+        where NotSignedInError names the command that fixes it.
+        """
+        if not getattr(service, "requires_auth", False):
+            return None
+        portal = getattr(self.command_processor, "auth_portal", None)
+        if portal is None:
+            return None
+        # ytm has no account of its own: it plays through YouTube's session.
+        name = "yt" if service.name == "ytm" else service.name
+        try:
+            state = portal.statuses().get(name)
+        except Exception:
+            return None
+        if state is None:
+            return None
+        return state == "connected"
+
+    def status_line(self, service) -> str:
+        label = self._display_name(service)
+        if not service.is_enabled:
+            return service.error_message or self.translator.translate(
+                "%(service)s is switched off in this bot's configuration."
+            ) % {"service": label}
+        connected = self._connected(service)
+        if connected is False:
+            # Command last, after a colon and with no full stop, so a screen
+            # reader's review cursor finds it at the end.
+            return self.translator.translate(
+                "%(service)s is not connected. To connect an account, send this "
+                "command: li %(code)s"
+            ) % {"service": label, "code": "yt" if service.name == "ytm" else service.name}
+        if service.warning_message:
+            return service.warning_message
+        return self.translator.translate("%(service)s is connected and ready.") % {
+            "service": label
+        }
+
+    def short_status(self, service) -> str:
+        """A few words, for the list of every service.
+
+        The full sentence belongs to `sv SERVICE`, which is about one service.
+        Seven of them in a row is a paragraph a listener has to sit through to
+        reach the one they asked about, so the list says only which state each
+        one is in and where to go for the rest.
+        """
+        if not service.is_enabled:
+            return self.translator.translate("unavailable: %(reason)s") % {
+                "reason": service.error_message
+                or self.translator.translate("switched off in this bot's configuration")
+            }
+        if self._connected(service) is False:
+            return self.translator.translate("not connected, send li %(code)s") % {
+                "code": "yt" if service.name == "ytm" else service.name
+            }
+        if service.warning_message:
+            return service.warning_message
+        return self.translator.translate("ready")
 
     @property
     def service_help(self):
         services: List[str] = []
         for i in self.service_manager.services:
             service = self.service_manager.services[i]
-            if not service.is_enabled:
-                if service.error_message:
-                    services.append(
-                        "{} (Error: {})".format(service.name, service.error_message)
-                    )
-                else:
-                    services.append(
-                        self.translator.translate("{} (Error)").format(service.name)
-                    )
-            elif service.warning_message:
-                services.append(
-                    self.translator.translate("{} (Warning: {})").format(
-                        service.name, service.warning_message
-                    )
-                )
-            else:
-                services.append(service.name)
-        help = self.translator.translate(
-            "Current service: {current_service}\nAvailable:\n{available_services}\nsend sv SERVICE h for additional help"
+            services.append("{} ({})".format(service.name, self.short_status(service)))
+        return self.translator.translate(
+            "Current service: {current_service}{newline}Available:{newline}"
+            "{available_services}{newline}send sv SERVICE h for additional help"
         ).format(
             current_service=self.service_manager.service.name,
-            available_services="\n".join(services),
+            newline=chr(10),
+            available_services=chr(10).join(services),
         )
-        return help
 
 
 class SelectTrackCommand(Command):
@@ -1006,7 +1076,7 @@ class SearchResultsCommand(Command):
     @property
     def help(self) -> str:
         return self.translator.translate(
-            "Toggles search results mode. When active, 'p QUERY' shows a numbered list. Use 'sr on' or 'sr off' to set explicitly. Save permanently with 'sc'"
+            "Toggles search results mode. When active, 'p QUERY' reads out a numbered list and plays nothing, so whatever is playing keeps playing until 'sl NUMBER' picks one. Use 'sr on' or 'sr off' to set explicitly, 'slc' for how many results. Save permanently with 'sc'"
         )
 
     def __call__(self, arg: str, user: User) -> Optional[str]:
@@ -1081,33 +1151,40 @@ class SelectSearchResultCommand(Command):
 
 
 class SearchResultsCountCommand(Command):
-    """slc NUMBER — configura quantidade de resultados exibidos (volátil, padrão 1)."""
-
-    _MIN = 1
+    """slc NUMBER — how many results the sr list shows (volatile, reset on restart)."""
 
     @property
     def help(self) -> str:
         return self.translator.translate(
-            "NUMBER Sets how many results are shown when search results mode is active. Without a number shows current count. Resets to 1 on restart"
+            "NUMBER Sets how many results are shown when search results mode is active, or 0 for as many as the service returns. Without a number shows current count. Resets on restart"
         )
 
     def __call__(self, arg: str, user: User) -> Optional[str]:
         if not arg:
-            return self.translator.translate(
-                "Search results count: {count}"
-            ).format(count=self.command_processor.search_results_count)
+            count = self.command_processor.search_results_count
+            if not count:
+                return self.translator.translate(
+                    "Search results count: as many as the service returns"
+                )
+            return self.translator.translate("Search results count: {count}").format(
+                count=count
+            )
 
         try:
             count = int(arg.strip())
         except ValueError:
             raise errors.InvalidArgumentError
 
-        if count < self._MIN:
+        if count < 0:
             return self.translator.translate(
-                "Invalid count. Please enter a number greater than 0"
+                "Invalid count. Please enter 0 or a number greater than 0"
             )
 
         self.command_processor.search_results_count = count
+        if not count:
+            return self.translator.translate(
+                "Search results now show as many results as the service returns"
+            )
         return self.translator.translate(
             "Search results count set to {count}"
         ).format(count=count)

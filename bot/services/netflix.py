@@ -39,8 +39,38 @@ class NetflixService(Service):
         self.is_enabled = getattr(config, "enabled", True)
         self.error_message = ""
         self.warning_message = ""
-        self.help = ""
         self._engine = None
+
+    @property
+    def help(self) -> str:
+        """What `sv nf h` answers, above the live status line the command adds.
+
+        The connect command goes last, after a colon and with no full stop, so a
+        screen reader's review cursor lands on it.
+        """
+        t = self.translator.translate
+        return chr(10).join(
+            [
+                t(
+                    "Netflix plays films and shows, with audio description where "
+                    "Netflix offers one. da decides whether it is used; da ask "
+                    "makes the bot ask each time."
+                ),
+                t(
+                    "Each account has its own profiles, with their own watchlists "
+                    "and audio settings; pf lists them and pf with a number picks one."
+                ),
+                t(
+                    "The account name and password are typed on a web page, never "
+                    "in this channel, where everyone present would see them."
+                ),
+                t(
+                    "It plays through Google Chrome on the bot's own machine, so it "
+                    "does not work on a Raspberry Pi or any other ARM machine."
+                ),
+                t("To connect an account, send this command: li nf"),
+            ]
+        )
 
     def initialize(self) -> None:
         if self._engine is None:
@@ -52,6 +82,9 @@ class NetflixService(Service):
 
     def attach_engine(self, engine) -> None:
         self._engine = engine
+        # See BrowserService.attach_engine: the warning describes the moment
+        # before the engine existed and must not outlive it.
+        self.warning_message = ""
 
     def _require_engine(self):
         if self._engine is None:
@@ -84,6 +117,24 @@ class NetflixService(Service):
             engine="browser",
             extra_info={"id": item.get("id", ""), "kind": item.get("kind", "title")},
         )
+
+    def describe_tracks(self, tracks: List[Track]) -> str:
+        """The numbered list, with each entry named by what it is.
+
+        Netflix is its own class rather than a BrowserService, but its results
+        carry the same `kind` the other four do, so it gets the same labelled
+        list. Borrowed unbound rather than duplicated: describe_tracks only ever
+        reads self.translator, and a second copy of the labelling is a second
+        place for the two to drift apart.
+        """
+        from bot.services.browser_service import BrowserService
+
+        return BrowserService.describe_tracks(self, tracks)
+
+    def describe_results(self, results: List[Dict[str, Any]]) -> str:
+        from bot.services.browser_service import BrowserService
+
+        return BrowserService.describe_results(self, results)
 
     # -- the Service interface --------------------------------------------
 

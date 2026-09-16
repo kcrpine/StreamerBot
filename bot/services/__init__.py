@@ -35,6 +35,16 @@ class Service(ABC):
     def download(self, track: Track, file_path: str, video: bool = False) -> None:
         downloader.download_file(track.url, file_path)
 
+    def describe_tracks(self, tracks: List[Track]) -> str:
+        """Search results as a numbered list, for the `sl N` that follows.
+
+        The numbering is what `sl` selects on. Services whose results have kinds
+        — an album is not the song on it — override this to say so on each
+        line; a service that returns only videos or only songs has nothing to
+        add and says nothing, rather than labelling every entry identically.
+        """
+        return "\n".join(f"{i}. {track.name}" for i, track in enumerate(tracks, 1))
+
     @abstractmethod
     def get(
         self,

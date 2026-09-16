@@ -1051,6 +1051,30 @@ Recorded 13 September 2026, when the code was written. None of it has yet run ag
 
 ---
 
+### Every coding task publishes an auto-updating artifact page
+
+**Not optional, and not only at the end.** Terminal scrollback is the worst possible medium for the
+person this project is built for: it cannot be navigated by heading, a long tool result buries the one
+sentence that matters, and re-reading it means arrowing through hundreds of lines that were only ever
+meant for the machine. Publish the work as an Artifact instead, and hand back the link.
+
+- **Publish early, then keep republishing to the same URL.** The page goes up as soon as there is
+  something to say — what is being changed and why — and is republished as the work moves, so it is a
+  live view rather than a report written afterwards. Pass the artifact's `url` to update it in place;
+  a new URL is a new page and loses whatever the person had open.
+- **Structure it for a screen reader, because that is the point of publishing it.** Real headings in
+  order, a `<main>`, tables with a `<caption>` and `<th scope>`, state given in words and not only in
+  colour, and a skip link. This is the same standard the web portal is held to; see "Accessibility is
+  binding". Route the page through the `accessibility-lead` agent before publishing it, exactly as the
+  hooks require for the portal.
+- **Say what changed, what it replaces, and what is still unverified.** A status page that only lists
+  green ticks is worth nothing. Name the parts that were not run, and why — no Docker on the host, no
+  live account to test against, a test that exercises a stand-in rather than the real dependency.
+- **End with a summary section.** Last on the page, so the review cursor lands on it, and written so it
+  stands on its own for someone who reads nothing else.
+- **The page is a view of the work, never the record of it.** `CHANGELOG.md` and the plan remain the
+  source of truth and are still updated in the same commit. The artifact is not committed.
+
 ## Delivery order
 
 Each phase has an exit criterion you can actually check.
@@ -1069,6 +1093,8 @@ Each phase has an exit criterion you can actually check.
 | **9** 🔨 | YouTube browser-session sign-in with scheduled per-bot refresh, replacing OAuth for playback (see "Phase 9 — YouTube sign-in through a real browser session") | On the VPS that currently answers `LOGIN_REQUIRED` to every client, a bot signed in through the portal plays a YouTube video and a livestream; a session killed on Google's side produces the renewal message to the requester, not "service unavailable"; two bots on one host hold two different Google sessions. **BUILT, NOT YET VERIFIED LIVE** ([027]) — see "What Phase 9 built" below; the exit criterion needs the VPS |
 
 | **10** 🔨 | Adopt bot folders copied into `bots/` by hand, and decide foreign lineage by shape in the shell as well as in Python (see "Phase 10 — adopting a folder somebody copied in") | On a host with Docker, a TTMediaBot folder copied into `bots/` over scp is found by the scan, reported with its own nickname and server, adopted, and the resulting bot joins its channel under the name it had before. **BUILT, VERIFIED IN CI, NOT YET RUN AGAINST A REAL DOCKER HOST** ([029], [030]) — every `docker` call in the tests is a stub, so container creation is pinned by its flags rather than by a container existing |
+
+| **11** 🔨 | Search without stopping playback, list every result with its kind, and answer `sv` from live state instead of a startup string (see "Phase 11 — searching while playing, and telling the truth about a service") | With a track playing on Apple Music, `sr` then `p <query>` lists twenty-five results naming each one's kind and the track keeps playing; `sl N` switches to the chosen one; `sv am` says Apple Music is connected and ready, `sv am h` explains it, and `sv nf` names `li nf`. **BUILT, NOT YET VERIFIED LIVE** ([031], [032], [033], [034], [035]) — the page split and the readiness lookup need a host with Chrome and a connected account |
 
 Phase 0 is the riskiest to skip and the cheapest to verify. Phase 4 gives the engine abstraction its
 first real workout on the *easier* of the two external engines, before Chrome.
@@ -1393,3 +1419,145 @@ is the exit criterion in the delivery table.
 The local development host for this phase had neither Docker nor `jq`, so the behaviour tests silently
 skipped there and the first full run was in WSL. Worth knowing for anyone working on the shell scripts
 from Windows: **a green run on that host may mean the tests did not execute.** Check the skip count.
+
+---
+
+## Phase 11 — searching while playing, and telling the truth about a service
+
+Not in the original plan. It came from a session log (`sv`/`sr`/`p` against Apple Music and YouTube,
+15–16 September 2026) in which three separate things were wrong at once, and all three read to the user
+as "the bot is broken" rather than as the three unrelated defects they are.
+
+### A search stopped the music, and nothing said so
+
+`BrowserEngine` keyed its pages by service alone — `self._pages[service]` — so every adapter call for a
+service ran on the **same tab**. That tab is where the audio is. `AppleMusicAdapter.search` opens
+`music.apple.com/<storefront>/search?term=…` with `page.goto(...)`, and navigating a tab ends whatever
+MusicKit was playing in it. `is_logged_in` does the same thing: it `goto`s the home page to ask MusicKit
+whether it is authorized. So *asking whether a service is signed in* could stop the music as surely as
+searching did.
+
+Nothing reported it because nothing failed. No exception, no `ServiceError`, no end-of-file event — the
+tab simply became a different page, and `Player.state` still said Playing. This is the same shape as the
+stream-proxy 403 recorded in Phase 9's notes: a failure with no error object attached is invisible to
+every layer above it, and shows up only as behaviour a user has to describe in prose.
+
+**One page is not enough. Each browser service gets a player page and an auxiliary page**, both in the
+same persistent context so they share the sign-in:
+
+- The **player page** is used by `play`, `pause`, `resume`, `stop`, `seek`, `set_volume`,
+  `get_position`, `get_duration`, the audio-track calls and `now_playing`. Nothing else may navigate it.
+- The **auxiliary page** takes everything that navigates for its own reasons: `search`, `is_logged_in`,
+  `login`, the profile calls, `export_session` and `import_session`.
+
+Cookies live in the context, not the page, so a sign-in on the auxiliary page is a sign-in for the
+player page. `sign_out` drops every page for the service, not just one, or the next call resurrects a
+page belonging to a context that has been closed.
+
+The rule to carry forward: **a page that is producing audio is a playback device, not a browser tab.**
+Any new adapter method that calls `goto`, `reload` or `go_back` belongs on the auxiliary page unless
+playback is the thing it is changing.
+
+### Search results mode showed exactly one result
+
+Two independent limits, both set to 1, and neither wrong on its own:
+
+- `CommandProcessor.search_results_count` — what `slc` sets — defaulted to **1**.
+- `services.yt.search_results` and `services.ytm.search_results` in the shipped config are **1**, and
+  `YtService.search` uses that whenever `limit` is None.
+
+In ordinary mode both are right: `p <query>` plays the best match, and asking YouTube for twenty-five
+results to throw away twenty-four is waste. In search results mode they mean "here is your choice of
+one", which is not a choice. The log shows it plainly — `limit=1 … results=1` for the same Apple Music
+query that returned 25 a minute earlier with `limit=None`.
+
+**Search results mode gets its own default, and does not read the play-the-top-hit limit.** `slc`
+continues to set it, `slc 0` means "as many as the service returns", and `services.*.search_results`
+keeps meaning what it means for a bare `p`.
+
+### The list did not say what anything was
+
+`BrowserService.describe_results` was built in Phase 6 to the plan's "Search result ordering" section —
+summary of counts first, then numbered entries each naming its kind — and it has tests. It was never
+called. `_search_and_play` formats the list itself as `f"{i + 1}: {track.name}"`, which drops the kind
+entirely, so an album, an artist and a song are three identical-looking lines.
+
+`order_results` *is* called, so the ordering was right and only the labelling was missing: the results
+are already grouped, artists and albums and playlists before individual tracks, exactly as specified.
+
+Wiring it up goes through the service rather than the command, because only the service knows what its
+kinds are. `Service.describe_tracks(tracks)` returns a plain numbered list; `BrowserService` overrides it
+to reuse `describe_results`. A service with no notion of kind — YouTube, Spotify — keeps the plain list
+rather than inventing a label for everything.
+
+### Playback continues until a track is chosen
+
+This is the point of the mode and it was never written down. `p <query>` in search results mode queues
+nothing and plays nothing; it reads out a list. **Whatever was playing keeps playing** until `sl N`
+selects from that list, and only then does the player change tracks. With the page split above this is
+now what happens for the browser services too, which is where it visibly was not.
+
+### `sv <service>` called a service "not ready" while it was playing
+
+`BrowserService.initialize()` sets `warning_message` to "%(service)s is not ready yet." when no engine is
+attached yet — correct at that moment, because `ServiceManager` is built before the engine exists. But
+`attach_engine()` never cleared it. Nothing else ever wrote to that field, so the warning outlived the
+condition for the whole life of the process, and `sv am` said Apple Music was not ready in the same
+minute Apple Music was streaming into the channel. `NetflixService` and `SpotifyService` have the same
+line and the same omission.
+
+**Readiness is a question answered when it is asked, not a string left behind by startup.** `sv` now
+reports, per service:
+
+- **Disabled**, with the reason, when `is_enabled` is false. This is the arm64-has-no-Chrome case and it
+  is already set correctly during startup.
+- **Not connected**, naming the command that fixes it, when the service needs an account and the auth
+  portal says none is connected.
+- **Connected and ready** otherwise.
+
+The sign-in state comes from `AuthPortal.statuses()`, which is what `li` already reports and is a cheap
+local lookup. It is deliberately **not** `engine.is_logged_in()`: that is a browser round trip of several
+seconds on a command that has always answered instantly, and — before the page split above — it would
+have stopped the music to answer. If the stored account has since been signed out on the service's side,
+the next `p` says so through `NotSignedInError`, which already names the command.
+
+`ytm` reports YouTube's state, because it plays through the same session; it is not a separate account.
+
+### `sv <service> h` had nothing to say
+
+Every service sets `self.help = ""` in its constructor and nothing ever sets it to anything, so
+`sv am h`, `sv yt h` and `sv az h` all answered "This service has no additional help" — while the `sv`
+listing was actively telling users to send exactly that command.
+
+Each service now carries its own help: what it plays, what it needs, what it cannot do, and the command
+that connects it, with the live status line included so the answer is about *this* bot rather than about
+the service in general. This is the per-service walkthrough the plan's "Help must explain how to connect
+each service" section describes; `h connect <service>`, when it is built, should call the same text
+rather than write a second copy of it.
+
+### Found while building it, not part of the phase
+
+`tools/compile_locales.py` — the documented way to regenerate the catalogs after
+changing a string — could not run on a checkout whose path contains a space. It
+built one interpolated string per babel command and ran it with `shell=True`, so
+the shell split the path, babel was handed half a directory name, and the script
+reported "Bable is not installed" for a babel that was installed and working. The
+commands are argument lists now. Worth recording because the failure named the
+wrong cause: anyone hitting it would go and install a package they already had.
+
+It also wrote **absolute** paths into every `#:` source reference. Catalogs
+generated inside the image said `/work/bot/__init__.py`; running the documented
+command on a developer's machine rewrote all 390 of them to that machine's path,
+which is an unreadable diff and a local path committed to the repository. Paths
+are relative now and babel runs from the repository root, so the output is the
+same wherever it is generated. **Generated files have to be reproducible or they
+cannot be reviewed**, and the only thing that made this visible was reading the
+diff rather than the test result.
+
+### Exit criterion
+
+On a host with Chrome and a connected Apple Music account: with a track playing, `sr` then `p <query>`
+returns a numbered list of twenty-five results naming each one's kind, **and the track is still
+playing**; `sl` and a number switches to the chosen one. `sv am` answers "Apple Music is connected and
+ready", `sv am h` explains Apple Music and how it is connected, and `sv nf` on the same host says
+Netflix is not connected and names `li nf`.

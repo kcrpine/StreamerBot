@@ -65,8 +65,42 @@ class SpotifyService(Service):
         self.is_enabled = getattr(config, "enabled", True)
         self.error_message = ""
         self.warning_message = ""
-        self.help = ""
         self._engine = None
+
+    @property
+    def help(self) -> str:
+        """What `sv sp h` answers, above the live status line the command adds.
+
+        Spotify is the one users get stuck on, because pairing the account
+        correctly still leaves search broken and nothing links the two. Say so
+        here rather than leaving them to conclude the pairing failed.
+        """
+        t = self.translator.translate
+        return chr(10).join(
+            [
+                t(
+                    "Spotify plays as its own device signed in to your account, so "
+                    "it needs Spotify Premium. The free tier cannot play here."
+                ),
+                # Two lines, not one: a single chat message is cut at 256
+                # characters and this one ran past it, so it would have been
+                # split mid-sentence at whatever word happened to land there.
+                t(
+                    "Pasting a Spotify link works as soon as the account is paired. "
+                    "Searching by name needs one more thing: a Spotify application, "
+                    "which whoever runs this bot sets up once for everybody."
+                ),
+                t(
+                    "So if links play but searching does not, that is what is "
+                    "missing, not your account."
+                ),
+                t(
+                    "Pairing is done on another device: the bot replies with a code "
+                    "and an address to enter it at. Nothing is typed into this channel."
+                ),
+                t("To pair your account, send this command: li sp"),
+            ]
+        )
         self._store = None
         self._token = ""
         self._token_at = 0.0
@@ -81,6 +115,9 @@ class SpotifyService(Service):
 
     def attach_engine(self, engine) -> None:
         self._engine = engine
+        # See BrowserService.attach_engine: the warning describes the moment
+        # before the engine existed and must not outlive it.
+        self.warning_message = ""
 
     # -- auth --------------------------------------------------------------
 
