@@ -6,6 +6,40 @@ issue or a commit message. Numbering continues across releases.
 
 ## Unreleased
 
+- **[037]** Spotify and Amazon Music search for albums, artists and playlists as
+  well as songs, and a bare `p QUERY` still plays the song.
+
+  Spotify asked `/search` for `type=track` only, so however well the list
+  labelled its results there were never any albums or artists in it to label. It
+  now asks for all four types in one request. Selecting a container with `sl`
+  expands it into its tracks through the same `get()` a pasted link already uses,
+  rather than handing the daemon an album URI where it expects a track — an
+  artist URI in particular names nothing that can be played at all. The list
+  reads "Album: Lifer, by MercyMe" while `Playing` still says
+  "MercyMe - Even If", because the queue, the recents list and every existing
+  message use that second form and changing it was not part of this.
+
+  Amazon Music already returned the four kinds, and ordering containers first
+  therefore meant a bare `p QUERY` started whichever album or artist the page
+  rendered first. Both services now promote their best single song to a top
+  result, which is what Apple Music gets from its own search page, so the
+  containers can lead the list without the bare command losing the song.
+
+  Two more defects in the Amazon search, found while there. Its URL interpolated
+  the query raw into a path segment, so "AC/DC" asked for the album listing of an
+  artist called AC and anything after a question mark was dropped; it is encoded
+  now. And it waited a flat 3.5 seconds before scraping, which on a slow host
+  returned nothing and on a fast one could catch a partial render — the same
+  failure Apple Music was measured hitting, where the settled top result was
+  absent from the set read too early. It now reads until the list stops changing.
+  It also picks up the artist from the surrounding row, so its lines name one.
+
+  The ordering, labelling and top-result rules moved to `bot/services/results.py`.
+  They lived in `browser_service.py` while the four browser services were the
+  only users; Netflix borrowed them, then Spotify, and a third borrower is where
+  shared vocabulary stops being a detail of one module. Apple Music's own copy of
+  the spoken-title wording is gone with it.
+
 - **[036]** Every coding task now publishes an auto-updating Artifact page and
   hands back the link, recorded as a convention in `CLAUDE.md` and the plan.
   Terminal scrollback is the worst medium for this project's users: it cannot be

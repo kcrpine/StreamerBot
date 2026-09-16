@@ -9,12 +9,15 @@ from types import SimpleNamespace
 from unittest import TestCase
 from unittest.mock import Mock
 
-from bot import app_vars
+from bot import app_vars, errors
 from bot.commands.user_commands import ServiceCommand
 from bot.player.engines.browser_engine import AUX, PLAYER, BrowserEngine
 from bot.services import Service
 from bot.services.browser_service import AppleMusicService
 from bot.services.netflix import NetflixService
+from bot.services.results import promote_first_playable, spoken_title
+from bot.services.spotify import SpotifyService
+from bot.services.web.amazon_music import AmazonMusicAdapter
 
 
 def make_service(cls, engine=None):
@@ -286,6 +289,183 @@ class ServiceListTests(TestCase):
 
         self.assertIn("am (ready)", text)
         self.assertIn("az (not connected, send li az)", text)
+
+
+class SpotifyMultiTypeSearchTests(TestCase):
+    """Spotify searched type=track only, so its list had no albums or artists to
+    label however well the labelling worked."""
+
+    def setUp(self):
+        self.service = object.__new__(SpotifyService)
+        self.service.name = "sp"
+        self.service.translator = SimpleNamespace(translate=lambda s: s)
+
+    def _answer(self):
+        return {
+            "tracks": {"items": [
+                {"uri": "spotify:track:1", "id": "1", "name": "Even If",
+                 "artists": [{"name": "MercyMe"}]},
+                {"uri": "spotify:track:2", "id": "2", "name": "Even If (Live)",
+                 "artists": [{"name": "MercyMe"}]},
+            ]},
+            "albums": {"items": [
+                {"uri": "spotify:album:9", "id": "9", "name": "Lifer",
+                 "artists": [{"name": "MercyMe"}]},
+            ]},
+            "artists": {"items": [
+                {"uri": "spotify:artist:7", "id": "7", "name": "MercyMe", "artists": []},
+            ]},
+            # Spotify sends a literal null here for a type it has nothing for
+            "playlists": {"items": [None]},
+        }
+
+    def test_all_four_types_come_back(self):
+        self.service._get = lambda path, **kw: self._answer()
+
+        kinds = [t.extra_info["kind"] for t in self.service.search("even if")]
+
+        self.assertIn("album", kinds)
+        self.assertIn("artist", kinds)
+        self.assertIn("track", kinds)
+
+    def test_one_request_asks_for_all_four(self):
+        seen = {}
+        self.service._get = lambda path, **kw: (seen.update(kw), self._answer())[1]
+
+        self.service.search("even if")
+
+        self.assertEqual(seen["type"], "track,album,artist,playlist")
+
+    def test_a_null_item_is_skipped_rather_than_crashing(self):
+        """Spotify sends null in the items array of a type it has nothing for,
+        which is not the same as an empty array."""
+        self.service._get = lambda path, **kw: self._answer()
+
+        names = [t.name for t in self.service.search("even if")]
+
+        self.assertTrue(all(names))
+
+    def test_the_best_song_still_leads_so_a_bare_p_plays_it(self):
+        """Ordering containers first without this starts an album, or an artist,
+        which cannot be played at all."""
+        self.service._get = lambda path, **kw: self._answer()
+
+        first = self.service.search("even if")[0]
+
+        self.assertEqual(first.extra_info["kind"], "top")
+        self.assertEqual(first.extra_info["top_kind"], "track")
+        self.assertEqual(first.url, "spotify:track:1")
+
+    def test_containers_come_before_the_remaining_tracks(self):
+        self.service._get = lambda path, **kw: self._answer()
+
+        kinds = [t.extra_info["kind"] for t in self.service.search("even if")]
+
+        self.assertLess(kinds.index("artist"), kinds.index("track"))
+        self.assertLess(kinds.index("album"), kinds.index("track"))
+
+    def test_an_ordinary_track_name_is_unchanged(self):
+        """Every existing message, the queue and the recents list show this name."""
+        track = self.service._track(
+            {"uri": "spotify:track:1", "id": "1", "name": "Even If",
+             "artists": [{"name": "MercyMe"}]}
+        )
+
+        self.assertEqual(track.name, "MercyMe - Even If")
+
+    def test_nothing_found_is_still_nothing_found(self):
+        self.service._get = lambda path, **kw: {}
+
+        with self.assertRaises(errors.NothingFoundError):
+            self.service.search("nothing at all")
+
+
+class SelectionExpansionTests(TestCase):
+    """The daemon is handed a track URI, and an artist URI names nothing it can
+    play at all."""
+
+    def setUp(self):
+        self.service = object.__new__(SpotifyService)
+        self.service.name = "sp"
+        self.service.translator = SimpleNamespace(translate=lambda s: s)
+
+    def test_an_album_becomes_its_tracks(self):
+        album = SimpleNamespace(url="spotify:album:9", name="Lifer",
+                                extra_info={"kind": "album"})
+        self.service.get = lambda url: ["a", "b", "c"]
+
+        self.assertEqual(self.service.expand_selection(album), ["a", "b", "c"])
+
+    def test_a_promoted_top_track_is_played_as_itself(self):
+        top = SimpleNamespace(url="spotify:track:1", name="Even If",
+                              extra_info={"kind": "top", "top_kind": "track"})
+
+        self.assertEqual(self.service.expand_selection(top), [top])
+
+    def test_a_plain_track_is_played_as_itself(self):
+        track = SimpleNamespace(url="spotify:track:1", name="Even If",
+                                extra_info={"kind": "track"})
+
+        self.assertEqual(self.service.expand_selection(track), [track])
+
+    def test_a_browser_service_expands_nothing_because_the_site_queues_it(self):
+        album = SimpleNamespace(url="https://music.apple.com/us/album/1",
+                                name="Lifer", extra_info={"kind": "album"})
+
+        self.assertEqual(
+            make_service(AppleMusicService).expand_selection(album), [album]
+        )
+
+
+class AmazonSearchTests(TestCase):
+    def test_the_query_is_encoded_into_the_path(self):
+        """The path segment was interpolated raw, so a slash asked for an
+        entirely different page."""
+        url = AmazonMusicAdapter.search_url("AC/DC back in black")
+
+        self.assertNotIn("AC/DC", url)
+        self.assertIn("AC%2FDC", url)
+
+    def test_a_question_mark_does_not_truncate_the_query(self):
+        url = AmazonMusicAdapter.search_url("Whats up?")
+
+        self.assertTrue(url.endswith("%3F"))
+
+    def test_the_first_song_leads_so_a_bare_p_plays_a_song(self):
+        results = promote_first_playable([
+            {"title": "MercyMe", "kind": "artist"},
+            {"title": "Lifer", "kind": "album"},
+            {"title": "Even If", "kind": "track"},
+        ])
+
+        self.assertEqual(results[0]["kind"], "top")
+        self.assertEqual(results[0]["title"], "Even If")
+
+    def test_promotion_leaves_the_original_list_alone(self):
+        """A cached result list must not be rewritten by being read."""
+        original = [{"title": "Even If", "kind": "track"}]
+
+        promote_first_playable(original)
+
+        self.assertEqual(original[0]["kind"], "track")
+
+    def test_a_result_set_with_no_song_is_left_as_it_is(self):
+        results = promote_first_playable([{"title": "MercyMe", "kind": "artist"}])
+
+        self.assertEqual(results[0]["kind"], "artist")
+
+    def test_the_top_line_says_what_kind_of_thing_it_is(self):
+        """Its group label only says Top result, so the line has to say the rest."""
+        text = spoken_title(
+            {"title": "Even If", "artist": "MercyMe", "kind": "top", "top_kind": "track"}
+        )
+
+        self.assertEqual(text, "Song: Even If, by MercyMe")
+
+    def test_an_ordinary_line_adds_the_artist_only(self):
+        text = spoken_title({"title": "Lifer", "artist": "MercyMe", "kind": "album"})
+
+        self.assertEqual(text, "Lifer, by MercyMe")
 
 
 class ServiceHelpTests(TestCase):

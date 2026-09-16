@@ -39,6 +39,14 @@ from bot import errors
 from bot.player.enums import TrackType
 from bot.player.track import Track
 from bot.services import Service
+from bot.services.results import (
+    describe_results,
+    describe_tracks,
+    is_container,
+    order_results,
+    promote_first_playable,
+    spoken_title,
+)
 
 if TYPE_CHECKING:
     from bot import Bot
@@ -242,22 +250,40 @@ class SpotifyService(Service):
 
     # -- track building ----------------------------------------------------
 
-    def _track(self, item: Dict[str, Any]) -> Track:
+    def _track(self, item: Dict[str, Any], kind: str = "track", top_kind: str = "") -> Track:
         artists = ", ".join(a.get("name", "") for a in item.get("artists", []) if a.get("name"))
         name = item.get("name", "")
+        if kind in ("track", ""):
+            # Unchanged for the ordinary case: this is the name every existing
+            # message, the queue and the recents list already show.
+            spoken = f"{artists} - {name}" if artists else name
+        else:
+            spoken = spoken_title(
+                {"title": name, "artist": artists, "kind": kind, "top_kind": top_kind}
+            )
+        extra = {
+            "id": item.get("id", ""),
+            "duration_ms": item.get("duration_ms"),
+            "album": (item.get("album") or {}).get("name", ""),
+            "kind": kind,
+            # Kept apart from Track.name so the result list can read
+            # "Track: Even If, by MercyMe" while every other message keeps
+            # saying "MercyMe - Even If", which is what the queue, the recents
+            # list and "Playing X" have always shown.
+            "title": name,
+            "artist": artists,
+        }
+        if top_kind:
+            extra["top_kind"] = top_kind
         return Track(
             service=self.name,
             url=item.get("uri", ""),
-            name=f"{artists} - {name}" if artists else name,
+            name=spoken,
             # External: there is no stream to resolve, and the daemon is already
             # producing the audio.
             type=TrackType.External,
             engine="librespot",
-            extra_info={
-                "id": item.get("id", ""),
-                "duration_ms": item.get("duration_ms"),
-                "album": (item.get("album") or {}).get("name", ""),
-            },
+            extra_info=extra,
         )
 
     # -- the Service interface --------------------------------------------
@@ -298,12 +324,94 @@ class SpotifyService(Service):
             self.translator.translate("That kind of Spotify link is not supported.")
         )
 
+    #: What /search is asked for, and the response key each type comes back under.
+    SEARCH_TYPES = (
+        ("track", "tracks"),
+        ("album", "albums"),
+        ("artist", "artists"),
+        ("playlist", "playlists"),
+    )
+
     def search(self, query: str, limit: Optional[int] = None) -> List[Track]:
-        data = self._get("/search", q=query, type="track", limit=min(limit or 20, 50))
-        items = (data.get("tracks") or {}).get("items", [])
-        if not items:
+        """Songs, albums, artists and playlists, not songs alone.
+
+        Spotify returns a separate ranked set per type and has no "top result" of
+        its own, so the best single thing to play is its first track. That one is
+        promoted, which is what keeps a bare `p QUERY` playing the song asked for:
+        ordering containers first without it would start an album, or an artist,
+        which cannot be played at all.
+
+        One request for all four types. Spotify's `limit` is per type, so asking
+        for the full count of each and trimming afterwards is what makes the
+        proportions the service's own rather than this method's.
+        """
+        wanted = min(limit or 20, 50)
+        per_type = max(1, min(wanted, 20))
+        data = self._get(
+            "/search",
+            q=query,
+            type=",".join(name for name, _ in self.SEARCH_TYPES),
+            limit=per_type,
+        )
+
+        results: List[Dict[str, Any]] = []
+        for kind, key in self.SEARCH_TYPES:
+            for item in ((data.get(key) or {}).get("items") or []):
+                # Spotify sends a literal null in the items array of a type it
+                # has nothing for, which is not the same as an empty array.
+                if not item or not item.get("uri"):
+                    continue
+                results.append({"kind": kind, "item": item})
+
+        if not results:
             raise errors.NothingFoundError("")
-        return [self._track(item) for item in items if item.get("uri")]
+
+        ordered = order_results(promote_first_playable(results))[:wanted]
+        return [
+            self._track(entry["item"], entry["kind"], entry.get("top_kind", ""))
+            for entry in ordered
+        ]
+
+    def expand_selection(self, track: Track) -> List[Track]:
+        """An album, artist or playlist chosen from a list becomes its tracks.
+
+        Through get(), which is the same path a pasted link takes, so there is one
+        expansion per service and not two. Without this the daemon is handed an
+        album URI where it expects a track, and an artist URI names nothing it can
+        play at all.
+        """
+        if not is_container(track):
+            return [track]
+        return self.get(track.url) or [track]
+
+    def describe_tracks(self, tracks: List[Track]) -> str:
+        """Every line in the same shape, naming the kind and then the artist.
+
+        Not the shared helper, which reads Track.name: that is deliberately the
+        old "MercyMe - Even If" for a song, so a list built from it would read
+        "Track: MercyMe - Even If" next to "Album: Lifer, by MercyMe".
+        """
+        return describe_results(
+            self.translator,
+            [
+                {
+                    "kind": (track.extra_info or {}).get("kind", "track"),
+                    "title": spoken_title(
+                        {
+                            "title": (track.extra_info or {}).get("title", track.name),
+                            "artist": (track.extra_info or {}).get("artist", ""),
+                            # the group label already says which kind this is
+                            "kind": (track.extra_info or {}).get("kind", "track"),
+                            "top_kind": (track.extra_info or {}).get("top_kind", ""),
+                        }
+                    ),
+                }
+                for track in tracks
+            ],
+        )
+
+    def describe_results(self, results: List[Dict[str, Any]]) -> str:
+        return describe_results(self.translator, results)
 
     def download(self, track: Track, file_path: str, video: bool = False) -> None:
         # Spotify audio is DRM protected and the daemon decrypts it only into the

@@ -35,6 +35,16 @@ class Service(ABC):
     def download(self, track: Track, file_path: str, video: bool = False) -> None:
         downloader.download_file(track.url, file_path)
 
+    def expand_selection(self, track: Track) -> List[Track]:
+        """What to play when this result is chosen from a search list.
+
+        One track for most results, and for most services always: the browser
+        engine hands an album URL to the site's own player, which queues it.
+        Spotify is the exception and overrides this, because the daemon expects a
+        single track URI and an artist URI names nothing playable at all.
+        """
+        return [track]
+
     def describe_tracks(self, tracks: List[Track]) -> str:
         """Search results as a numbered list, for the `sl N` that follows.
 

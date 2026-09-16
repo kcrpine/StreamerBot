@@ -1094,7 +1094,7 @@ Each phase has an exit criterion you can actually check.
 
 | **10** 🔨 | Adopt bot folders copied into `bots/` by hand, and decide foreign lineage by shape in the shell as well as in Python (see "Phase 10 — adopting a folder somebody copied in") | On a host with Docker, a TTMediaBot folder copied into `bots/` over scp is found by the scan, reported with its own nickname and server, adopted, and the resulting bot joins its channel under the name it had before. **BUILT, VERIFIED IN CI, NOT YET RUN AGAINST A REAL DOCKER HOST** ([029], [030]) — every `docker` call in the tests is a stub, so container creation is pinned by its flags rather than by a container existing |
 
-| **11** 🔨 | Search without stopping playback, list every result with its kind, and answer `sv` from live state instead of a startup string (see "Phase 11 — searching while playing, and telling the truth about a service") | With a track playing on Apple Music, `sr` then `p <query>` lists twenty-five results naming each one's kind and the track keeps playing; `sl N` switches to the chosen one; `sv am` says Apple Music is connected and ready, `sv am h` explains it, and `sv nf` names `li nf`. **BUILT, NOT YET VERIFIED LIVE** ([031], [032], [033], [034], [035]) — the page split and the readiness lookup need a host with Chrome and a connected account |
+| **11** 🔨 | Search without stopping playback, list every result with its kind, and answer `sv` from live state instead of a startup string (see "Phase 11 — searching while playing, and telling the truth about a service") | With a track playing on Apple Music, `sr` then `p <query>` lists twenty-five results naming each one's kind and the track keeps playing; `sl N` switches to the chosen one; `sv am` says Apple Music is connected and ready, `sv am h` explains it, and `sv nf` names `li nf`. **BUILT, NOT YET VERIFIED LIVE** ([031] to [037]) — the page split and the readiness lookup need a host with Chrome and a connected account |
 
 Phase 0 is the riskiest to skip and the cheapest to verify. Phase 4 gives the engine abstraction its
 first real workout on the *easier* of the two external engines, before Chrome.
@@ -1534,6 +1534,38 @@ that connects it, with the live status line included so the answer is about *thi
 the service in general. This is the per-service walkthrough the plan's "Help must explain how to connect
 each service" section describes; `h connect <service>`, when it is built, should call the same text
 rather than write a second copy of it.
+
+### Spotify and Amazon Music got the ordering the plan already specified
+
+The plan's "Search result ordering" section names Spotify, Apple Music and Amazon
+Music. Only the browser services were ever built to it, and Spotify's search asked
+`/search` for `type=track` alone — so however well the list labelled its results,
+there were never any albums or artists in it to label.
+
+Both are done now, and both needed the same thing to be safe: **a top result.**
+Ordering containers before tracks is right for a list being heard, and it is wrong
+for `p QUERY`, which plays the first result. Apple Music escapes this because its
+own search page supplies a `top`; Spotify has no such concept and Amazon's scrape
+is in DOM order, so a bare search on either would have started an album — or an
+artist, which cannot be played at all. Both now promote their first real song, so
+the containers lead the list without the bare command losing the song.
+
+Selecting a container has to expand it. Spotify's `get()` already turned an album,
+artist or playlist link into tracks, so `sl` routes through it rather than handing
+the daemon a URI it cannot play; the browser services need none of this, because
+the site's own player queues an album when it is given one.
+
+Two defects in the Amazon search found on the way, both of the shape Apple Music
+had already been fixed for: the query was interpolated raw into a path segment, so
+`AC/DC` asked for a different page entirely, and the scrape waited a flat 3.5
+seconds rather than until the list stopped changing. **The lesson from Apple Music
+did not travel to the file next to it** — worth knowing when the third adapter
+grows a search.
+
+`bot/services/results.py` now holds the ordering, the labels and the top-result
+rule. They lived in `browser_service.py` while the four browser services were the
+only users; Netflix borrowed them, then Spotify, and a third borrower is the point
+at which shared vocabulary stops being a detail of one module.
 
 ### Found while building it, not part of the phase
 

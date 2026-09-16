@@ -18,6 +18,7 @@ from bot import errors
 from bot.player.enums import TrackType
 from bot.player.track import Track
 from bot.services import Service
+from bot.services.results import describe_results, describe_tracks
 
 if TYPE_CHECKING:
     from bot import Bot
@@ -122,19 +123,12 @@ class NetflixService(Service):
         """The numbered list, with each entry named by what it is.
 
         Netflix is its own class rather than a BrowserService, but its results
-        carry the same `kind` the other four do, so it gets the same labelled
-        list. Borrowed unbound rather than duplicated: describe_tracks only ever
-        reads self.translator, and a second copy of the labelling is a second
-        place for the two to drift apart.
+        carry the same `kind` the other four do, so it reads back the same way.
         """
-        from bot.services.browser_service import BrowserService
-
-        return BrowserService.describe_tracks(self, tracks)
+        return describe_tracks(self.translator, tracks)
 
     def describe_results(self, results: List[Dict[str, Any]]) -> str:
-        from bot.services.browser_service import BrowserService
-
-        return BrowserService.describe_results(self, results)
+        return describe_results(self.translator, results)
 
     # -- the Service interface --------------------------------------------
 

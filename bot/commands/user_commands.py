@@ -1137,6 +1137,17 @@ class SelectSearchResultCommand(Command):
         # Clear pending results after selection
         del self.command_processor.pending_search_results[user.id]
 
+        # An album, artist or playlist is not one thing to play. The service
+        # turns it into its tracks through the same get() a pasted link uses.
+        try:
+            tracks = self.service_manager.service.expand_selection(track)
+        except errors.ServiceError:
+            return self.translator.translate(
+                "The selected service is currently unavailable"
+            )
+        if not tracks:
+            return self.translator.translate("Nothing is found for your query")
+
         if self.config.general.send_channel_messages:
             self.run_async(
                 self.ttclient.send_message,
@@ -1146,8 +1157,12 @@ class SelectSearchResultCommand(Command):
                 type=2,
             )
 
-        self.run_async(self.player.play, [track])
-        return self.translator.translate("Playing {}").format(track.name)
+        self.run_async(self.player.play, tracks)
+        if len(tracks) > 1:
+            return self.translator.translate(
+                "Playing {name}, {count} tracks"
+            ).format(name=track.name, count=len(tracks))
+        return self.translator.translate("Playing {}").format(tracks[0].name)
 
 
 class SearchResultsCountCommand(Command):

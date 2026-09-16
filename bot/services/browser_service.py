@@ -19,41 +19,19 @@ from bot import errors
 from bot.player.enums import TrackType
 from bot.player.track import Track
 from bot.services import Service
+from bot.services.results import (
+    KIND_LABELS,
+    KIND_LABELS_PLURAL,
+    KIND_ORDER,
+    describe_results,
+    describe_tracks,
+    order_results,
+)
 
 if TYPE_CHECKING:
     from bot import Bot
 
 logger = logging.getLogger(__name__)
-
-# Which kinds are shown before which, when a search returns several. Artists,
-# albums and playlists lead because they are containers: hearing them first lets
-# a user pick a whole thing rather than wading through individual tracks.
-KIND_ORDER = ("top", "artist", "album", "playlist", "series", "title", "track")
-
-KIND_LABELS = {
-    "artist": "Artist",
-    "album": "Album",
-    "playlist": "Playlist",
-    "series": "Series",
-    "title": "Title",
-    "track": "Track",
-    "top": "Top result",
-}
-
-# The summary line counts things, and "24 Track" read aloud is wrong in a way
-# that a written list gets away with. Kept as its own table rather than adding
-# an "s", because a translator needs both forms and several shipped languages
-# do not pluralise by suffix at all.
-KIND_LABELS_PLURAL = {
-    "artist": "Artists",
-    "album": "Albums",
-    "playlist": "Playlists",
-    "series": "Series",
-    "title": "Titles",
-    "track": "Tracks",
-    "top": "Top results",
-}
-
 
 class BrowserService(Service):
     """Shared behaviour for the four services the browser engine plays."""
@@ -169,72 +147,16 @@ class BrowserService(Service):
         )
 
     def order_results(self, results: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        """Group by kind without disturbing the service's own ranking.
-
-        The service's ordering is its answer to the query and re-sorting it by
-        title or duration produces worse results, so within each kind the
-        original order is preserved exactly; only the groups are reordered.
-
-        Grouping matters more here than in a visual interface. A sighted user
-        skims a mixed list and picks out the album. A screen reader user hears
-        all twenty-five entries in sequence, so "three albums, then the tracks"
-        is navigable where an interleaved list is not.
-        """
-        by_kind: Dict[str, List[Dict[str, Any]]] = {}
-        for item in results:
-            by_kind.setdefault(item.get("kind", "title"), []).append(item)
-
-        ordered: List[Dict[str, Any]] = []
-        for kind in KIND_ORDER:
-            ordered.extend(by_kind.pop(kind, []))
-        for remaining in by_kind.values():  # anything the site invented
-            ordered.extend(remaining)
-        return ordered
+        """Containers before individual tracks, service ranking kept within each."""
+        return order_results(results)
 
     def describe_results(self, results: List[Dict[str, Any]]) -> str:
-        """A numbered list, each line naming its kind first.
-
-        Kind first because that is the word being listened for, and it lets
-        someone stop reading once they hear the one they want.
-        """
-        counts: Dict[str, int] = {}
-        for item in results:
-            counts[item.get("kind", "title")] = counts.get(item.get("kind", "title"), 0) + 1
-
-        summary_parts = [
-            self.translator.translate("%(count)s %(kind)s")
-            % {
-                "count": count,
-                "kind": self.translator.translate(
-                    (KIND_LABELS if count == 1 else KIND_LABELS_PLURAL).get(kind, kind)
-                ),
-            }
-            for kind, count in counts.items()
-        ]
-        lines = [", ".join(summary_parts) + "."]
-        for index, item in enumerate(results, 1):
-            label = self.translator.translate(KIND_LABELS.get(item.get("kind", "title"), "Title"))
-            lines.append(f"{index}. {label}: {item.get('title', '')}")
-        return "\n".join(lines)
+        """A numbered list, each line naming its kind first."""
+        return describe_results(self.translator, results)
 
     def describe_tracks(self, tracks: List[Any]) -> str:
-        """The same list, once the results have become Tracks.
-
-        `search()` keeps each result's kind in `extra_info`, so the numbered list
-        the user hears can name it. This is the only caller of
-        `describe_results`: the kinds are the whole point of a grouped list and
-        the command used to print bare titles, which made an album, an artist
-        and a song three identical-looking lines.
-        """
-        return self.describe_results(
-            [
-                {
-                    "kind": (getattr(track, "extra_info", None) or {}).get("kind", "title"),
-                    "title": track.name,
-                }
-                for track in tracks
-            ]
-        )
+        """The same list, once the results have become Tracks."""
+        return describe_tracks(self.translator, tracks)
 
     # -- the Service interface --------------------------------------------
 
@@ -331,6 +253,8 @@ class AmazonMusicService(BrowserService):
 
 __all__ = [
     "BrowserService",
+    "KIND_LABELS",
+    "KIND_LABELS_PLURAL",
     "DisneyService",
     "AppleMusicService",
     "AmazonMusicService",

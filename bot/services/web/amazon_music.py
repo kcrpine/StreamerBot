@@ -25,6 +25,7 @@ from __future__ import annotations
 import logging
 from typing import Any, Dict, List, Optional
 
+from bot.services.results import promote_first_playable, spoken_title
 from bot.services.web import WebServiceAdapter
 
 logger = logging.getLogger(__name__)
@@ -146,41 +147,102 @@ class AmazonMusicAdapter(WebServiceAdapter):
 
     # -- finding things ----------------------------------------------------
 
+    SEARCH_SCRAPE_JS = """() => {
+        const out = [];
+        const seen = new Set();
+        const absolute = (href) => href.startsWith('http')
+            ? href : 'https://music.amazon.com' + href;
+
+        document.querySelectorAll('a[href*="/albums/"], a[href*="/playlists/"], a[href*="/artists/"], a[href*="/tracks/"]')
+          .forEach(a => {
+            const href = a.getAttribute('href') || '';
+            if (!href || seen.has(href)) return;
+            const title = (a.getAttribute('aria-label') || a.textContent || '').trim();
+            if (!title) return;
+            seen.add(href);
+
+            let kind = 'album';
+            if (href.includes('/playlists/')) kind = 'playlist';
+            else if (href.includes('/artists/')) kind = 'artist';
+            else if (href.includes('/tracks/')) kind = 'track';
+
+            // The artist is not on the link itself. It is a sibling link inside
+            // whatever row Amazon rendered, and the row has no stable class, so
+            // this walks up to the nearest plausible container instead.
+            let artist = '';
+            if (kind !== 'artist') {
+                const row = a.closest('music-image-row, music-vertical-item, li, [role="row"], tr');
+                if (row) {
+                    const artistLink = row.querySelector('a[href*="/artists/"]');
+                    if (artistLink) artist = (artistLink.textContent || '').trim();
+                }
+            }
+            out.push({id: absolute(href), url: absolute(href), kind, title, artist});
+        });
+        return out.slice(0, 25);
+    }"""
+
+    SETTLE_POLL_MS = 900
+    SETTLE_MAX_MS = 9000
+
+    def _settled_results(self, page) -> List[Dict[str, Any]]:
+        """Scrape once the result list has stopped changing.
+
+        The old version waited a flat 3.5 seconds and read whatever was there.
+        This app renders late and in stages, so on a slow host that returned an
+        empty list, and on a fast one it could catch a partial render — the same
+        failure Apple Music was measured hitting, where the settled top result was
+        absent from the set read too early. Reading twice and comparing costs
+        nothing when the page is already done.
+        """
+        previous = None
+        waited = 0
+        while True:
+            try:
+                current = page.evaluate(self.SEARCH_SCRAPE_JS) or []
+            except Exception as error:
+                logger.debug(f"[amazon music] search scrape failed: {error}")
+                current = []
+            fingerprint = [item.get("url") for item in current]
+            if current and fingerprint == previous:
+                return current
+            if waited >= self.SETTLE_MAX_MS:
+                return current
+            previous = fingerprint
+            page.wait_for_timeout(self.SETTLE_POLL_MS)
+            waited += self.SETTLE_POLL_MS
+
+    @staticmethod
+    def search_url(query: str) -> str:
+        """The search address, with the query encoded.
+
+        It used to be interpolated raw. Amazon's search path takes the query as a
+        path segment, so a query containing a slash, a question mark or a hash
+        silently became a different URL — "AC/DC" asked for the album listing of
+        an artist called AC, and "What's up?" truncated at the question mark.
+        quote() with no safe characters encodes all three, and a space as %20.
+        """
+        from urllib.parse import quote
+
+        return f"{HOME}/search/{quote(query, safe='')}"
+
     def search(self, page, query: str) -> List[Dict[str, Any]]:
         try:
-            page.goto(f"{HOME}/search/{query}", wait_until="domcontentloaded", timeout=45000)
-            page.wait_for_timeout(3500)  # this app renders late
+            page.goto(self.search_url(query), wait_until="domcontentloaded", timeout=45000)
         except Exception as error:
             logger.debug(f"[amazon music] search navigation failed: {error}")
             return []
-        try:
-            return page.evaluate(
-                """() => {
-                    const out = [];
-                    const seen = new Set();
-                    document.querySelectorAll('a[href*="/albums/"], a[href*="/playlists/"], a[href*="/artists/"], a[href*="/tracks/"]')
-                      .forEach(a => {
-                        const href = a.getAttribute('href') || '';
-                        if (!href || seen.has(href)) return;
-                        const title = (a.getAttribute('aria-label')
-                            || a.textContent || '').trim();
-                        if (!title) return;
-                        seen.add(href);
-                        let kind = 'album';
-                        if (href.includes('/playlists/')) kind = 'playlist';
-                        else if (href.includes('/artists/')) kind = 'artist';
-                        else if (href.includes('/tracks/')) kind = 'track';
-                        out.push({
-                            id: href, title, kind,
-                            url: href.startsWith('http') ? href : 'https://music.amazon.com' + href
-                        });
-                    });
-                    return out.slice(0, 25);
-                }"""
-            ) or []
-        except Exception as error:
-            logger.debug(f"[amazon music] search scrape failed: {error}")
-            return []
+
+        results = self._settled_results(page)
+
+        # An artist cannot be played and an album is not what `p <query>` was
+        # asked for, so the first actual song leads. Without this, ordering
+        # containers first means a bare search starts whichever album or artist
+        # Amazon happened to render first.
+        results = promote_first_playable(results)
+        for item in results:
+            item["title"] = spoken_title(item)
+        return results
 
     # -- playback ----------------------------------------------------------
 

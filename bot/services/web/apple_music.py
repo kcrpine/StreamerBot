@@ -20,6 +20,7 @@ import re
 import time
 from typing import Any, Dict, List, Optional
 
+from bot.services.results import spoken_title
 from bot.services.web import WebServiceAdapter
 
 logger = logging.getLogger(__name__)
@@ -507,20 +508,11 @@ class AppleMusicAdapter(WebServiceAdapter):
     def spoken_title(item: Dict[str, Any]) -> str:
         """The title as read out in a result list.
 
-        A top result says what it is, because its group label only says "Top
-        result": "Song: Adventure of a Lifetime, by Coldplay". Other results
-        already have their kind as the group label, so they only add the artist.
+        Shared with Amazon Music rather than kept here: both sites answer with the
+        same four kinds, and two copies of the wording is two places for them to
+        drift apart.
         """
-        title = (item.get("title") or "").strip()
-        artist = (item.get("artist") or "").strip()
-        by = f", by {artist}" if artist and artist != title else ""
-        if item.get("kind") == "top":
-            kind_word = {"track": "Song", "album": "Album", "artist": "Artist",
-                         "playlist": "Playlist"}.get(item.get("top_kind", ""), "")
-            if item.get("top_kind") == "artist":
-                return f"{kind_word}: {title}" if kind_word else title
-            return f"{kind_word}: {title}{by}" if kind_word else f"{title}{by}"
-        return f"{title}{by}"
+        return spoken_title(item)
 
     SETTLE_POLL_MS = 1000
     SETTLE_MAX_MS = 12000
