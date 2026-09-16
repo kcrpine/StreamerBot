@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  StreamerBot\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-09-14 04:35+0000\n"
+"POT-Creation-Date: 2026-09-15 22:20-0400\n"
 "PO-Revision-Date: 2021-07-17 13:41+0400\n"
 "Last-Translator: \n"
 "Language: tr\n"
@@ -19,22 +19,21 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.18.0\n"
 
-#: /work/bot/__init__.py:183 /work/bot/__init__.py:246
+#: bot/__init__.py:183 bot/__init__.py:246
 msgid ""
 "This needs Google Chrome, which is not available on this machine's "
 "processor architecture."
 msgstr ""
 
-#: /work/bot/__init__.py:228
+#: bot/__init__.py:228
 msgid "Spotify is unavailable: the player could not start."
 msgstr ""
 
-#: /work/bot/__init__.py:261 /work/bot/__init__.py:264
-#: /work/bot/modules/portal_pages.py:478
+#: bot/__init__.py:261 bot/__init__.py:264 bot/modules/portal_pages.py:478
 msgid "The sign-in did not complete."
 msgstr ""
 
-#: /work/bot/__init__.py:277
+#: bot/__init__.py:277
 msgid ""
 "The account portal is switched off in this bot's configuration, so "
 "Netflix, Disney Plus, Apple Music and Amazon Music cannot be connected. "
@@ -44,7 +43,7 @@ msgid ""
 "Portal and Spotify Ports in the manager turns it back on."
 msgstr ""
 
-#: /work/bot/__init__.py:330
+#: bot/__init__.py:330
 #, python-format
 msgid ""
 "The account portal could not start because port %(port)s is already in "
@@ -55,7 +54,7 @@ msgid ""
 "they sign in with a code in the channel."
 msgstr ""
 
-#: /work/bot/__init__.py:340
+#: bot/__init__.py:340
 #, python-format
 msgid ""
 "The account portal could not start, so Netflix, Disney Plus, Apple Music "
@@ -63,26 +62,26 @@ msgid ""
 "file: %(reason)s"
 msgstr ""
 
-#: /work/bot/__init__.py:372
+#: bot/__init__.py:372
 msgid ""
 "Hello! I'm back and ready for you to stream again. Thank you for your "
 "patience!"
 msgstr ""
 
-#: /work/bot/__init__.py:408
+#: bot/__init__.py:408
 msgid ""
 "Hello there! It's me, the Streamer Bot, just coming in here to let you "
 "know that an update is in progress and I will restart in a few moments to"
 " apply it. Thank you!"
 msgstr ""
 
-#: /work/bot/__init__.py:440
+#: bot/__init__.py:440
 msgid "The bot is restarting now to apply the update. See you in a moment!"
 msgstr ""
 "Bot şimdi güncellemeyi uygulamak için yeniden başlatılıyor. Yakında "
 "görüşmek üzere!"
 
-#: /work/bot/app_vars.py:44
+#: bot/app_vars.py:44
 #, python-brace-format
 msgid ""
 "StreamerBot for TeamTalk 5.\n"
@@ -97,47 +96,44 @@ msgid ""
 "Kirill Belousov, and on the fork by Joao Almeida.\n"
 msgstr ""
 
-#: /work/bot/TeamTalk/__init__.py:173
+#: bot/TeamTalk/__init__.py:173
 msgid "Send \"h\" for help"
 msgstr "Yardım için \"h\" gönderin"
 
-#: /work/bot/commands/__init__.py:183
+#: bot/commands/__init__.py:189
 msgid "Unknown command. Send \"h\" for help."
 msgstr "Bilinmeyen komut. Yardım için \"h\" gönderin."
 
-#: /work/bot/commands/__init__.py:189 /work/bot/commands/user_commands.py:829
-#: /work/bot/commands/user_commands.py:835
-#: /work/bot/commands/user_commands.py:1242
-#: /work/bot/commands/user_commands.py:1324
-#: /work/bot/commands/user_commands.py:1396
-#: /work/bot/commands/user_commands.py:1470
-#: /work/bot/modules/playlist_uploader.py:130
-#: /work/bot/modules/playlist_uploader.py:144 /work/bot/modules/uploader.py:97
+#: bot/commands/__init__.py:195 bot/commands/user_commands.py:899
+#: bot/commands/user_commands.py:905 bot/commands/user_commands.py:1319
+#: bot/commands/user_commands.py:1401 bot/commands/user_commands.py:1473
+#: bot/commands/user_commands.py:1547 bot/modules/playlist_uploader.py:130
+#: bot/modules/playlist_uploader.py:144 bot/modules/uploader.py:97
 #, python-brace-format
 msgid "Error: {}"
 msgstr "Hata: {}"
 
-#: /work/bot/commands/__init__.py:201
+#: bot/commands/__init__.py:207
 msgid "You are banned"
 msgstr "Siz engellendiniz"
 
-#: /work/bot/commands/__init__.py:205
+#: bot/commands/__init__.py:211
 msgid "You are not in bot's channel"
 msgstr "botun kanalında değilsiniz"
 
-#: /work/bot/commands/__init__.py:209
+#: bot/commands/__init__.py:215
 msgid "Bot is locked"
 msgstr "Bot kilitli"
 
-#: /work/bot/commands/__init__.py:213
+#: bot/commands/__init__.py:219
 msgid "This command is blocked"
 msgstr "Bu komut kilitli"
 
-#: /work/bot/commands/__init__.py:237
+#: bot/commands/__init__.py:243
 msgid "Unknown command"
 msgstr "Bilinmeyen komut"
 
-#: /work/bot/commands/admin_commands.py:21
+#: bot/commands/admin_commands.py:21
 msgid ""
 "+/-COMMAND Blocks or unblocks commands. +COMMAND adds command to the "
 "blocklist. -COMMAND removes from it. Without a command shows the "
@@ -147,68 +143,60 @@ msgstr ""
 "listesine komut ekler. -KOMUT komutu engelleme listesinden kaldırır. "
 "Komut olmadan engellenen komut listesini gösterir"
 
-#: /work/bot/commands/admin_commands.py:32
-#: /work/bot/commands/admin_commands.py:322
-#: /work/bot/commands/admin_commands.py:352
-#: /work/bot/commands/user_commands.py:564
-#: /work/bot/commands/user_commands.py:576
-#: /work/bot/commands/user_commands.py:632
-#: /work/bot/commands/user_commands.py:1172
-#: /work/bot/commands/user_commands.py:1194
-#: /work/bot/commands/user_commands.py:1257
+#: bot/commands/admin_commands.py:32 bot/commands/admin_commands.py:322
+#: bot/commands/admin_commands.py:352 bot/commands/user_commands.py:634
+#: bot/commands/user_commands.py:646 bot/commands/user_commands.py:702
+#: bot/commands/user_commands.py:1249 bot/commands/user_commands.py:1271
+#: bot/commands/user_commands.py:1334
 msgid "The list is empty"
 msgstr "Liste boş"
 
-#: /work/bot/commands/admin_commands.py:37
-#: /work/bot/commands/admin_commands.py:304
-#: /work/bot/commands/admin_commands.py:336
-#: /work/bot/commands/user_commands.py:527
+#: bot/commands/admin_commands.py:37 bot/commands/admin_commands.py:304
+#: bot/commands/admin_commands.py:336 bot/commands/user_commands.py:597
 msgid "Added"
 msgstr "Eklendi"
 
-#: /work/bot/commands/admin_commands.py:39
+#: bot/commands/admin_commands.py:39
 msgid "This command is already added"
 msgstr "Bu komut zaten eklendi"
 
-#: /work/bot/commands/admin_commands.py:45
-#: /work/bot/commands/admin_commands.py:310
-#: /work/bot/commands/admin_commands.py:342
-#: /work/bot/commands/user_commands.py:539
+#: bot/commands/admin_commands.py:45 bot/commands/admin_commands.py:310
+#: bot/commands/admin_commands.py:342 bot/commands/user_commands.py:609
 msgid "Deleted"
 msgstr "Silindi"
 
-#: /work/bot/commands/admin_commands.py:47
+#: bot/commands/admin_commands.py:47
 msgid "This command is not blocked"
 msgstr "Bu komut kilitli değil"
 
-#: /work/bot/commands/admin_commands.py:56
+#: bot/commands/admin_commands.py:56
 msgid "GENDER Changes bot's gender. n neutral, m male, f female"
 msgstr "CİNSİYET Botun cinsiyetini değiştirir. n nötr, m erkek, f kadın"
 
-#: /work/bot/commands/admin_commands.py:70
+#: bot/commands/admin_commands.py:70
 msgid "LANGUAGE Changes bot's language"
 msgstr "DIL Botun dilini değiştirir"
 
-#: /work/bot/commands/admin_commands.py:78
+#: bot/commands/admin_commands.py:78
 msgid "The language has been changed"
 msgstr "Dil değiştirildi"
 
-#: /work/bot/commands/admin_commands.py:80
+#: bot/commands/admin_commands.py:80
 msgid "Incorrect language"
 msgstr "yanlış dil"
 
-#: /work/bot/commands/admin_commands.py:83
+#: bot/commands/admin_commands.py:83
 #, python-brace-format
 msgid ""
 "Current language: {current_language}. Available languages: "
 "{available_languages}"
 msgstr "Şu anki dil: {current_language}. Mevcut diller: {available_languages}"
 
-#: /work/bot/commands/admin_commands.py:93
+#: bot/commands/admin_commands.py:93
 msgid "NICKNAME Changes bot's nickname"
 msgstr "TAKMA AD Botun takma adını değiştirir"
 
-#: /work/bot/commands/admin_commands.py:104
+#: bot/commands/admin_commands.py:104
 msgid ""
 "r/f Clears bot's cache. r clears recents, f clears favorites, without an "
 "option clears the entire cache"
@@ -216,19 +204,19 @@ msgstr ""
 "r/f Botun önbelleğini temizler. r son çalınan parça listesini siler, f "
 "favorileri siler, seçenek olmadan tüm önbelleği temizler"
 
-#: /work/bot/commands/admin_commands.py:112
+#: bot/commands/admin_commands.py:112
 msgid "Cache cleared"
 msgstr "Önbellek temizlendi"
 
-#: /work/bot/commands/admin_commands.py:116
+#: bot/commands/admin_commands.py:116
 msgid "Recents cleared"
 msgstr "Son çalınan parça listesi temizlendi"
 
-#: /work/bot/commands/admin_commands.py:120
+#: bot/commands/admin_commands.py:120
 msgid "Favorites cleared"
 msgstr "Favoriler temizlendi"
 
-#: /work/bot/commands/admin_commands.py:127
+#: bot/commands/admin_commands.py:127
 msgid ""
 "Join channel. first argument is channel name or id, second argument is "
 "password, split argument \" | \", if password is undefined, don't type "
@@ -238,77 +226,76 @@ msgstr ""
 "argümanları \" | \" ile ayırın, şifre tanımlanmamışsa ikinci argümanı "
 "yazmayın"
 
-#: /work/bot/commands/admin_commands.py:146
+#: bot/commands/admin_commands.py:146
 msgid "This channel does not exist"
 msgstr "Bu kanal mevcut değil"
 
-#: /work/bot/commands/admin_commands.py:160
+#: bot/commands/admin_commands.py:160
 #, python-brace-format
 msgid "Error joining channel: {error}"
 msgstr "Kanala katılırken hata oluştu: {error}"
 
-#: /work/bot/commands/admin_commands.py:208
+#: bot/commands/admin_commands.py:208
 msgid "Enables or disables voice transmission"
 msgstr "Ses iletimini etkinleştirir veya devre dışı bırakır"
 
-#: /work/bot/commands/admin_commands.py:215
-#: /work/bot/commands/admin_commands.py:217
+#: bot/commands/admin_commands.py:215 bot/commands/admin_commands.py:217
 msgid "Voice transmission enabled"
 msgstr "Ses iletimi etkin"
 
-#: /work/bot/commands/admin_commands.py:222
+#: bot/commands/admin_commands.py:222
 msgid "Voice transmission disabled"
 msgstr "Ses iletimi devre dışı"
 
-#: /work/bot/commands/admin_commands.py:228
+#: bot/commands/admin_commands.py:228
 msgid "Locks or unlocks the bot"
 msgstr "Botu kilitler veya kilidini açar"
 
-#: /work/bot/commands/admin_commands.py:233
+#: bot/commands/admin_commands.py:233
 msgid "Locked"
 msgstr "Kilitlendi"
 
-#: /work/bot/commands/admin_commands.py:235
+#: bot/commands/admin_commands.py:235
 msgid "Unlocked"
 msgstr "Kilid açıldı"
 
-#: /work/bot/commands/admin_commands.py:242
+#: bot/commands/admin_commands.py:242
 msgid "STATUS Changes bot's status"
 msgstr "DURUM Botun durumunu değiştirir"
 
-#: /work/bot/commands/admin_commands.py:252
+#: bot/commands/admin_commands.py:252
 msgid "Enables or disables event handling"
 msgstr "Olay işlemeyi etkinleştirir veya devre dışı bırakır"
 
-#: /work/bot/commands/admin_commands.py:259
+#: bot/commands/admin_commands.py:259
 msgid "Event handling is enabled"
 msgstr "Olay işleme etkin"
 
-#: /work/bot/commands/admin_commands.py:261
+#: bot/commands/admin_commands.py:261
 msgid "Event handling is disabled"
 msgstr "Olay işleme devre dışı"
 
-#: /work/bot/commands/admin_commands.py:269
+#: bot/commands/admin_commands.py:269
 msgid "Enables or disables sending of channel messages"
 msgstr "Kanal mesajlarının gönderilmesini etkinleştirir veya devre dışı bırakır"
 
-#: /work/bot/commands/admin_commands.py:277
+#: bot/commands/admin_commands.py:277
 msgid "Channel messages enabled"
 msgstr "Kanal mesajları etkinleştirildi"
 
-#: /work/bot/commands/admin_commands.py:279
+#: bot/commands/admin_commands.py:279
 msgid "Channel messages disabled"
 msgstr "Kanal mesajları devre dışı bırakıldı"
 
-#: /work/bot/commands/admin_commands.py:286
+#: bot/commands/admin_commands.py:286
 msgid "Saves bot's configuration"
 msgstr "Botun konfigurasyonunu kaydeder"
 
-#: /work/bot/commands/admin_commands.py:290
+#: bot/commands/admin_commands.py:290
 msgid "Configuration saved"
 msgstr "Konfigurasyon kaydedildi"
 
-#: /work/bot/commands/admin_commands.py:297
+#: bot/commands/admin_commands.py:297
 msgid ""
 "+/-USERNAME Manages a list of administrators. +USERNAME adds a user. "
 "-USERNAME removes it. Without an option shows the list"
@@ -317,16 +304,15 @@ msgstr ""
 "ekler. -KULLANICI ADI kullanıcıyı kaldırır. Bir seçenek olmadan listeyi "
 "gösterir"
 
-#: /work/bot/commands/admin_commands.py:313
+#: bot/commands/admin_commands.py:313
 msgid "This user is not in the admin list"
 msgstr "Bu kullanıcı yönetici listesinde değil"
 
-#: /work/bot/commands/admin_commands.py:319
-#: /work/bot/commands/admin_commands.py:349
+#: bot/commands/admin_commands.py:319 bot/commands/admin_commands.py:349
 msgid "<Anonymous>"
 msgstr "<Anonim>"
 
-#: /work/bot/commands/admin_commands.py:329
+#: bot/commands/admin_commands.py:329
 msgid ""
 "+/-USERNAME Manages a list of banned users. +USERNAME adds a user. "
 "-USERNAME removes it. Without an option shows the list"
@@ -335,145 +321,144 @@ msgstr ""
 "ADI kullanıcı ekler. -KULLANICI ADI kullanıcıyı kaldırır. Bir seçenek "
 "olmadan listeyi gösterir"
 
-#: /work/bot/commands/admin_commands.py:344
+#: bot/commands/admin_commands.py:344
 msgid "This user is not banned"
 msgstr "Bu kullanıcı engellenmemiştir"
 
-#: /work/bot/commands/admin_commands.py:358
+#: bot/commands/admin_commands.py:358
 msgid "Quits the bot"
 msgstr "Botu kapatır"
 
-#: /work/bot/commands/admin_commands.py:367
+#: bot/commands/admin_commands.py:367
 msgid "Restarts the bot"
 msgstr "Botu yeniden başlatır"
 
-#: /work/bot/commands/admin_commands.py:382
+#: bot/commands/admin_commands.py:382
 msgid "Returns current channel's ID"
 msgstr "Mevcut kanalın kimliğini (ID) döndürür"
 
-#: /work/bot/commands/admin_commands.py:401
+#: bot/commands/admin_commands.py:401
 msgid ""
 "[status|out] Shows whether this bot is signed in to YouTube, or signs it "
 "out. To sign in, send li yt"
 msgstr ""
 
 # | msgid "This user is not banned"
-#: /work/bot/commands/admin_commands.py:409
-#: /work/bot/modules/auth_portal.py:268 /work/bot/modules/auth_portal.py:303
+#: bot/commands/admin_commands.py:409 bot/modules/auth_portal.py:268
+#: bot/modules/auth_portal.py:303
 #, fuzzy
 msgid "The YouTube service is not enabled."
 msgstr "Bu kullanıcı engellenmemiştir"
 
-#: /work/bot/commands/admin_commands.py:416
+#: bot/commands/admin_commands.py:416
 msgid "This bot is signed in to YouTube."
 msgstr ""
 
-#: /work/bot/commands/admin_commands.py:419
+#: bot/commands/admin_commands.py:419
 msgid ""
 "Google signed this bot out of YouTube. To sign in again, send this "
 "command: li yt"
 msgstr ""
 
-#: /work/bot/commands/admin_commands.py:422
+#: bot/commands/admin_commands.py:422
 msgid "This bot is not signed in to YouTube. To sign in, send this command: li yt"
 msgstr ""
 
-#: /work/bot/commands/admin_commands.py:427
+#: bot/commands/admin_commands.py:427
 msgid "This bot has been signed out of YouTube."
 msgstr ""
 
-#: /work/bot/commands/admin_commands.py:431
+#: bot/commands/admin_commands.py:431
 msgid ""
 "YouTube is connected through the account portal now. Send this command: "
 "li yt"
 msgstr ""
 
-#: /work/bot/commands/admin_commands.py:443
+#: bot/commands/admin_commands.py:443
 msgid ""
 "[link|rotate|off] Shows the account portal's status, mints a new link, "
 "revokes every existing link, or stops the portal"
 msgstr ""
 
-#: /work/bot/commands/admin_commands.py:450
-#: /work/bot/commands/admin_commands.py:503
+#: bot/commands/admin_commands.py:450 bot/commands/admin_commands.py:503
 msgid "The account portal is not running."
 msgstr ""
 
-#: /work/bot/commands/admin_commands.py:456
+#: bot/commands/admin_commands.py:456
 #, python-format
 msgid ""
 "The portal is listening on %(host)s port %(port)s with %(count)s live "
 "links."
 msgstr ""
 
-#: /work/bot/commands/admin_commands.py:470
+#: bot/commands/admin_commands.py:470
 #, python-format
 msgid "That address came from %(source)s."
 msgstr ""
 
-#: /work/bot/commands/admin_commands.py:480
+#: bot/commands/admin_commands.py:480
 #, python-format
 msgid "Revoked %(count)s links. Send ap link for a new one."
 msgstr ""
 
-#: /work/bot/commands/admin_commands.py:485
+#: bot/commands/admin_commands.py:485
 msgid "The portal has been stopped."
 msgstr ""
 
-#: /work/bot/commands/admin_commands.py:496
+#: bot/commands/admin_commands.py:496
 msgid ""
 "SERVICE Disconnects a streaming account and deletes its saved sign-in "
 "(yt, sp, nf, dp, am, az)"
 msgstr ""
 
-#: /work/bot/commands/admin_commands.py:511
+#: bot/commands/admin_commands.py:511
 #, python-format
 msgid "%(service)s is not connected."
 msgstr ""
 
-#: /work/bot/commands/admin_commands.py:517
+#: bot/commands/admin_commands.py:517
 #, python-format
 msgid "%(service)s has been disconnected and its saved sign-in deleted."
 msgstr ""
 
-#: /work/bot/commands/command.py:30
+#: bot/commands/command.py:30
 msgid "help text not found"
 msgstr "yardım metni bulunamadı"
 
-#: /work/bot/commands/command.py:82
+#: bot/commands/command.py:82
 #, python-brace-format
 msgid "The YouTube sign-in could not be renewed, so {request} was not played."
 msgstr ""
 
-#: /work/bot/commands/command.py:102
+#: bot/commands/command.py:102
 msgid ""
 "YouTube refused to play this without a signed-in account, which is usual "
 "on a server. To connect one, send this command: li yt"
 msgstr ""
 
-#: /work/bot/commands/command.py:128
+#: bot/commands/command.py:128
 #, python-brace-format
 msgid ""
 "Renewing the YouTube sign-in. {request} will start playing when it "
 "finishes, usually within a minute."
 msgstr ""
 
-#: /work/bot/commands/command.py:137
+#: bot/commands/command.py:137
 msgid ""
 "Google signed StreamerBot out of YouTube. To sign in again, send this "
 "command: li yt"
 msgstr ""
 
-#: /work/bot/commands/user_commands.py:20
+#: bot/commands/user_commands.py:20
 msgid "Shows command help"
 msgstr "Komut yardımını gösterir"
 
-#: /work/bot/commands/user_commands.py:29
+#: bot/commands/user_commands.py:29
 msgid "Shows information about the bot"
 msgstr "Bot hakkında bilgi gösterir"
 
 # --- Search Results Mode (sr/sl/slc) ---
-#: /work/bot/commands/user_commands.py:39
+#: bot/commands/user_commands.py:39
 msgid ""
 "QUERY Plays tracks found for the query. If no query is given, plays or "
 "pauses current track. When search results mode (sr) is active, shows a "
@@ -483,115 +468,99 @@ msgstr ""
 "oynatır veya duraklatır. Arama sonuçları modu (sr) aktifken numaralı "
 "liste gösterir"
 
-#: /work/bot/commands/user_commands.py:45
-#: /work/bot/commands/user_commands.py:756
-#: /work/bot/commands/user_commands.py:856
+#: bot/commands/user_commands.py:45 bot/commands/user_commands.py:826
+#: bot/commands/user_commands.py:926
 msgid "Searching..."
 msgstr "Aranıyor..."
 
-#: /work/bot/commands/user_commands.py:55
-#: /work/bot/commands/user_commands.py:146
-#: /work/bot/commands/user_commands.py:764
-#: /work/bot/commands/user_commands.py:863
-#: /work/bot/commands/user_commands.py:1234
+#: bot/commands/user_commands.py:55 bot/commands/user_commands.py:154
+#: bot/commands/user_commands.py:834 bot/commands/user_commands.py:933
+#: bot/commands/user_commands.py:1311
 msgid "Nothing is found for your query"
 msgstr "Sorgunuz için hiçbir şey bulunamadı"
 
-#: /work/bot/commands/user_commands.py:58
-#: /work/bot/commands/user_commands.py:866
+#: bot/commands/user_commands.py:58 bot/commands/user_commands.py:936
 msgid "The selected service is currently unavailable"
 msgstr "Seçilen hizmet şu anda kullanılamıyor"
 
-#: /work/bot/commands/user_commands.py:77
+#: bot/commands/user_commands.py:85
 msgid "Search results:"
 msgstr "Arama sonuçları:"
 
-#: /work/bot/commands/user_commands.py:80
+#: bot/commands/user_commands.py:87
 msgid "Use 'sl NUMBER' to select a track"
 msgstr "Parça seçmek için 'sl NUMARA' kullanın"
 
-#: /work/bot/commands/user_commands.py:96
+#: bot/commands/user_commands.py:104
 #, python-brace-format
 msgid "{nickname} requested {request}"
 msgstr "{nickname} {request} istedi"
 
-#: /work/bot/commands/user_commands.py:100
-#: /work/bot/commands/user_commands.py:256
-#: /work/bot/commands/user_commands.py:282
-#: /work/bot/commands/user_commands.py:299
-#: /work/bot/commands/user_commands.py:445
-#: /work/bot/commands/user_commands.py:882
-#: /work/bot/commands/user_commands.py:992
-#: /work/bot/commands/user_commands.py:1080
+#: bot/commands/user_commands.py:108 bot/commands/user_commands.py:264
+#: bot/commands/user_commands.py:290 bot/commands/user_commands.py:307
+#: bot/commands/user_commands.py:515 bot/commands/user_commands.py:952
+#: bot/commands/user_commands.py:1062 bot/commands/user_commands.py:1150
 #, python-brace-format
 msgid "Playing {}"
 msgstr "Oynatılıyor {}"
 
 # | msgid "URL Plays a stream from bot given URL"
-#: /work/bot/commands/user_commands.py:108
+#: bot/commands/user_commands.py:116
 msgid "URL Plays a stream from a given URL"
 msgstr "URL Verilen bir URL'den akış oynatır"
 
-#: /work/bot/commands/user_commands.py:113
+#: bot/commands/user_commands.py:121
 msgid "Loading URL / playlist..."
 msgstr "URL / çalma listesi yükleniyor..."
 
-#: /work/bot/commands/user_commands.py:119
+#: bot/commands/user_commands.py:127
 msgid "Your link"
 msgstr ""
 
-#: /work/bot/commands/user_commands.py:124
+#: bot/commands/user_commands.py:132
 msgid "Incorrect protocol"
 msgstr "Geçersiz protokol"
 
-#: /work/bot/commands/user_commands.py:126
+#: bot/commands/user_commands.py:134
 msgid "Cannot process stream URL"
 msgstr "Akış URL'si işlenemiyor"
 
-#: /work/bot/commands/user_commands.py:128
+#: bot/commands/user_commands.py:136
 msgid "The path cannot be found"
 msgstr "Yol bulunamadı"
 
 # | msgid "{nickname} requested playing from a URL"
-#: /work/bot/commands/user_commands.py:151
+#: bot/commands/user_commands.py:159
 #, fuzzy, python-brace-format
 msgid "{nickname} requested playing from a URL ({count} tracks)"
 msgstr "{nickname} bir URL'den oynatma istedi"
 
-#: /work/bot/commands/user_commands.py:158
+#: bot/commands/user_commands.py:166
 #, python-brace-format
 msgid "Loaded {count} tracks"
 msgstr "{count} parça yüklendi"
 
-#: /work/bot/commands/user_commands.py:168
+#: bot/commands/user_commands.py:176
 msgid "Stops playback"
 msgstr "Oynatmayı durdurur"
 
-#: /work/bot/commands/user_commands.py:175
+#: bot/commands/user_commands.py:183
 #, python-brace-format
 msgid "{nickname} stopped playback"
 msgstr "{nickname} oynatmayı durdurdu"
 
-#: /work/bot/commands/user_commands.py:181
-#: /work/bot/commands/user_commands.py:214
-#: /work/bot/commands/user_commands.py:233
-#: /work/bot/commands/user_commands.py:260
-#: /work/bot/commands/user_commands.py:276
-#: /work/bot/commands/user_commands.py:288
-#: /work/bot/commands/user_commands.py:305
-#: /work/bot/commands/user_commands.py:449
-#: /work/bot/commands/user_commands.py:465
-#: /work/bot/commands/user_commands.py:476
-#: /work/bot/commands/user_commands.py:529
-#: /work/bot/commands/user_commands.py:547
-#: /work/bot/commands/user_commands.py:593
-#: /work/bot/commands/user_commands.py:659
-#: /work/bot/commands/user_commands.py:680
-#: /work/bot/commands/user_commands.py:979
+#: bot/commands/user_commands.py:189 bot/commands/user_commands.py:222
+#: bot/commands/user_commands.py:241 bot/commands/user_commands.py:268
+#: bot/commands/user_commands.py:284 bot/commands/user_commands.py:296
+#: bot/commands/user_commands.py:313 bot/commands/user_commands.py:519
+#: bot/commands/user_commands.py:535 bot/commands/user_commands.py:546
+#: bot/commands/user_commands.py:599 bot/commands/user_commands.py:617
+#: bot/commands/user_commands.py:663 bot/commands/user_commands.py:729
+#: bot/commands/user_commands.py:750 bot/commands/user_commands.py:1049
 msgid "Nothing is playing"
 msgstr "Hiçbir şey çalmıyor"
 
-#: /work/bot/commands/user_commands.py:188
+#: bot/commands/user_commands.py:196
 #, python-brace-format
 msgid ""
 "VOLUME Sets the volume to a value between 0 and {max_volume}. If no "
@@ -600,7 +569,7 @@ msgstr ""
 "SES Sesi 0 ile {max_volume} arasında bir değere ayarlar. Ses düzeyi "
 "belirtilmemişse, geçerli ses düzeyi görüntülenir"
 
-#: /work/bot/commands/user_commands.py:209
+#: bot/commands/user_commands.py:217
 #, python-brace-format
 msgid "STEP Seeks current track backward. the default step is {seek_step} seconds"
 msgstr ""
@@ -608,7 +577,7 @@ msgstr ""
 "seconds[ADIM] Geçerli parçayı geriye doğru arar. varsayılan adım "
 "{seek_step} saniye"
 
-#: /work/bot/commands/user_commands.py:228
+#: bot/commands/user_commands.py:236
 #, python-brace-format
 msgid "STEP Seeks current track forward. the default step is {seek_step} seconds"
 msgstr ""
@@ -616,49 +585,42 @@ msgstr ""
 "seconds[ADIM] Mevcut parçayı ileriye doğru arar. varsayılan adım "
 "{seek_step} saniye"
 
-#: /work/bot/commands/user_commands.py:246
+#: bot/commands/user_commands.py:254
 msgid ""
 "[NUMBER|?] Plays next track, jumps to track number, or shows current "
 "position with ?"
 msgstr ""
 
-#: /work/bot/commands/user_commands.py:268
-#: /work/bot/commands/user_commands.py:457
+#: bot/commands/user_commands.py:276 bot/commands/user_commands.py:527
 msgid "Incorrect number"
 msgstr "Yanlış numara"
 
-#: /work/bot/commands/user_commands.py:270
-#: /work/bot/commands/user_commands.py:459
-#: /work/bot/commands/user_commands.py:472
+#: bot/commands/user_commands.py:278 bot/commands/user_commands.py:529
+#: bot/commands/user_commands.py:542
 #, python-brace-format
 msgid "Playing {} {}"
 msgstr "Oynatılıyor {} {}"
 
-#: /work/bot/commands/user_commands.py:274
-#: /work/bot/commands/user_commands.py:463
-#: /work/bot/commands/user_commands.py:541
-#: /work/bot/commands/user_commands.py:574
-#: /work/bot/commands/user_commands.py:613
-#: /work/bot/commands/user_commands.py:947
-#: /work/bot/commands/user_commands.py:1064
-#: /work/bot/commands/user_commands.py:1201
+#: bot/commands/user_commands.py:282 bot/commands/user_commands.py:533
+#: bot/commands/user_commands.py:611 bot/commands/user_commands.py:644
+#: bot/commands/user_commands.py:683 bot/commands/user_commands.py:1017
+#: bot/commands/user_commands.py:1134 bot/commands/user_commands.py:1278
 msgid "Out of list"
 msgstr "Liste dışı"
 
-#: /work/bot/commands/user_commands.py:286
-#: /work/bot/commands/user_commands.py:996
+#: bot/commands/user_commands.py:294 bot/commands/user_commands.py:1066
 msgid "No next track"
 msgstr "Sonraki parça yok"
 
-#: /work/bot/commands/user_commands.py:294
+#: bot/commands/user_commands.py:302
 msgid "Plays previous track"
 msgstr "Önceki parçayı oynatır"
 
-#: /work/bot/commands/user_commands.py:303
+#: bot/commands/user_commands.py:311
 msgid "No previous track"
 msgstr "Önceki parça yok"
 
-#: /work/bot/commands/user_commands.py:312
+#: bot/commands/user_commands.py:320
 msgid ""
 "MODE Sets the playback mode. If no mode is specified, the current mode "
 "and a list of modes are displayed"
@@ -666,27 +628,27 @@ msgstr ""
 "MOD Oynatma modunu ayarlar. Mod belirtilmemişse, geçerli mod ve modların "
 "listesi görüntülenir"
 
-#: /work/bot/commands/user_commands.py:317
+#: bot/commands/user_commands.py:325
 msgid "Single Track"
 msgstr "Tek Parça"
 
-#: /work/bot/commands/user_commands.py:318
+#: bot/commands/user_commands.py:326
 msgid "Repeat Track"
 msgstr "Parçayı Tekrarlama modu"
 
-#: /work/bot/commands/user_commands.py:319
+#: bot/commands/user_commands.py:327
 msgid "Track list"
 msgstr "Parça listesi"
 
-#: /work/bot/commands/user_commands.py:320
+#: bot/commands/user_commands.py:328
 msgid "Repeat track list"
 msgstr "Parça listesini tekrarlama modu"
 
-#: /work/bot/commands/user_commands.py:321
+#: bot/commands/user_commands.py:329
 msgid "Random"
 msgstr "Rastgele"
 
-#: /work/bot/commands/user_commands.py:324
+#: bot/commands/user_commands.py:332
 #, python-brace-format
 msgid ""
 "Current mode: {current_mode}\n"
@@ -695,16 +657,16 @@ msgstr ""
 "Geçerli mod: {current_mode}\n"
 "{modes}"
 
-#: /work/bot/commands/user_commands.py:342
+#: bot/commands/user_commands.py:350
 #, python-brace-format
 msgid "Current mode: {mode}"
 msgstr "Geçerli mod: {mode}"
 
-#: /work/bot/commands/user_commands.py:346
+#: bot/commands/user_commands.py:354
 msgid "Incorrect mode"
 msgstr "Geçersiz mod"
 
-#: /work/bot/commands/user_commands.py:355
+#: bot/commands/user_commands.py:363
 msgid ""
 "SERVICE Selects the service to play from, sv SERVICE h returns additional"
 " help. If no service is specified, the current service and a list of "
@@ -714,64 +676,80 @@ msgstr ""
 "belirtilmezse, mevcut hizmet ve kullanılabilir hizmetlerin listesi "
 "görüntülenir"
 
-#: /work/bot/commands/user_commands.py:363
-#, python-brace-format
-msgid ""
-"Unknown service.\n"
-"{}"
+# | msgid "" "Unknown service.\n" "{}"
+#: bot/commands/user_commands.py:371
+#, fuzzy, python-brace-format
+msgid "Unknown service.{newline}{help}"
 msgstr ""
 "Bilinmeyen hizmet.\n"
 "{}"
 
-#: /work/bot/commands/user_commands.py:372
-#, python-brace-format
-msgid ""
-"Current service: {}\n"
-"Warning: {}"
+# | msgid "" "Current service: {}\n" "Warning: {}"
+#: bot/commands/user_commands.py:379
+#, fuzzy, python-brace-format
+msgid "Current service: {service}{newline}{status}"
 msgstr ""
 "Mevcut hizmet: {}\n"
 "Uyarı: {}"
 
-#: /work/bot/commands/user_commands.py:374
-#, python-brace-format
-msgid "Current service: {}"
-msgstr "Mevcut hizmet: {}"
-
-#: /work/bot/commands/user_commands.py:380
-#, python-brace-format
-msgid ""
-"Error: {error}\n"
-"{service} is disabled"
+# | msgid "" "Error: {error}\n" "{service} is disabled"
+#: bot/commands/user_commands.py:388
+#, fuzzy, python-brace-format
+msgid "Error: {error}{newline}{service} is disabled"
 msgstr ""
 "Hata: {error}\n"
 "{service} devre dışı bırakıldı"
 
-#: /work/bot/commands/user_commands.py:387
+#: bot/commands/user_commands.py:395
 #, python-brace-format
 msgid "{service} is disabled"
 msgstr "{service} devre dışı"
 
-#: /work/bot/commands/user_commands.py:394
-msgid "This service has no additional help"
-msgstr "Bu hizmetin ek yardımı yok"
+#: bot/commands/user_commands.py:447
+#, python-format
+msgid "%(service)s is switched off in this bot's configuration."
+msgstr ""
 
-#: /work/bot/commands/user_commands.py:411
-#, python-brace-format
-msgid "{} (Error)"
-msgstr "{} (Hata)"
-
-#: /work/bot/commands/user_commands.py:415
-#, python-brace-format
-msgid "{} (Warning: {})"
-msgstr "{} (Uyarı: {})"
-
-#: /work/bot/commands/user_commands.py:422
-#, python-brace-format
+#: bot/commands/user_commands.py:454
+#, python-format
 msgid ""
-"Current service: {current_service}\n"
-"Available:\n"
-"{available_services}\n"
-"send sv SERVICE h for additional help"
+"%(service)s is not connected. To connect an account, send this command: "
+"li %(code)s"
+msgstr ""
+
+#: bot/commands/user_commands.py:459
+#, python-format
+msgid "%(service)s is connected and ready."
+msgstr ""
+
+#: bot/commands/user_commands.py:472
+#, python-format
+msgid "unavailable: %(reason)s"
+msgstr ""
+
+# | msgid "Saves bot's configuration"
+#: bot/commands/user_commands.py:474
+#, fuzzy
+msgid "switched off in this bot's configuration"
+msgstr "Botun konfigurasyonunu kaydeder"
+
+#: bot/commands/user_commands.py:477
+#, python-format
+msgid "not connected, send li %(code)s"
+msgstr ""
+
+#: bot/commands/user_commands.py:482
+msgid "ready"
+msgstr ""
+
+# | msgid "" "Current service: {current_service}\n" "Available:\n"
+# | "{available_services}\n" "send sv SERVICE h for additional help"
+#: bot/commands/user_commands.py:491
+#, fuzzy, python-brace-format
+msgid ""
+"Current service: "
+"{current_service}{newline}Available:{newline}{available_services}{newline}send"
+" sv SERVICE h for additional help"
 msgstr ""
 "Mevcut hizmet: {current_service}\n"
 "Kullanılabilir:\n"
@@ -779,12 +757,12 @@ msgstr ""
 "Ek yardım için sv HİZMET h gönderin"
 
 # | msgid "NUMBER Selects track by number from the list of current results"
-#: /work/bot/commands/user_commands.py:434
+#: bot/commands/user_commands.py:504
 #, fuzzy
 msgid "[NUMBER|?] Selects track by number, or shows current position with ?"
 msgstr "NUMARA Geçerli sonuçlar listesinden parçayı numaraya göre seçer"
 
-#: /work/bot/commands/user_commands.py:483
+#: bot/commands/user_commands.py:553
 msgid ""
 "SPEED Sets playback speed from 0.25 to 4. If no speed is given, shows "
 "current speed"
@@ -792,12 +770,12 @@ msgstr ""
 "HIZ Oynatma hızını 0.25 ile 4 arasında ayarlar. Hız belirtilmezse, mevcut"
 " hız gösterilir"
 
-#: /work/bot/commands/user_commands.py:488
+#: bot/commands/user_commands.py:558
 #, python-brace-format
 msgid "Current rate: {}"
 msgstr "Geçerli hız: {}"
 
-#: /work/bot/commands/user_commands.py:502
+#: bot/commands/user_commands.py:572
 msgid ""
 "+/-NUMBER Manages favorite tracks. + adds the current track to favorites."
 " - removes a track requested from favorites. If a number is specified "
@@ -807,29 +785,28 @@ msgstr ""
 "favorilerden istenen parçayı kaldırır. +/- sonra bir numara belirtilirse,"
 " o numaraya sahip bir parçayı ekler/kaldırır"
 
-#: /work/bot/commands/user_commands.py:508
+#: bot/commands/user_commands.py:578
 msgid "This command is not available for guest users"
 msgstr "Bu komut konuk kullanıcılar için mevcut değildir"
 
-#: /work/bot/commands/user_commands.py:545
+#: bot/commands/user_commands.py:615
 msgid "This track is not in favorites"
 msgstr "Bu parça favorilerde değil"
 
-#: /work/bot/commands/user_commands.py:554
-#: /work/bot/commands/user_commands.py:619
+#: bot/commands/user_commands.py:624 bot/commands/user_commands.py:689
 #, python-brace-format
 msgid "{number}: {track_name}"
 msgstr "{number}: {track_name}"
 
-#: /work/bot/commands/user_commands.py:582
+#: bot/commands/user_commands.py:652
 msgid "Gets a direct link to the current track"
 msgstr "Geçerli parçaya doğrudan bir bağlantı alır"
 
-#: /work/bot/commands/user_commands.py:591
+#: bot/commands/user_commands.py:661
 msgid "URL is not available"
 msgstr "URL mevcut değil"
 
-#: /work/bot/commands/user_commands.py:600
+#: bot/commands/user_commands.py:670
 msgid ""
 "NUMBER Plays a track with  the given number from a list of recent tracks."
 " Without a number shows recent tracks"
@@ -837,55 +814,53 @@ msgstr ""
 "NUMARA Son parçaların listesinden verilen numaralı parçayı oynatır. "
 "Numara olmadan son parçaları gösterir"
 
-#: /work/bot/commands/user_commands.py:625
+#: bot/commands/user_commands.py:695
 #, python-brace-format
 msgid "{number}: {track_url}"
 msgstr "{number}: {track_url}"
 
-#: /work/bot/commands/user_commands.py:640
+#: bot/commands/user_commands.py:710
 msgid "Downloads the current track and uploads it to the channel."
 msgstr "Mevcut parçayı indirir ve kanala yükler."
 
-#: /work/bot/commands/user_commands.py:655
+#: bot/commands/user_commands.py:725
 msgid "Downloading..."
 msgstr "İndiriliyor..."
 
-#: /work/bot/commands/user_commands.py:657
-#: /work/bot/commands/user_commands.py:678
+#: bot/commands/user_commands.py:727 bot/commands/user_commands.py:748
 msgid "Live streams cannot be downloaded"
 msgstr "Canlı akışlar indirilemiyor"
 
-#: /work/bot/commands/user_commands.py:666
+#: bot/commands/user_commands.py:736
 msgid "Downloads the current track as video and uploads it to the channel."
 msgstr "Mevcut parçayı video olarak indirir ve kanala yükler."
 
-#: /work/bot/commands/user_commands.py:676
+#: bot/commands/user_commands.py:746
 msgid "Downloading video..."
 msgstr "Video indiriliyor..."
 
-#: /work/bot/commands/user_commands.py:686
+#: bot/commands/user_commands.py:756
 msgid "Makes the bot join your current channel"
 msgstr "Botun mevcut kanalınıza katılmasını sağlar"
 
-#: /work/bot/commands/user_commands.py:707
-#: /work/bot/commands/user_commands.py:724
+#: bot/commands/user_commands.py:777 bot/commands/user_commands.py:794
 #, python-brace-format
 msgid "Joining channel: {}"
 msgstr "Kanala katılıyor: {}"
 
-#: /work/bot/commands/user_commands.py:716
+#: bot/commands/user_commands.py:786
 #, python-brace-format
 msgid "Failed to join channel. Error: {}"
 msgstr "Kanala katılma başarısız oldu. Hata: {}"
 
-#: /work/bot/commands/user_commands.py:727
+#: bot/commands/user_commands.py:797
 #, python-brace-format
 msgid "Failed to join channel: {}"
 msgstr "Kanala katılma başarısız oldu: {}"
 
 # | msgid "" "Downloads all tracks from a playlist/album URL, zips them, and
 # | uploads to" " the channel."
-#: /work/bot/commands/user_commands.py:734
+#: bot/commands/user_commands.py:804
 #, fuzzy
 msgid ""
 "Downloads all tracks from a playlist/album URL, zips them, and uploads to"
@@ -895,18 +870,18 @@ msgstr ""
 "Bir playlist/albüm URL'sindeki tüm parçaları indirir, ZIP'ler ve kanala "
 "yükler."
 
-#: /work/bot/commands/user_commands.py:743
+#: bot/commands/user_commands.py:813
 #, python-brace-format
 msgid "Current progress: {}"
 msgstr "Mevcut ilerleme: {}"
 
-#: /work/bot/commands/user_commands.py:753
+#: bot/commands/user_commands.py:823
 msgid "Please send the link to the playlist or album."
 msgstr "Lütfen çalma listesi veya albüm bağlantısını gönderin."
 
 # | msgid "This command is for playlists and albums. For single tracks, use
 # | 'dl'."
-#: /work/bot/commands/user_commands.py:772
+#: bot/commands/user_commands.py:842
 #, fuzzy
 msgid ""
 "This command is for playlists, albums, and channels. For single tracks, "
@@ -916,7 +891,7 @@ msgstr ""
 "komut çalma listeleri ve albümler içindir. Tekli parçalar için 'dl' "
 "kullanın."
 
-#: /work/bot/commands/user_commands.py:847
+#: bot/commands/user_commands.py:917
 msgid ""
 "QUERY Searches for a track and adds it to the queue. If nothing is "
 "playing, starts immediately"
@@ -924,51 +899,51 @@ msgstr ""
 "SORGU Bir parçayı arar ve sıraya ekler. Hiçbir şey çalmıyorsa, hemen "
 "başlar"
 
-#: /work/bot/commands/user_commands.py:891
+#: bot/commands/user_commands.py:961
 #, python-brace-format
 msgid "{nickname} added to queue: {track}"
 msgstr "{nickname} sıraya ekledi: {track}"
 
-#: /work/bot/commands/user_commands.py:897
+#: bot/commands/user_commands.py:967
 #, python-brace-format
 msgid "Added to queue [{position}]: {track}"
 msgstr "Sıraya eklendi [{position}]: {track}"
 
-#: /work/bot/commands/user_commands.py:904
+#: bot/commands/user_commands.py:974
 msgid "Lists all tracks in the queue"
 msgstr "Sıradaki tüm parçaları listeler"
 
-#: /work/bot/commands/user_commands.py:910
+#: bot/commands/user_commands.py:980
 msgid "The queue is empty"
 msgstr "Sıra boş"
 
-#: /work/bot/commands/user_commands.py:918
+#: bot/commands/user_commands.py:988
 #, python-brace-format
 msgid "Queue ({count} track(s)):"
 msgstr "Sıra ({count} parça):"
 
-#: /work/bot/commands/user_commands.py:928
+#: bot/commands/user_commands.py:998
 msgid "NUMBER Removes track number NUMBER from the queue"
 msgstr "NUMBER Sıradaki NUMBER numaralı parçayı kaldırır"
 
-#: /work/bot/commands/user_commands.py:953
+#: bot/commands/user_commands.py:1023
 #, python-brace-format
 msgid "Removed from queue: {track}"
 msgstr "Sıradan kaldırıldı: {track}"
 
-#: /work/bot/commands/user_commands.py:960
+#: bot/commands/user_commands.py:1030
 msgid "Clears the entire queue"
 msgstr "Tüm sırayı temizler"
 
-#: /work/bot/commands/user_commands.py:964
+#: bot/commands/user_commands.py:1034
 msgid "The queue is already empty"
 msgstr "Sıra zaten boş"
 
-#: /work/bot/commands/user_commands.py:967
+#: bot/commands/user_commands.py:1037
 msgid "Queue cleared"
 msgstr "Sıra temizlendi"
 
-#: /work/bot/commands/user_commands.py:974
+#: bot/commands/user_commands.py:1044
 msgid ""
 "Skips current track and plays the next one from the queue. Falls back to "
 "normal next if queue is empty"
@@ -976,29 +951,28 @@ msgstr ""
 "Mevcut parçayı atlar ve sıradaki parçayı çalar. Sıra boşsa, normal "
 "sonraki parçaya geçer"
 
-#: /work/bot/commands/user_commands.py:985
+#: bot/commands/user_commands.py:1055
 #, python-brace-format
 msgid "Playing next from queue: {}"
 msgstr "Sıradaki parça çalınıyor: {}"
 
-#: /work/bot/commands/user_commands.py:1009
+#: bot/commands/user_commands.py:1079
 msgid ""
-"Toggles search results mode. When active, 'p QUERY' shows a numbered "
-"list. Use 'sr on' or 'sr off' to set explicitly. Save permanently with "
-"'sc'"
+"Toggles search results mode. When active, 'p QUERY' reads out a numbered "
+"list and plays nothing, so whatever is playing keeps playing until 'sl "
+"NUMBER' picks one. Use 'sr on' or 'sr off' to set explicitly, 'slc' for "
+"how many results. Save permanently with 'sc'"
 msgstr ""
 
-#: /work/bot/commands/user_commands.py:1017
-#: /work/bot/commands/user_commands.py:1027
+#: bot/commands/user_commands.py:1087 bot/commands/user_commands.py:1097
 msgid "Search results mode: ON"
 msgstr "Arama sonuçları modu: AÇIK"
 
-#: /work/bot/commands/user_commands.py:1021
-#: /work/bot/commands/user_commands.py:1029
+#: bot/commands/user_commands.py:1091 bot/commands/user_commands.py:1099
 msgid "Search results mode: OFF"
 msgstr "Arama sonuçları modu: KAPALI"
 
-#: /work/bot/commands/user_commands.py:1041
+#: bot/commands/user_commands.py:1111
 msgid ""
 "NUMBER Selects and plays result NUMBER from the last search list "
 "(requires search results mode to be active)"
@@ -1006,11 +980,11 @@ msgstr ""
 "NUMARA Son arama listesinden NUMARA sonucunu seçer ve oynatır (arama "
 "sonuçları modunun aktif olması gerekir)"
 
-#: /work/bot/commands/user_commands.py:1060
+#: bot/commands/user_commands.py:1130
 msgid "No search results available. Use 'p QUERY' to search first"
 msgstr "Mevcut arama sonucu yok. Önce 'p SORGU' ile arama yapın"
 
-#: /work/bot/commands/user_commands.py:1074
+#: bot/commands/user_commands.py:1144
 #, python-brace-format
 msgid "{nickname} selected: {track}"
 msgstr "{nickname} seçti: {track}"
@@ -1018,77 +992,93 @@ msgstr "{nickname} seçti: {track}"
 # | msgid "" "NUMBER Sets how many results are shown when search results mode
 # is
 # | " "active. Without a number shows current count. Resets to 5 on restart"
-#: /work/bot/commands/user_commands.py:1091
+# | msgid "" "NUMBER Sets how many results are shown when search results mode
+# is
+# | " "active. Without a number shows current count. Resets to 1 on restart"
+#: bot/commands/user_commands.py:1159
 #, fuzzy
 msgid ""
 "NUMBER Sets how many results are shown when search results mode is "
-"active. Without a number shows current count. Resets to 1 on restart"
+"active, or 0 for as many as the service returns. Without a number shows "
+"current count. Resets on restart"
 msgstr ""
 "NUMARA Arama modunda kaç sonuç gösterileceğini ayarlar. Numara olmadan "
 "mevcut sayıyı gösterir. Yeniden başlatmada 5'e sıfırlanır"
 
-#: /work/bot/commands/user_commands.py:1097
+# | msgid "Search results count: {count}"
+#: bot/commands/user_commands.py:1167
+#, fuzzy
+msgid "Search results count: as many as the service returns"
+msgstr "Arama sonucu sayısı: {count}"
+
+#: bot/commands/user_commands.py:1169
 #, python-brace-format
 msgid "Search results count: {count}"
 msgstr "Arama sonucu sayısı: {count}"
 
-#: /work/bot/commands/user_commands.py:1107
-msgid "Invalid count. Please enter a number greater than 0"
+# | msgid "Invalid count. Please enter a number greater than 0"
+#: bot/commands/user_commands.py:1180
+#, fuzzy
+msgid "Invalid count. Please enter 0 or a number greater than 0"
 msgstr "Geçersiz sayı. Lütfen 0'dan büyük bir sayı girin"
 
-#: /work/bot/commands/user_commands.py:1112
+#: bot/commands/user_commands.py:1186
+msgid "Search results now show as many results as the service returns"
+msgstr ""
+
+#: bot/commands/user_commands.py:1189
 #, python-brace-format
 msgid "Search results count set to {count}"
 msgstr "Arama sonucu sayısı {count} olarak ayarlandı"
 
-#: /work/bot/commands/user_commands.py:1120
+#: bot/commands/user_commands.py:1197
 msgid "LINK Adds a link to the download list."
 msgstr "LINK İndirme listesine bir bağlantı ekler."
 
-#: /work/bot/commands/user_commands.py:1132
+#: bot/commands/user_commands.py:1209
 #, python-brace-format
 msgid "Added link to the list. Total: {count}"
 msgstr "Bağlantı listeye eklendi. Toplam: {count}"
 
-#: /work/bot/commands/user_commands.py:1141
+#: bot/commands/user_commands.py:1218
 msgid "LINK1 LINK2 ... Adds multiple space-separated links to the download list."
 msgstr ""
 "LINK1 LINK2 ... İndirme listesine boşlukla ayrılmış birden fazla bağlantı"
 " ekler."
 
-#: /work/bot/commands/user_commands.py:1156
+#: bot/commands/user_commands.py:1233
 #, python-brace-format
 msgid "Added {added_count} links. Total list size: {count}"
 msgstr "{added_count} bağlantı eklendi. Toplam liste boyutu: {count}"
 
-#: /work/bot/commands/user_commands.py:1166
+#: bot/commands/user_commands.py:1243
 msgid "Lists all links in the download list."
 msgstr "İndirme listesindeki tüm bağlantıları listeler."
 
-#: /work/bot/commands/user_commands.py:1185
+#: bot/commands/user_commands.py:1262
 msgid "NUMBER_OR_LINK Removes a link from the download list by its index or URL."
 msgstr ""
 "NUMARA_VEYA_BAGLANTI İndirme listesinden dizine veya URL'ye göre bir "
 "bağlantıyı kaldırır."
 
-#: /work/bot/commands/user_commands.py:1210
+#: bot/commands/user_commands.py:1287
 msgid "Link not found in the list"
 msgstr "Bağlantı listede bulunamadı"
 
-#: /work/bot/commands/user_commands.py:1212
+#: bot/commands/user_commands.py:1289
 #, python-brace-format
 msgid "Removed link: {link}"
 msgstr "Kaldırılan bağlantı: {link}"
 
-#: /work/bot/commands/user_commands.py:1219
+#: bot/commands/user_commands.py:1296
 msgid "LINK Downloads a link directly and uploads it to the channel."
 msgstr "LINK Bir bağlantıyı doğrudan indirir ve kanala yükler."
 
-#: /work/bot/commands/user_commands.py:1227
+#: bot/commands/user_commands.py:1304
 msgid "Searching and downloading..."
 msgstr "Aranıyor ve indiriliyor..."
 
-#: /work/bot/commands/user_commands.py:1251
+#: bot/commands/user_commands.py:1328
 msgid ""
 "Downloads all links in your list and uploads them to the channel. Can "
 "download normally or as a ZIP archive."
@@ -1096,7 +1086,7 @@ msgstr ""
 "Listenizdeki tüm bağlantıları indirir ve kanala yükler. Normal olarak "
 "veya ZIP arşivi olarak indirilebilir."
 
-#: /work/bot/commands/user_commands.py:1263
+#: bot/commands/user_commands.py:1340
 msgid ""
 "How do you want to download these links?\n"
 "1. Download individually (Normal)\n"
@@ -1108,74 +1098,67 @@ msgstr ""
 "2. Hepsini bir ZIP dosyasında sıkıştır\n"
 "Sadece 1 veya 2 ile yanıt verin."
 
-#: /work/bot/commands/user_commands.py:1274
+#: bot/commands/user_commands.py:1351
 #, python-brace-format
 msgid "Starting local download of {count} links..."
 msgstr "{count} bağlantının yerel olarak indirilmesi başlatılıyor..."
 
-#: /work/bot/commands/user_commands.py:1277
+#: bot/commands/user_commands.py:1354
 #, python-brace-format
 msgid "Starting download of {count} links..."
 msgstr "{count} bağlantının indirilmesi başlatılıyor..."
 
-#: /work/bot/commands/user_commands.py:1283
+#: bot/commands/user_commands.py:1360
 #, python-brace-format
 msgid "Resolving and zipping locally {count} links..."
 msgstr "{count} bağlantı yerel olarak çözümleniyor ve ZIP'leniyor..."
 
-#: /work/bot/commands/user_commands.py:1286
+#: bot/commands/user_commands.py:1363
 #, python-brace-format
 msgid "Resolving and zipping {count} links..."
 msgstr "{count} bağlantı çözümleniyor ve ZIP'leniyor..."
 
-#: /work/bot/commands/user_commands.py:1288
+#: bot/commands/user_commands.py:1365
 msgid "Invalid option. Please send 'ads' again to select."
 msgstr "Geçersiz seçenek. Seçmek için lütfen 'ads' komutunu tekrar gönderin."
 
-#: /work/bot/commands/user_commands.py:1294
-#: /work/bot/commands/user_commands.py:1332
+#: bot/commands/user_commands.py:1371 bot/commands/user_commands.py:1409
 #, python-brace-format
 msgid "Processing link {number}/{total}: {link}"
 msgstr "Bağlantı işleniyor {number}/{total}: {link}"
 
-#: /work/bot/commands/user_commands.py:1302
-#: /work/bot/commands/user_commands.py:1340
+#: bot/commands/user_commands.py:1379 bot/commands/user_commands.py:1417
 #, python-brace-format
 msgid "Nothing is found for: {link}"
 msgstr "Şunun için hiçbir şey bulunamadı: {link}"
 
-#: /work/bot/commands/user_commands.py:1310
+#: bot/commands/user_commands.py:1387
 #, python-brace-format
 msgid "Error downloading {link}: {error}"
 msgstr "{link} indirilirken hata oluştu: {error}"
 
-#: /work/bot/commands/user_commands.py:1360
-#: /work/bot/commands/user_commands.py:1477
+#: bot/commands/user_commands.py:1437 bot/commands/user_commands.py:1554
 msgid "All downloads completed successfully!"
 msgstr "Tüm indirmeler başarıyla tamamlandı!"
 
-#: /work/bot/commands/user_commands.py:1365
-#: /work/bot/commands/user_commands.py:1482
+#: bot/commands/user_commands.py:1442 bot/commands/user_commands.py:1559
 #, python-brace-format
 msgid "Downloads completed with {error_count} error(s)."
 msgstr "İndirmeler {error_count} hata ile tamamlandı."
 
-#: /work/bot/commands/user_commands.py:1374
-#: /work/bot/commands/user_commands.py:1404
+#: bot/commands/user_commands.py:1451 bot/commands/user_commands.py:1481
 msgid "Resolving links..."
 msgstr "Bağlantılar çözümleniyor..."
 
-#: /work/bot/commands/user_commands.py:1388
-#: /work/bot/commands/user_commands.py:1421
+#: bot/commands/user_commands.py:1465 bot/commands/user_commands.py:1498
 msgid "Error: No valid tracks found to download."
 msgstr "Hata: İndirilecek geçerli parça bulunamadı."
 
-#: /work/bot/commands/user_commands.py:1441
-#: /work/bot/modules/playlist_uploader.py:88
+#: bot/commands/user_commands.py:1518 bot/modules/playlist_uploader.py:88
 msgid "Error: Failed to download any tracks from this playlist."
 msgstr "Hata: Bu çalma listesinden herhangi bir parça indirilemedi."
 
-#: /work/bot/commands/user_commands.py:1493
+#: bot/commands/user_commands.py:1570
 msgid ""
 "Toggles local download mode for the 'ads' command. When active, files are"
 " saved locally to the VPS instead of uploaded to TeamTalk."
@@ -1183,21 +1166,21 @@ msgstr ""
 " 'ads' komutu için yerel indirme modunu değiştirir. Aktif olduğunda, "
 "dosyalar TeamTalk'a yüklenmek yerine yerel olarak VPS'ye kaydedilir."
 
-#: /work/bot/commands/user_commands.py:1499
+#: bot/commands/user_commands.py:1576
 msgid "Local download mode (adsc) enabled."
 msgstr "Yerel indirme modu (adsc) etkinleştirildi."
 
-#: /work/bot/commands/user_commands.py:1501
+#: bot/commands/user_commands.py:1578
 msgid "Local download mode (adsc) disabled."
 msgstr "Yerel indirme modu (adsc) devre dışı bırakıldı."
 
-#: /work/bot/commands/user_commands.py:1520
+#: bot/commands/user_commands.py:1597
 msgid ""
 "[service] Shows which streaming accounts are connected. With a service "
 "(yt, sp, nf, dp, am, az) it starts connecting that one"
 msgstr ""
 
-#: /work/bot/commands/user_commands.py:1535
+#: bot/commands/user_commands.py:1612
 #, python-format
 msgid ""
 "This server cannot run a browser, so connect YouTube by importing a "
@@ -1205,52 +1188,52 @@ msgid ""
 " bot. Open this link: %(url)s"
 msgstr ""
 
-#: /work/bot/commands/user_commands.py:1541
+#: bot/commands/user_commands.py:1618
 #, python-format
 msgid ""
 "To connect YouTube, use a separate Google account made for the bot, not "
 "your personal one. Open this link: %(url)s"
 msgstr ""
 
-#: /work/bot/commands/user_commands.py:1556
+#: bot/commands/user_commands.py:1633
 msgid ""
 "The account portal is not running, so Netflix, Disney Plus, Apple Music "
 "and Amazon Music cannot be connected. The reason is in this bot's log "
 "file."
 msgstr ""
 
-#: /work/bot/commands/user_commands.py:1565
+#: bot/commands/user_commands.py:1642
 msgid "Your streaming accounts:"
 msgstr ""
 
-#: /work/bot/commands/user_commands.py:1570
+#: bot/commands/user_commands.py:1647
 #, python-format
 msgid "%(service)s: connected"
 msgstr ""
 
-#: /work/bot/commands/user_commands.py:1575
+#: bot/commands/user_commands.py:1652
 #, python-format
 msgid "%(service)s: signed out, connect again"
 msgstr ""
 
-#: /work/bot/commands/user_commands.py:1580
+#: bot/commands/user_commands.py:1657
 #, python-format
 msgid "%(service)s: not connected"
 msgstr ""
 
-#: /work/bot/commands/user_commands.py:1600
+#: bot/commands/user_commands.py:1677
 #, python-format
 msgid ""
 "%(service)s is already connected. To use a different account, disconnect "
 "it first at %(url)s"
 msgstr ""
 
-#: /work/bot/commands/user_commands.py:1612
+#: bot/commands/user_commands.py:1689
 #, python-format
 msgid "%(service)s sign-in could not start: %(error)s"
 msgstr ""
 
-#: /work/bot/commands/user_commands.py:1618
+#: bot/commands/user_commands.py:1695
 #, python-format
 msgid ""
 "To connect %(service)s, go to %(url)s and enter the code %(code)s. "
@@ -1258,592 +1241,592 @@ msgid ""
 "whether it worked."
 msgstr ""
 
-#: /work/bot/commands/user_commands.py:1624
+#: bot/commands/user_commands.py:1701
 #, python-format
 msgid "To connect %(service)s, open %(url)s"
 msgstr ""
 
-#: /work/bot/commands/user_commands.py:1643
+#: bot/commands/user_commands.py:1720
 msgid ""
 "[on|off|ask] Plays films and shows with audio description when it is "
 "available. With no argument, says what the current setting is"
 msgstr ""
 
-#: /work/bot/commands/user_commands.py:1651
+#: bot/commands/user_commands.py:1728
 msgid "Audio description is not available in this bot."
 msgstr ""
 
-#: /work/bot/commands/user_commands.py:1659
+#: bot/commands/user_commands.py:1736
 msgid ""
 "Audio description is on. Films play with the description when there is "
 "one."
 msgstr ""
 
-#: /work/bot/commands/user_commands.py:1662
+#: bot/commands/user_commands.py:1739
 msgid "Audio description is off. Send da on to turn it on."
 msgstr ""
 
-#: /work/bot/commands/user_commands.py:1665
+#: bot/commands/user_commands.py:1742
 msgid "The bot asks each time. Send da on or da off to stop being asked."
 msgstr ""
 
-#: /work/bot/commands/user_commands.py:1679
+#: bot/commands/user_commands.py:1756
 msgid "Audio description is on. You will not be asked again."
 msgstr ""
 
-#: /work/bot/commands/user_commands.py:1682
+#: bot/commands/user_commands.py:1759
 msgid "Audio description is off. You will not be asked again."
 msgstr ""
 
-#: /work/bot/commands/user_commands.py:1685
+#: bot/commands/user_commands.py:1762
 msgid "The bot will ask each time."
 msgstr ""
 
-#: /work/bot/commands/user_commands.py:1699
+#: bot/commands/user_commands.py:1776
 msgid ""
 "[number] Lists the profiles for the current service, or selects one by "
 "number"
 msgstr ""
 
-#: /work/bot/commands/user_commands.py:1706
+#: bot/commands/user_commands.py:1783
 #, python-format
 msgid "%(service)s does not have profiles."
 msgstr ""
 
-#: /work/bot/commands/user_commands.py:1712
+#: bot/commands/user_commands.py:1789
 msgid "No profiles were found. The account may not be connected yet."
 msgstr ""
 
-#: /work/bot/commands/user_commands.py:1718
+#: bot/commands/user_commands.py:1795
 #, python-format
 msgid "%(count)s profiles:"
 msgstr ""
 
-#: /work/bot/commands/user_commands.py:1722
+#: bot/commands/user_commands.py:1799
 msgid "Send pf and a number to choose one."
 msgstr ""
 
-#: /work/bot/commands/user_commands.py:1734
+#: bot/commands/user_commands.py:1811
 #, python-format
 msgid "Now using the profile %(name)s."
 msgstr ""
 
-#: /work/bot/commands/user_commands.py:1737
+#: bot/commands/user_commands.py:1814
 msgid "That profile could not be selected."
 msgstr ""
 
-#: /work/bot/connectors/tt_player_connector.py:36
+#: bot/connectors/tt_player_connector.py:36
 #, python-brace-format
 msgid "Playing: {track_name}"
 msgstr "Oynatılıyor: {track_name}"
 
-#: /work/bot/connectors/tt_player_connector.py:42
+#: bot/connectors/tt_player_connector.py:42
 #, python-brace-format
 msgid "Playing: {stream_url}"
 msgstr "Oynatılıyor: {stream_url}"
 
-#: /work/bot/connectors/tt_player_connector.py:53
+#: bot/connectors/tt_player_connector.py:53
 #, python-brace-format
 msgid "Paused: {track_name}"
 msgstr "Duraklatıldı: {track_name}"
 
-#: /work/bot/connectors/tt_player_connector.py:59
+#: bot/connectors/tt_player_connector.py:59
 #, python-brace-format
 msgid "Paused: {stream_url}"
 msgstr "Duraklatıldı: {stream_url}"
 
-#: /work/bot/modules/apple_music_downloader.py:75
+#: bot/modules/apple_music_downloader.py:75
 msgid "Apple Music is not available on this bot."
 msgstr ""
 
-#: /work/bot/modules/apple_music_downloader.py:90
+#: bot/modules/apple_music_downloader.py:90
 msgid "What is playing is not an album or playlist that can be downloaded."
 msgstr ""
 
-#: /work/bot/modules/apple_music_downloader.py:93
+#: bot/modules/apple_music_downloader.py:93
 msgid "the playlist"
 msgstr ""
 
-#: /work/bot/modules/apple_music_downloader.py:95
+#: bot/modules/apple_music_downloader.py:95
 #, python-brace-format
 msgid ""
 "Downloading the playlist {name}. It will be uploaded to the channel as "
 "one zip file when it is ready, which can take several minutes."
 msgstr ""
 
-#: /work/bot/modules/apple_music_downloader.py:101
+#: bot/modules/apple_music_downloader.py:101
 #, python-brace-format
 msgid ""
 "Downloading the album {name}. It will be uploaded to the channel as one "
 "zip file when it is ready, which can take several minutes."
 msgstr ""
 
-#: /work/bot/modules/apple_music_downloader.py:107
+#: bot/modules/apple_music_downloader.py:107
 msgid "Apple Music is not playing a song right now."
 msgstr ""
 
-#: /work/bot/modules/apple_music_downloader.py:112
+#: bot/modules/apple_music_downloader.py:112
 msgid "This song is not in the Apple Music catalog, so it cannot be downloaded."
 msgstr ""
 
-#: /work/bot/modules/apple_music_downloader.py:116
+#: bot/modules/apple_music_downloader.py:116
 #, python-brace-format
 msgid "Downloading {name}. It will be uploaded to the channel when it is ready."
 msgstr ""
 
-#: /work/bot/modules/apple_music_downloader.py:121
+#: bot/modules/apple_music_downloader.py:121
 msgid "To download the whole album or playlist instead, send dlp."
 msgstr ""
 
-#: /work/bot/modules/apple_music_downloader.py:126
+#: bot/modules/apple_music_downloader.py:126
 msgid ""
 "An Apple Music download is already running. Please send this again when "
 "it has finished."
 msgstr ""
 
-#: /work/bot/modules/apple_music_downloader.py:157
+#: bot/modules/apple_music_downloader.py:157
 #, python-brace-format
 msgid "{name} is in the channel: one zip file with {count} tracks."
 msgstr ""
 
-#: /work/bot/modules/apple_music_downloader.py:160
+#: bot/modules/apple_music_downloader.py:160
 #, python-brace-format
 msgid "{name} is in the channel."
 msgstr ""
 
-#: /work/bot/modules/apple_music_downloader.py:164
+#: bot/modules/apple_music_downloader.py:164
 #, python-brace-format
 msgid "Could not download {name}: {reason}"
 msgstr ""
 
-#: /work/bot/modules/apple_music_downloader.py:173
+#: bot/modules/apple_music_downloader.py:173
 #, python-brace-format
 msgid "Could not download {name}."
 msgstr ""
 
-#: /work/bot/modules/apple_music_downloader.py:187
+#: bot/modules/apple_music_downloader.py:187
 msgid "Apple Music is not signed in on this bot. Send li am to connect it."
 msgstr ""
 
-#: /work/bot/modules/audio_description.py:129
+#: bot/modules/audio_description.py:129
 #, python-format
 msgid "%(title)s has audio description. Play it with the description?"
 msgstr ""
 
-#: /work/bot/modules/audio_description.py:132
+#: bot/modules/audio_description.py:132
 msgid "This has audio description. Play it with the description?"
 msgstr ""
 
-#: /work/bot/modules/audio_description.py:136
+#: bot/modules/audio_description.py:136
 msgid "1. Yes. 2. No. 3. Yes, and remember. 4. No, and remember."
 msgstr ""
 
-#: /work/bot/modules/auth_portal.py:347
+#: bot/modules/auth_portal.py:347
 msgid "Enter the Google account email address"
 msgstr ""
 
-#: /work/bot/modules/auth_portal.py:349
+#: bot/modules/auth_portal.py:349
 #, python-format
 msgid "Enter your %(service)s email address or username"
 msgstr ""
 
-#: /work/bot/modules/auth_portal.py:354
+#: bot/modules/auth_portal.py:354
 msgid "Enter the Google account password"
 msgstr ""
 
-#: /work/bot/modules/auth_portal.py:356
+#: bot/modules/auth_portal.py:356
 #, python-format
 msgid "Enter your %(service)s password"
 msgstr ""
 
-#: /work/bot/modules/auth_portal.py:398
+#: bot/modules/auth_portal.py:398
 msgid "Enter the verification code"
 msgstr ""
 
-#: /work/bot/modules/auth_portal.py:604
+#: bot/modules/auth_portal.py:604
 msgid "Signing in to this service is not available yet."
 msgstr ""
 
 # | msgid "Cache cleared"
-#: /work/bot/modules/auth_portal.py:621
+#: bot/modules/auth_portal.py:621
 #, fuzzy
 msgid "Cancelled."
 msgstr "Önbellek temizlendi"
 
-#: /work/bot/modules/playlist_uploader.py:55
+#: bot/modules/playlist_uploader.py:55
 #, python-brace-format
 msgid "Downloading playlist: {}"
 msgstr "Çalma listesi indiriliyor: {}"
 
-#: /work/bot/modules/playlist_uploader.py:62
+#: bot/modules/playlist_uploader.py:62
 #, python-brace-format
 msgid "Downloading track {}: {}"
 msgstr "Parça indiriliyor {}: {}"
 
-#: /work/bot/modules/playlist_uploader.py:94
+#: bot/modules/playlist_uploader.py:94
 msgid "Zipping tracks..."
 msgstr "Parçalar ZIP'leniyor..."
 
-#: /work/bot/modules/playlist_uploader.py:109
+#: bot/modules/playlist_uploader.py:109
 #, python-brace-format
 msgid "Uploading ZIP: {}"
 msgstr "ZIP yükleniyor: {}"
 
-#: /work/bot/modules/portal_pages.py:45
+#: bot/modules/portal_pages.py:45
 msgid "dash"
 msgstr ""
 
-#: /work/bot/modules/portal_pages.py:46
+#: bot/modules/portal_pages.py:46
 msgid "underscore"
 msgstr ""
 
-#: /work/bot/modules/portal_pages.py:47
+#: bot/modules/portal_pages.py:47
 msgid "dot"
 msgstr ""
 
-#: /work/bot/modules/portal_pages.py:48
+#: bot/modules/portal_pages.py:48
 msgid "space"
 msgstr ""
 
 # | msgid "Error: {}"
-#: /work/bot/modules/portal_pages.py:73 /work/bot/modules/portal_pages.py:145
+#: bot/modules/portal_pages.py:73 bot/modules/portal_pages.py:145
 #, fuzzy
 msgid "Error:"
 msgstr "Hata: {}"
 
-#: /work/bot/modules/portal_pages.py:118
+#: bot/modules/portal_pages.py:118
 msgid "There is a problem"
 msgstr ""
 
-#: /work/bot/modules/portal_pages.py:158
+#: bot/modules/portal_pages.py:158
 msgid "Back to your accounts"
 msgstr ""
 
-#: /work/bot/modules/portal_pages.py:174 /work/bot/modules/portal_pages.py:470
-#: /work/bot/modules/portal_pages.py:498 /work/bot/modules/portal_pages.py:562
-#: /work/bot/modules/portal_pages.py:615 /work/bot/modules/portal_pages.py:661
+#: bot/modules/portal_pages.py:174 bot/modules/portal_pages.py:470
+#: bot/modules/portal_pages.py:498 bot/modules/portal_pages.py:562
+#: bot/modules/portal_pages.py:615 bot/modules/portal_pages.py:661
 #, python-format
 msgid "Import a %(service)s session"
 msgstr ""
 
-#: /work/bot/modules/portal_pages.py:181 /work/bot/modules/portal_pages.py:209
-#: /work/bot/modules/portal_pages.py:216 /work/bot/modules/portal_pages.py:257
+#: bot/modules/portal_pages.py:181 bot/modules/portal_pages.py:209
+#: bot/modules/portal_pages.py:216 bot/modules/portal_pages.py:257
 #, python-format
 msgid "Connect %(service)s"
 msgstr ""
 
-#: /work/bot/modules/portal_pages.py:197
+#: bot/modules/portal_pages.py:197
 msgid "Connected"
 msgstr ""
 
-#: /work/bot/modules/portal_pages.py:202 /work/bot/modules/portal_pages.py:699
+#: bot/modules/portal_pages.py:202 bot/modules/portal_pages.py:699
 #, python-format
 msgid "Disconnect %(service)s"
 msgstr ""
 
-#: /work/bot/modules/portal_pages.py:206
+#: bot/modules/portal_pages.py:206
 msgid "Expired. Connect again to keep streaming."
 msgstr ""
 
-#: /work/bot/modules/portal_pages.py:213
+#: bot/modules/portal_pages.py:213
 msgid "Not connected"
 msgstr ""
 
-#: /work/bot/modules/portal_pages.py:235
+#: bot/modules/portal_pages.py:235
 msgid "Your streaming accounts"
 msgstr ""
 
-#: /work/bot/modules/portal_pages.py:236
+#: bot/modules/portal_pages.py:236
 #, python-format
 msgid "%(connected)s of %(total)s services connected."
 msgstr ""
 
-#: /work/bot/modules/portal_pages.py:240
+#: bot/modules/portal_pages.py:240
 #, python-format
 msgid "%(connected)s of %(total)s services connected"
 msgstr ""
 
-#: /work/bot/modules/portal_pages.py:259
+#: bot/modules/portal_pages.py:259
 msgid "Go to"
 msgstr ""
 
-#: /work/bot/modules/portal_pages.py:264
+#: bot/modules/portal_pages.py:264
 msgid "(opens in a new tab)"
 msgstr ""
 
-#: /work/bot/modules/portal_pages.py:265
+#: bot/modules/portal_pages.py:265
 msgid "Enter the code below."
 msgstr ""
 
-#: /work/bot/modules/portal_pages.py:266
+#: bot/modules/portal_pages.py:266
 msgid "Come back here and select Check status."
 msgstr ""
 
-#: /work/bot/modules/portal_pages.py:269
+#: bot/modules/portal_pages.py:269
 msgid "Your device code"
 msgstr ""
 
-#: /work/bot/modules/portal_pages.py:283
+#: bot/modules/portal_pages.py:283
 msgid "Check status"
 msgstr ""
 
-#: /work/bot/modules/portal_pages.py:289
+#: bot/modules/portal_pages.py:289
 #, python-format
 msgid "Connect %(service)s: enter your code"
 msgstr ""
 
-#: /work/bot/modules/portal_pages.py:308
+#: bot/modules/portal_pages.py:308
 msgid "Google account email address"
 msgstr ""
 
-#: /work/bot/modules/portal_pages.py:309
+#: bot/modules/portal_pages.py:309
 msgid "The Google account made for StreamerBot, not your personal one."
 msgstr ""
 
-#: /work/bot/modules/portal_pages.py:310
+#: bot/modules/portal_pages.py:310
 msgid "Google account password"
 msgstr ""
 
-#: /work/bot/modules/portal_pages.py:312
+#: bot/modules/portal_pages.py:312
 #, python-format
 msgid "%(service)s email address or username"
 msgstr ""
 
-#: /work/bot/modules/portal_pages.py:313
+#: bot/modules/portal_pages.py:313
 #, python-format
 msgid "The address you use to sign in to %(service)s."
 msgstr ""
 
-#: /work/bot/modules/portal_pages.py:314
+#: bot/modules/portal_pages.py:314
 #, python-format
 msgid "%(service)s password"
 msgstr ""
 
-#: /work/bot/modules/portal_pages.py:333 /work/bot/modules/portal_pages.py:361
-#: /work/bot/modules/portal_pages.py:366
+#: bot/modules/portal_pages.py:333 bot/modules/portal_pages.py:361
+#: bot/modules/portal_pages.py:366
 #, python-format
 msgid "Sign in to %(service)s"
 msgstr ""
 
-#: /work/bot/modules/portal_pages.py:363
+#: bot/modules/portal_pages.py:363
 msgid "Cancel and go back"
 msgstr ""
 
-#: /work/bot/modules/portal_pages.py:396
+#: bot/modules/portal_pages.py:396
 #, python-format
 msgid "Signing in as %(username)s."
 msgstr ""
 
-#: /work/bot/modules/portal_pages.py:402 /work/bot/modules/portal_pages.py:427
+#: bot/modules/portal_pages.py:402 bot/modules/portal_pages.py:427
 #, python-format
 msgid "Enter your %(service)s verification code"
 msgstr ""
 
-#: /work/bot/modules/portal_pages.py:410
+#: bot/modules/portal_pages.py:410
 msgid "Verification code"
 msgstr ""
 
-#: /work/bot/modules/portal_pages.py:414
+#: bot/modules/portal_pages.py:414
 msgid "Type or paste the whole code into the box below. Spaces do not matter."
 msgstr ""
 
-#: /work/bot/modules/portal_pages.py:419
+#: bot/modules/portal_pages.py:419
 msgid "Verify code"
 msgstr ""
 
-#: /work/bot/modules/portal_pages.py:422
+#: bot/modules/portal_pages.py:422
 msgid "Send a new code"
 msgstr ""
 
-#: /work/bot/modules/portal_pages.py:424 /work/bot/modules/portal_pages.py:444
-#: /work/bot/modules/portal_pages.py:565
+#: bot/modules/portal_pages.py:424 bot/modules/portal_pages.py:444
+#: bot/modules/portal_pages.py:565
 msgid "Cancel this sign-in"
 msgstr ""
 
-#: /work/bot/modules/portal_pages.py:435 /work/bot/modules/portal_pages.py:447
+#: bot/modules/portal_pages.py:435 bot/modules/portal_pages.py:447
 #, python-format
 msgid "Signing in to %(service)s"
 msgstr ""
 
-#: /work/bot/modules/portal_pages.py:436
+#: bot/modules/portal_pages.py:436
 msgid "Waiting for the service to confirm. This usually takes 10 to 30 seconds."
 msgstr ""
 
-#: /work/bot/modules/portal_pages.py:442
+#: bot/modules/portal_pages.py:442
 msgid "Check again"
 msgstr ""
 
-#: /work/bot/modules/portal_pages.py:453 /work/bot/modules/portal_pages.py:457
+#: bot/modules/portal_pages.py:453 bot/modules/portal_pages.py:457
 #, python-format
 msgid "%(service)s connected"
 msgstr ""
 
-#: /work/bot/modules/portal_pages.py:454
+#: bot/modules/portal_pages.py:454
 #, python-format
 msgid "StreamerBot can now stream from your %(service)s account."
 msgstr ""
 
-#: /work/bot/modules/portal_pages.py:463
+#: bot/modules/portal_pages.py:463
 msgid "Try again"
 msgstr ""
 
-#: /work/bot/modules/portal_pages.py:477 /work/bot/modules/portal_pages.py:483
+#: bot/modules/portal_pages.py:477 bot/modules/portal_pages.py:483
 #, python-format
 msgid "%(service)s could not be connected"
 msgstr ""
 
-#: /work/bot/modules/portal_pages.py:496
+#: bot/modules/portal_pages.py:496
 msgid ""
 "If Google refuses to sign in here, import a session from your own browser"
 " instead:"
 msgstr ""
 
-#: /work/bot/modules/portal_pages.py:502
+#: bot/modules/portal_pages.py:502
 msgid "Use a separate Google account"
 msgstr ""
 
-#: /work/bot/modules/portal_pages.py:503
+#: bot/modules/portal_pages.py:503
 msgid ""
 "Google may restrict an account that plays videos automatically from a "
 "server. Make a Google account just for StreamerBot rather than using your"
 " personal one."
 msgstr ""
 
-#: /work/bot/modules/portal_pages.py:527 /work/bot/modules/portal_pages.py:550
+#: bot/modules/portal_pages.py:527 bot/modules/portal_pages.py:550
 msgid "Approve the sign-in on your phone"
 msgstr ""
 
-#: /work/bot/modules/portal_pages.py:531
+#: bot/modules/portal_pages.py:531
 msgid "Not approved yet. Approve the sign-in on your phone"
 msgstr ""
 
-#: /work/bot/modules/portal_pages.py:537
+#: bot/modules/portal_pages.py:537
 msgid "Number to tap on your phone"
 msgstr ""
 
-#: /work/bot/modules/portal_pages.py:545
+#: bot/modules/portal_pages.py:545
 msgid "Google says:"
 msgstr ""
 
-#: /work/bot/modules/portal_pages.py:551
+#: bot/modules/portal_pages.py:551
 msgid "Google has not confirmed the approval yet."
 msgstr ""
 
-#: /work/bot/modules/portal_pages.py:554
+#: bot/modules/portal_pages.py:554
 msgid ""
 "Google sent a prompt to a phone or tablet signed in to this account. Tap "
 "Yes on it, then come back here."
 msgstr ""
 
-#: /work/bot/modules/portal_pages.py:555
+#: bot/modules/portal_pages.py:555
 msgid ""
 "The prompt stops working after a few minutes. If it has gone, cancel and "
 "sign in again."
 msgstr ""
 
-#: /work/bot/modules/portal_pages.py:559
+#: bot/modules/portal_pages.py:559
 msgid "I have approved it on my phone"
 msgstr ""
 
-#: /work/bot/modules/portal_pages.py:617
+#: bot/modules/portal_pages.py:617
 msgid ""
 "Use this when Google will not sign in from the bot, or when the bot "
 "cannot run a browser."
 msgstr ""
 
-#: /work/bot/modules/portal_pages.py:619
+#: bot/modules/portal_pages.py:619
 msgid ""
 "In your own browser, sign in to YouTube with the Google account made for "
 "StreamerBot."
 msgstr ""
 
-#: /work/bot/modules/portal_pages.py:620
+#: bot/modules/portal_pages.py:620
 msgid ""
 "While on youtube.com, use a cookie export extension to save the cookies "
 "in Netscape cookies.txt format."
 msgstr ""
 
-#: /work/bot/modules/portal_pages.py:621
+#: bot/modules/portal_pages.py:621
 msgid ""
 "Choose that file below, or open it, copy everything in it, and paste it "
 "into the box below."
 msgstr ""
 
-#: /work/bot/modules/portal_pages.py:622
+#: bot/modules/portal_pages.py:622
 msgid "Select Import the session."
 msgstr ""
 
-#: /work/bot/modules/portal_pages.py:625
+#: bot/modules/portal_pages.py:625
 msgid ""
 "Google sometimes ends a session that is used from a different place. If "
 "that happens, StreamerBot tells you in TeamTalk and you can import again."
 msgstr ""
 
-#: /work/bot/modules/portal_pages.py:629
+#: bot/modules/portal_pages.py:629
 msgid ""
 "This server cannot run a browser, so nothing can keep an imported session"
 " alive. Expect to import again from time to time."
 msgstr ""
 
-#: /work/bot/modules/portal_pages.py:636
+#: bot/modules/portal_pages.py:636
 msgid "Your cookies.txt file"
 msgstr ""
 
-#: /work/bot/modules/portal_pages.py:642
+#: bot/modules/portal_pages.py:642
 msgid "Or paste the contents of the file"
 msgstr ""
 
-#: /work/bot/modules/portal_pages.py:643
+#: bot/modules/portal_pages.py:643
 msgid "Paste the whole file. It is several lines of text."
 msgstr ""
 
-#: /work/bot/modules/portal_pages.py:650
+#: bot/modules/portal_pages.py:650
 msgid "Import the session"
 msgstr ""
 
-#: /work/bot/modules/portal_pages.py:656
+#: bot/modules/portal_pages.py:656
 #, python-format
 msgid "Lines pasted: %(count)s"
 msgstr ""
 
-#: /work/bot/modules/portal_pages.py:673
+#: bot/modules/portal_pages.py:673
 msgid "Choose your cookies.txt file, or paste its contents"
 msgstr ""
 
-#: /work/bot/modules/portal_pages.py:674
+#: bot/modules/portal_pages.py:674
 msgid ""
 "This is too long to be a cookies file. Check you chose only the "
 "cookies.txt file."
 msgstr ""
 
-#: /work/bot/modules/portal_pages.py:675
+#: bot/modules/portal_pages.py:675
 msgid ""
 "This is not a cookies.txt file. Export the cookies again in Netscape "
 "cookies.txt format."
 msgstr ""
 
-#: /work/bot/modules/portal_pages.py:676
+#: bot/modules/portal_pages.py:676
 msgid ""
 "This file has no YouTube sign-in in it. Sign in to YouTube in your "
 "browser, then export the cookies again while on youtube.com."
 msgstr ""
 
-#: /work/bot/modules/portal_pages.py:677
+#: bot/modules/portal_pages.py:677
 msgid ""
 "YouTube says this session is already signed out. Sign in to YouTube in "
 "your browser again, then export a fresh file."
 msgstr ""
 
-#: /work/bot/modules/portal_pages.py:678
+#: bot/modules/portal_pages.py:678
 msgid "The session could not be imported."
 msgstr ""
 
-#: /work/bot/modules/portal_pages.py:690 /work/bot/modules/portal_pages.py:705
+#: bot/modules/portal_pages.py:690 bot/modules/portal_pages.py:705
 #, python-format
 msgid "Disconnect %(service)s?"
 msgstr ""
 
-#: /work/bot/modules/portal_pages.py:691
+#: bot/modules/portal_pages.py:691
 #, python-format
 msgid ""
 "StreamerBot will stop streaming from your %(service)s account. Your "
@@ -1851,201 +1834,225 @@ msgid ""
 "time."
 msgstr ""
 
-#: /work/bot/modules/portal_pages.py:702
+#: bot/modules/portal_pages.py:702
 #, python-format
 msgid "Cancel, keep %(service)s connected"
 msgstr ""
 
 # | msgid "help text not found"
-#: /work/bot/modules/portal_pages.py:721
+#: bot/modules/portal_pages.py:721
 #, fuzzy
 msgid "Page not found"
 msgstr "yardım metni bulunamadı"
 
 # | msgid "This user is not in the admin list"
-#: /work/bot/modules/portal_pages.py:722
+#: bot/modules/portal_pages.py:722
 #, fuzzy
 msgid "This address is not quite right."
 msgstr "Bu kullanıcı yönetici listesinde değil"
 
-#: /work/bot/modules/portal_pages.py:723 /work/bot/modules/portal_pages.py:730
+#: bot/modules/portal_pages.py:723 bot/modules/portal_pages.py:730
 msgid "To get a new link, send the li command to StreamerBot in TeamTalk."
 msgstr ""
 
-#: /work/bot/modules/portal_pages.py:728
+#: bot/modules/portal_pages.py:728
 msgid "Link expired"
 msgstr ""
 
-#: /work/bot/modules/portal_pages.py:729
+#: bot/modules/portal_pages.py:729
 msgid "This link has expired."
 msgstr ""
 
-#: /work/bot/modules/portal_pages.py:735
+#: bot/modules/portal_pages.py:735
 msgid "Something went wrong"
 msgstr ""
 
-#: /work/bot/modules/portal_pages.py:736
+#: bot/modules/portal_pages.py:736
 msgid "StreamerBot could not finish that request."
 msgstr ""
 
-#: /work/bot/modules/portal_pages.py:737
+#: bot/modules/portal_pages.py:737
 msgid "Try again in a moment. If it keeps happening, check the bot's log."
 msgstr ""
 
-#: /work/bot/modules/uploader.py:63
+#: bot/modules/uploader.py:63
 msgid "Error: Downloaded file not found."
 msgstr "Hata: İndirilen dosya bulunamadı."
 
-#: /work/bot/modules/youtube_session_keeper.py:256
-#: /work/bot/modules/youtube_session_keeper.py:263
+#: bot/modules/youtube_session_keeper.py:256
+#: bot/modules/youtube_session_keeper.py:263
 msgid ""
 "Google signed in, but YouTube did not recognise the session. Please try "
 "again."
 msgstr ""
 
-#: /work/bot/services/browser_service.py:66
+#: bot/services/browser_service.py:126
 #, python-format
 msgid "%(service)s is not ready yet."
 msgstr ""
 
-#: /work/bot/services/browser_service.py:78
+#: bot/services/browser_service.py:143
 #, python-format
 msgid ""
 "%(service)s needs Google Chrome, which is not available on this machine's"
 " processor architecture."
 msgstr ""
 
-#: /work/bot/services/browser_service.py:89
+#: bot/services/browser_service.py:154
 #, python-format
 msgid "%(service)s is not connected. Send li %(code)s to connect an account."
 msgstr ""
 
-#: /work/bot/services/browser_service.py:140
+#: bot/services/browser_service.py:205
 #, python-format
 msgid "%(count)s %(kind)s"
 msgstr ""
 
-#: /work/bot/services/browser_service.py:155
+#: bot/services/browser_service.py:244
 #, python-format
 msgid "That is not a %(service)s link."
 msgstr ""
 
 # | msgid "Live streams cannot be downloaded"
-#: /work/bot/services/browser_service.py:171
+#: bot/services/browser_service.py:260
 #, fuzzy, python-format
 msgid "%(service)s cannot be downloaded."
 msgstr "Canlı akışlar indirilemiyor"
 
-#: /work/bot/services/gamdl_downloader.py:158
+#: bot/services/browser_service.py:286
+msgid ""
+"Disney Plus plays films and shows, with audio description where Disney "
+"Plus offers one. Each account has its own profiles, with their own "
+"watchlists and audio settings; pf lists them and pf with a number picks "
+"one."
+msgstr ""
+
+#: bot/services/browser_service.py:302
+msgid ""
+"Apple Music plays songs, albums, artists and playlists. A search returns "
+"all four, each named by what it is, so an album and the song on it are "
+"told apart. dl downloads what is playing and dlp downloads the album it "
+"is from."
+msgstr ""
+
+#: bot/services/browser_service.py:325
+msgid ""
+"Amazon Music plays songs, albums, artists and playlists. A search returns"
+" all four, each named by what it is. It needs an Amazon account with a "
+"music subscription; a plain Prime account plays only part of the "
+"catalogue."
+msgstr ""
+
+#: bot/services/gamdl_downloader.py:158
 msgid "The Apple Music downloader is not installed in this image."
 msgstr ""
 
-#: /work/bot/services/gamdl_downloader.py:165
+#: bot/services/gamdl_downloader.py:165
 msgid ""
 "Downloading from Apple Music needs a subscription. Connect the account "
 "first with li am."
 msgstr ""
 
-#: /work/bot/services/gamdl_downloader.py:199
+#: bot/services/gamdl_downloader.py:199
 msgid "That is not an Apple Music link."
 msgstr ""
 
-#: /work/bot/services/gamdl_downloader.py:216
+#: bot/services/gamdl_downloader.py:216
 msgid "The download took too long and was stopped."
 msgstr ""
 
-#: /work/bot/services/gamdl_downloader.py:230
+#: bot/services/gamdl_downloader.py:230
 msgid "The download produced no audio files."
 msgstr ""
 
-#: /work/bot/services/gamdl_downloader.py:252
+#: bot/services/gamdl_downloader.py:252
 msgid "That needs an active Apple Music subscription."
 msgstr ""
 
-#: /work/bot/services/gamdl_downloader.py:255
+#: bot/services/gamdl_downloader.py:255
 msgid "Apple Music did not have that."
 msgstr ""
 
-#: /work/bot/services/gamdl_downloader.py:258
+#: bot/services/gamdl_downloader.py:258
 msgid "That track needs a decryption device file the bot does not have."
 msgstr ""
 
-#: /work/bot/services/gamdl_downloader.py:262
+#: bot/services/gamdl_downloader.py:262
 msgid "The Apple Music sign-in has expired. Connect it again with li am."
 msgstr ""
 
 # | msgid "Error: Downloaded file not found."
-#: /work/bot/services/gamdl_downloader.py:265
+#: bot/services/gamdl_downloader.py:265
 #, fuzzy
 msgid "The download failed."
 msgstr "Hata: İndirilen dosya bulunamadı."
 
-#: /work/bot/services/netflix.py:50
+#: bot/services/netflix.py:80
 msgid "Netflix is not ready yet."
 msgstr ""
 
-#: /work/bot/services/netflix.py:60
+#: bot/services/netflix.py:93
 msgid ""
 "Netflix needs Google Chrome, which is not available on this machine's "
 "processor architecture."
 msgstr ""
 
-#: /work/bot/services/netflix.py:72
+#: bot/services/netflix.py:105
 msgid "Netflix is not connected. Send li nf to connect an account."
 msgstr ""
 
-#: /work/bot/services/netflix.py:96
+#: bot/services/netflix.py:147
 msgid "That is not a Netflix link."
 msgstr ""
 
 # | msgid "Live streams cannot be downloaded"
-#: /work/bot/services/netflix.py:110
+#: bot/services/netflix.py:161
 #, fuzzy
 msgid "Netflix titles cannot be downloaded."
 msgstr "Canlı akışlar indirilemiyor"
 
-#: /work/bot/services/spotify.py:79
+#: bot/services/spotify.py:113
 msgid "Spotify is not connected yet. Send li sp to connect an account."
 msgstr ""
 
-#: /work/bot/services/spotify.py:118
+#: bot/services/spotify.py:155
 msgid ""
 "Spotify search needs a Spotify application. Add a client ID and secret in"
 " the bot's configuration, then try again. Playing a pasted Spotify link "
 "does not need one."
 msgstr ""
 
-#: /work/bot/services/spotify.py:180
+#: bot/services/spotify.py:217
 msgid "The Spotify session expired. Try again."
 msgstr ""
 
-#: /work/bot/services/spotify.py:185
+#: bot/services/spotify.py:222
 msgid "Spotify refused that request. Playback needs a Premium account."
 msgstr ""
 
-#: /work/bot/services/spotify.py:190
+#: bot/services/spotify.py:227
 msgid "Spotify is rate limiting us. Try again shortly."
 msgstr ""
 
-#: /work/bot/services/spotify.py:233
+#: bot/services/spotify.py:270
 msgid "That is not a Spotify link."
 msgstr ""
 
-#: /work/bot/services/spotify.py:261
+#: bot/services/spotify.py:298
 msgid "That kind of Spotify link is not supported."
 msgstr ""
 
 # | msgid "Live streams cannot be downloaded"
-#: /work/bot/services/spotify.py:275
+#: bot/services/spotify.py:312
 #, fuzzy
 msgid "Spotify tracks cannot be downloaded."
 msgstr "Canlı akışlar indirilemiyor"
 
-#: /work/bot/services/yt.py:170 /work/bot/services/yt.py:442
+#: bot/services/yt.py:194 bot/services/yt.py:466
 msgid "Unknown Title"
 msgstr "Bilinmeyen Başlık"
 
-#: /work/bot/services/yt.py:200 /work/bot/services/ytm.py:115
+#: bot/services/yt.py:224 bot/services/ytm.py:141
 msgid "Unknown"
 msgstr "Bilinmiyor"
 
@@ -2275,4 +2282,24 @@ msgstr "Bilinmiyor"
 
 #~ msgid "Error: This playlist is too large (max {} tracks)."
 #~ msgstr "Hata: Bu çalma listesi çok büyük (maks {} parça)."
+
+#~ msgid "Current service: {}"
+#~ msgstr "Mevcut hizmet: {}"
+
+#~ msgid "This service has no additional help"
+#~ msgstr "Bu hizmetin ek yardımı yok"
+
+#~ msgid "{} (Error)"
+#~ msgstr "{} (Hata)"
+
+#~ msgid "{} (Warning: {})"
+#~ msgstr "{} (Uyarı: {})"
+
+#~ msgid ""
+#~ "Toggles search results mode. When "
+#~ "active, 'p QUERY' shows a numbered "
+#~ "list. Use 'sr on' or 'sr off' "
+#~ "to set explicitly. Save permanently with"
+#~ " 'sc'"
+#~ msgstr ""
 
