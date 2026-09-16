@@ -2153,6 +2153,17 @@ bot_dir_is_legacy() {
     [ -f "$dir/TTMediaBot.log" ] && return 0
     if [ -f "$dir/config.json" ]; then
         grep -q "TTMediaBot" "$dir/config.json" 2>/dev/null && return 0
+        # Another fork's service keys. bot/migrators/config_migrator.py decides
+        # lineage by shape rather than by version number, for the reason given
+        # there: a fork that reached its own version 2 means something entirely
+        # different by it, so the number cannot be compared across lineages.
+        # Deciding it the same way here matters most for a folder copied in by
+        # hand, which is exactly a config written by some other fork.
+        jq -e '(.services | type) == "object"
+               and ((.services | has("vk")) or (.services | has("yam"))
+                    or (.services.default_service == "vk")
+                    or (.services.default_service == "yam"))' \
+            "$dir/config.json" >/dev/null 2>&1 && return 0
         # No auth_portal section means it predates this version whatever it is named.
         jq -e 'has("auth_portal")' "$dir/config.json" >/dev/null 2>&1 || return 0
     fi
@@ -2188,9 +2199,10 @@ migrate_one_bot() {
             return 1
         fi
 
-        local tmp defaults
+        local tmp defaults old_default
         tmp=$(mktemp)
         defaults=$(streamerbot_config_defaults)
+        old_default=$(jq -r '.services.default_service // empty' "$dir/config.json" 2>/dev/null)
 
         # Deep merge with the bot's own values winning, then the few renames a
         # merge cannot express, because the old value is still valid JSON and
@@ -2205,6 +2217,11 @@ migrate_one_bot() {
                     (if ((.logger.file_name // "") | test("TTMediaBot"))
                      then "StreamerBot.log"
                      else (.logger.file_name // "StreamerBot.log") end)
+                | .services.default_service =
+                    (if ((.services.default_service // "yt")
+                         | IN("yt","ytm","sp","nf","dp","am","az"))
+                     then (.services.default_service // "yt")
+                     else "yt" end)
                 | .config_version = (if ((.config_version // 0) < 2) then 2 else .config_version end)
               ' "$dir/config.json" > "$tmp" 2>/dev/null; then
             rm -f "$tmp"
@@ -2232,6 +2249,21 @@ migrate_one_bot() {
             echo "  Added the new configuration sections. Nickname and server details unchanged."
             echo "  The original is kept as config.json.pre-migration."
         fi
+
+        # Said out loud, because it changes which service a bare search uses.
+        # VK and Yandex Music are TTMediaBot's and have no equivalent here, so
+        # there is nothing to map them to. Left alone, ServiceManager looks the
+        # name up in a plain dict and the bot dies during startup with a
+        # traceback instead of anything a user could act on.
+        case "$old_default" in
+            ""|yt|ytm|sp|nf|dp|am|az) ;;
+            *)
+                echo "  The default service was $old_default, which this bot does not have."
+                echo "  It is now YouTube. To use another, set services.default_service"
+                echo "  in this bot's config.json to one of: yt, ytm, sp, nf, dp, am, az."
+                log_line "Default service $old_default was not available; set to yt for $name"
+                ;;
+        esac
 
         # The old cookies.txt is removed. Nothing reads it since the switch to
         # device-code sign-in, and leaving it behind means a stale YouTube
@@ -2318,6 +2350,366 @@ migrate_restored_bots() {
     fi
     echo "OK. Every bot is ready."
     return 0
+}
+
+# ---------------------------------------------------------------------------
+# Adopting a bot folder that was copied in by hand.
+#
+# The supported way to bring an old bot across is Backup and Restore, but people
+# copy a folder straight into bots/ over scp, WinSCP or a file manager, because
+# that is the obvious thing to do when the folder is right there. Nothing
+# noticed. The folder sat in bots/ with no container, so every menu item that
+# works from "docker ps -a -f label=role=streamerbot" skipped it silently, and
+# the bot simply never appeared -- no error, nothing in any log, because no code
+# ever ran for it.
+#
+# So this scans for exactly that: a directory under bots/ with no container. It
+# then puts the folder through the same migration a restore uses
+# (migrate_one_bot), and creates the container. Nothing here is a second copy of
+# the migration rules; a copied folder and a restored one are the same problem
+# arriving by different routes, and two migrations that drift apart is how a bot
+# ends up on a config nothing understands.
+# ---------------------------------------------------------------------------
+
+# The name has to survive three separate things, and a folder copied from a
+# Windows machine routinely fails all of them:
+#
+#   - Docker's container name grammar;
+#   - the YouTube bridge's bot_id validation, which is the containment boundary
+#     that stops one bot reaching another bot's YouTube session, so it is strict
+#     on purpose and must not be relaxed to accommodate a folder name;
+#   - being usable as a directory name inside the container.
+#
+# The bridge's regex is the strictest, so matching it satisfies all three.
+BOT_NAME_PATTERN='^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$'
+
+bot_name_is_valid() {
+    printf '%s' "$1" | grep -Eq "$BOT_NAME_PATTERN"
+}
+
+# Every directory under bots/ that has no container. Note the -a: a bot whose
+# container exists but is stopped is not a candidate, and adopting it would
+# destroy and rebuild a container someone deliberately stopped.
+adoptable_bot_dirs() {
+    local dir name
+    [ -d "$BOTS_ROOT" ] || return 0
+    for dir in "$BOTS_ROOT"/*; do
+        [ -d "$dir" ] || continue
+        name=$(basename "$dir")
+        [ -n "$(docker ps -a -q -f "name=^/${name}$" 2>/dev/null)" ] && continue
+        printf '%s\n' "$dir"
+    done
+}
+
+# Where this folder's config.json actually is.
+#
+# Two shapes arrive. A bot's own data folder has config.json at the top, which
+# is the easy case. But people also copy the whole old TTMediaBot install
+# directory, and then config.json is one or two levels down among the source
+# code. Guessing between several would be worse than saying so, so this only
+# answers when there is exactly one candidate.
+#
+# The search is depth limited and prunes directories certain to hold a
+# config.json belonging to something else.
+find_adoptable_config() {
+    local dir="$1"
+    find "$dir" -maxdepth 3 \
+        \( -name .git -o -name node_modules -o -name __pycache__ \) -prune -o \
+        -name config.json -type f -print 2>/dev/null | head -5
+}
+
+# Bring one nested bot folder's data up to the top of the bot directory.
+#
+# Deliberately named files and directories, never "move everything up". A copied
+# install directory holds the entire source tree beside config.json, and hoisting
+# that into bots/<name>/ would mount a second copy of the bot's own source over
+# the container's data directory.
+lift_adopted_bot_data() {
+    local source="$1" dir="$2" item moved=0
+    for item in config.json config.json.pre-migration \
+                TTMediaBotCache.dat StreamerBotCache.dat \
+                TTMediaBot.log StreamerBot.log cookies.txt \
+                secrets browser youtube_auth librespot; do
+        [ -e "$source/$item" ] || continue
+        [ -e "$dir/$item" ] && continue
+        mv "$source/$item" "$dir/$item" 2>/dev/null && moved=$((moved + 1))
+    done
+    [ "$moved" -gt 0 ]
+}
+
+# Check one bot's configuration, rather than every bot on the host.
+#
+# validate_bot_configs reports on all of them, which is right before starting
+# them all and wrong here: a folder being adopted one at a time should not
+# produce a report about bots the user did not touch. Same script, same rules,
+# read-only mount for the same reason -- a running bot holds a lock on its own
+# config.json.
+validate_one_bot_config() {
+    local dir="$1" name
+    name=$(basename "$dir")
+
+    if ! docker image inspect "$BOT_IMAGE" >/dev/null 2>&1; then
+        echo "Warning. Bot $name was not checked, because the image is not built yet."
+        return 0
+    fi
+    if ! docker run --rm --entrypoint test "$BOT_IMAGE" \
+        -f /home/streamer/StreamerBot/tools/check_config.py >/dev/null 2>&1; then
+        echo "Warning. Bot $name was not checked, because this image predates the check."
+        echo "  Rebuild with option 3 to have configurations checked from now on."
+        return 0
+    fi
+
+    # Mounted under the bot's own name rather than a fixed path, because
+    # check_config.py takes the name it reports from the config file's parent
+    # directory. Mounted at /bot it would report on a bot called "bot", which is
+    # useless in a run that adopts several folders at once.
+    docker run --rm -v "${dir}:/bots/${name}:ro" \
+        --entrypoint python "$BOT_IMAGE" \
+        /home/streamer/StreamerBot/tools/check_config.py "/bots/${name}/config.json"
+}
+
+# Say what a candidate folder is, before anything is changed.
+#
+# Returns 0 when it can be adopted, 1 when it cannot. Everything it prints is a
+# plain sentence opening with Error or Warning where there is one, because this
+# is read aloud and the severity has to arrive before the detail.
+inspect_adoption_candidate() {
+    local dir="$1" name configs count config_path nickname hostname
+    name=$(basename "$dir")
+
+    if ! bot_name_is_valid "$name"; then
+        echo "  Error. The folder name cannot be used as a bot name."
+        echo "  Letters, digits, dots, dashes and underscores only, starting with"
+        echo "  a letter or a digit. Spaces are the usual reason."
+        echo "  Rename the folder and run this again."
+        return 1
+    fi
+
+    configs=$(find_adoptable_config "$dir")
+    count=$(printf '%s' "$configs" | grep -c . 2>/dev/null || true)
+
+    if [ "${count:-0}" -eq 0 ]; then
+        echo "  Error. There is no config.json anywhere in this folder, so there is"
+        echo "  nothing to make a bot from."
+        return 1
+    fi
+
+    if [ -f "$dir/config.json" ]; then
+        config_path="$dir/config.json"
+    elif [ "${count:-0}" -eq 1 ]; then
+        config_path="$configs"
+        echo "  The configuration is not at the top of this folder. It is at:"
+        echo "    ${config_path#$dir/}"
+        echo "  That looks like a copy of a whole installation rather than one bot's"
+        echo "  data folder. The bot's own files are moved up before adopting."
+    else
+        echo "  Error. This folder holds $count files named config.json and there is no"
+        echo "  way to tell which one is the bot's. Copy just the bot's own folder."
+        return 1
+    fi
+
+    if ! jq -e . "$config_path" >/dev/null 2>&1; then
+        echo "  Error. config.json is not valid JSON, so it cannot be read."
+        echo "  Fix that file, or copy the folder across again."
+        return 1
+    fi
+
+    nickname=$(jq -r '.teamtalk.nickname // ""' "$config_path" 2>/dev/null)
+    hostname=$(jq -r '.teamtalk.hostname // ""' "$config_path" 2>/dev/null)
+    echo "  Nickname: ${nickname:-not set}. Server: ${hostname:-not set}."
+
+    if bot_dir_is_legacy "$(dirname "$config_path")"; then
+        echo "  This came from an older version or another fork. Its configuration is"
+        echo "  brought up to date, keeping its name and server details."
+    else
+        echo "  Its configuration is already current."
+    fi
+    return 0
+}
+
+# Say, once at startup, that a copied folder is sitting there doing nothing.
+#
+# This is the whole reason the failure was invisible: the folder is in bots/, it
+# looks right, and every menu item works from the container list, so the bot is
+# absent from all of them without anything saying why. Like the update check,
+# this only reports -- adopting a folder creates a container and starts a bot,
+# which is not something to do to somebody on the way to the menu.
+notice_adoptable_bots() {
+    local count
+    count=$(adoptable_bot_dirs | grep -c . 2>/dev/null || true)
+    [ "${count:-0}" -gt 0 ] || return 0
+    echo ""
+    echo "Note. $count folder(s) in the bots folder have no container, so they are not"
+    echo "running and no menu item lists them. This is what a bot folder copied in by"
+    echo "hand looks like."
+    echo "To bring them in, choose Manage Bots, then Adopt Bot Folders Copied Into bots/."
+}
+
+adopt_copied_bots() {
+    header
+    echo -e "${YELLOW} --- Adopt Bot Folders Copied Into bots/ --- ${NC}"
+    echo ""
+    echo "This finds bot folders that were copied into the bots folder by hand and"
+    echo "have no container yet, brings their configuration up to date, and creates"
+    echo "a container for each one. Nickname, server, account and channel are kept"
+    echo "exactly as they are, and the original configuration is kept beside the new"
+    echo "one as config.json.pre-migration."
+    echo ""
+
+    if ! command -v jq >/dev/null 2>&1; then
+        echo "Error. jq is not installed, so configurations cannot be read."
+        echo "Install jq and try again."
+        read -p "Press Enter to continue..."
+        return
+    fi
+
+    local candidates=() dir
+    while IFS= read -r dir; do
+        [ -n "$dir" ] && candidates+=("$dir")
+    done < <(adoptable_bot_dirs)
+
+    if [ "${#candidates[@]}" -eq 0 ]; then
+        echo "There is nothing to adopt. Every folder in the bots folder already has"
+        echo "a container."
+        echo ""
+        echo "To bring a bot across, copy its folder into:"
+        echo "  $BOTS_ROOT"
+        echo "then run this again."
+        read -p "Press Enter to continue..."
+        return
+    fi
+
+    echo "Found ${#candidates[@]} folder(s) with no container."
+    echo ""
+
+    # Report on every candidate first, then ask once. Asking folder by folder
+    # while still printing findings mixes a question into a report, and the
+    # answer scrolls away from what it was about.
+    local adoptable=() name
+    for dir in "${candidates[@]}"; do
+        name=$(basename "$dir")
+        echo "Folder $name:"
+        if inspect_adoption_candidate "$dir"; then
+            adoptable+=("$dir")
+        fi
+        echo ""
+    done
+
+    if [ "${#adoptable[@]}" -eq 0 ]; then
+        echo "None of these folders can be adopted as they are. Each one says why above."
+        read -p "Press Enter to continue..."
+        return
+    fi
+
+    echo "${#adoptable[@]} of ${#candidates[@]} folder(s) can be adopted:"
+    for dir in "${adoptable[@]}"; do
+        echo "  $(basename "$dir")"
+    done
+    echo ""
+    read -p "Type adopt to continue, or press Enter to cancel: " confirm
+    if [ "$confirm" != "adopt" ]; then
+        echo "Cancelled. Nothing was changed."
+        read -p "Press Enter to continue..."
+        return
+    fi
+
+    echo ""
+    echo "Step 1 of 3. Updating configurations."
+    local failed=0 ready=() configs config_path
+    for dir in "${adoptable[@]}"; do
+        name=$(basename "$dir")
+        echo "Bot $name:"
+
+        # A nested configuration was reported above; move the bot's own files up
+        # now that adopting has been agreed to, so a cancelled run leaves the
+        # folder exactly as it was found.
+        if [ ! -f "$dir/config.json" ]; then
+            configs=$(find_adoptable_config "$dir")
+            config_path=$(printf '%s' "$configs" | head -1)
+            if lift_adopted_bot_data "$(dirname "$config_path")" "$dir"; then
+                echo "  Moved the bot's own files up to the top of the folder."
+                echo "  The rest of what was copied is left where it is and is not used."
+            else
+                echo "  Error. The bot's files could not be moved up, so it was skipped."
+                failed=$((failed + 1))
+                continue
+            fi
+        fi
+
+        if migrate_one_bot "$dir"; then
+            echo "  OK."
+            ready+=("$dir")
+        else
+            failed=$((failed + 1))
+        fi
+        echo ""
+    done
+
+    if [ "${#ready[@]}" -eq 0 ]; then
+        echo "Error. No folder could be updated, so no container was created."
+        read -p "Press Enter to continue..."
+        return
+    fi
+
+    # Before the container exists. A bot started against a configuration that
+    # cannot work restarts in a loop, and a restart loop looks like the adoption
+    # having gone wrong rather than the configuration it arrived with.
+    echo "Step 2 of 3. Checking that each configuration will start a bot."
+    local check_failed=0
+    for dir in "${ready[@]}"; do
+        validate_one_bot_config "$dir" || check_failed=1
+    done
+    echo ""
+
+    echo "Step 3 of 3. Creating the containers."
+    ensure_shared_youtube_service || {
+        echo "Error. The shared YouTube service could not be started, so no container"
+        echo "was created. The folders are updated, and adopting again will finish the job."
+        read -p "Press Enter to continue..."
+        return
+    }
+
+    local created=0
+    for dir in "${ready[@]}"; do
+        name=$(basename "$dir")
+        log_line "Adopting copied bot folder $name"
+        if log_run "docker create for adopted bot $name" \
+            docker create \
+                --name "${name}" \
+                --network host \
+                -e "TTBOT_INSTANCE=${name}" \
+                -e "YOUTUBE_BRIDGE_URL=${YOUTUBE_BRIDGE_URL}" \
+                --label "role=streamerbot" \
+                --restart always \
+                -v "${dir}:/home/streamer/StreamerBot/data" \
+                "${BOT_IMAGE}"; then
+            echo "  OK. Container $name created."
+            created=$((created + 1))
+        else
+            echo "  Error. Container $name was not created. See logs/manager.log."
+            failed=$((failed + 1))
+        fi
+    done
+
+    echo ""
+    if [ "$created" -gt 0 ]; then
+        echo "Starting the adopted bots."
+        docker start $(docker ps -a -q -f "label=role=streamerbot" -f "status=created") >/dev/null 2>&1
+    fi
+
+    echo ""
+    echo "Finished. $created bot(s) adopted and started."
+    if [ "$failed" -gt 0 ]; then
+        echo "Warning. $failed folder(s) were not adopted. Each one says why above."
+    fi
+    if [ "$check_failed" -eq 1 ]; then
+        # Started anyway, for the reason creation gives: a bot with a broken
+        # configuration restarts in a loop whether or not it was started here,
+        # and holding back the healthy ones adopted in the same run helps nobody.
+        echo "Error. The bots named above will not connect until their configurations"
+        echo "are fixed. The others started normally."
+    fi
+    read -p "Press Enter to continue..."
 }
 
 restore_bots() {
@@ -2545,7 +2937,8 @@ manage_bots() {
         echo "11. Clear All Bot Cache Files"
         echo "12. Clear YouTube Bridge Cache"
         echo "13. Repair Account Portal and Spotify Ports"
-        echo "14. Return to Main Menu"
+        echo "14. Adopt Bot Folders Copied Into bots/"
+        echo "15. Return to Main Menu"
         echo ""
         read -p "Choose an option: " opt_manage
         
@@ -2627,6 +3020,10 @@ manage_bots() {
                 header
                 ;;
             14)
+                adopt_copied_bots
+                header
+                ;;
+            15)
                 return
                 ;;
             *)
@@ -2845,6 +3242,9 @@ mkdir -p "$BOTS_ROOT"
 
 # Show menu once
 header
+# After the header and before the menu, so the note and the menu item it names
+# are read one after the other rather than with a banner between them.
+notice_adoptable_bots
 while true; do
     echo "1. Create Bot"
     echo "2. Manage Bots"

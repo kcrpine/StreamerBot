@@ -6,6 +6,57 @@ issue or a commit message. Numbering continues across releases.
 
 ## Unreleased
 
+- **[030]** Restoring or adopting a configuration from TTMediaBot now recognises
+  it by shape rather than by its version number, and repairs its default service
+  on disk. Two gaps, both of which let a foreign configuration through looking
+  fine. First, `bot_dir_is_legacy` decided lineage from the TTMediaBot cache and
+  log filenames, so a config from a fork that had renamed those but still carried
+  `services.vk` or `services.yam` was reported as already current and said so to
+  the user. `bot/migrators/config_migrator.py` has always decided this by shape,
+  for the reason recorded there — a fork that reached its own version 2 means
+  something entirely different by it — and the shell now decides it the same way.
+  Second, the shell migration never touched `services.default_service`, so a
+  restored bot kept `"vk"`, which this bot does not have; `ServiceManager` looks
+  that up in a plain dict, so the bot died during startup with a traceback rather
+  than anything a user could act on. The bot's own migration repaired this at
+  startup, so it was survivable, but only after a restart and only in memory
+  until the config was rewritten. It is now set to `yt` when the migration runs,
+  and the change is named out loud because it changes which service a bare search
+  uses.
+
+- **[029]** A bot folder copied into `bots/` by hand can now be adopted from the
+  menu: Manage Bots, then "Adopt Bot Folders Copied Into bots/". Backup and
+  Restore was the only supported route, but copying the folder straight in over
+  scp or a file manager is the obvious thing to do when the folder is right
+  there, and it failed silently. Every menu item works from
+  `docker ps -a -f label=role=streamerbot`, so a folder with no container was
+  absent from all of them — no error, nothing in any log, because no code ever
+  ran for it. The manager now also says so on startup rather than leaving it to
+  be discovered.
+
+  Adopting scans for folders with no container, reports what each one is
+  (nickname, server, and whether it came from an older version) before anything
+  is changed, and only then asks. It puts the folder through the same migration
+  a restore uses, so there is one set of rules rather than two that drift: the
+  new configuration sections and services are added, TTMediaBot's cache and log
+  files are renamed keeping their contents, the original is kept as
+  `config.json.pre-migration`, and the nickname, account, server and channel are
+  never touched. The account portal, go-librespot and stream relay ports are made
+  unique, because a copied folder arrives holding the ports it had on the machine
+  it came from and would take them from whichever bot already has them.
+
+  Three cases it refuses rather than guesses at: a folder name that cannot be a
+  bot name (a space is the usual reason — the name becomes the `bot_id`, which is
+  what stops one bot reaching another's YouTube session, so the name has to meet
+  that rule rather than the rule being relaxed); a `config.json` that is not
+  valid JSON; and a folder holding several `config.json` files, where there is no
+  way to tell which is the bot's. Where someone copied a whole installation
+  rather than one bot's data folder, the bot's own files are moved up and the
+  source tree beside them is left alone.
+
+  A folder that already has a container is never a candidate, including a stopped
+  one, so a bot someone deliberately stopped is not rebuilt behind their back.
+
 - **[028]** Translation catalogs regenerated. They had not been updated since
   Phase 0, so every string added since then, including all of Phase 9's portal
   pages and chat messages, never reached translators and appeared in English in
