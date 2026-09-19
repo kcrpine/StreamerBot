@@ -6,6 +6,75 @@ issue or a commit message. Numbering continues across releases.
 
 ## Unreleased
 
+- **[039]** Creating a bot, and editing bots, now ask whether the account portal
+  should be reachable from other computers.
+
+  `auth_portal.host` has always decided this: `127.0.0.1` is the machine the bot
+  runs on and nothing else, `0.0.0.0` is every interface. The setting worked. The
+  only way to reach it was to edit JSON by hand, over SSH, on a headless server —
+  while the bot itself printed "set auth_portal.host to 0.0.0.0 in this bot's
+  config.json" whenever it detected the problem
+  (`bot/modules/public_address.py::reachability_warning`). A workaround the
+  software tells you to perform is a question it should have asked.
+
+  It is asked rather than defaulted to `0.0.0.0`, and the question says what the
+  choice costs. The portal takes account passwords and one-time codes and has no
+  login page by design: a link is minted only by a TeamTalk command from a user
+  who already passed `check_access`, and the token in it is the proof. That is
+  sound against someone guessing a URL and it is not encryption, so opening the
+  portal to the network puts those links, and what is typed into them, on it in
+  plain HTTP. Choosing to open it also prints the firewall sentence, because a
+  free port is only half of reachability. Pressing Enter still gives loopback.
+
+  One function, `ask_portal_host`, serves both callers. Two copies of this
+  question would drift, and the sentence about what it costs is the half most
+  likely to be dropped from the copy. In Bulk Update Configuration it is option
+  7, and "Everything" moved from 7 to 8.
+
+- **[038]** A restore, or a bot folder copied in by hand, now keeps the YouTube
+  sign-in it arrives with instead of deleting it, and no longer gives advice
+  about a device code that no longer exists.
+
+  This reversed twice and the messages went stale with it. The old TTMediaBot
+  played YouTube from a `cookies.txt` in the top of the bot's folder. Phase 2
+  replaced that with an OAuth device code, so the migration deleted the file and
+  said "This version signs in with a code instead. Send li yt." Phase 9 then
+  retired the device code as well, because YouTube answers 400 to every
+  OAuth-authenticated player request and refuses anonymous playback from
+  datacenter addresses. Cookies are how it signs in again. So the migration was
+  destroying a working account and, on the way out, directing people to a screen
+  that had been removed two phases earlier.
+
+  The file is now staged as `youtube_auth/imported_cookies.txt` and imported by
+  the bot a couple of minutes after it starts. It is deliberately **not** written
+  straight to `youtube_auth/cookies.txt`, where the bridge reads: that file and
+  the bot's own Chrome profile have to agree, because the keep-alive asks Chrome
+  whether YouTube still considers it signed in, and a session present only in the
+  file answers no — a perfectly good session would be marked expired on its first
+  refresh. Importing goes through `YouTubeSessionKeeper.import_text`, the same
+  path as a session pasted into the portal, which loads it into the profile
+  first, and which already handles arm64 having no Chrome at all.
+
+  Three rules the staging keeps. A file carrying no Google sign-in is not kept,
+  checked the same way `bot/auth/cookies.py::has_google_session` checks it — one
+  of SAPISID or a `__Secure-` twin *and* one of SID or a twin, since either alone
+  is not signed in. A bot that is already signed in keeps the account it is
+  using, because the staged file came out of a backup and can only be the older.
+  And a session YouTube refuses is renamed rather than deleted: a restore does
+  not destroy what it was given, and a file named for the reason it was refused
+  is something a user can act on.
+
+  Signing out removes a staged file too. Without that, a bot signs itself back in
+  minutes after someone deliberately signed it out, with nothing on screen to
+  explain it.
+
+  The port-conflict note was wrong in the same way and is corrected. It told
+  people "YouTube and Spotify sign-in are unaffected: those use a code in the
+  channel rather than the portal." YouTube's sign-in *is* a portal page now —
+  `li yt` mints a `/connect/yt` or `/import/yt` link — so a portal that cannot
+  bind does stop it, and the note sent people looking in the wrong place. Spotify
+  genuinely is unaffected, and that distinction is now what the note makes.
+
 - **[037]** Spotify and Amazon Music search for albums, artists and playlists as
   well as songs, and a bare `p QUERY` still plays the song.
 

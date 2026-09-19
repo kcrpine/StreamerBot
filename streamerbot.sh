@@ -397,6 +397,85 @@ force_rebuild_image() {
     read -p "Process completed. Press Enter to return..."
 }
 
+# ---------------------------------------------------------------------------
+# Who can open the account portal.
+#
+# auth_portal.host is what the portal binds to. 127.0.0.1 is the machine the bot
+# runs on and nothing else; 0.0.0.0 is every interface, so another computer can
+# reach it.
+#
+# Loopback is the safe default and, for how these bots are actually deployed,
+# usually the wrong one. They run on a headless VPS and the person connecting an
+# account is sitting at their own computer somewhere else. The bot already
+# detects exactly this and says "set auth_portal.host to 0.0.0.0 in this bot's
+# config.json" (bot/modules/public_address.py::reachability_warning) -- which
+# means the setting works and the only way to reach it was to edit JSON by hand,
+# over SSH, on a remote server. Asking here is the difference between a
+# documented workaround and a choice anyone can make.
+#
+# It is asked as a real question rather than defaulted to 0.0.0.0, because it is
+# a real decision. The portal takes account passwords and one-time codes, and it
+# has no login page by design: a URL is minted only by a TeamTalk command from a
+# user who already passed check_access, and the token in it is the proof (see
+# bot/modules/auth_portal.py). That is sound against someone guessing a URL and
+# it is not encryption. Opening the portal to the network means those links, and
+# what is typed into them, cross it in plain HTTP. Anyone who wants that should
+# be told, and anyone who does not should keep loopback and use an SSH tunnel.
+#
+# Sets PORTAL_HOST. A global rather than a printed value, because this asks
+# questions and a $(...) capture would swallow them.
+PORTAL_HOST_LOCAL="127.0.0.1"
+PORTAL_HOST_ANY="0.0.0.0"
+
+# Initialised so the variable always holds one of the two valid addresses,
+# whether or not the question has been reached.
+PORTAL_HOST="$PORTAL_HOST_LOCAL"
+
+ask_portal_host() {
+    local current="${1:-$PORTAL_HOST_LOCAL}" default_option answer
+    if [ "$current" = "$PORTAL_HOST_ANY" ]; then default_option=2; else default_option=1; fi
+
+    echo ""
+    echo "Account portal access."
+    echo "The account portal is the web page that connects YouTube, Netflix, Disney"
+    echo "Plus, Apple Music and Amazon Music to this bot. YouTube is on that list"
+    echo "now: it signs in as a real browser session, not with a code."
+    echo "Which computers should be able to open it?"
+    echo "1. Only this computer. The portal listens on ${PORTAL_HOST_LOCAL}."
+    echo "2. Any computer that can reach this one. The portal listens on ${PORTAL_HOST_ANY}."
+    echo ""
+    echo "Choose 2 if this bot runs on a server and you connect accounts from your"
+    echo "own computer. That is the usual case, and with option 1 the link the bot"
+    echo "sends you will not open."
+    echo "Choose 1 if you are sitting at this machine, or if you reach it over an"
+    echo "SSH tunnel. The portal has no password: it is protected by links that"
+    echo "cannot be guessed, sent privately in TeamTalk, and it speaks plain HTTP."
+    echo "On option 2 those links, and anything typed into them, cross the network"
+    echo "unencrypted."
+    read -p "Option [Default: ${default_option}]: " answer
+    answer=${answer:-$default_option}
+
+    case "$answer" in
+        2)
+            PORTAL_HOST="$PORTAL_HOST_ANY"
+            echo "The portal will listen on ${PORTAL_HOST_ANY}, so other computers can reach it."
+            echo "A port that nothing is blocking is the other half of this. Allow the"
+            echo "portal's port through any firewall on this host, and where the bot sits"
+            echo "behind a router or a cloud security group, forward it here as well, or"
+            echo "the portal will bind correctly and the link still will not open."
+            ;;
+        1)
+            PORTAL_HOST="$PORTAL_HOST_LOCAL"
+            echo "The portal will listen on ${PORTAL_HOST_LOCAL}, so only this computer can open it."
+            ;;
+        *)
+            if [ "$default_option" = "2" ]; then PORTAL_HOST="$PORTAL_HOST_ANY"; else PORTAL_HOST="$PORTAL_HOST_LOCAL"; fi
+            echo "That was not 1 or 2, so the portal is left listening on ${PORTAL_HOST}."
+            ;;
+    esac
+    echo ""
+}
+
 # Function: Create Bot
 create_bot() {
     header
@@ -476,7 +555,9 @@ create_bot() {
     fi
     echo ""
 
-    
+    # Asked once and applied to every bot created in this run, including a batch.
+    ask_portal_host "$(jq -r '.auth_portal.host // "127.0.0.1"' "$CONFIG_SOURCE" 2>/dev/null)"
+
     # Batch create option - ask BEFORE creating
     echo ""
     read -p "Batch create? (y/N): " batch_create
@@ -678,6 +759,7 @@ create_bot() {
        --arg chan "$channel" \
        --arg chan_pass "$channel_password" \
        --argjson del_timer "$delete_timer" \
+       --arg portal_host "$PORTAL_HOST" \
        '.teamtalk.hostname = $host |
         .teamtalk.tcp_port = $tcp |
         .teamtalk.udp_port = $udp |
@@ -688,7 +770,8 @@ create_bot() {
         .teamtalk.channel = $chan |
         .teamtalk.channel_password = $chan_pass |
         .general.delete_uploaded_files_after = $del_timer |
-        .general.start_commands = $startcmds' \
+        .general.start_commands = $startcmds |
+        .auth_portal.host = $portal_host' \
        "$CURRENT_BOT_DIR/config.json" > "$tmp_config" && mv "$tmp_config" "$CURRENT_BOT_DIR/config.json"
 
     # The portal and go-librespot both listen, and every bot shares the host's
@@ -997,6 +1080,7 @@ bulk_update_config() {
     current_user=$(jq -r '.teamtalk.username // "N/A"' "$first_config")
     current_chan=$(jq -r '.teamtalk.channel // "/"' "$first_config")
     current_chan_pass=$(jq -r '.teamtalk.channel_password // ""' "$first_config")
+    current_portal_host=$(jq -r '.auth_portal.host // "127.0.0.1"' "$first_config")
     
     echo -e "${GREEN}Current configuration (reference: $first_bot):${NC}"
     echo "  Server: $current_host"
@@ -1006,6 +1090,7 @@ bulk_update_config() {
     echo "  Username: $current_user"
     echo "  Channel: $current_chan"
     echo "  Channel Password: $([ -n "$current_chan_pass" ] && echo "*****" || echo "(None)")"
+    echo "  Account portal opens from: $([ "$current_portal_host" = "0.0.0.0" ] && echo "any computer" || echo "this computer only")"
     echo ""
     echo "Total bots: ${#bots[@]}"
     echo ""
@@ -1024,7 +1109,8 @@ bulk_update_config() {
         echo "4. Credentials (username/password)"
         echo "5. Channel & Password"
         echo "6. File Deletion Timer (delete_uploaded_files_after)"
-        echo "7. Everything"
+        echo "7. Account portal access (this computer only, or any computer)"
+        echo "8. Everything"
         echo "0. Cancel"
         echo ""
         read -p "Choose an option: " choice
@@ -1038,7 +1124,7 @@ bulk_update_config() {
             0)
                 return
                 ;;
-            1|2|3|4|5|6|7)
+            1|2|3|4|5|6|7|8)
                 break
                 ;;
             *)
@@ -1059,22 +1145,23 @@ bulk_update_config() {
     new_chan="UNSET"
     new_chan_pass="UNSET"
     new_del_timer="UNSET"
+    new_portal_host="UNSET"
     
     echo ""
     
-    if [[ "$choice" == "1" || "$choice" == "7" ]]; then
+    if [[ "$choice" == "1" || "$choice" == "8" ]]; then
         read -p "New server (Enter = keep): " input
         if [ -n "$input" ]; then new_host="$input"; fi
     fi
 
-    if [[ "$choice" == "2" || "$choice" == "7" ]]; then
+    if [[ "$choice" == "2" || "$choice" == "8" ]]; then
         read -p "New TCP port (Enter = keep): " input
         if [ -n "$input" ]; then new_tcp="$input"; fi
         read -p "New UDP port (Enter = keep): " input
         if [ -n "$input" ]; then new_udp="$input"; fi
     fi
     
-    if [[ "$choice" == "3" || "$choice" == "7" ]]; then
+    if [[ "$choice" == "3" || "$choice" == "8" ]]; then
         read -p "Encryption (y/N): " enc_input
         if [[ "$enc_input" =~ ^[yY]$ ]]; then
             new_enc="true"
@@ -1083,7 +1170,7 @@ bulk_update_config() {
         fi
     fi
 
-    if [[ "$choice" == "4" || "$choice" == "7" ]]; then
+    if [[ "$choice" == "4" || "$choice" == "8" ]]; then
         read -p "New username (Enter = keep, '.' = clear): " input
         if [ "$input" == "." ]; then new_user=""; elif [ -n "$input" ]; then new_user="$input"; fi
 
@@ -1091,7 +1178,7 @@ bulk_update_config() {
         if [ "$input" == "." ]; then new_pass=""; elif [ -n "$input" ]; then new_pass="$input"; fi
     fi
     
-    if [[ "$choice" == "5" || "$choice" == "7" ]]; then
+    if [[ "$choice" == "5" || "$choice" == "8" ]]; then
         read -p "New Channel (Enter = keep, '.' = root '/'): " input
         if [ "$input" == "." ]; then new_chan="/"; elif [ -n "$input" ]; then new_chan="$input"; fi
 
@@ -1099,7 +1186,7 @@ bulk_update_config() {
         if [ "$input" == "." ]; then new_chan_pass=""; elif [ -n "$input" ]; then new_chan_pass="$input"; fi
     fi
 
-    if [[ "$choice" == "6" || "$choice" == "7" ]]; then
+    if [[ "$choice" == "6" || "$choice" == "8" ]]; then
         echo ""
         echo -e "${YELLOW}Delete uploaded files after how many seconds? (0 = never delete)${NC}"
         echo "  Current (from first bot): ${current_del_timer}s"
@@ -1111,6 +1198,19 @@ bulk_update_config() {
                 echo -e "${RED}Invalid value, keeping current.${NC}"
             fi
         fi
+    fi
+
+    if [[ "$choice" == "7" || "$choice" == "8" ]]; then
+        # The current value is read from the reference bot, so the question
+        # offers what these bots already have rather than the template default.
+        echo ""
+        if [ "$current_portal_host" = "$PORTAL_HOST_ANY" ]; then
+            echo "These bots currently let any computer open the account portal."
+        else
+            echo "These bots currently let only this computer open the account portal."
+        fi
+        ask_portal_host "$current_portal_host"
+        new_portal_host="$PORTAL_HOST"
     fi
     
     # Show summary
@@ -1139,6 +1239,10 @@ bulk_update_config() {
 
     if [ "$new_del_timer" != "UNSET" ]; then
         echo "  Delete files after: ${new_del_timer}s$([ "$new_del_timer" == "0" ] && echo " (never)" || true)"
+    fi
+
+    if [ "$new_portal_host" != "UNSET" ]; then
+        echo "  Account portal opens from: $([ "$new_portal_host" = "$PORTAL_HOST_ANY" ] && echo "any computer (${PORTAL_HOST_ANY})" || echo "this computer only (${PORTAL_HOST_LOCAL})")"
     fi
 
     echo ""
@@ -1270,6 +1374,10 @@ bulk_update_config() {
 
         if [ "$new_del_timer" != "UNSET" ]; then
             jq_cmd="$jq_cmd | .general.delete_uploaded_files_after = $new_del_timer"
+        fi
+
+        if [ "$new_portal_host" != "UNSET" ]; then
+            jq_cmd="$jq_cmd | .auth_portal.host = \"$new_portal_host\""
         fi
 
         jq "$jq_cmd" "$config_file" > "$tmp_config" && mv "$tmp_config" "$config_file"
@@ -1909,9 +2017,15 @@ found for it.
 Every bot on this host shares the host's ports, and nothing was free in the 200
 ports starting at ${DEFAULT_PORTAL_PORT}. Port ${wanted} was already taken.
 
-While the portal is off, connecting Netflix, Disney Plus, Apple Music and Amazon
-Music will not work on this bot. YouTube and Spotify sign-in are unaffected:
-those use a code in the channel rather than the portal.
+While the portal is off, no streaming account can be connected on this bot.
+That now includes YouTube: it signs in as a real browser session rather than
+with a code, and both ways of doing that -- signing in to Google, and importing
+a cookies.txt from your own browser -- are pages on this portal. Spotify is the
+one exception, because go-librespot still pairs with a code in the channel.
+
+A YouTube account that is already connected keeps working while the portal is
+off. What cannot be done is connecting one, or signing in again after Google
+ends the session.
 
 To fix it, free up some ports near ${DEFAULT_PORTAL_PORT} or delete bots that are
 no longer used, then run Manage Bots, Repair Account Portal and Spotify Ports.
@@ -1932,9 +2046,13 @@ NOTEEOF
     chown 1000:1000 "$dir/PORT_CONFLICT.txt" 2>/dev/null || true
 
     echo "  Warning. No free port for the account portal near ${DEFAULT_PORTAL_PORT}."
-    echo "  The portal is switched off on this bot until that is resolved, so"
-    echo "  Netflix, Disney Plus, Apple Music and Amazon Music cannot be connected."
-    echo "  YouTube and Spotify still work, because they sign in with a code."
+    echo "  The portal is switched off on this bot until that is resolved, so no"
+    echo "  streaming account can be connected: Netflix, Disney Plus, Apple Music,"
+    echo "  Amazon Music, and YouTube too. YouTube signs in as a browser session"
+    echo "  now rather than with a code, and that is a page on this portal."
+    echo "  Spotify still pairs with a code in the channel, so it is unaffected."
+    echo "  A YouTube account already connected keeps playing; it just cannot be"
+    echo "  reconnected while the portal is off."
     echo "  A free port is only half of it. The port also has to be allowed through"
     echo "  any firewall on this host, and forwarded here by a router or cloud"
     echo "  security group in front of it, or the portal binds and the link still"
@@ -2170,6 +2288,104 @@ bot_dir_is_legacy() {
     return 1
 }
 
+# ---------------------------------------------------------------------------
+# A YouTube session arriving in a backup or a copied folder.
+#
+# This reversed twice, so it is worth saying plainly what is true now. The old
+# TTMediaBot played YouTube with a cookies.txt sitting in the top of the bot's
+# folder. Phase 2 replaced that with an OAuth device code and the file became
+# dead weight, so the migration deleted it. Phase 9 then retired the device code
+# as well: YouTube answers 400 to every OAuth-authenticated player request and
+# refuses anonymous playback from datacenter addresses, so a bot could sign in
+# with a code and still play nothing.
+#
+# What YouTube does serve is a real browser session -- cookies. So a cookies.txt
+# in a restored folder is not dead weight any more. It is this bot's YouTube
+# sign-in, in exactly the format the current version imports, and deleting it
+# throws away a working account for no reason.
+#
+# It is not written straight to youtube_auth/cookies.txt, which is where the
+# bridge reads. That file and the bot's own Chrome profile have to agree: the
+# keep-alive asks Chrome whether YouTube still considers it signed in, and a
+# session that is only in the file and not in the profile answers no, which
+# would mark a perfectly good session as expired on the first refresh. So the
+# file is staged as imported_cookies.txt and the bot imports it on its next
+# start, through the same code path as a session pasted into the portal. That
+# loads it into Chrome, asks YouTube whether it signs in, and stores it.
+# ---------------------------------------------------------------------------
+
+# Whether this cookies.txt could sign a YouTube request in.
+#
+# The same test bot/auth/cookies.py::has_google_session makes, and for the same
+# reason: it is necessary and not sufficient. Only YouTube can say whether a
+# session is still alive, and the bot asks it when it imports. This only rejects
+# a file that could never work -- exported while signed out, or for another site
+# entirely -- so that a file with nothing in it is not carried across and left
+# looking like a connected account.
+#
+# Fields are tab separated: domain, subdomains, path, secure, expires, name,
+# value. Matched with grep rather than parsed, because a cookie value is a
+# credential and the fewer places it is read into a variable, the better.
+cookie_file_carries_google_session() {
+    local file="$1" tab prefix
+    [ -f "$file" ] || return 1
+    tab=$(printf '	')
+    prefix="^(#HttpOnly_)?\.?([A-Za-z0-9-]+\.)*youtube\.com${tab}([^${tab}]*${tab}){4}"
+
+    # SAPISID or a __Secure- twin is what the request signature is computed
+    # from; SID or a twin is the session itself. Neither alone is signed in.
+    grep -qE "${prefix}(SAPISID|__Secure-3PAPISID|__Secure-1PAPISID)${tab}." "$file" 2>/dev/null || return 1
+    grep -qE "${prefix}(SID|__Secure-1PSID|__Secure-3PSID)${tab}." "$file" 2>/dev/null || return 1
+    return 0
+}
+
+# Move an old top-level cookies.txt to where the bot will find it.
+#
+# Never leaves a credential in the top of the folder either way: that is the
+# path nothing reads and everything tars into a backup.
+migrate_youtube_cookie_file() {
+    local dir="$1" name pending
+    name=$(basename "$dir")
+    [ -f "$dir/cookies.txt" ] || return 0
+
+    pending="$dir/youtube_auth/imported_cookies.txt"
+
+    # Already signed in here. The stored session is the live one and the file in
+    # the top of the folder is older than it by definition, so it goes.
+    if [ -f "$dir/youtube_auth/cookies.txt" ]; then
+        rm -f "$dir/cookies.txt"
+        log_line "Removed a superseded top-level cookies.txt from $name"
+        echo "  This bot already has a stored YouTube session, so the older"
+        echo "  cookies.txt in the top of its folder was removed."
+        return 0
+    fi
+
+    if ! cookie_file_carries_google_session "$dir/cookies.txt"; then
+        rm -f "$dir/cookies.txt"
+        log_line "Removed a cookies.txt with no Google session from $name"
+        echo "  The old cookies.txt carried no YouTube sign-in, so it was removed."
+        echo "  To connect YouTube, send li yt to the bot once it is running."
+        return 0
+    fi
+
+    mkdir -p "$dir/youtube_auth"
+    if mv "$dir/cookies.txt" "$pending" 2>/dev/null; then
+        chmod 600 "$pending" 2>/dev/null || true
+        chown 1000:1000 "$pending" 2>/dev/null || true
+        log_line "Staged the old cookies.txt of $name for import"
+        echo "  Kept this bot's YouTube sign-in. This version plays YouTube as a"
+        echo "  signed-in browser session, so the old cookies.txt is worth keeping."
+        echo "  The bot imports it a couple of minutes after it starts."
+        echo "  If Google has since ended that session, send li yt to the bot and it"
+        echo "  will send you a link to sign in again."
+    else
+        echo "  Warning. This bot's old cookies.txt could not be moved, so it was"
+        echo "  left where it is and YouTube is not connected. Send li yt to the bot"
+        echo "  once it is running."
+    fi
+    return 0
+}
+
 migrate_one_bot() {
     local dir="$1" name before after
     name=$(basename "$dir")
@@ -2265,18 +2481,9 @@ migrate_one_bot() {
                 ;;
         esac
 
-        # The old cookies.txt is removed. Nothing reads it since the switch to
-        # device-code sign-in, and leaving it behind means a stale YouTube
-        # session sitting in plaintext in a directory that gets tarred into
-        # backups. Deleting it is the safer of the two options, not the riskier
-        # one, and the bot signs in again with a code.
-        if [ -f "$dir/cookies.txt" ]; then
-            rm -f "$dir/cookies.txt"
-            log_line "Removed the obsolete cookies.txt from $name"
-            echo "  Removed the old cookies.txt. This version signs in with a code"
-            echo "  instead. Send li yt to the bot once it is running."
-        fi
     fi
+
+    migrate_youtube_cookie_file "$dir"
 
     # Every restored bot arrives holding the same portal and go-librespot ports,
     # since the defaults merged in above are constants. Left alone, only the

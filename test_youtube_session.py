@@ -23,6 +23,8 @@ from bot.auth.cookies import CookieFileError, has_google_session, parse_netscape
 from bot.modules.youtube_session_keeper import (
     ImportProblem,
     ON_DEMAND_MIN_INTERVAL_SECONDS,
+    PENDING_IMPORT_NAME,
+    REJECTED_IMPORT_NAME,
     RefreshResult,
     YouTubeSessionKeeper,
     is_login_required,
@@ -341,6 +343,161 @@ class KeeperSignInAndImportTests(TestCase):
         keeper = make_keeper(signed_in_engine(), browser_sign_in=False)
 
         self.assertFalse(keeper.browser_available)
+
+
+class RestoredSessionAdoptionTests(TestCase):
+    """The last step of bringing an old bot across.
+
+    streamerbot.sh carries the old TTMediaBot's top-level cookies.txt into
+    youtube_auth/imported_cookies.txt rather than deleting it, because Phase 9
+    made cookies the way YouTube signs in again. This is what turns that file
+    into a session the bridge can use.
+
+    It is staged rather than written straight to cookies.txt because that file
+    and the bot's Chrome profile have to agree: the keep-alive asks Chrome
+    whether YouTube still considers it signed in, and a session present only in
+    the file answers no. Importing loads it into the profile first.
+    """
+
+    def stage(self, keeper, text):
+        os.makedirs(keeper.store.dir, mode=0o700, exist_ok=True)
+        with open(keeper.pending_import_path, "w", encoding="utf-8") as f:
+            f.write(text)
+
+    def rejected_path(self, keeper):
+        return os.path.join(keeper.store.dir, REJECTED_IMPORT_NAME)
+
+    def test_nothing_staged_is_not_an_event(self):
+        keeper = make_keeper(signed_in_engine())
+
+        self.assertIsNone(keeper.adopt_pending_import())
+        self.assertEqual(keeper.status(), "disconnected")
+
+    def test_a_restored_session_becomes_a_usable_one(self):
+        keeper = make_keeper(signed_in_engine())
+        self.stage(keeper, cookies_txt(google_cookies()))
+
+        self.assertIs(keeper.adopt_pending_import(), True)
+        self.assertEqual(keeper.status(), "connected")
+        self.assertEqual(keeper.store.meta()["source"], "import")
+
+    def test_the_staged_file_is_removed_once_it_has_been_imported(self):
+        """Left in place it would be imported again on every start, undoing a
+        later sign-in with a session out of an old backup."""
+        keeper = make_keeper(signed_in_engine())
+        self.stage(keeper, cookies_txt(google_cookies()))
+
+        keeper.adopt_pending_import()
+
+        self.assertFalse(os.path.exists(keeper.pending_import_path))
+
+    def test_it_goes_through_the_browser_like_any_other_import(self):
+        """Not written to cookies.txt directly: the profile has to hold it too,
+        or the first keep-alive marks a working session expired."""
+        engine = signed_in_engine()
+        keeper = make_keeper(engine)
+        self.stage(keeper, cookies_txt(google_cookies()))
+
+        keeper.adopt_pending_import()
+
+        engine.import_session.assert_called_once()
+
+    def test_a_session_youtube_has_ended_is_kept_rather_than_deleted(self):
+        """A restore never destroys what it was given, and a file named for the
+        reason it was refused is something a user can act on."""
+        engine = Mock()
+        engine.import_session.return_value = {"logged_in": False, "cookies": []}
+        keeper = make_keeper(engine)
+        self.stage(keeper, cookies_txt(google_cookies()))
+
+        self.assertIs(keeper.adopt_pending_import(), False)
+        self.assertEqual(keeper.status(), "disconnected")
+        self.assertFalse(os.path.exists(keeper.pending_import_path))
+        self.assertTrue(os.path.exists(self.rejected_path(keeper)))
+
+    def test_a_file_that_is_not_cookies_is_refused_and_set_aside(self):
+        keeper = make_keeper(signed_in_engine())
+        self.stage(keeper, "this is not a cookie file")
+
+        self.assertIs(keeper.adopt_pending_import(), False)
+        self.assertTrue(os.path.exists(self.rejected_path(keeper)))
+
+    def test_a_bot_already_signed_in_keeps_the_account_it_is_using(self):
+        """The staged file came out of a backup, so it can only be older.
+        Importing it would sign the bot out of the account it is playing from."""
+        keeper = make_keeper(signed_in_engine())
+        keeper.store.save(google_cookies(sid="live"), "account||", "browser")
+        self.stage(keeper, cookies_txt(google_cookies(sid="from-the-backup")))
+
+        self.assertIsNone(keeper.adopt_pending_import())
+
+        self.assertEqual(keeper.status(), "connected")
+        self.assertIn("live", [c["value"] for c in keeper.store.load_cookies()])
+        self.assertNotIn("from-the-backup", [c["value"] for c in keeper.store.load_cookies()])
+        self.assertFalse(os.path.exists(keeper.pending_import_path))
+
+    def test_an_expired_session_is_replaced_by_the_restored_one(self):
+        """Google ended the stored session, so there is nothing to protect and
+        the restored file is the better of the two."""
+        keeper = make_keeper(signed_in_engine())
+        keeper.store.save(google_cookies(sid="dead"), "account||", "browser")
+        keeper.store.mark_needs_sign_in()
+        self.stage(keeper, cookies_txt(google_cookies(sid="from-the-backup")))
+
+        self.assertIs(keeper.adopt_pending_import(), True)
+        self.assertEqual(keeper.status(), "connected")
+
+    def test_without_a_browser_the_restored_session_is_still_adopted(self):
+        """arm64 has no Chrome. The file is stored as it is, which is exactly
+        what the import page does there."""
+        keeper = make_keeper(None)
+        self.stage(keeper, cookies_txt(google_cookies()))
+
+        self.assertIs(keeper.adopt_pending_import(), True)
+        self.assertEqual(keeper.status(), "connected")
+
+    def test_signing_out_removes_a_session_waiting_to_be_imported(self):
+        """Otherwise a bot signs itself back in minutes after someone
+        deliberately signed it out, with nothing on screen to explain it."""
+        keeper = make_keeper(signed_in_engine())
+        self.stage(keeper, cookies_txt(google_cookies()))
+
+        keeper.sign_out()
+
+        self.assertFalse(os.path.exists(keeper.pending_import_path))
+        self.assertIsNone(keeper.adopt_pending_import())
+        self.assertEqual(keeper.status(), "disconnected")
+
+    def test_signing_out_removes_a_refused_one_too(self):
+        keeper = make_keeper(signed_in_engine())
+        os.makedirs(keeper.store.dir, mode=0o700, exist_ok=True)
+        with open(self.rejected_path(keeper), "w", encoding="utf-8") as f:
+            f.write(cookies_txt(google_cookies()))
+
+        keeper.sign_out()
+
+        self.assertFalse(os.path.exists(self.rejected_path(keeper)))
+
+    def test_a_browser_failure_keeps_the_session_rather_than_losing_it(self):
+        """import_text stores the cookies when the browser itself failed, since
+        that is the browser failing and not the session. The staged file must
+        not be the casualty of a transient Chrome error either way."""
+        engine = Mock()
+        engine.import_session.side_effect = RuntimeError("chrome would not start")
+        keeper = make_keeper(engine)
+        self.stage(keeper, cookies_txt(google_cookies()))
+
+        self.assertIs(keeper.adopt_pending_import(), True)
+        self.assertEqual(keeper.status(), "connected")
+
+    @skipIf(sys.platform == "win32", "POSIX permissions")
+    def test_the_adopted_session_is_readable_only_by_the_bot(self):
+        keeper = make_keeper(signed_in_engine())
+        self.stage(keeper, cookies_txt(google_cookies()))
+
+        keeper.adopt_pending_import()
+
+        self.assertEqual(stat.S_IMODE(os.stat(keeper.store.cookies_path).st_mode), 0o600)
 
 
 class HeldRequestTests(TestCase):

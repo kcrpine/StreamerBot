@@ -10,7 +10,12 @@ with TeamTalk SDK 5.8.1.
 
 We are turning it into **StreamerBot**: same multi-bot Docker architecture, but
 
-- **no more cookie files** — YouTube signs in with an OAuth device code that refreshes itself forever;
+- **no more hand-exported cookie files** — YouTube signs in once through the portal and keeps itself
+  signed in. (As written this said "no more cookie files" and "an OAuth device code that refreshes
+  itself forever". Phase 9 retired the device code: YouTube answers 400 to OAuth-authenticated player
+  requests. It plays as a real browser session, so cookies came back — but as a file the bot writes and
+  rotates for itself, never one the operator re-exports every few weeks, which is what this bullet was
+  really promising. See "Phase 9" and "YouTube: cookies → OAuth device code".);
 - **six services** — YouTube, Spotify, Apple Music, Amazon Music, Netflix, Disney+, plus direct URLs;
 - **users connect their own accounts** through an accessible web portal and chat prompts;
 - **audio description** can be switched on for any movie or show, with the bot asking first;
@@ -1048,6 +1053,50 @@ Recorded 13 September 2026, when the code was written. None of it has yet run ag
   `failed exchanging device code: context deadline exceeded`. The daemon waits for a device code nobody
   entered, times out, exits, and the supervisor starts it waiting again. Unused device auth should stop
   until someone runs `li sp`, not loop.
+
+### Phase 9 left two surfaces still describing the device code
+
+Found afterwards, in `streamerbot.sh`, and corrected in [038] and [039]. Both are the same class of
+defect: the *behaviour* moved in Phase 9 and the *messages about it* did not, so the script confidently
+directed people to a flow that had been removed.
+
+**The restore migration deleted the one thing worth keeping.** `migrate_one_bot` removed a restored
+`cookies.txt` and printed "This version signs in with a code instead. Send li yt to the bot once it is
+running." Both halves were wrong by then. The file is a YouTube sign-in in exactly the format this
+version imports, and there is no code to send. Note that this plan asked for the opposite from the
+start — "retains the old `cookies.txt` as an importable session", under "Legacy backup migration" — so
+this is the implementation catching up with the plan, with the device-code clause dropped. Phase 2 is
+where it diverged: the file genuinely was dead weight for one phase, and the deletion outlived the
+reason for it.
+
+**Why it is staged rather than written to `youtube_auth/cookies.txt` directly.** That file and the
+bot's own Chrome profile have to agree. The keep-alive asks Chrome whether YouTube still considers it
+signed in, and a session present only in the file answers no — so writing it straight through would
+mark a working restored session "expired" on its first scheduled refresh, which is a worse failure than
+deleting it, because it looks like Google ended the session. It goes to
+`youtube_auth/imported_cookies.txt` and `YouTubeSessionKeeper.adopt_pending_import` runs it through
+`import_text`, the same path as a session pasted into the portal, which loads it into the profile
+first and already handles arm64 having no Chrome.
+
+**The port-conflict note told people to look in the wrong place.** `PORT_CONFLICT.txt` and the lines
+printed beside it said "YouTube and Spotify sign-in are unaffected: those use a code in the channel
+rather than the portal." YouTube's sign-in is a portal page now, so a portal that cannot bind does stop
+it. Spotify's claim is still true, and keeping the two apart is the whole value of the sentence.
+
+### `auth_portal.host` was a setting the bot told you to edit by hand
+
+Also [039]. `bot/modules/public_address.py::reachability_warning` detects that the portal is bound to
+loopback while the link points elsewhere, and prints "Set `auth_portal.host` to 0.0.0.0 in this bot's
+config.json and restart it." That is correct advice and it asks a blind user to hand-edit JSON over SSH
+on a headless box — for the *common* deployment, since these bots run on a VPS and the person connecting
+an account is at their own computer.
+
+Creating a bot and Bulk Update Configuration now both ask, through one shared `ask_portal_host`. Two
+copies of the question would drift, and the half most likely to be dropped from a copy is the sentence
+saying what it costs: the portal has no login page by design, so it is guarded by unguessable links over
+plain HTTP, and opening it to the network puts those links and what is typed into them on that network.
+The default stays loopback — pressing Enter must never expose a portal — and choosing to open it repeats
+the firewall point, because a free port is only half of reachability.
 
 ---
 

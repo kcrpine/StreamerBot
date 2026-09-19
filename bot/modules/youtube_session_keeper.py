@@ -52,6 +52,20 @@ HOLD_TIMEOUT_SECONDS = 150
 # few kilobytes; anything far larger is the wrong file.
 MAX_IMPORT_BYTES = 512 * 1024
 
+# A cookies.txt that arrived with a restored backup or a copied bot folder.
+# streamerbot.sh moves the old TTMediaBot's top-level cookies.txt here rather
+# than straight to cookies.txt, because that file and this bot's Chrome profile
+# have to agree: the keep-alive asks Chrome whether YouTube still considers it
+# signed in, and a session present only in the file would answer no and be
+# marked expired on the first refresh. Importing it goes through the same path
+# as a session pasted into the portal, which loads it into the profile first.
+PENDING_IMPORT_NAME = "imported_cookies.txt"
+
+# A staged file that could not be imported is renamed to this rather than
+# deleted. Restore never destroys what it was given, and a file named for the
+# reason it was refused is something a user can act on; a deleted one is not.
+REJECTED_IMPORT_NAME = "imported_cookies.rejected.txt"
+
 
 class RefreshResult(Enum):
     Alive = "alive"            # signed in; cookies stored if they changed
@@ -151,6 +165,14 @@ class YouTubeSessionKeeper:
         # Let the bot reach TeamTalk and the browser finish starting first.
         if self._closing.wait(120):
             return
+        # A restored bot folder may carry a session waiting to be imported. Done
+        # here rather than at start-up for the same reason as everything else in
+        # this thread: it drives Chrome, and nothing that drives Chrome belongs
+        # on the path between the bot process starting and it reaching TeamTalk.
+        try:
+            self.adopt_pending_import()
+        except Exception as error:  # noqa: BLE001 - the keeper must not die
+            logger.error(f"[youtube session] restored session import failed: {error}", exc_info=True)
         while not self._closing.is_set():
             try:
                 if self.is_due() and self.browser_available:
@@ -266,6 +288,74 @@ class YouTubeSessionKeeper:
         logger.info(f"[youtube session] {self._bot_name()} signed in to YouTube through the browser")
         job.succeed()
 
+    @property
+    def pending_import_path(self) -> str:
+        return os.path.join(self.store.dir, PENDING_IMPORT_NAME)
+
+    def adopt_pending_import(self) -> Optional[bool]:
+        """Import a cookies.txt left here by a restore. None when there was none.
+
+        Runs once, from the keeper thread, after the bot has settled. It is the
+        last step of bringing an old bot across: streamerbot.sh has carried the
+        file over, and this is what turns it into a session the bridge can use.
+
+        A bot that is already signed in keeps what it has. The staged file can
+        only be older -- it came out of a backup -- and replacing a live session
+        with it would sign the bot out of the account it is actually using.
+        """
+        path = self.pending_import_path
+        try:
+            with open(path, encoding="utf-8", errors="replace") as f:
+                text = f.read()
+        except FileNotFoundError:
+            return None
+        except OSError as error:
+            logger.warning(f"[youtube session] could not read the restored cookies: {error}")
+            return None
+
+        if self.store.has_session() and not self.store.needs_sign_in():
+            logger.info(
+                f"[youtube session] a restored cookies.txt was found, but this bot is "
+                f"already signed in, so the live session was left alone and the restored "
+                f"one set aside as {REJECTED_IMPORT_NAME}"
+            )
+            self._retire_pending(path, REJECTED_IMPORT_NAME)
+            return None
+
+        imported, problem = self.import_text(text)
+        if imported:
+            # Only now. A file removed before the import succeeded is a session
+            # lost to a transient browser failure with no way back.
+            try:
+                os.remove(path)
+            except OSError:
+                pass
+            logger.info(
+                f"[youtube session] {self._bot_name()}: imported the YouTube session "
+                "that came with the restored bot folder"
+            )
+            return True
+
+        logger.warning(
+            f"[youtube session] {self._bot_name()}: the YouTube session that came with "
+            f"the restored bot folder could not be used ({problem.value if problem else 'unknown'}). "
+            f"Someone must connect YouTube again with li yt. The file is kept as "
+            f"{REJECTED_IMPORT_NAME}."
+        )
+        self._retire_pending(path, REJECTED_IMPORT_NAME)
+        return False
+
+    def _retire_pending(self, path: str, new_name: str) -> None:
+        """Move a staged file aside, keeping its 0600, or remove it if that fails."""
+        try:
+            os.replace(path, os.path.join(self.store.dir, new_name))
+        except OSError as error:
+            logger.warning(f"[youtube session] could not set the restored cookies aside: {error}")
+            try:
+                os.remove(path)
+            except OSError:
+                pass
+
     def import_text(self, text: str) -> Tuple[bool, Optional[ImportProblem]]:
         """Store a cookies.txt file from the user's own browser.
 
@@ -315,6 +405,18 @@ class YouTubeSessionKeeper:
         return True, None
 
     def sign_out(self) -> None:
+        # Before clearing anything else. A restored folder can be carrying a
+        # staged session that has not been imported yet, and leaving it there
+        # would sign the bot back in minutes after someone deliberately signed
+        # it out -- with nothing on screen to explain it.
+        # The refused one goes too: signing out means no YouTube credential of
+        # this bot's is left on disk, and a session YouTube already rejected is
+        # not something anyone is going to want back.
+        for name in (PENDING_IMPORT_NAME, REJECTED_IMPORT_NAME):
+            try:
+                os.remove(os.path.join(self.store.dir, name))
+            except OSError:
+                pass
         self.store.clear()
         engine = self.engine
         if engine is not None:
@@ -362,6 +464,8 @@ __all__ = [
     "ImportProblem",
     "MAX_IMPORT_BYTES",
     "ON_DEMAND_MIN_INTERVAL_SECONDS",
+    "PENDING_IMPORT_NAME",
+    "REJECTED_IMPORT_NAME",
     "RefreshResult",
     "YouTubeSessionKeeper",
     "is_login_required",
