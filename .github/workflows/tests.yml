@@ -13,8 +13,43 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # Every build here is identified by the UTC time its run started, written
+  # YYMMDD.HHMMSS: 260920.002545 is 20 September 2026 at 00:25:45 UTC. A commit
+  # hash identifies a commit, which Git and GitHub already do better than any
+  # build tag can. What a releases page, an email subject or a downloaded zip
+  # has to answer is "which build is this, and is it newer than the one I
+  # have" - a timestamp answers that on sight, a hash answers it only after a
+  # round trip through the repository.
+  #
+  # It is computed once, in its own job, so the test reports, the image tag,
+  # the release and the email all name the same instant. Letting each job call
+  # date itself would give one run four slightly different stamps, which is
+  # worse than having none. The cost is one runner start ahead of the rest of
+  # the pipeline.
+  stamp:
+    name: Build stamp
+    runs-on: ubuntu-latest
+    outputs:
+      stamp: ${{ steps.now.outputs.stamp }}
+      tag: ${{ steps.now.outputs.tag }}
+      human: ${{ steps.now.outputs.human }}
+    steps:
+      - name: Stamp the run with its start time
+        id: now
+        run: |
+          set -euo pipefail
+          stamp=$(date -u +%y%m%d.%H%M%S)
+          human=$(date -u '+%Y-%m-%d %H:%M:%S UTC')
+          {
+            echo "stamp=$stamp"
+            echo "tag=build-$stamp"
+            echo "human=$human"
+          } >> "$GITHUB_OUTPUT"
+          echo "This build is $stamp, started $human."
+
   unit-tests:
     name: Unit tests
+    needs: stamp
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -57,7 +92,7 @@ jobs:
         id: tests
         run: |
           python tools/ci_test_report.py \
-            --title "Unit tests on ${{ github.sha }}" \
+            --title "Unit tests on build ${{ needs.stamp.outputs.stamp }}" \
             --markdown test-report.md \
             --text test-report.txt
 
@@ -121,6 +156,7 @@ jobs:
 
   docker-build:
     name: Docker image
+    needs: stamp
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -135,7 +171,12 @@ jobs:
         with:
           context: .
           load: true
-          tags: streamerbot:ci
+          # streamerbot:ci is what the steps below run; the second tag is the
+          # same image under the build stamp, so the build log says which build
+          # it is without anyone decoding a hash.
+          tags: |
+            streamerbot:ci
+            streamerbot:${{ needs.stamp.outputs.stamp }}
           build-args: |
             TTSDK_URL_X86_64=${{ env.TTSDK_URL_X86_64 }}
             TTSDK_URL_ARM64=${{ env.TTSDK_URL_ARM64 }}
@@ -159,7 +200,7 @@ jobs:
       - name: Run the suite inside the image
         run: |
           docker run --rm --entrypoint bash streamerbot:ci -c '
-            python tools/ci_test_report.py --title "In-image tests"
+            python tools/ci_test_report.py --title "In-image tests on build ${{ needs.stamp.outputs.stamp }}"
           '
 
   # A prerelease per push, so every commit has a downloadable build and a
@@ -170,7 +211,7 @@ jobs:
   prerelease:
     name: Prerelease
     runs-on: ubuntu-latest
-    needs: [unit-tests, shell-checks, docker-build]
+    needs: [stamp, unit-tests, shell-checks, docker-build]
     if: always() && github.event_name == 'push'
     permissions:
       contents: write
@@ -184,9 +225,28 @@ jobs:
 
       - name: Build the source zip
         id: build
+        env:
+          STAMP_TAG: ${{ needs.stamp.outputs.tag }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          tag="build-${{ github.run_number }}-$(git rev-parse --short HEAD)"
+          tag="$STAMP_TAG"
+          # This job runs with if: always(), so it would still start if the
+          # stamp job had somehow failed. Better a stamp taken late than a
+          # release tagged "build-".
+          if [ "$tag" = "build-" ] || [ -z "$tag" ]; then
+            tag="build-$(date -u +%y%m%d.%H%M%S)"
+            echo "The stamp job produced nothing; stamping here instead: $tag"
+          fi
+          # Two runs can only want the same tag if they start in the same
+          # second on different refs. That gets a counter rather than a failed
+          # publish at the end of the pipeline.
+          base="$tag"
+          n=1
+          while [ "$n" -lt 10 ] && gh release view "$tag" --repo "${{ github.repository }}" >/dev/null 2>&1; do
+            n=$((n + 1))
+            tag="${base}.${n}"
+          done
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
           # git archive respects .gitignore and export-ignore and never
           # includes .git itself, so the zip is the tracked tree exactly.
@@ -197,6 +257,8 @@ jobs:
         id: notes
         env:
           COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+          BUILD_TAG: ${{ steps.build.outputs.tag }}
+          BUILT_AT: ${{ needs.stamp.outputs.human }}
           UNIT: ${{ needs.unit-tests.result }}
           SHELL_CHECKS: ${{ needs.shell-checks.result }}
           DOCKER: ${{ needs.docker-build.result }}
@@ -209,6 +271,8 @@ jobs:
           echo "verdict=$verdict" >> "$GITHUB_OUTPUT"
           {
             printf '%s\n\n' "$verdict"
+            printf 'Build:  %s\n' "$BUILD_TAG"
+            printf 'Built:  %s\n' "$BUILT_AT"
             printf 'Commit: %s\n\n' "${{ github.sha }}"
             printf 'unit-tests: %s\nshell-checks: %s\ndocker-build: %s\n\n' \
               "$UNIT" "$SHELL_CHECKS" "$DOCKER"
@@ -257,7 +321,7 @@ jobs:
   notify:
     name: Report
     runs-on: ubuntu-latest
-    needs: [unit-tests, shell-checks, docker-build, prerelease]
+    needs: [stamp, unit-tests, shell-checks, docker-build, prerelease]
     if: always() && github.event_name == 'push'
     env:
       # Job-level so the email step's "if" can read it. Empty until the secret
@@ -305,6 +369,8 @@ jobs:
           OUTCOME: ${{ steps.outcome.outputs.word }}
           REPOSITORY: ${{ github.repository }}
           BRANCH: ${{ github.ref_name }}
+          BUILD_TAG: ${{ needs.prerelease.outputs.tag || needs.stamp.outputs.tag }}
+          BUILT_AT: ${{ needs.stamp.outputs.human }}
           COMMIT: ${{ github.sha }}
           COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
@@ -313,6 +379,8 @@ jobs:
         run: |
           {
             printf 'StreamerBot CI %s.\n\n' "$OUTCOME"
+            printf 'Build:      %s\n' "$BUILD_TAG"
+            printf 'Built:      %s\n' "$BUILT_AT"
             printf 'Repository: %s\n' "$REPOSITORY"
             printf 'Branch:     %s\n' "$BRANCH"
             printf 'Commit:     %s\n' "$COMMIT"
@@ -343,7 +411,7 @@ jobs:
           password: ${{ secrets.MAIL_PASSWORD }}
           from: StreamerBot CI
           to: ${{ secrets.MAIL_TO }}
-          subject: "StreamerBot CI ${{ steps.outcome.outputs.word }} on ${{ github.ref_name }} (${{ github.sha }})"
+          subject: "StreamerBot CI ${{ steps.outcome.outputs.word }} on ${{ github.ref_name }} (${{ needs.prerelease.outputs.tag || needs.stamp.outputs.tag }})"
           body: file://email-body.txt
 
       - name: Fail the run if anything failed

@@ -76,8 +76,14 @@ Windows-only `os.add_dll_directory(... "/../TeamTalk_DLL")` is guarded with `isd
 ### Added during Phase 3
 
 **A prerelease per push, with email.** GitHub Actions builds a source zip on every push, publishes it
-as a prerelease tagged `build-<run number>-<short sha>`, and records in the release notes whether the
-checks passed. Two reasons this earns its place: every commit gets a downloadable artifact, and
+as a prerelease tagged `build-<YYMMDD.HHMMSS>` in UTC — `build-260920.002545` is 20 September 2026 at
+00:25:45 — and records in the release notes whether the checks passed. (As written this said
+`build-<run number>-<short sha>`; the tag is now the time the run started. A hash identifies a commit,
+which Git and GitHub already do better than a build tag can, but it says nothing about *when*, so
+"which of these two builds is newer" needed a round trip through the repository to answer. The stamp is
+computed once in a `stamp` job and reused by the test report titles, the CI image tag, the release and
+the email, so everything in one run names the same instant; a same-second collision on two refs gets a
+`.2` counter.) Two reasons this earns its place: every commit gets a downloadable artifact, and
 publishing a release is the **only native GitHub mechanism that emails on a push** — the old Email
 service webhook was removed in 2019, and watching a repository does not notify on raw commits. The CI
 notify job also carries the build tag and link in its own email. A release per push accumulates fast,

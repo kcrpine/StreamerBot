@@ -6,6 +6,14 @@ issue or a commit message. Numbering continues across releases.
 
 ## Unreleased
 
+- **[042]** CI builds are now identified by the UTC time the run started, written `YYMMDD.HHMMSS` —
+  the prerelease tag is `build-260920.002545` rather than `build-<run number>-<short sha>`, and the
+  same stamp names the zip, the unit-test and in-image test reports, the CI Docker image tag, the
+  release notes, and the CI email's subject and body. A commit hash identifies a commit, which Git
+  and GitHub already do better than a build tag can; what a releases page or an email subject has to
+  answer is which build this is and whether it is newer than the one you have, and a timestamp
+  answers that on sight. The commit hash is still in the release notes and the email as detail.
+
 - **[041]** The rule that every coding task publishes an artifact page now applies only where a
   browser exists: Windows hosts and Linux desktops publish; a headless Linux command-line session
   does not, and reports in the terminal instead. The page is opened in a browser, and a headless
