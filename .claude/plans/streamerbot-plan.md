@@ -1169,6 +1169,8 @@ Each phase has an exit criterion you can actually check.
 
 | **11** 🔨 | Search without stopping playback, list every result with its kind, and answer `sv` from live state instead of a startup string (see "Phase 11 — searching while playing, and telling the truth about a service") | With a track playing on Apple Music, `sr` then `p <query>` lists twenty-five results naming each one's kind and the track keeps playing; `sl N` switches to the chosen one; `sv am` says Apple Music is connected and ready, `sv am h` explains it, and `sv nf` names `li nf`. **BUILT, NOT YET VERIFIED LIVE** ([031] to [037]) — the page split and the readiness lookup need a host with Chrome and a connected account |
 
+| **13** 🔨 | YouTube leaves through an address YouTube trusts: Cloudflare WARP, a gluetun VPN or the user's own proxy, chosen from a menu, with a way to switch a blocked address (see "Phase 13 — YouTube refuses this server's address") | On a host whose own address YouTube refuses, `streamerbot.sh` option 9 then WARP makes `p <youtube url>` play, and the menu's test reports 3 of 3 videos played |
+
 Phase 0 is the riskiest to skip and the cheapest to verify. Phase 4 gives the engine abstraction its
 first real workout on the *easier* of the two external engines, before Chrome.
 
@@ -1686,3 +1688,68 @@ already told the user to allow the port and never helped. Manage Bots option 15 
   `ufw status` comment format is assumed from 0.36 and has not been observed on a live host — the session
   was not root. Also, `test_port_allocation.ExhaustionTests.test_the_warning_names_what_still_works`
   already failed before this phase (asserts wording Phase 9 changed).
+
+---
+
+## Phase 13 — YouTube refuses this server's address
+
+kuhao could search YouTube and play nothing. Search worked, every stream resolve failed with
+`LOGIN_REQUIRED: Sign in to confirm you're not a bot` on every client, signed in or not. About 24 bots
+on the same OVH host (AS16276) showed the identical failure, 700-990 lines each in the recent log.
+
+### What it was not
+
+- **Not the sign-in.** kuhao's session was healthy: imported, 27 cookies, a DataSync ID,
+  `needs_sign_in: False`, refreshed on schedule. Signed in, it still failed.
+- **Not the token binding.** The stored DataSync ID is `115949595150057545456||`, and a token bound to
+  the raw value looked like an obvious mistake. A probe inside the bridge container with the raw and the
+  bare ID gave `LOGIN_REQUIRED` both ways, so `contentBindingFor` was left alone. **The existing test that
+  pins the raw `account||` value proves nothing about YouTube accepting it.**
+- **Not total.** From OVH an old video resolved and played while two recent ones were refused, so the
+  address is distrusted, not banned. That is what made a first probe misleading (below).
+
+### What was built (changelog [043], [044])
+
+- `youtube_egress.sh`, sourced by `streamerbot.sh`: menu option 9 and `--youtube-egress`,
+  `--check-youtube-egress`, `--rotate-youtube-ip`. Modes: direct, **Cloudflare WARP**, **gluetun VPN**,
+  the user's own proxy. Plain numbered steps for someone with no VPN account.
+- **The proxy reaches both the bridge and the stream relay.** The bridge uses Node's
+  `NODE_USE_ENV_PROXY` (no new dependency; the POT provider stays direct via `NO_PROXY`); the relay passes
+  `proxies=` to `requests`. A resolved `videoplayback` URL is signed for the address that resolved it, so
+  resolving through a proxy and fetching from the host's own address would 403. Only hosts that are
+  `googlevideo.com`/`youtube.com` or a subdomain are proxied; a bare suffix match let `evilgooglevideo.com`
+  through, and a test caught it.
+- **The proxy listens on Docker's bridge gateway address only.** The bridge container is on the default
+  bridge and bots are on the host network, so loopback reaches neither and `0.0.0.0` would be an open proxy
+  on the public address.
+- **Settings are untracked** (`youtube_proxy.env`, `youtube_vpn.env`, `youtube_egress_ips.log`, 0600):
+  a proxy URL carries credentials and `project.env` is committed.
+- `/live/`, `/embed/` and `/v/` URLs are recognised (`extractVideoId` moved into `media.mjs`, so it is
+  unit-tested). About fifty `/live/` attempts had died as "Invalid YouTube URL". A URL the bridge cannot
+  read is no longer retried.
+
+### Measured, not assumed
+
+- **One video is not a test.** The probe plays three (a majority must) and invalidates the bridge's
+  hour-long resolve cache first, or a cached success passes a blocked address. It also fetches a few
+  bytes of the stream through the same proxy, and follows googlevideo's `302`.
+- **WARP's port answers SOCKS5 and plain HTTP proxy requests on the same port.** That mattered: Node's env
+  proxy and `requests` speak HTTP proxies only, and it was remembered as SOCKS-only.
+- **Through WARP, 3 of 3 videos played**, including the two OVH direct refuses.
+- **WARP's address is not reliably switchable.** A fresh registration gave the same address once and a
+  different one the next time. Rotation therefore tries twice and then says which thing happened (same
+  address again, or a new one YouTube also refused) rather than claiming a switch.
+- Rotation never accepts an address already in the log of the last 20, and proves each new one with the
+  probe. For a VPN, gluetun picks a server at random each start, so a restart usually changes it.
+
+### Unverified
+
+- **A paid VPN provider** was never started: it needs an account. The gluetun launch follows its
+  documented settings and the image tag exists, nothing more.
+- The provider steps in the "I need a VPN account" text follow gluetun's provider list and have not been
+  checked against its wiki.
+- WARP addresses are shared and can be flagged by YouTube; passing today does not promise tomorrow. A
+  residential proxy is the most reliable option and was not tried.
+- Bots and the shared bridge must be recreated to read `YOUTUBE_PROXY_URL` (the menu does this and stops
+  them briefly); it has not been applied to the live bots.
+- The pre-commit hook in `.githooks/` was skipped on the commit because it is not executable.

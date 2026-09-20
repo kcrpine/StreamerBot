@@ -6,6 +6,11 @@ issue or a commit message. Numbering continues across releases.
 
 ## Unreleased
 
+- **[045]** The plan now records Phase 13, the YouTube egress work, including what it ruled out and what is
+  still unverified. Without it the next session would re-suspect the DataSync binding, which was
+  measured and is not the cause, and would trust a one-video test that passes on a blocked address.
+  Also brings the local plan copy in line with the repository's, which had fallen behind on the CI
+  build-naming paragraph. Changes the plan only.
 - **[044]** Cloudflare WARP is now a choice in the "YouTube Egress" menu, and the menu explains how to get
   a VPN account for people who have none. WARP is free and needs no account. It was run end to end
   before being added: through it, all three test videos played, including two that this server's own
