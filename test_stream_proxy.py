@@ -6,7 +6,7 @@ from unittest.mock import Mock, patch
 
 import requests
 
-from bot.services.stream_proxy import StreamProxy, _MAX_ENTRIES, _TOKEN_TTL_SECONDS
+from bot.services.stream_proxy import StreamProxy, _MAX_ENTRIES, _TOKEN_TTL_SECONDS, _ProxyHandler, _upstream_proxies
 
 
 class StreamProxyRegistrationTests(TestCase):
@@ -148,7 +148,7 @@ class StreamProxyRelayTests(TestCase):
         body = b"abcdefghijklmnopqrstuvwxy"  # 25 bytes
         assert len(body) == 25
 
-        def fake_get(url, headers, stream, timeout):
+        def fake_get(url, headers, stream, timeout, **kwargs):
             range_value = headers["Range"]
             start, end = (int(x) for x in range_value.removeprefix("bytes=").split("-"))
             end = min(end, len(body) - 1)
@@ -190,7 +190,7 @@ class StreamProxyRelayTests(TestCase):
         body = b"abcdefghij"  # 10 bytes, one full-size window
         calls = []
 
-        def fake_get(url, headers, stream, timeout):
+        def fake_get(url, headers, stream, timeout, **kwargs):
             range_value = headers["Range"]
             start, end = (int(x) for x in range_value.removeprefix("bytes=").split("-"))
             calls.append(range_value)
@@ -237,3 +237,40 @@ class StreamProxyRelayTests(TestCase):
 
         self.assertEqual(resp.status_code, 206)
         mock_get.assert_called_once()
+
+
+class UpstreamProxyTests(TestCase):
+    """A stream URL is signed for the address that resolved it, so the relay
+    must leave through the same proxy the bridge used."""
+
+    CDN = "https://rr2---sn-abc.googlevideo.com/videoplayback?x=1"
+
+    def test_no_proxy_configured_fetches_directly(self):
+        with patch.dict("os.environ", {"YOUTUBE_PROXY_URL": ""}):
+            self.assertIsNone(_upstream_proxies(self.CDN))
+
+    def test_youtube_cdn_goes_through_the_configured_proxy(self):
+        with patch.dict("os.environ", {"YOUTUBE_PROXY_URL": "http://172.17.0.1:8888"}):
+            self.assertEqual(
+                _upstream_proxies(self.CDN),
+                {"http": "http://172.17.0.1:8888", "https": "http://172.17.0.1:8888"},
+            )
+
+    def test_other_hosts_are_never_proxied(self):
+        with patch.dict("os.environ", {"YOUTUBE_PROXY_URL": "http://172.17.0.1:8888"}):
+            self.assertIsNone(_upstream_proxies("http://paralleledition.xyz:8000/radio.mp3"))
+            # A lookalike must not match by suffix alone.
+            self.assertIsNone(_upstream_proxies("https://evilgooglevideo.com/x"))
+
+    @patch("bot.services.stream_proxy.requests.get")
+    def test_the_relay_hands_the_proxy_to_requests(self, mock_get):
+        resp = Mock(status_code=206, headers={"Content-Range": "bytes 0-9/10"})
+        resp.iter_content.return_value = [b"0123456789"]
+        mock_get.return_value = resp
+        with patch.dict("os.environ", {"YOUTUBE_PROXY_URL": "http://172.17.0.1:8888"}):
+            # Uses no handler state, so it can be called without a socket.
+            _ProxyHandler._fetch_window(None, self.CDN, {}, 0, 9)
+        self.assertEqual(
+            mock_get.call_args.kwargs["proxies"],
+            {"http": "http://172.17.0.1:8888", "https": "http://172.17.0.1:8888"},
+        )

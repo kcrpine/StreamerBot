@@ -9,6 +9,7 @@ import {
   clientTakesPoToken,
   contentBindingFor,
   cookieHeaderFromNetscape,
+  extractVideoId,
   musicItemPayload,
   normalizeSearchKey,
   planPlaybackAttempts,
@@ -385,19 +386,6 @@ async function createAttestedSession(options, browserSession = null) {
   });
 
   return { session, poToken };
-}
-
-function extractVideoId(input) {
-  if (!input) return null;
-  if (/^[A-Za-z0-9_-]{11}$/.test(input)) return input;
-  try {
-    const url = new URL(input);
-    if (url.hostname === 'youtu.be') return url.pathname.split('/').filter(Boolean)[0] || null;
-    if (url.searchParams.get('v')) return url.searchParams.get('v');
-    const shorts = url.pathname.match(/^\/shorts\/([^/?]+)/);
-    if (shorts) return shorts[1];
-  } catch {}
-  return null;
 }
 
 async function extractPlaylistId(input, session) {

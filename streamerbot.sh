@@ -17,6 +17,17 @@ BOT_IMAGE="${STREAMERBOT_IMAGE:-streamerbot}"
 YOUTUBE_SERVICE_NAME="${STREAMERBOT_YOUTUBE_SERVICE:-streamerbot-youtube}"
 YOUTUBE_BRIDGE_URL="http://127.0.0.1:4417"
 
+# Optional egress proxy for YouTube, for hosts whose address YouTube refuses
+# ("Sign in to confirm you're not a bot"). Kept in an untracked file because a
+# proxy URL usually carries credentials and project.env is committed. Format:
+#   YOUTUBE_PROXY_URL=http://user:pass@host:port
+YOUTUBE_PROXY_URL=""
+if [ -f "$SCRIPT_DIR/youtube_proxy.env" ]; then
+    YOUTUBE_PROXY_URL="$(sed -n 's/^YOUTUBE_PROXY_URL=//p' "$SCRIPT_DIR/youtube_proxy.env" | head -n1)"
+fi
+# Egress menu and IP rotation. Functions only; they use helpers defined below.
+[ -f "$SCRIPT_DIR/youtube_egress.sh" ] && . "$SCRIPT_DIR/youtube_egress.sh"
+
 # Build args every "docker build" must pass: the TeamTalk SDK is downloaded
 # from bearware.dk during the build, and go-librespot is version pinned.
 IMAGE_BUILD_ARGS=(
@@ -42,6 +53,9 @@ if [ "${1:-}" = "--help" ] || [ "${1:-}" = "-h" ]; then
     echo "  --logs NAME      Show the last 50 log lines for one bot."
     echo "  --repair-ports   Give every bot its own account portal and Spotify port."
     echo "  --firewall       Allow each bot's account portal port through ufw."
+    echo "  --youtube-egress       Show how YouTube traffic leaves this server."
+    echo "  --check-youtube-egress Test YouTube; switch the VPN address only if it is blocked."
+    echo "  --rotate-youtube-ip    Switch the VPN or WARP to a different address now."
     echo "  --help           This text."
     echo ""
     echo "Everything except --help needs root, and will ask for it."
@@ -51,7 +65,7 @@ fi
 # Validate the flag name before elevating, so a typo does not cost a password
 # prompt first.
 case "${1:-}" in
-    ""|--status|--services|--start-all|--stop-all|--restart-all|--check-updates|--logs|--repair-ports|--firewall)
+    ""|--status|--services|--start-all|--stop-all|--restart-all|--check-updates|--logs|--repair-ports|--firewall|--youtube-egress|--check-youtube-egress|--rotate-youtube-ip)
         ;;
     *)
         echo "Error. Unknown option: $1"
@@ -197,6 +211,7 @@ create_shared_youtube_service() {
         --restart always \
         -e "STREAMERBOT_BOTS_ROOT=/bots" \
         -e "YOUTUBE_BRIDGE_HOST=0.0.0.0" \
+        -e "YOUTUBE_PROXY_URL=${YOUTUBE_PROXY_URL}" \
         -v "${BOTS_ROOT}:/bots:rw" \
         --entrypoint /bin/bash \
         "$BOT_IMAGE" \
@@ -305,6 +320,7 @@ recreate_bot_containers() {
                 --network host \
                 -e "TTBOT_INSTANCE=${bot_name}" \
                 -e "YOUTUBE_BRIDGE_URL=${YOUTUBE_BRIDGE_URL}" \
+                -e "YOUTUBE_PROXY_URL=${YOUTUBE_PROXY_URL}" \
                 --label "role=streamerbot" \
                 --restart always \
                 -v "${d}:/home/streamer/StreamerBot/data" \
@@ -798,6 +814,7 @@ create_bot() {
             --network host \
             -e "TTBOT_INSTANCE=${current_bot_name}" \
             -e "YOUTUBE_BRIDGE_URL=${YOUTUBE_BRIDGE_URL}" \
+            -e "YOUTUBE_PROXY_URL=${YOUTUBE_PROXY_URL}" \
             --label "role=streamerbot" \
             --restart always \
             -v "${CURRENT_BOT_DIR}:/home/streamer/StreamerBot/data" \
@@ -1626,6 +1643,7 @@ duplicate_bot() {
                 --network host \
                 -e "TTBOT_INSTANCE=${current_bot_name}" \
                 -e "YOUTUBE_BRIDGE_URL=${YOUTUBE_BRIDGE_URL}" \
+                -e "YOUTUBE_PROXY_URL=${YOUTUBE_PROXY_URL}" \
                 --label "role=streamerbot" \
                 --restart always \
                 -v "${CURRENT_BOT_DIR}:/home/streamer/StreamerBot/data" \
@@ -3069,6 +3087,7 @@ adopt_copied_bots() {
                 --network host \
                 -e "TTBOT_INSTANCE=${name}" \
                 -e "YOUTUBE_BRIDGE_URL=${YOUTUBE_BRIDGE_URL}" \
+                -e "YOUTUBE_PROXY_URL=${YOUTUBE_PROXY_URL}" \
                 --label "role=streamerbot" \
                 --restart always \
                 -v "${dir}:/home/streamer/StreamerBot/data" \
@@ -3514,6 +3533,9 @@ print_cli_help() {
     echo "  --logs NAME      Show the last 50 log lines for one bot."
     echo "  --repair-ports   Give every bot its own account portal and Spotify port."
     echo "  --firewall       Allow each bot's account portal port through ufw."
+    echo "  --youtube-egress       Show how YouTube traffic leaves this server."
+    echo "  --check-youtube-egress Test YouTube; switch the VPN address only if it is blocked."
+    echo "  --rotate-youtube-ip    Switch the VPN or WARP to a different address now."
     echo "  --help           This text."
 }
 
@@ -3612,6 +3634,18 @@ case "${1:-}" in
         ufw_sync_portal_ports
         exit 0
         ;;
+    --youtube-egress)
+        egress_status
+        exit 0
+        ;;
+    --check-youtube-egress)
+        egress_check
+        exit $?
+        ;;
+    --rotate-youtube-ip)
+        egress_rotate
+        exit $?
+        ;;
     --logs)
         if [ -z "${2:-}" ]; then
             echo "Error. Give a bot name, for example: streamerbot.sh --logs mybot"
@@ -3660,7 +3694,8 @@ while true; do
     echo "6. Enable/Disable Auto-Updates"
     echo "7. Clean Docker Cache (Unused)"
     echo "8. Manage Shared YouTube Servers"
-    echo "9. Exit"
+    echo "9. YouTube Egress (WARP, VPN or proxy; switch a blocked address)"
+    echo "10. Exit"
     echo ""
     read -p "Choose an option: " option
     
@@ -3718,6 +3753,10 @@ while true; do
             header
             ;;
         9)
+            youtube_egress_menu
+            header
+            ;;
+        10)
             echo "Exiting..."
             exit 0
             ;;

@@ -26,12 +26,14 @@ given, which is only safe to expose to the bot's own player.
 from __future__ import annotations
 
 import logging
+import os
 import re
 import secrets
 import threading
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Any, Dict, Optional, Tuple
+from urllib.parse import urlsplit
 
 import requests
 
@@ -50,6 +52,21 @@ _MAX_ENTRIES = 64
 # anything open-ended or larger is fetched as a sequence of windows this size.
 _UPSTREAM_CHUNK_BYTES = 700_000
 _MIN_WINDOW_BYTES = 50_000
+
+# A resolved videoplayback URL is signed for the address that resolved it. When
+# the bridge resolves through YOUTUBE_PROXY_URL, fetching that URL from this
+# host directly is refused with a 403, so the relay must leave by the same door.
+_PROXIED_HOST_SUFFIXES = ("googlevideo.com", "youtube.com")
+
+
+def _upstream_proxies(target_url: str) -> Optional[Dict[str, str]]:
+    """requests' `proxies` for a YouTube CDN URL, or None to fetch directly."""
+    proxy = os.environ.get("YOUTUBE_PROXY_URL", "").strip()
+    host = (urlsplit(target_url).hostname or "").lower()
+    # A dot boundary, so "evilgooglevideo.com" does not match by suffix alone.
+    if proxy and any(host == d or host.endswith("." + d) for d in _PROXIED_HOST_SUFFIXES):
+        return {"http": proxy, "https": proxy}
+    return None
 
 _CHUNK_READ_BYTES = 65536
 
@@ -114,7 +131,11 @@ class _ProxyHandler(BaseHTTPRequestHandler):
         while True:
             try:
                 resp = requests.get(
-                    target_url, headers={**headers, "Range": f"bytes={start}-{end}"}, stream=True, timeout=(5, 30)
+                    target_url,
+                    headers={**headers, "Range": f"bytes={start}-{end}"},
+                    stream=True,
+                    timeout=(5, 30),
+                    proxies=_upstream_proxies(target_url),
                 )
             except requests.RequestException as error:
                 logging.warning(f"[StreamProxy] upstream fetch failed: {error}")

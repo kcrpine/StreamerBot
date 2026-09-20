@@ -42,6 +42,20 @@ class YtServiceGetRetryTests(TestCase):
 
         self.assertEqual(self.service._get_inner.call_count, self.service._max_retries + 1)
 
+    def test_a_url_the_bridge_cannot_read_is_not_retried(self):
+        # A radio stream or mp3 link is refused the same way every time;
+        # retrying it only delayed the real error by three seconds.
+        self.service._get_inner = Mock(
+            side_effect=errors.ServiceError("YouTube.js bridge error: Invalid YouTube URL or video ID")
+        )
+
+        with patch("bot.services.yt.time.sleep") as mock_sleep:
+            with self.assertRaises(errors.ServiceError):
+                self.service.get("http://paralleledition.xyz:8000/radio.mp3")
+
+        self.assertEqual(self.service._get_inner.call_count, 1)
+        mock_sleep.assert_not_called()
+
     def test_auth_error_still_uses_exponential_backoff(self):
         self.service._get_inner = Mock(
             side_effect=[

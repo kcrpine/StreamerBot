@@ -21,7 +21,20 @@ trap cleanup EXIT INT TERM
 node /opt/bgutil-provider/server/build/main.js --port "$POT_PROVIDER_PORT" &
 POT_PID=$!
 
-node /home/streamer/StreamerBot/youtube_bridge/server.mjs &
+# When the host's own address is one YouTube distrusts (most VPS ranges), the
+# bridge's traffic goes out through YOUTUBE_PROXY_URL instead. Node 22 fetch
+# honours these variables only with NODE_USE_ENV_PROXY, and only for the bridge:
+# the POT provider stays direct, and NO_PROXY keeps the bridge's own calls to it
+# on loopback. Stream URLs are signed for the address that resolved them, so the
+# bots' stream relay must use the same proxy (see bot/services/stream_proxy.py).
+if [ -n "${YOUTUBE_PROXY_URL:-}" ]; then
+    echo "[youtube-services] YouTube traffic goes through a proxy"
+    HTTPS_PROXY="$YOUTUBE_PROXY_URL" HTTP_PROXY="$YOUTUBE_PROXY_URL" \
+        NO_PROXY="127.0.0.1,localhost" NODE_USE_ENV_PROXY=1 \
+        node /home/streamer/StreamerBot/youtube_bridge/server.mjs &
+else
+    node /home/streamer/StreamerBot/youtube_bridge/server.mjs &
+fi
 BRIDGE_PID=$!
 
 wait -n "$POT_PID" "$BRIDGE_PID"

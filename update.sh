@@ -34,6 +34,15 @@ IMAGE_BUILD_ARGS=(
     --build-arg "GO_LIBRESPOT_VERSION=${GO_LIBRESPOT_VERSION:-0.9.1}"
 )
 YOUTUBE_BRIDGE_URL="http://127.0.0.1:4417"
+
+# Optional egress proxy for YouTube, for hosts whose address YouTube refuses
+# ("Sign in to confirm you're not a bot"). Kept in an untracked file because a
+# proxy URL usually carries credentials and project.env is committed. Format:
+#   YOUTUBE_PROXY_URL=http://user:pass@host:port
+YOUTUBE_PROXY_URL=""
+if [ -f "$SCRIPT_DIR/youtube_proxy.env" ]; then
+    YOUTUBE_PROXY_URL="$(sed -n 's/^YOUTUBE_PROXY_URL=//p' "$SCRIPT_DIR/youtube_proxy.env" | head -n1)"
+fi
 UPDATE_LOCK_FILE="/tmp/streamerbot_update.lock"
 
 # ---------------------------------------------------------------------------
@@ -221,6 +230,7 @@ recreate_bot_containers() {
                 --network host \
                 -e "TTBOT_INSTANCE=${bot_name}" \
                 -e "YOUTUBE_BRIDGE_URL=${YOUTUBE_BRIDGE_URL}" \
+                -e "YOUTUBE_PROXY_URL=${YOUTUBE_PROXY_URL}" \
                 --label "role=streamerbot" \
                 --restart always \
                 -v "${d}:/home/streamer/StreamerBot/data" \

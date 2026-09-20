@@ -6,6 +6,29 @@ issue or a commit message. Numbering continues across releases.
 
 ## Unreleased
 
+- **[044]** Cloudflare WARP is now a choice in the "YouTube Egress" menu, and the menu explains how to get
+  a VPN account for people who have none. WARP is free and needs no account. It was run end to end
+  before being added: through it, all three test videos played, including two that this server's own
+  address is refused for, and its single port answers both SOCKS5 and plain HTTP proxy requests, so no
+  adapter is needed. Switching WARP's address is unreliable (a fresh registration gave the same
+  address once and a new one the next time), so the menu tries twice and then says what happened
+  instead of claiming a switch, and points to a VPN for more choice. The account help is plain numbered
+  lines a screen reader reads in order. Not tested: a paid VPN provider, which needs an account; the
+  provider steps in the help follow gluetun's provider list and should be checked against its wiki.
+- **[043]** YouTube traffic can now leave the host through a VPN container or a proxy, chosen from a new
+  "YouTube Egress" menu (and `--youtube-egress`, `--check-youtube-egress`, `--rotate-youtube-ip`).
+  From an OVH address YouTube refused most stream requests with "Sign in to confirm you're not a bot",
+  signed in or not, and probing showed the cause was the address, not the sign-in or the token binding
+  (both forms of the DataSync ID failed the same way). The VPN option (gluetun) restarts onto a
+  different server when asked, never accepts an address it already used, and proves the new one by
+  playing three videos through it, because one video is not a test: an old one resolved from OVH while
+  two recent ones were refused. The proxy is applied to the bridge (Node's `NODE_USE_ENV_PROXY`) and to
+  the stream relay, since a stream URL is signed for the address that resolved it. Proxy settings live
+  in untracked files, not `project.env`, because they hold credentials. The proxy listens on Docker's
+  bridge address only, never publicly. Also: `youtube.com/live/`, `/embed/` and `/v/` links are now
+  recognised (about fifty `/live/` requests died as "Invalid YouTube URL"), and a URL the bridge cannot
+  read is no longer retried. Not tested: an actual VPN or proxy, which needs credentials.
+
 - **[042]** CI builds are now identified by the UTC time the run started, written `YYMMDD.HHMMSS` —
   the prerelease tag is `build-260920.002545` rather than `build-<run number>-<short sha>`, and the
   same stamp names the zip, the unit-test and in-image test reports, the CI Docker image tag, the
@@ -13,7 +36,6 @@ issue or a commit message. Numbering continues across releases.
   and GitHub already do better than a build tag can; what a releases page or an email subject has to
   answer is which build this is and whether it is newer than the one you have, and a timestamp
   answers that on sight. The commit hash is still in the release notes and the email as detail.
-
 - **[041]** The rule that every coding task publishes an artifact page now applies only where a
   browser exists: Windows hosts and Linux desktops publish; a headless Linux command-line session
   does not, and reports in the terminal instead. The page is opened in a browser, and a headless

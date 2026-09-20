@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import {
+  extractVideoId,
   musicItemPayload,
   normalizeSearchKey,
   streamCacheTtlMs
@@ -60,4 +61,35 @@ test('caps long stream validity and rejects already unsafe URLs', () => {
   assert.equal(streamCacheTtlMs(`https://x.test/?expire=${farExpiry}`, nowMs), 3_600_000);
   assert.equal(streamCacheTtlMs(`https://x.test/?expire=${nearExpiry}`, nowMs), 0);
   assert.equal(streamCacheTtlMs('https://x.test/no-expiry', nowMs), 300_000);
+});
+
+test('extractVideoId reads the ID out of every shape YouTube hands out', () => {
+  const id = 'G_sEeYOEuBQ';
+  for (const input of [
+    id,
+    `https://www.youtube.com/watch?v=${id}`,
+    `https://music.youtube.com/watch?v=${id}&list=RDAMVM${id}`,
+    `https://youtu.be/${id}?si=abc`,
+    `https://www.youtube.com/shorts/${id}`,
+    // The one users actually sent, about fifty times: Share on a live stream.
+    `https://www.youtube.com/live/${id}?is=lAN2TciqEThBybvL`,
+    `https://www.youtube.com/embed/${id}`,
+    `https://www.youtube.com/v/${id}`
+  ]) {
+    assert.equal(extractVideoId(input), id, input);
+  }
+});
+
+test('extractVideoId refuses what is not a video', () => {
+  for (const input of [
+    '',
+    null,
+    'http://paralleledition.xyz:8000/radio.mp3',
+    'https://www.youtube.com/live/',
+    'https://www.youtube.com/live/short',
+    'https://www.youtube.com/playlist?list=PLXO2_WWm9yBQ',
+    'not a url'
+  ]) {
+    assert.equal(extractVideoId(input), null, String(input));
+  }
 });

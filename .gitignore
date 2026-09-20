@@ -78,3 +78,8 @@ Thumbs.db
 .claude/settings.local.json
 .claude/.last-*
 .claude/.a11y-agent-team-*
+
+# Per-host YouTube egress proxy (holds credentials)
+/youtube_proxy.env
+/youtube_vpn.env
+/youtube_egress_ips.log

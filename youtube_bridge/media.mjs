@@ -186,3 +186,37 @@ export function contentBindingFor({ signedIn, visitorData, datasyncId }) {
   if (signedIn) return datasyncId || undefined;
   return visitorData || undefined;
 }
+
+// Path prefixes under which YouTube puts the video ID as the next segment.
+// /live/ is what "Share" gives for a stream and what every failing request in
+// kuhao's log used; /embed/ and /v/ are the older embed and short-link shapes.
+const VIDEO_ID_PATH_PREFIXES = new Set(['shorts', 'live', 'embed', 'v']);
+const VIDEO_ID_PATTERN = /^[A-Za-z0-9_-]{11}$/;
+
+/**
+ * The 11-character video ID in a YouTube URL or a bare ID, or null.
+ *
+ * Only accepts an ID-shaped result, so a path such as /live/ with no ID after
+ * it, or /shorts/<anything long>, is "not a video" rather than a bogus lookup.
+ *
+ * @param {string} input
+ * @returns {string|null}
+ */
+export function extractVideoId(input) {
+  if (!input) return null;
+  if (VIDEO_ID_PATTERN.test(input)) return input;
+  try {
+    const url = new URL(input);
+    const segments = url.pathname.split('/').filter(Boolean);
+    let candidate = null;
+    if (url.hostname === 'youtu.be') {
+      candidate = segments[0] || null;
+    } else if (url.searchParams.get('v')) {
+      candidate = url.searchParams.get('v');
+    } else if (VIDEO_ID_PATH_PREFIXES.has(segments[0])) {
+      candidate = segments[1] || null;
+    }
+    return candidate && VIDEO_ID_PATTERN.test(candidate) ? candidate : null;
+  } catch {}
+  return null;
+}

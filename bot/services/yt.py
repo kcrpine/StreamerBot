@@ -139,7 +139,9 @@ class YtService(_Service):
                 last_error = e
                 error_msg = str(e)
                 is_auth_error = "Sign in to confirm" in error_msg or "cookies" in error_msg.lower()
-                if attempt >= self._max_retries:
+                # A URL the bridge cannot read as a video (a radio stream, an
+                # mp3 link, a /channel/ page) is refused identically every time.
+                if "Invalid YouTube URL" in error_msg or attempt >= self._max_retries:
                     raise
                 logging.warning(f"YT Get: Retryable error, will retry: {error_msg[:100]}")
 
