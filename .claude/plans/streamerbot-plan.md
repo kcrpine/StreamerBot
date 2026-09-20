@@ -1100,9 +1100,27 @@ the firewall point, because a free port is only half of reachability.
 
 ---
 
-### Every coding task publishes an auto-updating artifact page
+### Every coding task publishes an auto-updating artifact page — where there is a browser to open it
 
-**Not optional, and not only at the end.** Terminal scrollback is the worst possible medium for the
+**Where this applies.** The artifact exists to be opened in a browser, so it is only worth publishing
+where one exists:
+
+- **Windows host: publish.** Every coding task, as described below.
+- **Linux with a desktop session: publish.** A desktop means a display server is running
+  (`DISPLAY` or `WAYLAND_DISPLAY` is set, or `loginctl show-session` reports a type of `x11` or
+  `wayland`).
+- **Linux headless, command line only: do not create the page.** There is no browser on the machine,
+  so the link cannot be opened there and the page is wasted effort. Do not publish an artifact, and do
+  not offer to. Report in the terminal instead, keeping it short and structured: what is being
+  changed and why, what changed, what is unverified and why, and a closing summary as the last thing
+  printed. Everything else in this section that is not about the page itself still applies:
+  `CHANGELOG.md` and the plan are updated in the same commit, and the unverified parts are named.
+- **macOS and anything else:** treat as a desktop unless it is a remote shell with no display.
+- **Unsure which it is:** check the environment variables above; if still unclear, ask once.
+
+The rules below describe the page for the cases where it is published.
+
+**Where it applies, it is not optional, and not only at the end.** Terminal scrollback is the worst possible medium for the
 person this project is built for: it cannot be navigated by heading, a long tool result buries the one
 sentence that matters, and re-reading it means arrowing through hundreds of lines that were only ever
 meant for the machine. Publish the work as an Artifact instead, and hand back the link.

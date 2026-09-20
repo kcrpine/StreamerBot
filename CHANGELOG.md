@@ -6,6 +6,11 @@ issue or a commit message. Numbering continues across releases.
 
 ## Unreleased
 
+- **[041]** The rule that every coding task publishes an artifact page now applies only where a
+  browser exists: Windows hosts and Linux desktops publish; a headless Linux command-line session
+  does not, and reports in the terminal instead. The page is opened in a browser, and a headless
+  server has none, so the page was work nobody could open. Changes CLAUDE.md and the plan.
+
 - **[040]** The manager can now allow each bot's account portal port through ufw, from
   Manage Bots, option 15, or `streamerbot.sh --firewall`.
 
