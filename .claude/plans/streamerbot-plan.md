@@ -1642,3 +1642,23 @@ returns a numbered list of twenty-five results naming each one's kind, **and the
 playing**; `sl` and a number switches to the chosen one. `sv am` answers "Apple Music is connected and
 ready", `sv am h` explains Apple Music and how it is connected, and `sv nf` on the same host says
 Netflix is not connected and names `li nf`.
+
+## Phase 12 — letting the portal port through ufw
+
+`assign_unique_bot_ports` gives each bot a free portal port, but a free port is only half of reachability:
+with ufw on, the portal binds and the link still does not open. `PORT_CONFLICT.txt` and `ask_portal_host`
+already told the user to allow the port and never helped. Manage Bots option 15 and `--firewall` now do
+(`ufw_sync_portal_ports` in `streamerbot.sh`, changelog [040]).
+
+- **Only the portal port is opened.** go-librespot's API port and the stream relay are loopback-only.
+- **Rules are tagged** `StreamerBot portal <bot>` so a rule left by a port change is recognised and
+  offered for removal, and nobody else's rule is ever touched.
+- **ufw is never enabled from here** — enabling on a remote host can cut off the SSH session.
+- **Loopback or disabled portals are reported and skipped**; opening their port does nothing.
+- **Automatic pass** after create, restore, Start All and Restart All: adds missing rules only, only when
+  ufw is already active, never deletes.
+- Found on the way: `jq '.enabled // true'` reads `false` as absent, so a disabled portal looked enabled.
+- **Unverified:** run against a stub ufw only (`tests/deployment/test_ufw_firewall.py`). The real
+  `ufw status` comment format is assumed from 0.36 and has not been observed on a live host — the session
+  was not root. Also, `test_port_allocation.ExhaustionTests.test_the_warning_names_what_still_works`
+  already failed before this phase (asserts wording Phase 9 changed).

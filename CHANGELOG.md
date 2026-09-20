@@ -6,6 +6,25 @@ issue or a commit message. Numbering continues across releases.
 
 ## Unreleased
 
+- **[040]** The manager can now allow each bot's account portal port through ufw, from
+  Manage Bots, option 15, or `streamerbot.sh --firewall`.
+
+  A free port was only half of reachability: with ufw on, the portal bound
+  correctly and the link still would not open, and the only advice was "allow it
+  through your firewall" with no help doing so. It checks whether ufw is
+  installed and active, says per bot whether the portal port is allowed, prints
+  the exact `ufw` command it runs and what ufw answered, and asks before
+  changing anything. When a bot's port has changed it offers to remove the old
+  rule; only rules it created (commented `StreamerBot portal <bot>`) are ever
+  removed. After ports are handed out on create, restore, Start All and
+  Restart All it adds missing rules by itself, but only if ufw is already active.
+
+  Only the portal port is opened. go-librespot's API port and the stream relay
+  are loopback-only on purpose. A portal listening on 127.0.0.1 or switched off
+  is reported and skipped, since opening its port would do nothing. ufw is never
+  enabled from here: on a remote host that can cut off the SSH session running it.
+  Tested against a stub ufw; the real ufw's output format is assumed from 0.36.
+
 - **[039]** Creating a bot, and editing bots, now ask whether the account portal
   should be reachable from other computers.
 

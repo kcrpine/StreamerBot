@@ -41,6 +41,7 @@ if [ "${1:-}" = "--help" ] || [ "${1:-}" = "-h" ]; then
     echo "  --check-updates  Say whether an update is available, without installing it."
     echo "  --logs NAME      Show the last 50 log lines for one bot."
     echo "  --repair-ports   Give every bot its own account portal and Spotify port."
+    echo "  --firewall       Allow each bot's account portal port through ufw."
     echo "  --help           This text."
     echo ""
     echo "Everything except --help needs root, and will ask for it."
@@ -50,7 +51,7 @@ fi
 # Validate the flag name before elevating, so a typo does not cost a password
 # prompt first.
 case "${1:-}" in
-    ""|--status|--services|--start-all|--stop-all|--restart-all|--check-updates|--logs|--repair-ports)
+    ""|--status|--services|--start-all|--stop-all|--restart-all|--check-updates|--logs|--repair-ports|--firewall)
         ;;
     *)
         echo "Error. Unknown option: $1"
@@ -778,6 +779,7 @@ create_bot() {
     # ports. Without this the second bot's portal never starts and its Spotify
     # daemon restarts forever.
     assign_unique_bot_ports "$CURRENT_BOT_DIR"
+    ufw_sync_portal_ports quiet
 
     # Fix permissions for container user (uid 1000 is standard for non-root in many images)
     echo "Adjusting folder permissions..."
@@ -2210,6 +2212,186 @@ repair_all_bot_ports() {
     return 0
 }
 
+# ---------------------------------------------------------------------------
+# ufw: let the account portal's port through the host firewall.
+#
+# A free port is only half of reachability. With ufw on, the portal binds
+# correctly and the link still does not open until the port is allowed. Only
+# the portal's port is ever opened: go-librespot's API port and the stream relay
+# are loopback-only on purpose, and opening them would expose them.
+#
+# Every rule carries the comment "StreamerBot portal <bot>". That is how a rule
+# left behind by a port change is recognised later, without ever touching a rule
+# somebody else wrote.
+#
+# ufw is never switched on from here. Enabling it on a remote host can cut off
+# the SSH session that is running this, so that stays the user's decision.
+# ---------------------------------------------------------------------------
+UFW_RULE_TAG="StreamerBot portal"
+
+# missing, inactive or active.
+ufw_state() {
+    command -v ufw >/dev/null 2>&1 || { echo missing; return 0; }
+    if ufw status 2>/dev/null | head -n 1 | grep -qi '^Status: active'; then
+        echo active
+    else
+        echo inactive
+    fi
+}
+
+# One line per bot: name, portal port, whether it is enabled, and its host.
+ufw_bot_portals() {
+    local cfg
+    for cfg in "$BOTS_ROOT"/*/config.json; do
+        [ -f "$cfg" ] || continue
+        jq -r --arg n "$(basename "$(dirname "$cfg")")" \
+            '[$n, (.auth_portal.port // 4419 | tostring), (if .auth_portal.enabled == false then "false" else "true" end), (.auth_portal.host // "127.0.0.1")] | @tsv' \
+            "$cfg" 2>/dev/null
+    done
+}
+
+ufw_host_is_loopback() {
+    case "$1" in 127.*|localhost|::1) return 0 ;; esac
+    return 1
+}
+
+# Whether ufw already has an allow rule for this TCP port.
+ufw_port_allowed() {
+    ufw status 2>/dev/null | grep -Eq "^${1}(/tcp)?( \(v6\))?[[:space:]]+ALLOW"
+}
+
+# "port<TAB>bot" for every rule this script created, one per port.
+ufw_tagged_rules() {
+    ufw status 2>/dev/null \
+        | sed -n "s|^\([0-9][0-9]*\)/tcp[[:space:]].*# ${UFW_RULE_TAG} \(.*\)\$|\1\t\2|p" \
+        | sort -u
+}
+
+# Tagged rules whose port no bot's portal uses any more.
+ufw_stale_rules() {
+    local wanted="$1" port name
+    while IFS=$'\t' read -r port name; do
+        [ -n "$port" ] || continue
+        printf '%s\n' "$wanted" | grep -qx -- "$port" || printf '%s\t%s\n' "$port" "$name"
+    done < <(ufw_tagged_rules)
+}
+
+# $1 interactive (default) or quiet.
+#
+# Quiet is the automatic pass after ports are handed out: it only adds missing
+# rules, and only when ufw is already on. It never asks and never deletes.
+ufw_sync_portal_ports() {
+    local mode="${1:-interactive}" state name port enabled host
+    local to_open="" answer stale out
+
+    state=$(ufw_state)
+    if [ "$state" = missing ]; then
+        [ "$mode" = quiet ] && return 0
+        echo "ufw is not installed on this host, so nothing was changed."
+        echo "If the portal link does not open, the firewall may be somewhere else: a"
+        echo "cloud provider's security group or a router in front of this host."
+        return 0
+    fi
+    if [ "$mode" = quiet ] && [ "$state" != active ]; then
+        return 0
+    fi
+
+    [ "$mode" = quiet ] || {
+        echo "ufw is installed and ${state}."
+        [ "$state" = inactive ] && {
+            echo "It is switched off, so it is not blocking anything right now. This does"
+            echo "not switch it on, because that can cut off your SSH session. Rules added"
+            echo "here will already be in place if you enable it later."
+        }
+        echo ""
+    }
+
+    while IFS=$'\t' read -r name port enabled host; do
+        [ -n "$name" ] || continue
+        if [ "$enabled" != true ]; then
+            [ "$mode" = quiet ] || echo "Bot ${name}: the portal is switched off, so port ${port} is not opened."
+            continue
+        fi
+        if ufw_host_is_loopback "$host"; then
+            [ "$mode" = quiet ] || {
+                echo "Bot ${name}: portal port ${port} listens on ${host} only, so no other"
+                echo "  computer can reach it and opening the port would do nothing. Choose"
+                echo "  'reachable from other computers' in Bulk Update Configuration first."
+            }
+            continue
+        fi
+        if ufw_port_allowed "$port"; then
+            [ "$mode" = quiet ] || echo "Bot ${name}: portal port ${port} is already allowed."
+        else
+            [ "$mode" = quiet ] || echo "Bot ${name}: portal port ${port} is not allowed yet."
+            to_open=$(printf '%s\n%s\t%s' "$to_open" "$port" "$name")
+        fi
+    done < <(ufw_bot_portals)
+
+    # Rules from an earlier port, for the bots as they are now. Ports held by a
+    # portal that is switched off or loopback-only are not counted as wanted,
+    # but are not stale either while their bot still holds that port.
+    stale=""
+    if [ "$mode" != quiet ]; then
+        local held
+        held=$(ufw_bot_portals | cut -f2)
+        stale=$(ufw_stale_rules "$held")
+    fi
+
+    to_open=$(printf '%s\n' "$to_open" | sed '/^$/d')
+    if [ -n "$to_open" ]; then
+        if [ "$mode" != quiet ]; then
+            echo ""
+            read -p "Allow $(printf '%s\n' "$to_open" | wc -l) port(s) through ufw? [y/N]: " answer
+            case "$answer" in y|Y|yes|YES) ;; *) echo "Nothing was changed."; to_open="" ;; esac
+        fi
+        while IFS=$'\t' read -r port name; do
+            [ -n "$port" ] || continue
+            echo "Running: ufw allow ${port}/tcp comment \"${UFW_RULE_TAG} ${name}\""
+            if out=$(ufw allow "${port}/tcp" comment "${UFW_RULE_TAG} ${name}" 2>&1); then
+                echo "  ufw says: ${out}"
+                log_line "ufw: allowed ${port}/tcp for portal of ${name}"
+            else
+                echo "  Error. ufw refused: ${out}"
+                log_line "ufw: could not allow ${port}/tcp for ${name}: ${out}"
+            fi
+        done <<< "$to_open"
+    elif [ "$mode" != quiet ]; then
+        echo ""
+        echo "There are no portal ports waiting to be allowed."
+    fi
+
+    if [ -n "$stale" ]; then
+        echo ""
+        echo "These rules were made for a portal port that no bot uses any more:"
+        while IFS=$'\t' read -r port name; do
+            echo "  port ${port}/tcp, made for bot ${name}"
+        done <<< "$stale"
+        read -p "Remove them? [y/N]: " answer
+        case "$answer" in
+            y|Y|yes|YES)
+                while IFS=$'\t' read -r port name; do
+                    echo "Running: ufw delete allow ${port}/tcp"
+                    if out=$(ufw --force delete allow "${port}/tcp" 2>&1); then
+                        echo "  ufw says: ${out}"
+                        log_line "ufw: removed stale rule ${port}/tcp (was for ${name})"
+                    else
+                        echo "  Error. ufw refused: ${out}"
+                    fi
+                done <<< "$stale"
+                ;;
+            *) echo "Those rules were left as they are." ;;
+        esac
+    fi
+
+    if [ "$mode" != quiet ]; then
+        echo ""
+        echo "ufw is only this host's firewall. Behind a router or a cloud provider's"
+        echo "security group the port must also be forwarded or allowed there."
+    fi
+    return 0
+}
+
 streamerbot_config_defaults() {
     cat <<'DEFAULTSJSON'
   {
@@ -2489,6 +2671,7 @@ migrate_one_bot() {
     # since the defaults merged in above are constants. Left alone, only the
     # first bot to start would get a working portal or Spotify.
     assign_unique_bot_ports "$dir"
+    ufw_sync_portal_ports quiet
 
     # The container runs as uid 1000 and must be able to write the credential
     # directories it was just given.
@@ -3145,7 +3328,8 @@ manage_bots() {
         echo "12. Clear YouTube Bridge Cache"
         echo "13. Repair Account Portal and Spotify Ports"
         echo "14. Adopt Bot Folders Copied Into bots/"
-        echo "15. Return to Main Menu"
+        echo "15. Allow Account Portal Ports Through ufw Firewall"
+        echo "16. Return to Main Menu"
         echo ""
         read -p "Choose an option: " opt_manage
         
@@ -3159,6 +3343,7 @@ manage_bots() {
             1)
                 echo "Step 1 of 2. Checking for clashing ports."
                 repair_all_bot_ports quiet
+                ufw_sync_portal_ports quiet
                 echo "Step 2 of 2. Starting all bots."
                 docker start $(docker ps -a -q -f "label=role=streamerbot")
                 read -p "Completed. Enter to continue..."
@@ -3167,6 +3352,7 @@ manage_bots() {
             2)
                 echo "Step 1 of 3. Checking for clashing ports."
                 repair_all_bot_ports quiet
+                ufw_sync_portal_ports quiet
                 echo "Step 2 of 3. Stopping all bots."
                 docker stop -t 1 $(docker ps -a -q -f "label=role=streamerbot")
                 echo "Step 3 of 3. Starting all bots."
@@ -3231,6 +3417,14 @@ manage_bots() {
                 header
                 ;;
             15)
+                echo ""
+                echo "Checking whether ufw is installed on this host."
+                echo ""
+                ufw_sync_portal_ports
+                read -p "Press Enter to continue..."
+                header
+                ;;
+            16)
                 return
                 ;;
             *)
@@ -3319,6 +3513,7 @@ print_cli_help() {
     echo "  --check-updates  Say whether an update is available, without installing it."
     echo "  --logs NAME      Show the last 50 log lines for one bot."
     echo "  --repair-ports   Give every bot its own account portal and Spotify port."
+    echo "  --firewall       Allow each bot's account portal port through ufw."
     echo "  --help           This text."
 }
 
@@ -3411,6 +3606,10 @@ case "${1:-}" in
         ;;
     --repair-ports)
         repair_all_bot_ports
+        exit 0
+        ;;
+    --firewall)
+        ufw_sync_portal_ports
         exit 0
         ;;
     --logs)
