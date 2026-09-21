@@ -1,0 +1,211 @@
+#!/bin/bash
+#
+# StreamerBot pre-push hook.
+#
+# Runs the test suite before a push leaves this machine, in both of the places
+# it has to run, because neither one covers the other:
+#
+#   1. Inside the image. Everything under bot/ imports TeamTalkPy and mpv.py,
+#      which need libTeamTalk5.so and libmpv. Neither ships in the repository,
+#      so on a bare host those modules fail to import and the suite reports a
+#      wall of errors that says nothing about the code.
+#
+#   2. On the host. tests/deployment/ and test_update_shared_youtube.py drive
+#      the shell scripts, and they need jq and bash. The image has bash but no
+#      jq, so inside the container every one of them skips -- silently, and
+#      reported as a pass.
+#
+# Point 2 is the reason this hook exists rather than just running the image
+# suite. A run that happens only in the image comes back green with all 181
+# deployment tests skipped, which is exactly how a stale assertion in
+# tests/deployment/test_port_allocation.py failed CI on five consecutive pushes
+# while the in-image job stayed green the whole time.
+#
+# Missing Docker, a missing image, or a missing jq is a warning and not a
+# refusal. A collaborator who has none of them should still be able to push,
+# and CI runs both halves regardless. Only a real test failure stops a push.
+#
+# Install with tools/install-hooks.sh. Bypass a single push with
+# "git push --no-verify".
+
+set -u
+
+REPO_ROOT="$(git rev-parse --show-toplevel)" || exit 1
+cd "$REPO_ROOT" || exit 1
+
+status=0
+
+say() { printf '%s\n' "$*" >&2; }
+fail() { say "Error. $*"; status=1; }
+
+WORK="$(mktemp -d)"
+trap 'rm -rf "$WORK"' EXIT
+
+# The two lines of unittest output that actually say what happened.
+summarise() { grep -E '^(Ran [0-9]+ test|OK|FAILED)' "$1" | tail -n 2; }
+
+# ---------------------------------------------------------------------------
+# Is there anything to test?
+#
+# Git feeds the refs being pushed on stdin as
+# "<local ref> <local sha> <remote ref> <remote sha>". A branch deletion sends
+# an all-zero local sha and has no code to test, so it should not cost two
+# minutes. Run by hand there is no stdin at all, which means a person asking
+# for the checks directly.
+# ---------------------------------------------------------------------------
+pushing=0
+if [ -t 0 ]; then
+    pushing=1
+else
+    while read -r _ local_sha _ _; do
+        case "$local_sha" in
+            *[^0]*) pushing=1 ;;
+        esac
+    done
+fi
+
+[ "$pushing" -eq 1 ] || exit 0
+
+say ""
+say "Running the test suite before pushing. This takes about two minutes."
+say "To skip it deliberately, push again with --no-verify."
+say ""
+
+# The suites read the files on disk, not the commits being pushed, so say so
+# when those differ rather than letting a pass mean less than it appears to.
+if [ -n "$(git status --porcelain 2>/dev/null)" ]; then
+    say "Warning. The working tree has uncommitted changes. The suites run"
+    say "  against the files on disk, so they are testing something other than"
+    say "  what you are about to push."
+    say ""
+fi
+
+# ---------------------------------------------------------------------------
+# 1. The suite inside the image.
+#
+# The tree is mounted rather than baked in, so the image supplies only the
+# dependencies and the code under test is always the current one. That is also
+# why a stale image is usually harmless: it matters only when a dependency
+# changed.
+# ---------------------------------------------------------------------------
+IMAGE_NAME="streamerbot"
+if [ -f project.env ]; then
+    configured="$(sed -n 's/^STREAMERBOT_IMAGE=//p' project.env | tail -n 1)"
+    [ -n "$configured" ] && IMAGE_NAME="$configured"
+fi
+
+find_image() {
+    local tag
+    for tag in test latest ci; do
+        if docker image inspect "${IMAGE_NAME}:${tag}" >/dev/null 2>&1; then
+            printf '%s' "${IMAGE_NAME}:${tag}"
+            return 0
+        fi
+    done
+    return 1
+}
+
+image=""
+if ! command -v docker >/dev/null 2>&1; then
+    say "Warning. Docker is not installed, so the in-image suite did not run."
+    say "  Everything under bot/ is untested by this push. CI still runs it."
+    say ""
+elif ! docker info >/dev/null 2>&1; then
+    say "Warning. The Docker daemon is not responding, so the in-image suite"
+    say "  did not run. Everything under bot/ is untested by this push."
+    say ""
+elif ! image="$(find_image)"; then
+    say "Warning. No ${IMAGE_NAME} image found, so the in-image suite did not"
+    say "  run. Everything under bot/ is untested by this push. Build it with:"
+    say ""
+    say "    set -a; . ./project.env; set +a"
+    say "    docker build --build-arg TTSDK_URL_X86_64=\"\$TTSDK_URL_X86_64\" \\"
+    say "      --build-arg TTSDK_URL_ARM64=\"\$TTSDK_URL_ARM64\" \\"
+    say "      --build-arg GO_LIBRESPOT_VERSION=\"\$GO_LIBRESPOT_VERSION\" \\"
+    say "      -t ${IMAGE_NAME}:test ."
+    say ""
+fi
+
+if [ -n "$image" ]; then
+    say "Running the in-image suite against ${image}."
+    if docker run --rm -v "$REPO_ROOT:/work" -w /work --entrypoint bash \
+        "$image" -c 'python -m unittest discover -s . -p "test_*.py"' \
+        >"$WORK/image.log" 2>&1
+    then
+        say "OK. In-image suite passed. $(summarise "$WORK/image.log" | tr '\n' ' ')"
+    else
+        fail "The in-image suite failed."
+        say ""
+        tail -n 40 "$WORK/image.log" >&2
+        say ""
+    fi
+    say ""
+fi
+
+# ---------------------------------------------------------------------------
+# 2. The deployment suite on the host.
+#
+# These drive the real shell scripts in a sandbox. They need jq, which the
+# image does not have, and they skip themselves rather than failing when it is
+# missing -- so without the check below a jq-less host reports a clean pass
+# having run nothing.
+# ---------------------------------------------------------------------------
+python_bin=""
+for candidate in python3 python; do
+    if command -v "$candidate" >/dev/null 2>&1; then
+        python_bin="$candidate"
+        break
+    fi
+done
+
+if [ -z "$python_bin" ]; then
+    say "Warning. No python on PATH, so the deployment suite did not run."
+    say "  The shell scripts are untested by this push. CI still runs them."
+    say ""
+elif ! command -v jq >/dev/null 2>&1; then
+    say "Warning. jq is not installed, so the deployment tests would skip"
+    say "  themselves and report a pass having run nothing. Treating that as"
+    say "  not run. The shell scripts are untested by this push."
+    say ""
+    say "    sudo apt install jq"
+    say ""
+else
+    say "Running the deployment suite on this host. This is the slow half."
+    if "$python_bin" -m unittest discover -s tests/deployment -t . \
+        -p "test_*.py" >"$WORK/host.log" 2>&1
+    then
+        say "OK. Deployment suite passed. $(summarise "$WORK/host.log" | tr '\n' ' ')"
+    else
+        fail "The deployment suite failed."
+        say ""
+        tail -n 40 "$WORK/host.log" >&2
+        say ""
+    fi
+
+    # Small, fast, and lives outside tests/deployment/, so it needs its own run.
+    if "$python_bin" -m unittest test_update_shared_youtube \
+        >"$WORK/shared.log" 2>&1
+    then
+        say "OK. Shared YouTube migration passed. $(summarise "$WORK/shared.log" | tr '\n' ' ')"
+    else
+        fail "test_update_shared_youtube failed."
+        say ""
+        tail -n 20 "$WORK/shared.log" >&2
+        say ""
+    fi
+    say ""
+fi
+
+# ---------------------------------------------------------------------------
+# Verdict.
+# ---------------------------------------------------------------------------
+if [ "$status" -ne 0 ]; then
+    say "Push stopped, because the suite above failed."
+    say "Fix it, or push again with --no-verify to override deliberately."
+    say ""
+else
+    say "OK. Pushing."
+    say ""
+fi
+
+exit "$status"

@@ -141,7 +141,8 @@ jobs:
               echo "Error.   $script failed to parse"
               status=1
             fi
-          done < <(find . -name '*.sh' -not -path './.git/*' | sort)
+          done < <(find . \( -name '*.sh' -o -path './.githooks/*' \) \
+                     -not -path './.git/*' | sort)
           exit "$status"
 
       - name: ShellCheck
@@ -151,7 +152,8 @@ jobs:
           sudo apt-get install -y --no-install-recommends shellcheck
           # Advisory only. These scripts predate the rewrite and a hard failure
           # here would block unrelated work.
-          find . -name '*.sh' -not -path './.git/*' -print0 \
+          find . \( -name '*.sh' -o -path './.githooks/*' \) \
+            -not -path './.git/*' -print0 \
             | xargs -0 shellcheck -S error -f gcc || true
 
   docker-build:

@@ -6,6 +6,18 @@ issue or a commit message. Numbering continues across releases.
 
 ## Unreleased
 
+- **[050]** A pre-push hook now runs the suite before a push leaves the machine, in both of the places it
+  has to run. Running it only in the image is not enough and looks like it is: `tests/deployment/` and
+  `test_update_shared_youtube.py` skip there and are counted as passes, so the image reports 646 tests OK
+  with all 181 deployment tests sat out — which is exactly how [048] failed CI five times while the
+  in-image job stayed green. The reason they skip is **not** the `.dockerignore` exclusion CLAUDE.md
+  claimed, since the `-v "$PWD:/work"` mount restores the scripts; it is that the image has no `jq`.
+  CLAUDE.md is corrected. Missing Docker, image or `jq` is a warning and not a refusal, so a collaborator
+  without them can still push, and the hook says plainly which half went unrun rather than implying full
+  coverage. Costs about two minutes; `git push --no-verify` skips it. CI now also syntax-checks and
+  shellchecks `.githooks/`, which its `-name '*.sh'` filter had never matched, so neither hook was
+  covered.
+
 - **[049]** `.githooks/pre-commit` is now stored executable (mode 100755). It was stored 100644, so git
   ignored it and said so only in a hint that scrolls past above the commit's own output — the plan-drift
   and private-file checks had been silently skipped for an unknown number of commits on this clone.

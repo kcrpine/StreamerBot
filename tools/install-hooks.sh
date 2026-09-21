@@ -67,5 +67,16 @@ echo "  credentials and your session transcripts."
 echo "  It refuses to commit a plan that has drifted from your local copy at"
 echo "  ~/.claude/plans, and does nothing if you do not have one."
 echo
-echo "To bypass it for one commit, use git commit --no-verify."
+echo "The pre-push hook runs the test suite in both of the places it has to"
+echo "run: inside the image, which is the only place bot/ can import its"
+echo "dependencies, and on this host, which is the only place the deployment"
+echo "tests find the jq they need. Neither half covers the other, and the"
+echo "deployment tests skip rather than fail when jq is missing, so an"
+echo "in-image run alone reports a pass having skipped all 181 of them."
+echo "It takes about two minutes. Missing Docker, image or jq is a warning,"
+echo "not a refusal."
+echo
+echo "To bypass them for one command, use git commit --no-verify or"
+echo "git push --no-verify."
+echo
 echo "To undo this, run: git config --unset core.hooksPath"

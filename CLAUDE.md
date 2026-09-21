@@ -34,9 +34,27 @@ docker run --rm -v "$PWD:/work" -w /work --entrypoint bash streamerbot:test -c '
 `tools/ci_test_report.py` runs the same suite and emits a per-test Markdown/text report; CI uses it, and
 it is more readable than raw unittest output when several tests fail.
 
-Two test files (`test_update_shared_youtube.py`, `tests/deployment/`) read the shell scripts from disk
-and **skip** inside the image, because `.dockerignore` excludes those scripts by design. They pass on a
-host with the scripts present, so `python -m unittest test_update_shared_youtube` works on Windows.
+**That command is not the whole suite, and it says so nowhere.** `tests/deployment/` and
+`test_update_shared_youtube.py` drive the shell scripts and skip inside the image — not because
+`.dockerignore` excludes those scripts, which the `-v "$PWD:/work"` mount puts back, but because the
+image has no `jq`. They skip rather than fail, so an in-image run reports a clean pass having executed
+none of them: 646 tests pass in the image while all 181 deployment tests sit out. That is how a stale
+assertion in `tests/deployment/test_port_allocation.py` failed CI on five consecutive pushes while the
+in-image job stayed green throughout.
+
+The two halves are disjoint, so the full suite is both commands. The host half needs `jq` and `bash`
+and cannot run `bot/`; the image half needs only Docker and cannot run the deployment tests:
+
+```bash
+python -m unittest discover -s tests/deployment -t . -p "test_*.py"   # 181 tests, ~90s
+python -m unittest test_update_shared_youtube                          # 3 tests
+```
+
+`.githooks/pre-push` runs both before every push, so a green hook means a green CI. Missing Docker, a
+missing image or a missing `jq` is a warning rather than a refusal, so a collaborator without them can
+still push; only a real failure stops one. Bypass with `git push --no-verify`.
+
+A Windows host can run the deployment half only where `bash` and `jq` are on PATH, such as Git Bash.
 
 ## Building the image
 
