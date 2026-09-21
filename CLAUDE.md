@@ -73,8 +73,10 @@ crosses the 9p filesystem boundary and is slower than a clone kept inside the di
 
 This changes what `.githooks/pre-push` actually checks, depending on where you push from:
 
-- **From Git Bash or PowerShell** the hook finds no `docker`, prints its missing-Docker warning and
-  runs the host (deployment) half alone — exactly the half-green run the section above warns about.
+- **From Git Bash or PowerShell** the hook runs *neither* half. There is no `docker`, and there is no
+  `jq` anywhere on the Windows side either, so both halves degrade to warnings and the push proceeds
+  having tested nothing at all. Observed on the push that added this note: two warnings, then
+  "OK. Pushing."
 - **From inside WSL** both halves run for real: the distro has `jq` at `/usr/bin/jq` and the
   `streamerbot:test` image is already built there, so neither half degrades to a warning.
 
