@@ -56,6 +56,30 @@ still push; only a real failure stops one. Bypass with `git push --no-verify`.
 
 A Windows host can run the deployment half only where `bash` and `jq` are on PATH, such as Git Bash.
 
+### Docker lives in WSL on this Windows host
+
+There is no Docker on the Windows side: `docker` is on neither the Git Bash nor the PowerShell
+PATH, and Docker Desktop is not installed. The engine runs natively inside WSL — Ubuntu 24.04,
+`/usr/bin/docker`, Engine 29.8.1 on `overlayfs`, started by systemd as `docker.service`. The image
+half of the suite therefore has to be driven through WSL:
+
+```bash
+wsl -e bash -lc 'cd "/mnt/c/Users/kcrpi/Documents/teamtalk tv streamer and music bot/TTMediaBot" && docker run --rm -v "$PWD:/work" -w /work --entrypoint bash streamerbot:test -c "python -m unittest discover -s . -p \"test_*.py\""'
+```
+
+No `sudo`: the WSL user is in the `docker` group, so the socket is reachable directly. The Windows
+path is visible from WSL under `/mnt/c/...`, so no second clone is needed — but the bind mount
+crosses the 9p filesystem boundary and is slower than a clone kept inside the distro.
+
+This changes what `.githooks/pre-push` actually checks, depending on where you push from:
+
+- **From Git Bash or PowerShell** the hook finds no `docker`, prints its missing-Docker warning and
+  runs the host (deployment) half alone — exactly the half-green run the section above warns about.
+- **From inside WSL** both halves run for real: the distro has `jq` at `/usr/bin/jq` and the
+  `streamerbot:test` image is already built there, so neither half degrades to a warning.
+
+Push from WSL when you want the hook to mean what it claims.
+
 ## Building the image
 
 Build args are mandatory — the Dockerfile fails loudly on an empty SDK URL rather than producing a
