@@ -1753,3 +1753,24 @@ on the same OVH host (AS16276) showed the identical failure, 700-990 lines each 
 - Bots and the shared bridge must be recreated to read `YOUTUBE_PROXY_URL` (the menu does this and stops
   them briefly); it has not been applied to the live bots.
 - The pre-commit hook in `.githooks/` was skipped on the commit because it is not executable.
+
+### ExpressVPN over gluetun did not connect (measured 2026-09-20)
+
+- gluetun looped `TLS key negotiation failed to occur within 60 seconds` against a new ExpressVPN server
+  every ~75 s, with no `AUTH_FAILED`. OpenVPN checks the login only after the server answers, so the
+  credentials were never judged; it was not a password problem.
+- A packet capture on the host showed the handshake leaving `eno1` and no reply returning. ufw was not
+  the cause (outgoing allowed). Either the host's network drops the replies or ExpressVPN ignores
+  hosting-company addresses; which of the two is **not determined**.
+- TCP is not an escape for ExpressVPN: all 171 servers in gluetun's list are UDP-only, and TCP 1195 and 995
+  were refused on a 12-server sample. TCP 80/443 answered HTTP 404/400 (a web front end, not OpenVPN).
+  A raw UDP probe proves nothing because ExpressVPN uses tls-crypt and ignores unauthenticated packets.
+- Built: `egress_vpn_explain_failure` names silent-server versus rejected-login, a UDP-to-TCP retry for
+  providers other than ExpressVPN, a Proton free-servers prompt (`FREE_ONLY=on`), Proton WireGuard help
+  text, and a failed setup now resets the saved mode to direct instead of leaving a dead proxy saved.
+- **Measured 2026-09-21: ProtonVPN free, WireGuard.** Connected in about 10 s, so this host carries VPN UDP
+  fine and the ExpressVPN failure was on ExpressVPN's side. But YouTube refused every free address: six
+  different exits (Atlanta 89.187.171.228, 212.104.215.152, 149.40.62.15, 149.22.84.167, 185.45.15.37)
+  played 0 or 1 of 3 videos. Free-plan addresses are datacenter addresses YouTube already blocks. Bots were
+  not recreated; the bridge was put back to direct. A different result needs a residential proxy
+  (`url` mode), not another datacenter VPN.

@@ -76,5 +76,49 @@ class EgressMenuTextTests(unittest.TestCase):
         self.assertNotIn("\x1b[", out)
 
 
+class VpnFailureTests(unittest.TestCase):
+    """The setup must say which kind of failure it saw, using a stubbed `docker`."""
+
+    SILENT = "TLS Error: TLS key negotiation failed to occur within 60 seconds"
+    REJECTED = "AUTH: Received control message: AUTH_FAILED"
+
+    def setUp(self):
+        self._tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self._tmp.cleanup)
+
+    def _run(self, log: str, call: str) -> subprocess.CompletedProcess:
+        return run_egress(f"docker() {{ printf '%s\\n' '{log}'; }}; {call}", self._tmp.name)
+
+    def test_silent_server_is_not_called_a_password_problem(self):
+        out = self._run(self.SILENT, "egress_vpn_explain_failure").stdout
+        self.assertIn("did not answer", out)
+        self.assertIn("not a password problem", out)
+        self.assertNotIn("rejected", out)
+
+    def test_rejected_login_is_named_as_such(self):
+        out = self._run(self.REJECTED, "egress_vpn_explain_failure").stdout
+        self.assertIn("rejected the username or password", out)
+
+    def test_only_a_silent_server_is_retried_over_tcp(self):
+        self.assertEqual(self._run(self.SILENT, "egress_vpn_server_silent").returncode, 0)
+        self.assertNotEqual(self._run(self.REJECTED, "egress_vpn_server_silent").returncode, 0)
+        both = f"{self.SILENT}; {self.REJECTED}"
+        self.assertNotEqual(self._run(both, "egress_vpn_server_silent").returncode, 0)
+
+    def test_expressvpn_is_not_retried_over_tcp(self):
+        self.assertNotEqual(run_egress("egress_vpn_can_try_tcp expressvpn", self._tmp.name).returncode, 0)
+        self.assertEqual(run_egress("egress_vpn_can_try_tcp protonvpn", self._tmp.name).returncode, 0)
+
+    def test_giving_up_resets_the_saved_setting_to_direct(self):
+        run_egress('egress_write_env vpn "http://172.17.0.1:8888"', self._tmp.name)
+        out = self._run("", "egress_vpn_give_up; egress_mode")
+        self.assertEqual(out.stdout.strip().splitlines()[-1], "direct")
+
+    def test_proton_help_uses_wireguard_and_free_servers(self):
+        out = run_egress("egress_account_help", self._tmp.name).stdout
+        self.assertIn("WireGuard configuration", out)
+        self.assertIn("Free server", out)
+
+
 if __name__ == "__main__":
     unittest.main()

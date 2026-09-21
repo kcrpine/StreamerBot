@@ -6,6 +6,18 @@ issue or a commit message. Numbering continues across releases.
 
 ## Unreleased
 
+- **[047]** Recorded what ProtonVPN's free WireGuard servers did on this host: they connect, and YouTube
+  still refuses every address (6 tried). No code change; the plan's Phase 13 now says a datacenter VPN is not
+  the fix, so the next session goes to a residential proxy instead of trying another VPN.
+
+- **[046]** A VPN that fails to connect now says why. A server that never answers (gluetun's
+  `TLS key negotiation failed`) is reported as "not a password problem", because the login is only checked
+  after the server answers and people otherwise retype passwords for an hour; a rejected login is named as
+  that. For providers other than ExpressVPN (whose servers are UDP-only) a silent server is retried once
+  over TCP. A failed setup removes the container and resets the saved setting to direct, where before it
+  left a dead proxy saved for the next recreate. ProtonVPN gets a free-servers prompt and WireGuard steps
+  in the account help. Written after ExpressVPN failed on this host with no reply to any handshake packet.
+
 - **[045]** The plan now records Phase 13, the YouTube egress work, including what it ruled out and what is
   still unverified. Without it the next session would re-suspect the DataSync binding, which was
   measured and is not the cause, and would trust a one-video test that passes on a blocked address.

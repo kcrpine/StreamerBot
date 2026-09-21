@@ -195,7 +195,7 @@ egress_apply() {
 }
 
 egress_setup_vpn() {
-    local provider vpntype user pass key addr countries
+    local provider vpntype user pass key addr countries freeonly
     echo ""
     echo "VPN container (gluetun). It needs an account with a VPN provider."
     echo "Use the provider's name as gluetun spells it, for example: mullvad,"
@@ -206,6 +206,9 @@ egress_setup_vpn() {
     echo "2. WireGuard (private key)"
     read -r -p "Protocol [1]: " vpntype
     read -r -p "Countries to pick servers from, comma separated (Enter = any): " countries
+    if [ "$provider" = "protonvpn" ]; then
+        read -r -p "Use only Proton's free servers? [Y/n]: " freeonly
+    fi
     (
         umask 077
         {
@@ -224,22 +227,78 @@ egress_setup_vpn() {
                 echo "OPENVPN_PASSWORD=$pass"
             fi
             [ -z "$countries" ] || echo "SERVER_COUNTRIES=$countries"
+            case "${freeonly:-}" in [nN]*) ;; "") [ "$provider" != "protonvpn" ] || echo "FREE_ONLY=on" ;; *) echo "FREE_ONLY=on" ;; esac
         } > "$EGRESS_VPN_FILE"
     ) || return 1
     chmod 600 "$EGRESS_VPN_FILE"
 
-    echo "Starting the VPN container."
+    echo "Starting the VPN container. This can take up to a minute."
     egress_start_vpn || return 1
     local ip
-    if ip="$(egress_wait_for_ip)"; then
-        egress_remember_ip "$ip"
-        echo "OK. The VPN is up. YouTube will see this address: $ip"
-    else
-        echo "Error. The VPN did not come up. Last log lines:"
-        docker logs --tail 15 "$EGRESS_NAME" 2>&1
-        return 1
+    if ! ip="$(egress_wait_for_ip)"; then
+        egress_vpn_explain_failure
+        if [ "$vpntype" != "2" ] && egress_vpn_can_try_tcp "$provider" && egress_vpn_server_silent; then
+            echo "Trying again over TCP. This can take up to a minute."
+            echo "OPENVPN_PROTOCOL=tcp" >> "$EGRESS_VPN_FILE"
+            egress_start_vpn || return 1
+            if ! ip="$(egress_wait_for_ip)"; then
+                egress_vpn_explain_failure
+                echo "Error. TCP did not work either. The VPN container was removed and YouTube goes out directly again."
+                egress_vpn_give_up
+                return 1
+            fi
+        else
+            echo "Error. The VPN container was removed and YouTube goes out directly again."
+            egress_vpn_give_up
+            return 1
+        fi
     fi
+    egress_remember_ip "$ip"
+    echo "OK. The VPN is up. YouTube will see this address: $ip"
     egress_apply
+}
+
+# ExpressVPN's servers accept UDP only (gluetun's server list marks all 171 as
+# UDP, and TCP 1195 and 995 were refused on a sample), so a TCP retry against
+# it is a second wait for the same failure. Other providers are worth trying.
+egress_vpn_can_try_tcp() { # provider
+    [ "$1" != "expressvpn" ]
+}
+
+# True when the log shows the server never answered, as opposed to answering
+# and refusing the login. Only the first case is worth retrying another way.
+egress_vpn_server_silent() {
+    local log
+    log="$(docker logs --tail 200 "$EGRESS_NAME" 2>&1)"
+    printf '%s\n' "$log" | grep -q 'TLS key negotiation failed' &&
+        ! printf '%s\n' "$log" | grep -q 'AUTH_FAILED'
+}
+
+# One plain sentence saying which kind of failure this is, then the log. The
+# login is only checked after the server answers, so silence is never a
+# password problem, and people retype passwords for an hour otherwise.
+egress_vpn_explain_failure() {
+    local log
+    log="$(docker logs --tail 200 "$EGRESS_NAME" 2>&1)"
+    if printf '%s\n' "$log" | grep -q 'AUTH_FAILED'; then
+        echo "Error. The VPN provider rejected the username or password. Some providers"
+        echo "use special service credentials that are not your login."
+    elif printf '%s\n' "$log" | grep -q 'TLS key negotiation failed'; then
+        echo "Error. The VPN server did not answer. This is not a password problem."
+        echo "The server may refuse connections from hosting companies, or this"
+        echo "connection type may be blocked."
+    else
+        echo "Error. The VPN did not come up."
+    fi
+    echo "Last log lines:"
+    printf '%s\n' "$log" | tail -n 15
+}
+
+# A VPN that never came up must not stay the saved setting: the next time the
+# bridge or a bot is recreated it would send YouTube into a dead proxy.
+egress_vpn_give_up() {
+    docker rm -f "$EGRESS_NAME" >/dev/null 2>&1 || true
+    egress_write_env direct ""
 }
 
 egress_setup_url() {
@@ -378,9 +437,14 @@ egress_account_help() {
     echo "   the private key and the address that goes with it."
     echo "   In the VPN option, type: mullvad, choose WireGuard, then enter the key"
     echo "   and the address."
-    echo "3. ProtonVPN: create an account at proton.me, then in the account's"
-    echo "   downloads page find the OpenVPN username and password. They are not"
-    echo "   your login. In the VPN option, type: protonvpn, choose OpenVPN."
+    echo "3. ProtonVPN, free plan, with WireGuard:"
+    echo "   3a. Create an account at proton.me, then sign in at account.proton.me."
+    echo "   3b. Open Downloads, then WireGuard configuration."
+    echo "   3c. Choose Linux, give the key a name, pick a Free server, and create it."
+    echo "   3d. In the file, copy the value of the PrivateKey line and the value of"
+    echo "       the Address line."
+    echo "   3e. In the VPN option, type: protonvpn, choose WireGuard, answer yes to"
+    echo "       free servers only, then paste the key and the address."
     echo "4. NordVPN: sign in to the Nord account page and look for the manual"
     echo "   setup service credentials. They are not your login. In the VPN option,"
     echo "   type: nordvpn, choose OpenVPN."
