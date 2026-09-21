@@ -8,6 +8,7 @@ import { ExpiringLruCache } from './cache.mjs';
 import {
   clientTakesPoToken,
   contentBindingFor,
+  withGvsPoToken,
   cookieHeaderFromNetscape,
   extractVideoId,
   musicItemPayload,
@@ -503,11 +504,16 @@ async function resolveFormat(context, videoId, requestedClient, formatOptions) {
         : context;
       const session = attemptContext.session;
 
-      // The session's own token, minted against its visitorData when the session
-      // was created. Not a fresh one bound to this video: the binding has to
+      // The token for the *player* request: the session's own, minted against
+      // its visitorData (signed out) or DataSync ID (signed in) when the
+      // session was created. Not one bound to this video: the binding has to
       // match the identity of the request, and for youtubei.js that identity is
-      // the session. Binding it to the video ID here is what left every request
-      // effectively un-attested.
+      // the session. Binding it to the video ID here is what left every player
+      // request effectively un-attested.
+      //
+      // The stream URL needs a different token, bound the other way. See the
+      // gvs-po-token step below; the two are not interchangeable and swapping
+      // either for the other breaks a different half of playback.
       const poToken = clientTakesPoToken(client) ? attemptContext.poToken : undefined;
       console.log(`[youtube-bridge-timing] video=${videoId} client=${label} stage=po-token available=${Boolean(poToken)}`);
 
@@ -532,6 +538,21 @@ async function resolveFormat(context, videoId, requestedClient, formatOptions) {
 
       if (!format.url) {
         throw new Error('decipher returned an empty stream URL');
+      }
+
+      // The token Google's CDN checks, which is bound to the video, not to the
+      // session. Without it the URL resolves and plays its first ~1,024,000
+      // bytes — about a minute of Opus — and then 403s for ever after, which
+      // reads downstream as a track that simply ended. See withGvsPoToken.
+      if (clientTakesPoToken(client)) {
+        const gvsStartedAt = performance.now();
+        const gvsToken = await getPoToken(videoId);
+        console.log(`[youtube-bridge-timing] video=${videoId} client=${label} stage=gvs-po-token elapsed_ms=${Math.round(performance.now() - gvsStartedAt)} available=${Boolean(gvsToken)}`);
+        if (gvsToken) {
+          format.url = withGvsPoToken(format.url, gvsToken);
+        } else {
+          console.warn(`[youtube-bridge] ${videoId} has no video-bound proof-of-origin token, so playback will stop after about a minute.`);
+        }
       }
 
       console.log(`[youtube-bridge] resolved ${videoId} with client=${label} itag=${format.itag} elapsed_ms=${Math.round(performance.now() - clientStartedAt)}`);

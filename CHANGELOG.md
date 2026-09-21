@@ -6,6 +6,26 @@ issue or a commit message. Numbering continues across releases.
 
 ## Unreleased
 
+- **[055]** YouTube tracks play all the way through again, instead of stopping after about a minute.
+  There are **two** proof-of-origin tokens and they are bound to different things. The *player* token is
+  bound to the session — `visitorData` signed out, the account's `DATASYNC_ID` signed in — and is what
+  gets a datacenter address past "Sign in to confirm you're not a bot" when the stream is resolved. The
+  *GVS* token, the `&pot=` on the `videoplayback` URL that Google's CDN checks, is bound to the **video
+  ID**. The bridge minted one session-bound token and used it for both roles, and a token whose binding
+  does not match is not rejected — it is silently ignored. So every resolved URL behaved byte for byte
+  like one carrying no token at all: the first ~1,024,000 bytes served, a flat 403 on everything past
+  that, at any offset and any window size. Measured on the VPS on 2026-09-21 against freshly resolved
+  URLs for three videos, with the bot confirmed signed in (`ytcfg.LOGGED_IN: true` from YouTube itself,
+  using the bot's own cookie jar): the URL as resolved, the same URL with the session token removed
+  entirely, and the same URL with a token bound to the trimmed `DATASYNC_ID` all 403 at byte 1,200,000;
+  substituting a token bound to the video ID returns 206 at every offset, and an open-ended range from
+  the middle of the file then serves the entire remainder in one request. The bridge now mints a
+  video-bound token after deciphering and puts it on the URL, replacing the one YouTube supplied. **The
+  two tokens are not interchangeable** — each fixes a different half of playback — which is why the
+  session-bound one stays exactly where it was on the player request. This is what [052] and [054] were
+  reporting rather than curing: [052] stopped a truncated stream reading as a finished track, [054] made
+  the relay say so in the log, and both stand, but the tracks were never short. The stream proxy keeps
+  its windowing as a safety net for a token that fails to mint, not as the remedy.
 - **[052]** A YouTube stream that dies mid-track no longer reads as a track that finished. When the
   stream proxy has a later window refused upstream, it has already sent mpv a `Content-Length` for the
   whole file, so all it can do is stop writing; ffmpeg reports that as "Stream ends prematurely",

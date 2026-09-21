@@ -1040,11 +1040,24 @@ Recorded 13 September 2026, when the code was written. None of it has yet run ag
 - **Imported sessions go into the bot's Chrome profile where there is one**, and YouTube is asked
   whether they are signed in before they are accepted. That lets the keep-alive take them over, and a
   dead file is refused at import rather than failing later.
+- **There are two proof-of-origin tokens, not one, and they are bound differently.** Measured on the
+  VPS on 2026-09-21 against freshly resolved URLs for three videos, with `kuhao` confirmed signed in
+  (`ytcfg.LOGGED_IN: true`). The *player* token is session-bound — `visitorData` signed out, the
+  `DATASYNC_ID` signed in — and is what gets a datacenter address past `LOGIN_REQUIRED`. The *GVS*
+  token, the `&pot=` on the `videoplayback` URL that Google's CDN checks, is bound to the **video ID**.
+  The bridge was putting the session-bound token in both places, and a token with the wrong binding is
+  not rejected — it is ignored. So the URL behaved exactly as an un-attested one: the first ~1,024,000
+  bytes served, a flat 403 on everything past it, whatever offset or window size asked. Substituting a
+  video-bound token into the same URL turned every one of those 403s into a 206, including an
+  open-ended range from the middle of the file which then served the whole remainder in one request.
+  Fixed in [055].
+  - This answers the question that stood here before — whether the binding wants the full `DATASYNC_ID`
+    or only the part before `||`. Neither: for the URL token the DataSync ID is the wrong identity
+    altogether, and trimmed and full behaved identically (both 403).
 - **Unverified and worth checking first on the VPS:**
   - Google's sign-in selectors and challenge URLs, in `bot/services/web/youtube.py`.
-  - Whether the proof-of-origin binding wants the full `DATASYNC_ID` or only the part before `||`.
-    The bridge currently sends the full value.
-  - Whether youtubei.js's `cookie` option signs MWEB player requests in as expected.
+  - Which binding the *session* token should use. It is still the DataSync ID, and playback now works,
+    so nothing currently argues against it — but it was never isolated the way the URL token has been.
 - **Duplicate Bot needed no change.** It already copies only `config.json`, so it never copied
   `youtube_auth/` or `browser/`.
 - **`h connect youtube` does not exist**, although README mentions `h connect`. The separate-account

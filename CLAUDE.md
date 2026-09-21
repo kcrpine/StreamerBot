@@ -222,9 +222,19 @@ bounded windows comfortably under the lowest cutoff seen so far, concatenating t
 response so mpv never knows chunking happened; a window that still 403s is halved and retried rather
 than failing the whole track, since the cutoff itself is a moving target, not a wall.
 
-**Measured 2026-09-21: the cutoff is no longer the whole story, and windowing alone cannot rescue a
-long track.** Probing resolved URLs directly from the host, a short video (213s, 3.4MB) is served in
-full — every window, non-zero start offsets, an open-ended range, all fine. A long one is not: for a
+**Resolved 2026-09-21 ([055]): there are two proof-of-origin tokens and they are bound differently.**
+The *player* token is session-bound (`visitorData` signed out, `DATASYNC_ID` signed in) and is what
+gets a datacenter address past `LOGIN_REQUIRED` at resolve time. The *GVS* token — the `&pot=` on the
+`videoplayback` URL, which Google's CDN checks — is bound to the **video ID**. The bridge minted one
+session-bound token and used it for both, and a token whose binding does not match is not rejected, it
+is **ignored**: the URL behaved byte for byte like one carrying no token at all. Swapping a video-bound
+token into an otherwise identical URL turns the 403s into 206s, and an open-ended range from mid-file
+then serves the whole remainder in one request. Measured on three videos. **Do not "simplify" these two
+back into one token** — each fixes a different half of playback and neither substitutes for the other.
+
+**The measurement that led there, kept because it is how the symptom reads before the cause is known.**
+Probing resolved URLs directly from the host, a short video (213s, 3.4MB) is served in full — every
+window, non-zero start offsets, an open-ended range, all fine. A long one is not: for a
 1772s track and a 5251s track alike, **only the first ~1,024,000 bytes are served and everything past
 that is a flat 403**, whichever offset or window size asks for it. That is roughly 60 seconds of Opus.
 Binary search put the boundary between 1,015,625 and 1,031,250 bytes on a fresh URL. It is not about
@@ -232,8 +242,11 @@ range sizing, not about IP family (forcing IPv4 and IPv6 behave identically, tho
 for the host's IPv4 and the relay reaches the CDN over IPv6), and not per-request — it is an absolute
 position in long-form content. Signing in still matters and is not sufficient: a bot with no YouTube
 session cannot resolve these videos at all (`LOGIN_REQUIRED` on every client), while a signed-in one
-resolves them and is then capped. So "the bot plays a minute of every long video and moves on" is the
-current signature, and the remedy is in the session/attestation, not in `_UPSTREAM_CHUNK_BYTES`.
+resolved them and was then capped. "The bot plays a minute of every long video and moves on" is the
+signature of the missing GVS token above — the remedy was in the attestation, never in
+`_UPSTREAM_CHUNK_BYTES`. The relay still windows, which is now belt and braces rather than the fix: it
+keeps a track playing if a token ever goes missing again, instead of losing everything past the first
+minute silently.
 
 **The failure was invisible, which is what made it expensive.** When a later window is refused the relay
 has already sent mpv a `Content-Length` for the whole file, so all it can do is stop writing. ffmpeg

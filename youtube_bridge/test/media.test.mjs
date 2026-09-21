@@ -5,7 +5,8 @@ import {
   extractVideoId,
   musicItemPayload,
   normalizeSearchKey,
-  streamCacheTtlMs
+  streamCacheTtlMs,
+  withGvsPoToken
 } from '../media.mjs';
 
 test('normalizes equivalent search queries per mode', () => {
@@ -92,4 +93,39 @@ test('extractVideoId refuses what is not a video', () => {
   ]) {
     assert.equal(extractVideoId(input), null, String(input));
   }
+});
+
+
+// The stream URL's own token. YouTube already puts one there, bound to the
+// session, and a session-bound token is ignored by the CDN exactly as a missing
+// one is — so replacing it is the whole point, and appending a second would
+// leave the useless first one in force.
+test('replaces the proof-of-origin token already on a stream URL', () => {
+  const url = 'https://r1.googlevideo.com/videoplayback?expire=1&pot=OLD&cver=2';
+  assert.equal(
+    withGvsPoToken(url, 'NEW'),
+    'https://r1.googlevideo.com/videoplayback?expire=1&pot=NEW&cver=2'
+  );
+});
+
+test('adds a proof-of-origin token to a URL that has none', () => {
+  assert.equal(
+    withGvsPoToken('https://r1.googlevideo.com/videoplayback?expire=1', 'NEW'),
+    'https://r1.googlevideo.com/videoplayback?expire=1&pot=NEW'
+  );
+  assert.equal(
+    withGvsPoToken('https://r1.googlevideo.com/videoplayback', 'NEW'),
+    'https://r1.googlevideo.com/videoplayback?pot=NEW'
+  );
+});
+
+test('percent-encodes the token so a trailing = does not split the query', () => {
+  const url = withGvsPoToken('https://r1.googlevideo.com/videoplayback?a=1', 'MnR+b/c=');
+  assert.equal(new URL(url).searchParams.get('pot'), 'MnR+b/c=');
+});
+
+test('leaves the URL alone when no token could be minted', () => {
+  const url = 'https://r1.googlevideo.com/videoplayback?pot=OLD';
+  assert.equal(withGvsPoToken(url, ''), url);
+  assert.equal(withGvsPoToken(url, undefined), url);
 });

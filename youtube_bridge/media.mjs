@@ -187,6 +187,35 @@ export function contentBindingFor({ signedIn, visitorData, datasyncId }) {
   return visitorData || undefined;
 }
 
+/**
+ * Put a proof-of-origin token on a resolved `videoplayback` URL.
+ *
+ * This is the *second* token, and it is bound to the video rather than to the
+ * session. Measured against real resolved URLs on 2026-09-21: a URL carrying
+ * the session-bound token and a URL carrying no token at all behave
+ * identically — the first ~1,024,000 bytes are served and every byte past that
+ * is a flat 403, whatever offset or window asks for it. Replace `pot` with a
+ * token bound to the video ID and the same URL serves the whole remainder of
+ * the file in one open-ended request. A token whose binding does not match is
+ * not an error; it is ignored, which is why the broken case looked exactly like
+ * the un-attested one.
+ *
+ * YouTube already puts a `pot` on the URL, so this replaces rather than
+ * appends; appending a second one leaves the first to win.
+ *
+ * @param {string} streamUrl
+ * @param {string} token
+ * @returns {string} the URL with `pot` set, or unchanged if there is no token
+ */
+export function withGvsPoToken(streamUrl, token) {
+  if (!streamUrl || !token) return streamUrl;
+  const encoded = encodeURIComponent(token);
+  if (/[?&]pot=/.test(streamUrl)) {
+    return streamUrl.replace(/([?&]pot=)[^&]*/, `$1${encoded}`);
+  }
+  return `${streamUrl}${streamUrl.includes('?') ? '&' : '?'}pot=${encoded}`;
+}
+
 // Path prefixes under which YouTube puts the video ID as the next segment.
 // /live/ is what "Share" gives for a stream and what every failing request in
 // kuhao's log used; /embed/ and /v/ are the older embed and short-link shapes.
