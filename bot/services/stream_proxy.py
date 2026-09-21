@@ -21,6 +21,11 @@ window that still gets 403'd is retried once at half size rather than failing
 the whole track over what is a sizing guess, not a hard limit. Loopback-only,
 like auth_portal and go-librespot's API port: this proxies whatever URL it is
 given, which is only safe to expose to the bot's own player.
+
+None of that applies to a live broadcast, which is not a file and has no byte
+offsets to window. Those take a separate path, _relay_live, which walks the
+stream's segments with `&sq=N`. See that method for what a byte range does to
+a live URL and why it is impossible to notice.
 """
 
 from __future__ import annotations
@@ -33,7 +38,7 @@ import threading
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Any, Dict, Optional, Tuple
-from urllib.parse import urlsplit
+from urllib.parse import parse_qs, urlsplit
 
 import requests
 
@@ -70,8 +75,51 @@ def _upstream_proxies(target_url: str) -> Optional[Dict[str, str]]:
 
 _CHUNK_READ_BYTES = 65536
 
+# A live stream is addressed by segment, not by byte offset. Asking one for a
+# byte range is answered with 206 and a Content-Length and then *no body at
+# all* -- see _relay_live. These bound the segment walk instead.
+#
+# The timeout is generous on purpose: a request for the segment after the live
+# edge blocks until that segment exists, which is the pacing we want, not a
+# stall. Segments run a few seconds each, so a minute and a half of silence
+# means something is actually wrong.
+_LIVE_SEGMENT_TIMEOUT_SECONDS = 90
+# Consecutive failures before concluding the broadcast has ended rather than
+# hiccupped. A stream that has genuinely finished answers every sq the same way.
+_LIVE_SEGMENT_RETRIES = 3
+# How far behind the live edge the walk may drift before skipping forward.
+# Roughly a minute at typical segment lengths.
+_LIVE_MAX_LAG_SEGMENTS = 12
+
 _RANGE_RE = re.compile(r"bytes=(\d+)-(\d*)")
 _CONTENT_RANGE_RE = re.compile(r"bytes \d+-\d+/(\d+)")
+_SEQUENCE_RE = re.compile(r"([?&])sq=[^&]*")
+
+
+def is_live_url(url: str) -> bool:
+    """Whether a resolved stream URL is a live broadcast rather than a file.
+
+    YouTube marks these itself: `live=1` on the signed URL, and `noclen=1`
+    because a broadcast in progress has no content length. Either is enough;
+    both are present in practice.
+    """
+    query = parse_qs(urlsplit(url).query)
+    return query.get("live", [""])[0] == "1" or query.get("noclen", [""])[0] == "1"
+
+
+def with_sequence(url: str, seq: int) -> str:
+    """The same URL asking for segment `seq`, replacing any sq already on it."""
+    if _SEQUENCE_RE.search(url):
+        return _SEQUENCE_RE.sub(lambda m: f"{m.group(1)}sq={seq}", url, count=1)
+    return f"{url}{'&' if '?' in url else '?'}sq={seq}"
+
+
+def head_sequence_number(headers: Any) -> Optional[int]:
+    """The newest segment YouTube has produced, from its own response header."""
+    try:
+        return int(headers.get("X-Head-Seqnum"))
+    except (TypeError, ValueError):
+        return None
 
 
 def _parse_range(range_header: Optional[str]) -> Tuple[int, Optional[int]]:
@@ -112,11 +160,149 @@ class _ProxyHandler(BaseHTTPRequestHandler):
             return
         target_url, headers = entry
 
+        if is_live_url(target_url):
+            self._relay_live(target_url, headers, head_only)
+            return
+
         start, end = _parse_range(self.headers.get("Range"))
         if end is not None and (end - start + 1) <= _UPSTREAM_CHUNK_BYTES:
             self._relay_single(target_url, headers, start, end, head_only)
         else:
             self._relay_windowed(target_url, headers, start, end, head_only)
+
+    def _fetch_segment(
+        self, target_url: str, headers: Dict[str, str], seq: Optional[int]
+    ) -> Optional["requests.Response"]:
+        """One live segment, or the current one when `seq` is None."""
+        url = target_url if seq is None else with_sequence(target_url, seq)
+        try:
+            return requests.get(
+                url,
+                headers=headers,
+                stream=True,
+                timeout=(5, _LIVE_SEGMENT_TIMEOUT_SECONDS),
+                proxies=_upstream_proxies(target_url),
+            )
+        except requests.RequestException as error:
+            logging.warning(f"[StreamProxy] live segment fetch failed: {error}")
+            return None
+
+    def _relay_live(self, target_url: str, headers: Dict[str, str], head_only: bool) -> None:
+        """Relay a live broadcast by walking its segments, not its byte offsets.
+
+        A live stream is not a file, and asking one for a byte range does not
+        fail in any way a caller can see: YouTube answers **206 with a
+        Content-Length and then sends no body at all**. Measured three times
+        running against a real broadcast on 2026-09-21 -- 206, "700000 bytes
+        to follow", nothing, connection dropped after ~36s. The windowed path
+        therefore promised mpv a body it never received, mpv reported no error
+        because the stream was open and valid, and the track "played" silently
+        for twelve minutes across five stream-refresh attempts without one log
+        line anywhere. Re-resolving cannot help; every fresh URL does the same.
+
+        `&sq=N` is how the live endpoint is actually addressed. It returns one
+        complete segment per request, and a request for the segment after the
+        live edge blocks until that segment exists -- which is exactly the
+        real-time pacing a broadcast wants, rather than something to time out.
+        """
+        first = self._fetch_segment(target_url, headers, None)
+        if first is None:
+            self.send_error(502)
+            return
+        if first.status_code not in (200, 206):
+            self.send_response(first.status_code)
+            self.end_headers()
+            first.close()
+            return
+
+        seq = head_sequence_number(first.headers)
+        self.send_response(200)
+        content_type = first.headers.get("Content-Type")
+        if content_type:
+            self.send_header("Content-Type", content_type)
+        # Deliberately no Content-Length and no Accept-Ranges: a broadcast has
+        # no length and cannot be seeked, so mpv must read until we close.
+        self.end_headers()
+        if head_only:
+            first.close()
+            return
+
+        written, client_gone = self._write_chunks(first)
+        first.close()
+        self._warn_if_empty(written, f"the current segment of {target_url.split('?')[0]}")
+        if client_gone:
+            return
+        if seq is None:
+            # Nothing to advance from. One segment is a few seconds of audio,
+            # so this would otherwise look like a track that ended instantly.
+            logging.warning(
+                "[StreamProxy] live stream served no X-Head-Seqnum, so only one "
+                f"segment could be relayed for token {getattr(self, '_token', '?')}; "
+                "playback will stop after a few seconds"
+            )
+            return
+
+        misses = 0
+        seq += 1
+        while True:
+            resp = self._fetch_segment(target_url, headers, seq)
+            status = resp.status_code if resp is not None else None
+            if status != 200:
+                if resp is not None:
+                    resp.close()
+                misses += 1
+                if misses > _LIVE_SEGMENT_RETRIES:
+                    logging.info(
+                        f"[StreamProxy] live stream stopped serving at sq={seq} "
+                        f"(last status {status}); treating the broadcast as ended"
+                    )
+                    return
+                time.sleep(1)
+                continue
+            written, client_gone = self._write_chunks(resp)
+            head = head_sequence_number(resp.headers)
+            resp.close()
+            if client_gone:
+                return
+            if written == 0:
+                # A 200 carrying nothing counts against the same budget as a
+                # refusal. Without this the walk would spin on empty successes
+                # for ever, which is the very failure this path exists to end.
+                self._warn_if_empty(written, f"live segment sq={seq}")
+                misses += 1
+                if misses > _LIVE_SEGMENT_RETRIES:
+                    logging.warning(
+                        f"[StreamProxy] live stream kept returning empty segments at "
+                        f"sq={seq}; giving up rather than looping silently"
+                    )
+                    return
+                time.sleep(1)
+                continue
+            misses = 0
+            # Falling behind the live edge is drift, not an error -- skip to it
+            # rather than walking an ever-growing backlog in real time.
+            if head is not None and head - seq > _LIVE_MAX_LAG_SEGMENTS:
+                logging.info(
+                    f"[StreamProxy] live relay was {head - seq} segments behind; "
+                    f"skipping from sq={seq} to the live edge at sq={head}"
+                )
+                seq = head
+            seq += 1
+
+    def _warn_if_empty(self, written: int, what: str) -> None:
+        """An upstream success that carried no body at all.
+
+        This is the shape of failure that cost twelve minutes of silence: the
+        status says yes, so nothing downstream treats it as an error, and mpv
+        holds an open stream that never produces a sample. It has to be said
+        out loud somewhere, and this is the only place that knows.
+        """
+        if written == 0:
+            logging.warning(
+                f"[StreamProxy] upstream returned success but no body for {what} "
+                f"(token {getattr(self, '_token', '?')}); mpv will sit silent on an "
+                "open stream rather than report an error"
+            )
 
     def _fetch_window(
         self, target_url: str, headers: Dict[str, str], start: int, end: int
@@ -221,6 +407,10 @@ class _ProxyHandler(BaseHTTPRequestHandler):
                 return
             if total is not None and cursor >= total:
                 return
+            # Not finished, and the last window carried nothing: about to ask
+            # for the same bytes again. Checked here rather than straight after
+            # the write so a genuinely complete file never trips it.
+            self._warn_if_empty(written, f"the window at byte {cursor}")
             window_end = cursor + _UPSTREAM_CHUNK_BYTES - 1
             if limit is not None:
                 window_end = min(window_end, limit - 1)

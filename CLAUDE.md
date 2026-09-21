@@ -248,6 +248,24 @@ signature of the missing GVS token above — the remedy was in the attestation, 
 keeps a track playing if a token ever goes missing again, instead of losing everything past the first
 minute silently.
 
+**A live broadcast is not a file, and the relay's byte windows are wrong for one ([056]).** Asking a
+live URL for a byte range does not fail in any way a caller can see: YouTube answers **`206` with a
+`Content-Length` and then sends no body at all**. Measured three times running — 206, "700000 bytes to
+follow", zero bytes, connection dropped after ~36s; held open for 122 seconds, still zero. So the relay
+promised mpv a body that never arrived, mpv raised no error because the stream was open and valid, and a
+real broadcast sat silent in kuhao's log for **twelve minutes and twenty-four seconds** across five
+`start-file` events and four stream refreshes with no warning at any level. Neither existing net fires:
+the short-EOF check wants an EOF that never comes, and the truncation warning wants a 403, not a 206.
+
+`&sq=N` is how the live endpoint is actually addressed — one complete segment per request, and a request
+for the segment past the live edge **blocks until that segment exists**, which is the real-time pacing a
+broadcast wants and not a stall to time out. `stream_proxy.py` splits on the URL (`live=1`/`noclen=1`,
+which YouTube sets itself) and walks segments for live, windows bytes for files. Two rules if you touch
+it: a live response carries **no `Content-Length` and no `Accept-Ranges`**, because a broadcast has
+neither and a length is exactly the promise that hid this for twelve minutes; and **re-resolving a live
+URL is never the remedy** — every fresh URL behaves identically, which is why four refreshes changed
+nothing.
+
 **The failure was invisible, which is what made it expensive.** When a later window is refused the relay
 has already sent mpv a `Content-Length` for the whole file, so all it can do is stop writing. ffmpeg
 reports "Stream ends prematurely", reconnects a few times at the offset it reached, and then fires

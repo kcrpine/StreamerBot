@@ -6,6 +6,34 @@ issue or a commit message. Numbering continues across releases.
 
 ## Unreleased
 
+- **[056]** YouTube live streams play. They were not merely cut short — they produced **no audio at
+  all**, while looking to the bot exactly like a track that was playing. The stream proxy asks upstream
+  for a byte range, and a live broadcast is not a file: YouTube answers a byte-range request on one with
+  **`206` and `Content-Length: 700000`, and then sends no body whatsoever**. Measured three times in a
+  row against a live URL on 2026-09-21 — 206, a length, zero bytes, connection dropped after ~36s; held
+  open for 122 seconds in a longer probe, still zero. So the relay promised mpv a body that never came,
+  mpv raised no error because the stream was open and valid, and nothing anywhere logged a thing. In
+  kuhao's log a real broadcast sat silent from 20:16:06 to 20:28:30 — **twelve minutes and twenty-four
+  seconds**, five `start-file` events, four stream refreshes, one `track_abandoned reason=4` at the end,
+  and not one warning in between. Re-resolving could never have helped: every fresh URL behaves the same.
+  None of the existing nets caught it — [052] watches for a short **EOF** and mpv never reached one,
+  [054] logs a **403** and this is a **206**.
+  The relay now detects a live URL (YouTube marks them itself with `live=1` and `noclen=1`) and walks the
+  broadcast with `&sq=N`, which is how the live endpoint is actually addressed: one complete segment per
+  request, and a request for the segment after the live edge blocks until it exists, which is the
+  real-time pacing a broadcast wants rather than something to time out. Verified end to end against the
+  live stream that prompted this, through the real proxy with real mpv and the bot's own option set:
+  3,177,203 bytes over three minutes, playback position advancing in lockstep with the clock, no
+  timeouts. Live responses deliberately carry **no `Content-Length` and no `Accept-Ranges`** — a
+  broadcast has no length and cannot be seeked, and a length is precisely the promise that made the
+  original failure invisible. Ordinary videos are untouched: the split is on the URL, and a test pins
+  that a non-live URL still takes the windowed path with a `Range` header and no `sq`.
+- **[057]** The stream proxy says when upstream returns success with an empty body. A 2xx that carries no
+  bytes is the one failure shape nothing downstream can see — the status says yes, so no error is raised,
+  and mpv holds an open stream that never produces a sample. Both paths now log it: the live walk per
+  segment, and the windowed path when a window comes back empty and the file is not yet complete, which
+  means it is about to request the same bytes again. Twelve minutes of silence went unremarked at every
+  log level for want of this line.
 - **[055]** YouTube tracks play all the way through again, instead of stopping after about a minute.
   There are **two** proof-of-origin tokens and they are bound to different things. The *player* token is
   bound to the session — `visitorData` signed out, the account's `DATASYNC_ID` signed in — and is what

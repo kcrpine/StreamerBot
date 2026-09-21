@@ -1054,6 +1054,15 @@ Recorded 13 September 2026, when the code was written. None of it has yet run ag
   - This answers the question that stood here before — whether the binding wants the full `DATASYNC_ID`
     or only the part before `||`. Neither: for the URL token the DataSync ID is the wrong identity
     altogether, and trimmed and full behaved identically (both 403).
+- **Live streams were separately and completely broken, and the token fix does not touch them ([056]).**
+  The stream proxy relays by byte range; a live broadcast answers a byte-range request with `206`, a
+  `Content-Length`, and **no body at all**, for ever. That produced silence that looked like playback:
+  twelve minutes twenty-four seconds on a real broadcast in kuhao's log, five `start-file` events, four
+  stream refreshes, no error until the track was abandoned. The live endpoint is addressed by segment
+  (`&sq=N`) instead, which the relay now does. Verified end to end against a live broadcast with real
+  mpv. **The exit criterion for Phase 9 said "a bot signed in through the portal plays a YouTube video
+  *and a livestream*" — the livestream half was failing for a reason that had nothing to do with
+  sign-in**, which is worth remembering when a criterion covers two transports at once.
 - **Unverified and worth checking first on the VPS:**
   - Google's sign-in selectors and challenge URLs, in `bot/services/web/youtube.py`.
   - Which binding the *session* token should use. It is still the DataSync ID, and playback now works,
