@@ -222,6 +222,32 @@ bounded windows comfortably under the lowest cutoff seen so far, concatenating t
 response so mpv never knows chunking happened; a window that still 403s is halved and retried rather
 than failing the whole track, since the cutoff itself is a moving target, not a wall.
 
+**Measured 2026-09-21: the cutoff is no longer the whole story, and windowing alone cannot rescue a
+long track.** Probing resolved URLs directly from the host, a short video (213s, 3.4MB) is served in
+full — every window, non-zero start offsets, an open-ended range, all fine. A long one is not: for a
+1772s track and a 5251s track alike, **only the first ~1,024,000 bytes are served and everything past
+that is a flat 403**, whichever offset or window size asks for it. That is roughly 60 seconds of Opus.
+Binary search put the boundary between 1,015,625 and 1,031,250 bytes on a fresh URL. It is not about
+range sizing, not about IP family (forcing IPv4 and IPv6 behave identically, though the URL is signed
+for the host's IPv4 and the relay reaches the CDN over IPv6), and not per-request — it is an absolute
+position in long-form content. Signing in still matters and is not sufficient: a bot with no YouTube
+session cannot resolve these videos at all (`LOGIN_REQUIRED` on every client), while a signed-in one
+resolves them and is then capped. So "the bot plays a minute of every long video and moves on" is the
+current signature, and the remedy is in the session/attestation, not in `_UPSTREAM_CHUNK_BYTES`.
+
+**The failure was invisible, which is what made it expensive.** When a later window is refused the relay
+has already sent mpv a `Content-Length` for the whole file, so all it can do is stop writing. ffmpeg
+reports "Stream ends prematurely", reconnects a few times at the offset it reached, and then fires
+end-file with reason **EOF** — measured against a real libmpv, a 60s file truncated after 0.4s gives
+`reason=0`, the same event a finished track gives. `Player.on_end_file` only special-cased `ERROR`, so
+every truncated track went straight to `next()` with no refresh, no error and no log line at any level:
+282 tracks in 451 seconds, reading as the bot choosing bad tracks rather than every track failing the
+same way. `Player` now keeps the last `time-pos`/`duration` (mpv clears both before end-file) and judges
+an EOF against the track's own length; the relay logs the upstream status and offset behind the
+truncation. **A relay that cannot signal failure downstream has to at least say so in the log** — and
+note that a track playing its opening minute and stopping cannot be fixed by re-resolving, since the
+fresh URL carries the same cap.
+
 ### Per-bot isolation is a requirement, not an accident
 
 Each container is created with `-v "${BOTS_ROOT}/${bot}:/home/streamer/StreamerBot/data"`, so every

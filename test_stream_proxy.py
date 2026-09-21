@@ -183,6 +183,56 @@ class StreamProxyRelayTests(TestCase):
     @patch("bot.services.stream_proxy._MIN_WINDOW_BYTES", 2)
     @patch("bot.services.stream_proxy._UPSTREAM_CHUNK_BYTES", 10)
     @patch("bot.services.stream_proxy.requests.get")
+    def test_a_later_window_that_cannot_be_fetched_is_logged(self, mock_get):
+        # The response to mpv is truncated here, and mpv reports a truncated
+        # stream as a clean EOF -- indistinguishable from a finished track.
+        # Player.on_end_file catches that by duration now, but this is the
+        # only place that knows the upstream status behind it, and it used to
+        # return without logging anything at any level. A whole playlist could
+        # fail this way and leave no trace.
+        body = b"abcdefghijklmnopqrstuvwxy"  # 25 bytes: 3 windows of 10
+
+        def fake_get(url, headers, stream, timeout, **kwargs):
+            start, end = (
+                int(x) for x in headers["Range"].removeprefix("bytes=").split("-")
+            )
+            resp = Mock()
+            resp.close = Mock()
+            if start == 0:
+                end = min(end, len(body) - 1)
+                resp.status_code = 206
+                resp.headers = {
+                    "Content-Type": "audio/webm",
+                    "Content-Range": f"bytes {start}-{end}/{len(body)}",
+                }
+                resp.iter_content.return_value = [body[start:end + 1]]
+            else:
+                resp.status_code = 403          # every later window refused
+                resp.headers = {}
+                resp.iter_content.return_value = []
+            return resp
+
+        mock_get.side_effect = fake_get
+
+        local_url = self.proxy.register("https://googlevideo.com/videoplayback?x=1", {})
+        token = local_url.rsplit("/", 1)[-1]
+
+        with self.assertLogs("root", level="WARNING") as logged:
+            with self.assertRaises(Exception) as caught:
+                self._get(f"/{token}")
+
+        # The body stops 15 bytes short of the Content-Length already sent.
+        # An HTTP client sees an incomplete read; ffmpeg specifically reports
+        # "Stream ends prematurely", reconnects, and then calls it EOF.
+        self.assertIn("IncompleteRead", repr(caught.exception))
+        message = "\n".join(logged.output)
+        self.assertIn("upstream refused 403", message)
+        self.assertIn("at byte 10", message)
+        self.assertIn(token, message)
+
+    @patch("bot.services.stream_proxy._MIN_WINDOW_BYTES", 2)
+    @patch("bot.services.stream_proxy._UPSTREAM_CHUNK_BYTES", 10)
+    @patch("bot.services.stream_proxy.requests.get")
     def test_a_window_that_403s_is_retried_at_half_size(self, mock_get):
         # The actual second bug: the CDN's per-request cutoff isn't a fixed
         # number -- one video tolerated a chunk this size, another didn't.

@@ -3,7 +3,7 @@ import html
 import logging
 import time
 import threading
-from typing import Any, Dict, Callable, List, Optional, TYPE_CHECKING
+from typing import Any, Dict, Callable, List, Optional, Tuple, TYPE_CHECKING
 import random
 
 import mpv
@@ -32,6 +32,33 @@ PREFETCH_DELAY_SECONDS = 0.05
 # before treating the track as genuinely gone.
 YOUTUBE_STREAM_REFRESH_MAX_ATTEMPTS = 3
 YOUTUBE_STREAM_REFRESH_BACKOFF_SECONDS = 0.75
+
+# A stream that dies mid-track reaches us as a *clean* end-of-file, not an
+# error, so EOF alone cannot be trusted to mean "the track finished".
+#
+# stream_proxy has already sent mpv a Content-Length for the whole file by the
+# time an upstream window is refused; all it can do then is stop writing. ffmpeg
+# reports that as "Stream ends prematurely", reconnects a few times at the
+# offset it got to, and -- when those are refused too -- reports end-file with
+# reason EOF. Measured against a real libmpv: a 60s file truncated after 0.4s
+# produced reason=0, byte-for-byte the same event a track that genuinely ended
+# produces. Nothing downstream could tell the two apart, so a playlist whose
+# streams were all being refused advanced through every entry in seconds
+# without logging a single error -- 282 tracks in 451s in the log that led here.
+#
+# So an EOF that lands well short of the track's own duration is treated as a
+# failed stream and goes through the same refresh path as an error. Live
+# streams have no duration and are unaffected; a seek to the end leaves
+# time-pos near the duration and is likewise unaffected.
+# Re-resolving restarts the track from the beginning, and a fresh URL is
+# subject to the same limit the old one hit, so a stream that died a minute
+# into a half-hour track gains nothing from a refresh and costs the listener
+# that minute over again, three times, before the track is given up on anyway.
+# Only a stream that died almost immediately is worth re-resolving; past this
+# the track is abandoned, loudly, which is the part that was missing.
+SHORT_EOF_MIN_PLAYED_FRACTION = 0.9
+SHORT_EOF_GRACE_SECONDS = 15.0
+SHORT_EOF_RETRY_MAX_PLAYED_SECONDS = 5.0
 
 
 class Player:
@@ -108,6 +135,11 @@ class Player:
             self._register_playback_timing_event(event_name)
         self._player.observe_property("metadata", self.on_metadata_update)
         self._player.observe_property("media-title", self.on_metadata_update)
+        # mpv clears time-pos and duration before end-file reaches us, so the
+        # last values seen during playback have to be kept to judge whether a
+        # track ended where it should have. See SHORT_EOF_MIN_PLAYED_FRACTION.
+        self._player.observe_property("time-pos", self.on_playback_progress)
+        self._player.observe_property("duration", self.on_playback_progress)
         logging.debug("Player callbacks registered")
 
     def close(self) -> None:
@@ -212,6 +244,9 @@ class Player:
         must not go back through Track.url and get the expired one again.
         """
         trace = self._start_playback_trace()
+        # Belongs to the outgoing stream; keeping it would have the next track
+        # judged against the previous one's length.
+        self._reset_playback_progress()
 
         if isinstance(arg, str):
             engine = self._mpv_engine
@@ -219,6 +254,13 @@ class Player:
             url: Optional[str] = arg
         else:
             track = arg
+            # A fresh play of a track gets a fresh refresh budget. The counter
+            # lives on the Track, and track_list holds the same objects for the
+            # life of the session, so without this a track that exhausted its
+            # attempts once is skipped instantly every later time it comes
+            # round -- which for a looping playlist means permanently.
+            # The string branch must not reset: that *is* the retry.
+            track._stream_refresh_attempts = 0
             engine = self._engine_for(track)
             # Resolve before recording the track as played. Touching .url is
             # what triggers lazy resolution for a Dynamic track, and it can
@@ -320,8 +362,6 @@ class Player:
             self._log_playback_timing(event_name)
             if event_name in ("file-loaded", "playback-restart"):
                 self._log_mpv_state(event_name)
-            if event_name == "playback-restart":
-                self.track._stream_refresh_attempted = False
 
         self.register_event_callback(event_name, callback)
 
@@ -343,6 +383,41 @@ class Player:
             f"current_ao={self._read_mpv_property('current_ao')!r} "
             f"audio_params={self._read_mpv_property('audio_params')!r}"
         )
+
+    def on_playback_progress(self, name: str, value: Any) -> None:
+        """Remember the last position and duration mpv reported.
+
+        Both are cleared by the time end-file arrives, so they are of no use
+        read at that point; _ended_short_of_duration needs the values from
+        while the track was still playing.
+        """
+        if value is None:
+            return
+        if name == "time-pos":
+            self._last_time_pos = value
+        elif name == "duration":
+            self._last_duration = value
+
+    def _reset_playback_progress(self) -> None:
+        self._last_time_pos = None
+        self._last_duration = None
+
+    def _ended_short_of_duration(self) -> Optional[Tuple[float, float]]:
+        """(played, duration) if the stream stopped well short, else None.
+
+        Returns None whenever the question cannot be answered -- no duration
+        (live streams), no position seen yet -- so an unknown case keeps the
+        old behaviour of trusting mpv's EOF.
+        """
+        duration = getattr(self, "_last_duration", None)
+        played = getattr(self, "_last_time_pos", None)
+        if not duration or duration <= 0 or played is None:
+            return None
+        if played >= duration * SHORT_EOF_MIN_PLAYED_FRACTION:
+            return None
+        if duration - played <= SHORT_EOF_GRACE_SECONDS:
+            return None
+        return played, duration
 
     def _read_mpv_property(self, name: str) -> Any:
         try:
@@ -760,8 +835,23 @@ class Player:
                 f"reason={reason} track={self.track.name!r}"
             )
             return
+        short = (
+            self._ended_short_of_duration()
+            if reason == mpv.MpvEventEndFile.EOF
+            else None
+        )
+        retryable_short = False
+        if short is not None:
+            played, duration = short
+            retryable_short = played <= SHORT_EOF_RETRY_MAX_PLAYED_SECONDS
+            logging.warning(
+                "[PlaybackTiming] end_file_short_of_duration "
+                f"track={self.track.name!r} played={played:.1f}s "
+                f"duration={duration:.1f}s retrying={retryable_short} "
+                "-- a failed stream, not a finished track"
+            )
         if (
-            reason == mpv.MpvEventEndFile.ERROR
+            (reason == mpv.MpvEventEndFile.ERROR or retryable_short)
             and self.track.service in ("yt", "ytm")
             and getattr(self.track, "_stream_refresh_attempts", 0)
             < YOUTUBE_STREAM_REFRESH_MAX_ATTEMPTS
@@ -783,6 +873,16 @@ class Player:
                     "[PlaybackTiming] youtube_stream_refresh_failed "
                     f"track={self.track.name!r} attempt={attempt} error={error!r}"
                 )
+        elif reason == mpv.MpvEventEndFile.ERROR or short is not None:
+            # Out of refresh attempts, or a service with nothing to refresh.
+            # Worth a line either way: without one, a run of unplayable tracks
+            # is indistinguishable in the log from a playlist playing through.
+            logging.warning(
+                "[PlaybackTiming] track_abandoned "
+                f"track={self.track.name!r} service={self.track.service} "
+                f"reason={reason} "
+                f"refresh_attempts={getattr(self.track, '_stream_refresh_attempts', 0)}"
+            )
         if self.state == State.Playing and self._player.idle_active:
             self._advance_after_end()
 

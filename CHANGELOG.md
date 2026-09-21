@@ -6,6 +6,34 @@ issue or a commit message. Numbering continues across releases.
 
 ## Unreleased
 
+- **[052]** A YouTube stream that dies mid-track no longer reads as a track that finished. When the
+  stream proxy has a later window refused upstream, it has already sent mpv a `Content-Length` for the
+  whole file, so all it can do is stop writing; ffmpeg reports that as "Stream ends prematurely",
+  reconnects a few times at the offset it reached, and then fires end-file with reason **EOF** — the
+  same event a track that genuinely ended produces. Measured against a real libmpv: a 60s file truncated
+  after 0.4s gives `reason=0`. `on_end_file` only ever special-cased `ERROR`, so every one of these went
+  straight to `next()` with no refresh, no error and **no log line at any level**. On a playlist whose
+  streams were all being refused, that is 282 tracks in 451 seconds — which reads as the bot picking bad
+  tracks rather than every track failing the same way. `Player` now keeps the last `time-pos`/`duration`
+  it saw (mpv clears both before end-file arrives) and treats an EOF that lands well short of the track's
+  own length as a failed stream. A stream that died within a few seconds of the start is re-resolved, as
+  an error already was; one that died further in is abandoned and **logged** rather than retried, because
+  re-resolving restarts the track from the beginning against a URL subject to the same limit — the
+  listener would hear that same opening minute four times and the track would be dropped anyway. Live
+  streams have no duration and are unaffected; so is a seek to the end, which leaves `time-pos` near the
+  duration.
+- **[053]** The stream-refresh budget is reset when a track starts. The counter lives on the `Track`, and
+  `track_list` holds the same objects for the life of the session, so a track that exhausted its three
+  attempts once was skipped instantly every later time it came round — for a looping playlist, for ever.
+  A `playback-restart` callback did write `_stream_refresh_attempted = False`, but nothing has ever read
+  that name; the counter in use is `_stream_refresh_attempts`. The dead write is gone and the reset now
+  happens in `_play` for a `Track`, deliberately not for the `_play(url_string)` retry — resetting there
+  would let a stream that loads and then fails retry without end.
+- **[054]** The stream proxy says when it truncates. `_relay_windowed` returned silently on a refused
+  window, which is the one place that knows the upstream status behind a track that is about to look
+  short; it now logs the status, the byte offset and the token. Without it, a run of unplayable tracks
+  was indistinguishable in the log from a playlist playing through.
+
 - **[051]** `update.sh` no longer strips the executable bit off the git hooks, which it had been doing on
   every single update. Its permissions pass flattens every tracked file to 664 and then restores `+x` for
   `*.sh` in the repository root only; `.githooks/pre-commit` and `.githooks/pre-push` match neither, so

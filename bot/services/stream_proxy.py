@@ -105,7 +105,8 @@ class _ProxyHandler(BaseHTTPRequestHandler):
 
     def _relay(self, head_only: bool) -> None:
         proxy: "StreamProxy" = self.server.stream_proxy  # type: ignore[attr-defined]
-        entry = proxy.lookup(self.path.lstrip("/"))
+        self._token = self.path.lstrip("/")
+        entry = proxy.lookup(self._token)
         if entry is None:
             self.send_error(404)
             return
@@ -225,8 +226,21 @@ class _ProxyHandler(BaseHTTPRequestHandler):
                 window_end = min(window_end, limit - 1)
             resp = self._fetch_window(target_url, headers, cursor, window_end)
             if resp is None or resp.status_code not in (200, 206):
+                status = resp.status_code if resp is not None else "no response"
                 if resp is not None:
                     resp.close()
+                # Headers promising the whole file went out long ago, so there
+                # is no way left to tell mpv this failed: it sees the body stop
+                # early and reports a clean EOF, which the player used to take
+                # for a finished track and silently skip. Player.on_end_file
+                # now catches that by duration, but this is the only place that
+                # knows *why*, and it said nothing at any log level.
+                logging.warning(
+                    f"[StreamProxy] upstream refused {status} at byte {cursor}"
+                    f"{'' if total is None else f' of {total}'} for token "
+                    f"{getattr(self, '_token', '?')}; the response to mpv is "
+                    "truncated and will look like a short track"
+                )
                 return
 
     def _write_chunks(self, resp: "requests.Response") -> Tuple[int, bool]:
