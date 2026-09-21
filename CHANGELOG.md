@@ -6,6 +6,19 @@ issue or a commit message. Numbering continues across releases.
 
 ## Unreleased
 
+- **[051]** `update.sh` no longer strips the executable bit off the git hooks, which it had been doing on
+  every single update. Its permissions pass flattens every tracked file to 664 and then restores `+x` for
+  `*.sh` in the repository root only; `.githooks/pre-commit` and `.githooks/pre-push` match neither, so
+  they were disabled again within minutes of being installed. **This corrects [049]**, which blamed a
+  checkout rewriting the file — that was a guess and it was wrong. The real cause is this pass, it is
+  recurring, and on a host running `streamerbot-updater.service` it fires on a timer, which is why
+  `tools/install-hooks.sh` appeared to work and the hook was dead again shortly after. The restore now
+  globs `.githooks/*` so a hook added later is covered without anyone remembering the line is there.
+  Deliberately not restored from `git ls-files` modes, which would have been self-maintaining but reads
+  from a polluted record: roughly seventy files are tracked 100755 that should not be, including
+  `README.md`, `LICENSE`, `config.json` and the `.po` catalogs. That is worth fixing separately and is
+  not fixed here.
+
 - **[050]** A pre-push hook now runs the suite before a push leaves the machine, in both of the places it
   has to run. Running it only in the image is not enough and looks like it is: `tests/deployment/` and
   `test_update_shared_youtube.py` skip there and are counted as passes, so the image reports 646 tests OK

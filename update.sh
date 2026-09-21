@@ -656,6 +656,22 @@ update_and_fix_permissions() {
 
         chmod +x "$TARGET_FIX_DIR"/*.sh 2>/dev/null
 
+        # The git hooks need it back too, and the line above does not reach
+        # them: they live in .githooks/ and are named pre-commit and pre-push,
+        # so neither the directory nor the *.sh pattern matches. Every update
+        # therefore flattened them to 664 and left them there.
+        #
+        # That is worse than it sounds, because git does not refuse to work
+        # without them. It declines to run a hook it cannot execute, says so in
+        # a hint printed above the command's own output, and carries on -- so
+        # the commit or push succeeds, the hint scrolls past unread, and the
+        # private-file, plan-drift and pre-push test checks are all off while
+        # still appearing to be installed.
+        #
+        # Globbing the directory rather than naming the two files means a hook
+        # added later is covered without anyone remembering this line exists.
+        chmod +x "$TARGET_FIX_DIR"/.githooks/* 2>/dev/null
+
         ensure_bot_data_ownership
 
         echo ""
