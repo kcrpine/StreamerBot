@@ -440,6 +440,27 @@ with a number in square brackets:
 - On a release, `## Unreleased` becomes that version's section and a fresh empty one is started.
   **Numbering continues across releases** so a number identifies a change on its own.
 
+### Commit messages are short; the CHANGELOG is where detail goes
+
+A commit message is read in `git log`, usually several at a time, by someone scanning for the change
+they are after. One that fills the screen buries the nine around it. The long version — the measurements,
+the theory that turned out to be wrong, the reasoning the diff does not carry — belongs in the CHANGELOG
+entry, which is numbered, citable in an issue, and read deliberately rather than scrolled past.
+
+- **A subject line, then one or two short paragraphs.** The subject says what changed, in the imperative
+  and under about 72 characters. The body says what was wrong and why the fix is the shape it is. If a
+  third paragraph is starting, it is CHANGELOG material.
+- **Do not hard-wrap inside a sentence.** Write each paragraph as one line and let the reader's terminal
+  or viewer wrap it. A sentence broken across three hard newlines reflows badly everywhere it is
+  displayed and is tedious to edit afterwards. Break between paragraphs, never mid-thought.
+- **Do not restate the diff.** What changed is already in the patch; the message is for what the patch
+  cannot say.
+- **Point at the number.** When the change has a CHANGELOG entry, naming it — "see [052]" — lets the
+  short message stay short and still lead anywhere.
+- **Explain *why*, particularly where a choice looks odd.** Several non-obvious decisions in this
+  codebase exist because the obvious version was tried and broke something. That is exactly the part
+  worth the sentence, even in a two-paragraph message.
+
 ### Keeping the plan and this file in sync
 
 **This repository is the source of truth, and the sync runs both ways.** The plan is authored at
@@ -483,6 +504,3 @@ picking a side, which is how a collaborator's contribution disappears without an
 
 A phase is not finished until the plan recording what it found is pushed. Treat the pushed version as
 what the project has agreed; treat anything only in the local copy as not yet real.
-
-Commit messages explain *why*, particularly where a choice looks odd. Several non-obvious decisions in
-this codebase exist because the obvious version was tried and broke something.
