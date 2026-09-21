@@ -461,6 +461,34 @@ entry, which is numbered, citable in an issue, and read deliberately rather than
   codebase exist because the obvious version was tried and broke something. That is exactly the part
   worth the sentence, even in a two-paragraph message.
 
+### On a host running the updater, an unpushed commit lives about five minutes
+
+`streamerbot-updater.service` runs `auto_updater.sh`, which wakes every `STREAMERBOT_UPDATE_INTERVAL`
+seconds — 300 in `project.env` — and invokes `AUTO_UPDATE=true update.sh` (`auto_updater.sh:197`). In
+that mode `update.sh` answers its own confirmation prompt without asking anyone (`update.sh:525`) and
+runs `git reset --hard "origin/$BRANCH"` followed by `git clean -fd` (`update.sh:567`). A commit that
+exists only locally is discarded, uncommitted edits with it, and `git clean -fd` removes new untracked
+files as well. **`git commit` and `git push` are one step on these hosts, not two.**
+
+**The guard that looks like it prevents this does not.** `update.sh:433` prints "Local version has
+diverged or is ahead of remote. Auto-pull skipped to protect local changes" and does skip `NEEDS_PULL` —
+but the reset is reached through `NEEDS_REBUILD`, which a local commit *guarantees*: `NEEDS_REBUILD` is
+set whenever `LOCAL_HASH != RUNNING_HASH` (`update.sh:445`), and `RUNNING_HASH` is the commit baked into
+the running image's `commit_hash` label. Committing is itself what triggers the rebuild that throws the
+commit away, and the reassuring message is printed on the way there. A branch is no refuge either: the
+reset targets `origin/$BRANCH` with `BRANCH` defaulting to `main` (`update.sh:381`), so it is whatever
+the updater is tracking, not whatever you are on.
+
+Two things follow, and the first one has already cost a session:
+
+- **`git push` reporting "Everything up-to-date" moments after you committed means the reset has already
+  happened.** The commit is not lost yet — `git reflog` still names it, and `git merge --ff-only <sha>`
+  puts it back on the branch. Push it straight away. Read literally the message is true, which is what
+  makes it so easy to take for "done".
+- **Work that must sit uncommitted needs the timer stopped** (`systemctl stop
+  streamerbot-updater.service`) or needs to live outside the repository. Nothing inside it survives a
+  `reset --hard` plus `clean -fd` on a five-minute loop.
+
 ### Keeping the plan and this file in sync
 
 **This repository is the source of truth, and the sync runs both ways.** The plan is authored at
