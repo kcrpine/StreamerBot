@@ -6,6 +6,13 @@ issue or a commit message. Numbering continues across releases.
 
 ## Unreleased
 
+- **[048]** Fixed the CI unit-test failure on every push. `test_the_warning_names_what_still_works` still
+  asserted "YouTube and Spotify still work", which stopped being true in Phase 9 when YouTube sign-in moved
+  onto the portal; the script's warning was rewritten then (correctly) and the test was not. It now pins the
+  current wording: Spotify still pairs, YouTube is named as affected, an already-connected account keeps
+  playing. It went unnoticed because `tests/deployment/` skips inside the Docker image, so only the
+  host-runner job runs it. Test change only.
+
 - **[047]** Recorded what ProtonVPN's free WireGuard servers did on this host: they connect, and YouTube
   still refuses every address (6 tried). No code change; the plan's Phase 13 now says a datacenter VPN is not
   the fix, so the next session goes to a residential proxy instead of trying another VPN.

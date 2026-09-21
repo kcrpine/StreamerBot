@@ -287,15 +287,21 @@ class ExhaustionTests(PortAllocationHarness):
         self.assertIn("forward", text.lower())
 
     def test_the_warning_names_what_still_works(self):
-        """YouTube and Spotify sign in with a code, not the portal. Saying so
-        stops someone concluding the whole bot is broken."""
+        """Spotify is the one sign-in that does not need the portal, and a
+        YouTube account that is already connected keeps playing. Saying so
+        stops someone concluding the whole bot is broken, without claiming
+        YouTube can still be connected, which since Phase 9 it cannot."""
         self.make_bot("victim")
         for n in range(4419, 4419 + 205):
             self.make_bot(f"hog{n}", portal=n, api=n)
 
         result = self.run_shell('assign_unique_bot_ports "$BOTS_ROOT/victim"')
 
-        self.assertIn("YouTube and Spotify still work", result.stdout)
+        self.assertIn("Spotify still pairs with a code", result.stdout)
+        # YouTube must be named as affected, not promised as working.
+        self.assertIn("and YouTube too", result.stdout)
+        self.assertNotIn("YouTube and Spotify still work", result.stdout)
+        self.assertIn("already connected keeps playing", result.stdout)
 
     def test_the_portal_comes_back_on_once_a_port_is_free(self):
         self.make_bot("victim")
