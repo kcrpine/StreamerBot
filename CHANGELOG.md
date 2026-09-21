@@ -6,6 +6,17 @@ issue or a commit message. Numbering continues across releases.
 
 ## Unreleased
 
+- **[049]** `.githooks/pre-commit` is now stored executable (mode 100755). It was stored 100644, so git
+  ignored it and said so only in a hint that scrolls past above the commit's own output — the plan-drift
+  and private-file checks had been silently skipped for an unknown number of commits on this clone.
+  `tools/install-hooks.sh` does `chmod +x`, but that fixes only the working tree, and the next checkout
+  that rewrites the file restores the stored 644 and undoes it; editing the hook in aa27873 is the likely
+  moment it was lost. Storing the bit means a fresh clone gets a runnable hook and an edit cannot silently
+  disable it. Note that a clone with `core.fileMode=false`, as this one has, cannot commit a `chmod` at
+  all — `git update-index --chmod=+x` is the only way to change the stored mode there. Other scripts at
+  644 were checked and are correct: `youtube_egress.sh` is sourced, and the rest are invoked with an
+  explicit `bash` prefix.
+
 - **[048]** Fixed the CI unit-test failure on every push. `test_the_warning_names_what_still_works` still
   asserted "YouTube and Spotify still work", which stopped being true in Phase 9 when YouTube sign-in moved
   onto the portal; the script's warning was rewritten then (correctly) and the test was not. It now pins the
