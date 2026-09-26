@@ -20,6 +20,14 @@ class SoundDeviceType(Enum):
     Input = 1
 
 
+# PulseAudio's own capture of the sink entrypoint.sh creates, as the TeamTalk SDK
+# lists it under SOUNDSYSTEM_PULSEAUDIO. Index 0, the configured default, is the
+# ALSA "pulse" device instead: the same audio routed through the ALSA plugin, and
+# the SDK's capture thread busy-waits on that route, burning a quarter of a core
+# or more per bot while nothing is even playing. See CHANGELOG [058].
+NATIVE_MONITOR_INPUT = "StreamerBotSink.monitor"
+
+
 class SoundDeviceManager:
     def __init__(self, bot: Bot) -> None:
         self.config = bot.config
@@ -72,6 +80,17 @@ class SoundDeviceManager:
         input_device = self._find_by_name(
             self.input_devices, self.config.sound_devices.input_device_name
         )
+        if (
+            input_device is None
+            and not self.config.sound_devices.input_device_name
+            and self.input_device_index == 0
+        ):
+            # Only when nobody chose a device: a configured name or a non-default
+            # index is a deliberate choice and is honoured as before. Outside the
+            # container the monitor does not exist and this falls through to index 0.
+            input_device = self._find_by_name(self.input_devices, NATIVE_MONITOR_INPUT)
+            if input_device is not None:
+                logging.info(f"Using input device {input_device.name!r}")
         if input_device is not None:
             self.ttclient.set_input_device(int(input_device.id))
         else:

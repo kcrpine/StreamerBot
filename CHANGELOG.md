@@ -6,6 +6,21 @@ issue or a commit message. Numbering continues across releases.
 
 ## Unreleased
 
+- **[058]** An idle bot no longer burns a quarter of a core. On kevin2 (8 threads) 26 of 30 bots sat at
+  17-46% CPU each while playing nothing, about seven cores between them, which starved AzuraCast on the
+  same host: load average 74, Liquidsoap falling up to 41 seconds behind real time, and stations
+  answering `nextsong` with `Queue is empty!`. Sampling one such bot with py-spy put all of its Python
+  code under 2% of a core, so the 10 ms `loop_timeout` polls are not it. The CPU was one native thread in
+  the TeamTalk SDK, always runnable and making no system calls, created alongside PulseAudio's
+  `threaded-ml` when the SDK opens its input device. Every bot used input index 0, which in the image is
+  the ALSA `pulse` device: the sink's monitor reached through the ALSA plugin, and the SDK's capture
+  thread busy-waits on that route. Bots that had not opened their input stayed under 1%.
+  SDK 5.22a also lists the same monitor natively under `SOUNDSYSTEM_PULSEAUDIO` as
+  `StreamerBotSink.monitor`, and a config that names no input device and leaves the index at 0 now
+  selects it. Measured on kevin2's TestBot by setting that name in its config: 21.5% idle before, 2.2%
+  after, and the capture stream now opens at the sink's own 48 kHz instead of being resampled to 44.1.
+  A configured `input_device_name` or non-default `input_device` is still honoured, and where the monitor
+  does not exist (outside the image) selection falls through to index 0 as before.
 - **[056]** YouTube live streams play. They were not merely cut short — they produced **no audio at
   all**, while looking to the bot exactly like a track that was playing. The stream proxy asks upstream
   for a byte range, and a live broadcast is not a file: YouTube answers a byte-range request on one with
