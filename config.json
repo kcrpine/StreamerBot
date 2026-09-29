@@ -21,7 +21,8 @@
         "volume_fading": true,
         "volume_fading_interval": 0.025,
         "seek_step": 5,
-        "player_options": {}
+        "player_options": {},
+        "stop_when_solo": false
     },
     "teamtalk": {
         "hostname": "localhost",

@@ -179,6 +179,16 @@ class TemplatesAreCurrentTests(TestCase):
             self.assertIn("audio_description", config, name)
             self.assertIn("output_device_name", config["sound_devices"], name)
 
+    def test_stop_when_solo_is_declared_off(self):
+        """Existing bots gain the key through the migration defaults; new ones
+        through the templates. Both must say false, which is the model default."""
+        for name in ("config.json", "config_default.json"):
+            self.assertIs(read_config(name)["player"]["stop_when_solo"], False, name)
+        script = read_script("streamerbot.sh")
+        defaults = script[script.index("streamerbot_config_defaults() {"):]
+        defaults = defaults[: defaults.index("DEFAULTSJSON\n}")]
+        self.assertIn('"player": { "stop_when_solo": false }', defaults)
+
     def test_the_version_was_bumped(self):
         for name in ("config.json", "config_default.json"):
             self.assertGreaterEqual(read_config(name)["config_version"], 2, name)

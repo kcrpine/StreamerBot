@@ -2428,6 +2428,7 @@ streamerbot_config_defaults() {
       "token_ttl": 72000
     },
     "audio_description": { "default": "ask" },
+    "player": { "stop_when_solo": false },
     "sound_devices": { "output_device_name": "", "input_device_name": "" }
   }
 DEFAULTSJSON

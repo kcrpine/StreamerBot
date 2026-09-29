@@ -177,11 +177,8 @@ class TeamTalkThread(Thread):
                         # Check if no other users remain
                         if other_users_count == 0:
                              logging.info("Auto-return triggered: Bot is alone in channel. returning to default.")
-                             # Stop playback if playing
-                             from bot.player.enums import State as PlayerState
-                             if self.bot.player.state != PlayerState.Stopped:
-                                 self.bot.player.stop()
-                             
+                             self.stop_if_solo_stop_enabled()
+
                              # Determine default channel ID
                              default_channel = self.config.channel
                              if isinstance(default_channel, int):
@@ -204,6 +201,20 @@ class TeamTalkThread(Thread):
 
             if self.config.event_handling.load_event_handlers:
                 self.run_event_handler(event)
+
+    def stop_if_solo_stop_enabled(self) -> None:
+        """Stop playback on being left alone, only if player.stop_when_solo says to.
+
+        Off by default: whoever joins next hears the stream still running, and
+        stopping it would have thrown away what was playing. The move back to
+        the default channel happens either way.
+        """
+        if not self.bot.config.player.stop_when_solo:
+            logging.info("Left alone in the channel; playback continues (player.stop_when_solo is off).")
+            return
+        from bot.player.enums import State as PlayerState
+        if self.bot.player.state != PlayerState.Stopped:
+            self.bot.player.stop()
 
     def close(self) -> None:
         self._close = True

@@ -35,6 +35,10 @@ class PlayerModel(BaseModel):
     # Per-bot unique like auth_portal.port and services.sp.api_port, since
     # bots share the host's port space (--network host).
     stream_proxy_port: int = 4420
+    # Stop playback when the last listener leaves the bot's channel. Off by
+    # default: a stream should keep running for whoever joins next, and
+    # stopping it discards what was playing.
+    stop_when_solo: bool = False
 
 class TeamTalkUserModel(BaseModel):
     admins: List[str] = ["admin"]

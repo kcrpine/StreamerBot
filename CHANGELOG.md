@@ -6,6 +6,13 @@ issue or a commit message. Numbering continues across releases.
 
 ## Unreleased
 
+- **[059]** A bot left alone in its channel keeps playing. It used to stop playback the moment the last
+  listener left, which threw away whatever was streaming — a radio station or a long queue had to be
+  started again by whoever came back. The new `player.stop_when_solo` option restores the old behaviour
+  when set to `true`; it defaults to `false`. The move back to the default channel is unchanged either
+  way, so a bot that was pulled into another channel returns home still playing. Existing bots gain the
+  key through the migration defaults in `streamerbot.sh`, and a `config.json` without it gets the model
+  default, so no bot needs editing for the new behaviour to apply.
 - **[058]** An idle bot no longer burns a quarter of a core. On kevin2 (8 threads) 26 of 30 bots sat at
   17-46% CPU each while playing nothing, about seven cores between them, which starved AzuraCast on the
   same host: load average 74, Liquidsoap falling up to 41 seconds behind real time, and stations

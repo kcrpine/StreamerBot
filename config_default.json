@@ -22,7 +22,8 @@
         "volume_fading_interval": 0.025,
         "seek_step": 5,
         "player_options": {},
-        "stream_proxy_port": 4420
+        "stream_proxy_port": 4420,
+        "stop_when_solo": false
     },
     "teamtalk": {
         "hostname": "localhost",
