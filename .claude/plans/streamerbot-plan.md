@@ -1695,7 +1695,7 @@ Netflix is not connected and names `li nf`.
 
 `assign_unique_bot_ports` gives each bot a free portal port, but a free port is only half of reachability:
 with ufw on, the portal binds and the link still does not open. `PORT_CONFLICT.txt` and `ask_portal_host`
-already told the user to allow the port and never helped. Manage Bots option 15 and `--firewall` now do
+already told the user to allow the port and never helped. Manage Bots option 16 (15 before [060]) and `--firewall` now do
 (`ufw_sync_portal_ports` in `streamerbot.sh`, changelog [040]).
 
 - **Only the portal port is opened.** go-librespot's API port and the stream relay are loopback-only.

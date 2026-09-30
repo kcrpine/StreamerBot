@@ -1058,6 +1058,335 @@ delete_bots_batch() {
     done
 }
 
+# Rename a bot: its folder, its container and TTBOT_INSTANCE together.
+#
+# The container's data volume points at the folder by path, so a moved folder
+# needs a new container; docker rename alone would leave the old mount. Each
+# step is undone if a later one fails, so a failure leaves the bot as it was.
+rename_bot_container() {
+    local old="$1" new="$2" was_running=false
+    [ "$(docker ps -q -f name=^/${old}$)" ] && was_running=true
+
+    echo "Renaming ${old} to ${new}."
+    docker stop -t 1 "$old" > /dev/null 2>&1
+    if ! mv "$BOTS_ROOT/$old" "$BOTS_ROOT/$new"; then
+        echo -e "${RED}Error. The folder could not be moved. ${old} keeps its name.${NC}"
+        [ "$was_running" = true ] && docker start "$old" > /dev/null 2>&1
+        return 1
+    fi
+    if ! log_run "docker create for $new" \
+        docker create \
+            --name "${new}" \
+            --network host \
+            -e "TTBOT_INSTANCE=${new}" \
+            -e "YOUTUBE_BRIDGE_URL=${YOUTUBE_BRIDGE_URL}" \
+            -e "YOUTUBE_PROXY_URL=${YOUTUBE_PROXY_URL}" \
+            --label "role=streamerbot" \
+            --restart always \
+            -v "${BOTS_ROOT}/${new}:/home/streamer/StreamerBot/data" \
+            "${BOT_IMAGE}"; then
+        mv "$BOTS_ROOT/$new" "$BOTS_ROOT/$old"
+        [ "$was_running" = true ] && docker start "$old" > /dev/null 2>&1
+        echo -e "${RED}Error. The new container could not be created. ${old} keeps its name.${NC}"
+        return 1
+    fi
+    docker rm -f "$old" > /dev/null 2>&1
+    log_line "Renamed bot $old to $new"
+    if [ "$was_running" = true ]; then
+        if docker start "$new" > /dev/null 2>&1; then
+            echo -e "${GREEN}OK. ${old} is now ${new}, and it has started with the new configuration.${NC}"
+        else
+            echo -e "${RED}Error. ${old} is now ${new}, but it did not start. Try Start All.${NC}"
+        fi
+    else
+        echo -e "${GREEN}OK. ${old} is now ${new}. It was not running, so it was left stopped.${NC}"
+    fi
+}
+
+# Function: Edit Bot Configuration
+#
+# The same questions Create Bot asks, for one bot that already exists. Each one
+# names the bot's current value and Enter keeps it, so changing one setting is
+# one answer followed by Enter through the rest. Bulk Update Configuration can
+# reach a single bot too, but it reads its "current" values from whichever bot
+# sorts first, so it cannot tell you what the bot you are editing has.
+#
+# Every value reaches jq through --arg or --argjson, never by pasting it into
+# the program text: a password containing a quote would otherwise end the
+# string early and write something else, or nothing.
+edit_bot_config() {
+    header
+    echo -e "${YELLOW} --- Edit Bot Configuration --- ${NC}"
+
+    local bots=() d
+    if [ -d "$BOTS_ROOT" ]; then
+        for d in "$BOTS_ROOT"/*; do
+            [ -f "$d/config.json" ] && bots+=("$(basename "$d")")
+        done
+    fi
+
+    if [ ${#bots[@]} -eq 0 ]; then
+        echo "No bots found."
+        read -rp "Enter to return..."
+        return
+    fi
+
+    local i
+    echo "Bots:"
+    for i in "${!bots[@]}"; do
+        echo "$((i+1)). ${bots[$i]}"
+    done
+    echo "0. Return"
+    echo ""
+    local bot_num
+    read -rp "Enter the NUMBER of the bot to edit: " bot_num
+    if [ -z "$bot_num" ] || [ "$bot_num" = "0" ]; then return; fi
+    if [[ ! "$bot_num" =~ ^[0-9]+$ ]] || [ "$bot_num" -lt 1 ] || [ "$bot_num" -gt "${#bots[@]}" ]; then
+        echo -e "${RED}That is not a number from the list. Nothing was changed.${NC}"
+        read -rp "Enter to return..."
+        return
+    fi
+
+    local bot_name="${bots[$((bot_num-1))]}"
+    local config_file="$BOTS_ROOT/$bot_name/config.json"
+    if ! jq -e . "$config_file" >/dev/null 2>&1; then
+        echo -e "${RED}Error. ${bot_name}'s config.json is not valid JSON, so it cannot be edited here.${NC}"
+        read -rp "Enter to return..."
+        return
+    fi
+
+    # Renaming is a yes/no first, because it is the one change that is not a
+    # setting: the folder, the container and TTBOT_INSTANCE (the YouTube
+    # bridge's id for this bot, which it joins under bots/) all carry the name
+    # and must move together.
+    local new_name="$bot_name" rename_answer
+    read -rp "Rename ${bot_name}'s container and folder? (y/N): " rename_answer
+    if [[ "$rename_answer" =~ ^[yY]$ ]]; then
+        read -rp "New name: " new_name
+        if [ -z "$new_name" ] || [ "$new_name" = "$bot_name" ]; then
+            echo "No new name given. The name stays ${bot_name}."
+            new_name="$bot_name"
+        elif ! bot_name_is_valid "$new_name"; then
+            echo "A name may use letters, digits, dot, dash and underscore, and must start"
+            echo "with a letter or digit. The name stays ${bot_name}."
+            new_name="$bot_name"
+        elif [ -e "$BOTS_ROOT/$new_name" ] || [ "$(docker ps -a -q -f name=^/${new_name}$)" ]; then
+            echo "A bot or container named ${new_name} already exists. The name stays ${bot_name}."
+            new_name="$bot_name"
+        fi
+    fi
+
+    # Current values, read once.
+    local cur_host cur_tcp cur_udp cur_enc cur_user cur_pass cur_nick
+    local cur_chan cur_chan_pass cur_del cur_portal cur_cmds_count cur_cmds_json
+    cur_host=$(jq -r '.teamtalk.hostname // ""' "$config_file")
+    cur_tcp=$(jq -r '.teamtalk.tcp_port // 10333' "$config_file")
+    cur_udp=$(jq -r '.teamtalk.udp_port // 10333' "$config_file")
+    cur_enc=$(jq -r '.teamtalk.encrypted // false' "$config_file")
+    cur_user=$(jq -r '.teamtalk.username // ""' "$config_file")
+    cur_pass=$(jq -r '.teamtalk.password // ""' "$config_file")
+    cur_nick=$(jq -r '.teamtalk.nickname // ""' "$config_file")
+    cur_chan=$(jq -r '.teamtalk.channel // "/"' "$config_file")
+    cur_chan_pass=$(jq -r '.teamtalk.channel_password // ""' "$config_file")
+    cur_del=$(jq -r '.general.delete_uploaded_files_after // 300' "$config_file")
+    cur_portal=$(jq -r '.auth_portal.host // "127.0.0.1"' "$config_file")
+    cur_cmds_json=$(jq -c '.general.start_commands // [] | if type == "array" then . else [] end' "$config_file")
+    cur_cmds_count=$(jq -r 'length' <<<"$cur_cmds_json")
+
+    echo ""
+    echo "Editing ${bot_name}. Each question shows the current value."
+    echo "Press Enter to keep it."
+    echo ""
+
+    local input new_host new_tcp new_udp new_enc new_user new_pass new_nick
+    local new_chan new_chan_pass new_del new_cmds_json
+
+    read -rp "TeamTalk Server Address [Current: ${cur_host:-none}]: " input
+    new_host=${input:-$cur_host}
+
+    read -rp "TCP Port [Current: ${cur_tcp}]: " input
+    new_tcp=${input:-$cur_tcp}
+    if [[ ! "$new_tcp" =~ ^[0-9]+$ ]] || [ "$new_tcp" -lt 1 ] || [ "$new_tcp" -gt 65535 ]; then
+        echo "That is not a port number from 1 to 65535. Keeping ${cur_tcp}."
+        new_tcp=$cur_tcp
+    fi
+
+    read -rp "UDP Port [Current: ${cur_udp}]: " input
+    new_udp=${input:-$cur_udp}
+    if [[ ! "$new_udp" =~ ^[0-9]+$ ]] || [ "$new_udp" -lt 1 ] || [ "$new_udp" -gt 65535 ]; then
+        echo "That is not a port number from 1 to 65535. Keeping ${cur_udp}."
+        new_udp=$cur_udp
+    fi
+
+    local enc_default=1
+    [ "$cur_enc" = "true" ] && enc_default=2
+    echo "Encrypted? Currently $([ "$cur_enc" = "true" ] && echo "yes" || echo "no")."
+    echo "1. No (False)"
+    echo "2. Yes (True)"
+    read -rp "Option [Default: ${enc_default}]: " input
+    input=${input:-$enc_default}
+    case "$input" in
+        1) new_enc="false" ;;
+        2) new_enc="true" ;;
+        *) echo "That was not 1 or 2. Keeping the current setting."; new_enc="$cur_enc" ;;
+    esac
+
+    read -rp "Username [Current: ${cur_user:-none}. Enter keeps, a period clears]: " input
+    if [ "$input" = "." ]; then new_user=""; else new_user=${input:-$cur_user}; fi
+
+    # Never printed, only whether one is set.
+    read -rsp "Password [Currently $([ -n "$cur_pass" ] && echo "set" || echo "empty"). Enter keeps, a period clears]: " input
+    echo ""
+    if [ "$input" = "." ]; then new_pass=""; else new_pass=${input:-$cur_pass}; fi
+
+    read -rp "Bot Nickname [Current: ${cur_nick:-none}]: " input
+    new_nick=${input:-$cur_nick}
+
+    echo ""
+    echo "A startup command runs every time the bot connects. The usual one plays"
+    echo "a stream, for example:  u http://example.org:8000/live.mp3"
+    if [ "$cur_cmds_count" -eq 0 ]; then
+        echo "This bot has no startup command."
+    else
+        echo "This bot has ${cur_cmds_count} startup command$([ "$cur_cmds_count" -eq 1 ] || echo "s"):"
+        jq -r '.[] | "  " + (. | tostring)' <<<"$cur_cmds_json"
+        if [ "$cur_cmds_count" -gt 1 ]; then
+            echo "Typing a new command replaces all of them with that one command."
+        fi
+    fi
+    read -rp "Startup command (Enter keeps, a period removes): " input
+    if [ "$input" = "." ]; then
+        new_cmds_json='[]'
+    elif [ -n "$input" ]; then
+        new_cmds_json=$(jq -cn --arg c "$input" '[$c]')
+    else
+        new_cmds_json="$cur_cmds_json"
+    fi
+
+    read -rp "Channel [Current: ${cur_chan}. A period means the root channel /]: " input
+    if [ "$input" = "." ]; then new_chan="/"; else new_chan=${input:-$cur_chan}; fi
+
+    read -rsp "Channel Password [Currently $([ -n "$cur_chan_pass" ] && echo "set" || echo "empty"). Enter keeps, a period clears]: " input
+    echo ""
+    if [ "$input" = "." ]; then new_chan_pass=""; else new_chan_pass=${input:-$cur_chan_pass}; fi
+
+    echo ""
+    echo "Delete uploaded files after how many seconds? 0 means never delete."
+    read -rp "Timer in seconds [Current: ${cur_del}]: " input
+    new_del=${input:-$cur_del}
+    if [[ ! "$new_del" =~ ^[0-9]+$ ]]; then
+        echo "That is not a whole number of seconds. Keeping ${cur_del}."
+        new_del=$cur_del
+    fi
+
+    if [ "$cur_portal" = "$PORTAL_HOST_ANY" ]; then
+        echo "This bot currently lets any computer open the account portal."
+    else
+        echo "This bot currently lets only this computer open the account portal."
+    fi
+    ask_portal_host "$cur_portal"
+    local new_portal="$PORTAL_HOST"
+
+    # Summary: only what changed, so the list is short enough to check.
+    local changes=()
+    [ "$new_host" != "$cur_host" ] && changes+=("Server: ${cur_host:-none} to ${new_host:-none}")
+    [ "$new_tcp" != "$cur_tcp" ] && changes+=("TCP port: ${cur_tcp} to ${new_tcp}")
+    [ "$new_udp" != "$cur_udp" ] && changes+=("UDP port: ${cur_udp} to ${new_udp}")
+    [ "$new_enc" != "$cur_enc" ] && changes+=("Encrypted: $([ "$new_enc" = "true" ] && echo "yes" || echo "no")")
+    [ "$new_user" != "$cur_user" ] && changes+=("Username: ${cur_user:-none} to ${new_user:-none}")
+    [ "$new_pass" != "$cur_pass" ] && changes+=("Password: $([ -n "$new_pass" ] && echo "changed" || echo "cleared")")
+    [ "$new_nick" != "$cur_nick" ] && changes+=("Nickname: ${cur_nick:-none} to ${new_nick:-none}")
+    [ "$new_cmds_json" != "$cur_cmds_json" ] && changes+=("Startup command: $([ "$new_cmds_json" = "[]" ] && echo "removed" || jq -r '.[0]' <<<"$new_cmds_json")")
+    [ "$new_chan" != "$cur_chan" ] && changes+=("Channel: ${cur_chan} to ${new_chan}")
+    [ "$new_chan_pass" != "$cur_chan_pass" ] && changes+=("Channel password: $([ -n "$new_chan_pass" ] && echo "changed" || echo "cleared")")
+    [ "$new_del" != "$cur_del" ] && changes+=("Delete files after: ${cur_del} to ${new_del} seconds")
+    [ "$new_name" != "$bot_name" ] && changes+=("Container and folder name: ${bot_name} to ${new_name}")
+    [ "$new_portal" != "$cur_portal" ] && changes+=("Account portal opens from: $([ "$new_portal" = "$PORTAL_HOST_ANY" ] && echo "any computer" || echo "this computer only")")
+
+    echo ""
+    if [ ${#changes[@]} -eq 0 ]; then
+        echo "Nothing changed. ${bot_name} was left as it was."
+        read -rp "Enter to return..."
+        return
+    fi
+
+    echo "${#changes[@]} change$([ ${#changes[@]} -eq 1 ] || echo "s") to ${bot_name}:"
+    local c
+    for c in "${changes[@]}"; do echo "  $c"; done
+    echo ""
+    local confirm
+    read -rp "Save these changes? (y/N): " confirm
+    if [[ ! "$confirm" =~ ^[yY]$ ]]; then
+        echo "Cancelled. Nothing was changed."
+        read -rp "Enter to return..."
+        return
+    fi
+
+    local tmp_config
+    tmp_config=$(mktemp)
+    if ! jq --arg host "$new_host" \
+            --argjson tcp "$new_tcp" \
+            --argjson udp "$new_udp" \
+            --argjson enc "$new_enc" \
+            --arg user "$new_user" \
+            --arg pass "$new_pass" \
+            --arg nick "$new_nick" \
+            --argjson startcmds "$new_cmds_json" \
+            --arg chan "$new_chan" \
+            --arg chan_pass "$new_chan_pass" \
+            --argjson del_timer "$new_del" \
+            --arg portal_host "$new_portal" \
+            '.teamtalk.hostname = $host |
+             .teamtalk.tcp_port = $tcp |
+             .teamtalk.udp_port = $udp |
+             .teamtalk.encrypted = $enc |
+             .teamtalk.username = $user |
+             .teamtalk.password = $pass |
+             .teamtalk.nickname = $nick |
+             .general.start_commands = $startcmds |
+             .teamtalk.channel = $chan |
+             .teamtalk.channel_password = $chan_pass |
+             .general.delete_uploaded_files_after = $del_timer |
+             .auth_portal.host = $portal_host' \
+            "$config_file" > "$tmp_config"; then
+        rm -f "$tmp_config"
+        echo -e "${RED}Error. The configuration could not be written. Nothing was changed.${NC}"
+        read -rp "Enter to return..."
+        return
+    fi
+    mv "$tmp_config" "$config_file"
+    chown 1000:1000 "$config_file" 2>/dev/null || true
+    # Passwords deliberately absent: a log that records them leaks them.
+    log_line "Edited bot $bot_name: host=$new_host tcp=$new_tcp udp=$new_udp encrypted=$new_enc channel=$new_chan nickname=$new_nick portal_host=$new_portal"
+
+    echo "Saved."
+    if [ "$new_name" != "$bot_name" ]; then
+        rename_bot_container "$bot_name" "$new_name"
+    elif [ "$(docker ps -q -f name=^/${bot_name}$)" ]; then
+        local restart
+        read -rp "The bot reads its configuration when it starts. Restart ${bot_name} now? (Y/n): " restart
+        if [[ ! "$restart" =~ ^[nN]$ ]]; then
+            if docker restart -t 1 "$bot_name" > /dev/null 2>&1; then
+                echo -e "${GREEN}OK. ${bot_name} restarted with the new configuration.${NC}"
+            else
+                echo -e "${RED}Error. ${bot_name} did not restart. The changes are saved and apply on its next start.${NC}"
+            fi
+        else
+            echo "Not restarted. The changes apply the next time ${bot_name} starts."
+        fi
+    else
+        echo "${bot_name} is not running. The changes apply the next time it starts."
+    fi
+
+    # Opening the portal to other computers needs its port through ufw, and a
+    # renamed bot's rule is tagged with its name. Quiet mode only adds, so the
+    # old name's rule stays until option 16 offers to remove it.
+    if [ "$new_portal" != "$cur_portal" ] || [ "$new_name" != "$bot_name" ]; then
+        ufw_sync_portal_ports quiet
+    fi
+    read -rp "Press Enter to return..."
+}
+
 # Function: Bulk Update Configuration
 bulk_update_config() {
     header
@@ -3341,15 +3670,16 @@ manage_bots() {
         echo "5. Bulk Delete Bots"
         echo "6. Duplicate Bot"
         echo "7. Restart with Timer (Stop, Wait, Start)"
-        echo "8. Bulk Update Configuration"
-        echo "9. Backup and Restore Bots"
-        echo "10. Clear All Bot Logs"
-        echo "11. Clear All Bot Cache Files"
-        echo "12. Clear YouTube Bridge Cache"
-        echo "13. Repair Account Portal and Spotify Ports"
-        echo "14. Adopt Bot Folders Copied Into bots/"
-        echo "15. Allow Account Portal Ports Through ufw Firewall"
-        echo "16. Return to Main Menu"
+        echo "8. Edit Bot Configuration"
+        echo "9. Bulk Update Configuration"
+        echo "10. Backup and Restore Bots"
+        echo "11. Clear All Bot Logs"
+        echo "12. Clear All Bot Cache Files"
+        echo "13. Clear YouTube Bridge Cache"
+        echo "14. Repair Account Portal and Spotify Ports"
+        echo "15. Adopt Bot Folders Copied Into bots/"
+        echo "16. Allow Account Portal Ports Through ufw Firewall"
+        echo "17. Return to Main Menu"
         echo ""
         read -p "Choose an option: " opt_manage
         
@@ -3403,26 +3733,30 @@ manage_bots() {
                 header
                 ;;
             8)
-                bulk_update_config
+                edit_bot_config
                 header
                 ;;
             9)
-                backup_restore_menu
+                bulk_update_config
                 header
                 ;;
             10)
-                clear_bot_logs
+                backup_restore_menu
                 header
                 ;;
             11)
-                clear_bot_caches
+                clear_bot_logs
                 header
                 ;;
             12)
-                clear_youtube_bridge_cache
+                clear_bot_caches
                 header
                 ;;
             13)
+                clear_youtube_bridge_cache
+                header
+                ;;
+            14)
                 echo ""
                 echo "Every bot shares this host's ports, so two bots cannot both use the"
                 echo "account portal port or the Spotify port. This gives each bot its own."
@@ -3432,11 +3766,11 @@ manage_bots() {
                 read -p "Press Enter to continue..."
                 header
                 ;;
-            14)
+            15)
                 adopt_copied_bots
                 header
                 ;;
-            15)
+            16)
                 echo ""
                 echo "Checking whether ufw is installed on this host."
                 echo ""
@@ -3444,7 +3778,7 @@ manage_bots() {
                 read -p "Press Enter to continue..."
                 header
                 ;;
-            16)
+            17)
                 return
                 ;;
             *)

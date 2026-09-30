@@ -6,6 +6,19 @@ issue or a commit message. Numbering continues across releases.
 
 ## Unreleased
 
+- **[060]** Manage Bots has a new option 8, Edit Bot Configuration: Create Bot's questions asked again for
+  one existing bot, after a yes/no on renaming it. A rename moves the bot's folder and recreates its
+  container under the new name, with `TTBOT_INSTANCE` (the YouTube bridge's id for the bot) changed to
+  match. `docker rename` alone would keep the volume pointing at the old folder, and if the new
+  container cannot be created, the folder is moved back and the old one restarted. Each question names that bot's current value and Enter keeps it, passwords are
+  never printed (only whether one is set), and a period clears a password or removes the startup
+  command. Only the changed settings are listed before you confirm, and a running bot is offered a
+  restart. Bulk Update Configuration could already target one bot, but it took its "current" values from
+  whichever bot sorted first, so it could not tell you what the bot you were editing had. Values reach
+  jq through `--arg`, not by being pasted into the program, and are read with `read -r`, so a password
+  with a quote or a backslash is saved exactly as typed. Create Bot and Bulk Update still drop
+  backslashes, and Bulk Update breaks on a quote. Every Manage Bots item from the old 8 down moves one
+  number later: Bulk Update is now 9, the ufw firewall item 16, and Return 17.
 - **[059]** A bot left alone in its channel keeps playing. It used to stop playback the moment the last
   listener left, which threw away whatever was streaming — a radio station or a long queue had to be
   started again by whoever came back. The new `player.stop_when_solo` option restores the old behaviour
