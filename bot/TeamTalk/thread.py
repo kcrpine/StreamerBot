@@ -31,176 +31,187 @@ class TeamTalkThread(Thread):
             self.event_handlers = self.import_event_handlers()
         self._close = False
         while not self._close:
-            event = self.ttclient.get_event(self.ttclient.tt.getMessage())
-            if event.event_type == EventType.NONE:
-                continue
-            elif (
-                event.event_type == EventType.ERROR
-                and self.ttclient.state == State.CONNECTED
-            ):
-                self.ttclient.errors_queue.put(event.error)
-            elif (
-                event.event_type == EventType.SUCCESS
-                and self.ttclient.state == State.CONNECTED
-            ):
-                self.ttclient.event_success_queue.put(event)
-            elif (
-                event.event_type == EventType.USER_TEXT_MESSAGE
-                and event.message.type == MessageType.User
-            ):
-                self.ttclient.message_queue.put(event.message)
-            elif (
-                event.event_type == EventType.FILE_NEW
-                and event.file.username == self.config.username
-                and event.file.channel.id == self.ttclient.channel.id
-            ):
-                self.ttclient.uploaded_files_queue.put(event.file)
-            elif (
-                event.event_type == EventType.CON_FAILED
-                or event.event_type == EventType.CON_LOST
-                or event.event_type == EventType.MYSELF_KICKED
-            ):
-                server = f"{self.config.hostname}:{self.config.tcp_port}"
-                attempt = self.ttclient.reconnect_attempt + 1
-                limit = (
-                    "unlimited"
-                    if self.config.reconnection_attempts < 0
-                    else str(self.config.reconnection_attempts)
+            try:
+                self.process_next_event()
+            except Exception:
+                # One event the bot cannot handle must not end its connection
+                # to TeamTalk: this thread is the only thing that reads chat,
+                # and when it died the bot sat in the channel deaf, with the
+                # process still up so Docker never restarted it.
+                logging.exception("Error handling a TeamTalk event; skipping it")
+                time.sleep(0.1)
+
+    def process_next_event(self) -> None:
+        event = self.ttclient.get_event(self.ttclient.tt.getMessage())
+        if event.event_type in (EventType.NONE, EventType.UNKNOWN):
+            return
+        elif (
+            event.event_type == EventType.ERROR
+            and self.ttclient.state == State.CONNECTED
+        ):
+            self.ttclient.errors_queue.put(event.error)
+        elif (
+            event.event_type == EventType.SUCCESS
+            and self.ttclient.state == State.CONNECTED
+        ):
+            self.ttclient.event_success_queue.put(event)
+        elif (
+            event.event_type == EventType.USER_TEXT_MESSAGE
+            and event.message.type == MessageType.User
+        ):
+            self.ttclient.message_queue.put(event.message)
+        elif (
+            event.event_type == EventType.FILE_NEW
+            and event.file.username == self.config.username
+            and event.file.channel.id == self.ttclient.channel.id
+        ):
+            self.ttclient.uploaded_files_queue.put(event.file)
+        elif (
+            event.event_type == EventType.CON_FAILED
+            or event.event_type == EventType.CON_LOST
+            or event.event_type == EventType.MYSELF_KICKED
+        ):
+            server = f"{self.config.hostname}:{self.config.tcp_port}"
+            attempt = self.ttclient.reconnect_attempt + 1
+            limit = (
+                "unlimited"
+                if self.config.reconnection_attempts < 0
+                else str(self.config.reconnection_attempts)
+            )
+            if event.event_type == EventType.CON_FAILED:
+                logging.warning(
+                    f"Could not connect to {server}. "
+                    f"Attempt {attempt} of {limit}. "
+                    "Check the hostname, the TCP port, and whether the server "
+                    "requires an encrypted connection."
                 )
-                if event.event_type == EventType.CON_FAILED:
-                    logging.warning(
-                        f"Could not connect to {server}. "
-                        f"Attempt {attempt} of {limit}. "
-                        "Check the hostname, the TCP port, and whether the server "
-                        "requires an encrypted connection."
-                    )
-                elif event.event_type == EventType.CON_LOST:
-                    logging.warning(
-                        f"Lost the connection to {server}. Attempt {attempt} of {limit}."
-                    )
-                else:
-                    logging.warning(
-                        f"Kicked from {server} as {self.config.username!r}. "
-                        f"Attempt {attempt} of {limit}."
-                    )
+            elif event.event_type == EventType.CON_LOST:
+                logging.warning(
+                    f"Lost the connection to {server}. Attempt {attempt} of {limit}."
+                )
+            else:
+                logging.warning(
+                    f"Kicked from {server} as {self.config.username!r}. "
+                    f"Attempt {attempt} of {limit}."
+                )
+            self.ttclient.disconnect()
+            if (
+                self.ttclient.reconnect
+                and self.ttclient.reconnect_attempt
+                < self.config.reconnection_attempts
+                or self.config.reconnection_attempts < 0
+            ):
                 self.ttclient.disconnect()
+                time.sleep(self.config.reconnection_timeout)
+                self.ttclient.connect()
+                self.ttclient.reconnect_attempt += 1
+            else:
+                logging.error(
+                    f"Giving up on {self.config.hostname}:{self.config.tcp_port} "
+                    f"after {self.ttclient.reconnect_attempt} attempts. "
+                    "The bot is stopping. Set teamtalk.reconnection_attempts to -1 "
+                    "in this bot's config.json to keep retrying forever."
+                )
+                sys.exit(1)
+        elif event.event_type == EventType.CON_SUCCESS:
+            self.ttclient.reconnect_attempt = 0
+            self.ttclient.login()
+        elif event.event_type == EventType.ERROR:
+            if self.ttclient.flags & Flags.AUTHORIZED == Flags(0):
+                logging.warning(
+                    f"The server at {self.config.hostname}:{self.config.tcp_port} "
+                    f"rejected the login for username {self.config.username!r}. "
+                    "Check the username and password, and that the account exists "
+                    "on that server."
+                )
                 if (
                     self.ttclient.reconnect
                     and self.ttclient.reconnect_attempt
                     < self.config.reconnection_attempts
                     or self.config.reconnection_attempts < 0
                 ):
-                    self.ttclient.disconnect()
                     time.sleep(self.config.reconnection_timeout)
-                    self.ttclient.connect()
-                    self.ttclient.reconnect_attempt += 1
+                    self.ttclient.login()
                 else:
-                    logging.error(
-                        f"Giving up on {self.config.hostname}:{self.config.tcp_port} "
-                        f"after {self.ttclient.reconnect_attempt} attempts. "
-                        "The bot is stopping. Set teamtalk.reconnection_attempts to -1 "
-                        "in this bot's config.json to keep retrying forever."
-                    )
+                    logging.error("Login error")
                     sys.exit(1)
-            elif event.event_type == EventType.CON_SUCCESS:
-                self.ttclient.reconnect_attempt = 0
-                self.ttclient.login()
-            elif event.event_type == EventType.ERROR:
-                if self.ttclient.flags & Flags.AUTHORIZED == Flags(0):
-                    logging.warning(
-                        f"The server at {self.config.hostname}:{self.config.tcp_port} "
-                        f"rejected the login for username {self.config.username!r}. "
-                        "Check the username and password, and that the account exists "
-                        "on that server."
-                    )
-                    if (
-                        self.ttclient.reconnect
-                        and self.ttclient.reconnect_attempt
-                        < self.config.reconnection_attempts
-                        or self.config.reconnection_attempts < 0
-                    ):
-                        time.sleep(self.config.reconnection_timeout)
-                        self.ttclient.login()
-                    else:
-                        logging.error("Login error")
-                        sys.exit(1)
+            else:
+                logging.warning("Failed to join channel")
+                if (
+                    self.ttclient.reconnect
+                    and self.ttclient.reconnect_attempt
+                    < self.config.reconnection_attempts
+                    or self.config.reconnection_attempts < 0
+                ):
+                    time.sleep(self.config.reconnection_timeout)
+                    self.ttclient.join()
                 else:
-                    logging.warning("Failed to join channel")
-                    if (
-                        self.ttclient.reconnect
-                        and self.ttclient.reconnect_attempt
-                        < self.config.reconnection_attempts
-                        or self.config.reconnection_attempts < 0
-                    ):
-                        time.sleep(self.config.reconnection_timeout)
-                        self.ttclient.join()
-                    else:
-                        logging.error("Error joining channel")
-                        sys.exit(1)
-            elif event.event_type == EventType.MYSELF_LOGGEDIN:
-                self.ttclient.user_account = event.user_account
-                self.ttclient.reconnect_attempt = 0
-                self.ttclient.join()
-            elif (
-                event.event_type == EventType.SUCCESS
-                and self.ttclient.state == State.CONNECTING
-            ):
-                self.ttclient.reconnect_attempt = 0
-                self.ttclient.reconnect = True
-                self.ttclient.state = State.CONNECTED
-                self.ttclient.change_status_text(self.ttclient.status)
-            elif event.event_type == EventType.USER_LEFT:
-                # Auto-return logic
-                try:
-                    # Log event details for debugging
-                    logging.debug(f"USER_LEFT event: Source={event.source}, ChannelID={event.channel.id}, BotChannel={self.ttclient.channel.id}, User={event.user.username} ({event.user.id})")
+                    logging.error("Error joining channel")
+                    sys.exit(1)
+        elif event.event_type == EventType.MYSELF_LOGGEDIN:
+            self.ttclient.user_account = event.user_account
+            self.ttclient.reconnect_attempt = 0
+            self.ttclient.join()
+        elif (
+            event.event_type == EventType.SUCCESS
+            and self.ttclient.state == State.CONNECTING
+        ):
+            self.ttclient.reconnect_attempt = 0
+            self.ttclient.reconnect = True
+            self.ttclient.state = State.CONNECTED
+            self.ttclient.change_status_text(self.ttclient.status)
+        elif event.event_type == EventType.USER_LEFT:
+            # Auto-return logic
+            try:
+                # Log event details for debugging
+                logging.debug(f"USER_LEFT event: Source={event.source}, ChannelID={event.channel.id}, BotChannel={self.ttclient.channel.id}, User={event.user.username} ({event.user.id})")
 
-                    # Check if the event happened in the bot's current channel
-                    # Check both source and channel object to be safe
-                    if event.source == self.ttclient.channel.id or event.channel.id == self.ttclient.channel.id:
-                        # Get users in current channel using ctypes
-                        users = self.ttclient.tt.getChannelUsers(self.ttclient.channel.id)
-                        
-                        # Robust counting: Exclude bot itself and the user who just left (if still in list)
-                        other_users_count = 0
-                        for u in users:
-                            # u is a ctypes struct, so we use nUserID
-                            # self.ttclient.user is wrapper object, use id
-                            if u.nUserID == self.ttclient.user.id:
-                                continue
-                            if u.nUserID == event.user.id:
-                                continue
-                            other_users_count += 1
-                        
-                        logging.debug(f"Auto-return check: Total users={len(users)}, Other users counted={other_users_count}")
+                # Check if the event happened in the bot's current channel
+                # Check both source and channel object to be safe
+                if event.source == self.ttclient.channel.id or event.channel.id == self.ttclient.channel.id:
+                    # Get users in current channel using ctypes
+                    users = self.ttclient.tt.getChannelUsers(self.ttclient.channel.id)
+                    
+                    # Robust counting: Exclude bot itself and the user who just left (if still in list)
+                    other_users_count = 0
+                    for u in users:
+                        # u is a ctypes struct, so we use nUserID
+                        # self.ttclient.user is wrapper object, use id
+                        if u.nUserID == self.ttclient.user.id:
+                            continue
+                        if u.nUserID == event.user.id:
+                            continue
+                        other_users_count += 1
+                    
+                    logging.debug(f"Auto-return check: Total users={len(users)}, Other users counted={other_users_count}")
 
-                        # Check if no other users remain
-                        if other_users_count == 0:
-                             logging.info("Auto-return triggered: Bot is alone in channel. returning to default.")
-                             self.stop_if_solo_stop_enabled()
+                    # Check if no other users remain
+                    if other_users_count == 0:
+                         logging.info("Auto-return triggered: Bot is alone in channel. returning to default.")
+                         self.stop_if_solo_stop_enabled()
 
-                             # Determine default channel ID
-                             default_channel = self.config.channel
-                             if isinstance(default_channel, int):
-                                 default_channel_id = default_channel
-                             else:
-                                 # We need _str helper for string conversion
-                                 def _str(data):
-                                     if isinstance(data, str):
-                                         return bytes(data, "utf-8") if os.supports_bytes_environ else data
-                                     return str(data, "utf-8")
-                                 default_channel_id = self.ttclient.tt.getChannelIDFromPath(_str(default_channel))
-                                 if default_channel_id == 0:
-                                     default_channel_id = 1
-                             
-                             # Move back if not already there
-                             if self.ttclient.channel.id != default_channel_id:
-                                 self.ttclient.move_user(self.ttclient.user.id, default_channel_id)
-                except Exception as e:
-                    logging.error(f"Error in auto-return logic: {e}")
+                         # Determine default channel ID
+                         default_channel = self.config.channel
+                         if isinstance(default_channel, int):
+                             default_channel_id = default_channel
+                         else:
+                             # We need _str helper for string conversion
+                             def _str(data):
+                                 if isinstance(data, str):
+                                     return bytes(data, "utf-8") if os.supports_bytes_environ else data
+                                 return str(data, "utf-8")
+                             default_channel_id = self.ttclient.tt.getChannelIDFromPath(_str(default_channel))
+                             if default_channel_id == 0:
+                                 default_channel_id = 1
+                         
+                         # Move back if not already there
+                         if self.ttclient.channel.id != default_channel_id:
+                             self.ttclient.move_user(self.ttclient.user.id, default_channel_id)
+            except Exception as e:
+                logging.error(f"Error in auto-return logic: {e}")
 
-            if self.config.event_handling.load_event_handlers:
-                self.run_event_handler(event)
+        if self.config.event_handling.load_event_handlers:
+            self.run_event_handler(event)
 
     def stop_if_solo_stop_enabled(self) -> None:
         """Stop playback on being left alone, only if player.stop_when_solo says to.

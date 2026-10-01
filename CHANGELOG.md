@@ -6,6 +6,23 @@ issue or a commit message. Numbering continues across releases.
 
 ## Unreleased
 
+- **[061]** A TeamTalk event the bot does not recognise no longer leaves it deaf. Creating a user account
+  on the server sends every admin-logged-in client event 410 (`CLIENTEVENT_CMD_USERACCOUNT_NEW`).
+  `EventType` had no member for it, or for nine other events the 5.22 SDK defines, so `EventType(410)`
+  raised `ValueError` in the TeamTalk thread and ended it. That thread is the bot's only reader of chat
+  and connection events, and nothing else noticed: the player, the pre-warm timer and the process all
+  kept running, so the container stayed up, `restart=always` never fired, and the bot sat in its
+  channel ignoring every command until someone restarted it by hand. captianbubblebot did this three
+  times, all on 410; AshWells once on 410, and Chris-Test once on 420 (account removed). Three layers
+  now, because each guards against a different failure: the missing events are in `EventType`, and
+  any code a future SDK adds maps to `EventType.UNKNOWN` instead of raising; an exception while
+  handling one event is logged and that event skipped, rather than ending the loop; and if the thread
+  does stop without being asked to, the main loop notices and exits the process, so Docker restarts
+  the bot. That last one also covers the thread's own give-up paths, whose `sys.exit(1)` only ever
+  ended the thread and left the same deaf bot behind while logging "The bot is stopping". The exit is
+  `os._exit`, not `close()`: a bot whose player or browser is wedged can block on the way out, and a
+  bot hanging in shutdown is no better than the deaf one. A test fails if an SDK upgrade adds an event
+  that `EventType` does not name.
 - **[060]** Manage Bots has a new option 8, Edit Bot Configuration: Create Bot's questions asked again for
   one existing bot, after a yes/no on renaming it. A rename moves the bot's folder and recreates its
   container under the new name, with `TTBOT_INSTANCE` (the YouTube bridge's id for the bot) changed to

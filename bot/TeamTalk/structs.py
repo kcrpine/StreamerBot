@@ -298,6 +298,34 @@ class EventType(Enum):
     USER_FIRST_STREAM_VOICE_PACKET = (
         TeamTalkPy.ClientEvent.CLIENTEVENT_USER_FIRSTVOICESTREAMPACKET
     )
+    # Missing until 5.22, so 410 (an account created on the server, which an
+    # admin bot is told about) raised in the event thread and killed it.
+    CON_CRYPT_ERROR = TeamTalkPy.ClientEvent.CLIENTEVENT_CON_CRYPT_ERROR
+    USER_ACCOUNT_NEW = TeamTalkPy.ClientEvent.CLIENTEVENT_CMD_USERACCOUNT_NEW
+    USER_ACCOUNT_REMOVE = TeamTalkPy.ClientEvent.CLIENTEVENT_CMD_USERACCOUNT_REMOVE
+    SOUND_DEVICE_ADDED = TeamTalkPy.ClientEvent.CLIENTEVENT_SOUNDDEVICE_ADDED
+    SOUND_DEVICE_REMOVED = TeamTalkPy.ClientEvent.CLIENTEVENT_SOUNDDEVICE_REMOVED
+    SOUND_DEVICE_UNPLUGGED = TeamTalkPy.ClientEvent.CLIENTEVENT_SOUNDDEVICE_UNPLUGGED
+    SOUND_DEVICE_NEW_DEFAULT_INPUT = (
+        TeamTalkPy.ClientEvent.CLIENTEVENT_SOUNDDEVICE_NEW_DEFAULT_INPUT
+    )
+    SOUND_DEVICE_NEW_DEFAULT_OUTPUT = (
+        TeamTalkPy.ClientEvent.CLIENTEVENT_SOUNDDEVICE_NEW_DEFAULT_OUTPUT
+    )
+    SOUND_DEVICE_NEW_DEFAULT_INPUT_COM_DEVICE = (
+        TeamTalkPy.ClientEvent.CLIENTEVENT_SOUNDDEVICE_NEW_DEFAULT_INPUT_COMDEVICE
+    )
+    SOUND_DEVICE_NEW_DEFAULT_OUTPUT_COM_DEVICE = (
+        TeamTalkPy.ClientEvent.CLIENTEVENT_SOUNDDEVICE_NEW_DEFAULT_OUTPUT_COMDEVICE
+    )
+    # Anything a later SDK adds. Not a real ClientEvent value; see _missing_.
+    UNKNOWN = -1
+
+    @classmethod
+    def _missing_(cls, value):
+        # A code this enum has never heard of is not a reason to stop reading
+        # events. The SDK grows new ones between releases.
+        return cls.UNKNOWN
 
 
 class Event:

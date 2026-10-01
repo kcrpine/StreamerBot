@@ -384,6 +384,8 @@ class Bot:
 
         self._close = False
         while not self._close:
+            if self._teamtalk_thread_died():
+                self._exit_for_restart()
             try:
                 message = self.ttclient.message_queue.get_nowait()
                 logging.info(
@@ -415,6 +417,31 @@ class Bot:
                     pass
 
             time.sleep(app_vars.loop_timeout)
+
+    def _teamtalk_thread_died(self) -> bool:
+        """True when the TeamTalk event thread has ended without being asked to.
+
+        That thread is the bot's only reader of chat and connection events.
+        Everything else keeps running without it, so the container stays up,
+        Docker sees nothing wrong, and the bot sits in its channel unable to
+        hear a command. Its own give-up paths call sys.exit, which in a thread
+        ends only the thread.
+        """
+        thread = self.ttclient.thread
+        return not thread.is_alive() and not getattr(thread, "_close", False)
+
+    def _exit_for_restart(self) -> None:
+        logging.critical(
+            "The TeamTalk connection thread has stopped, so this bot can no longer "
+            "hear commands. Exiting so Docker restarts it; the reason is logged "
+            "above."
+        )
+        logging.shutdown()
+        # Not sys.exit or close(): either can block on a player or a browser in
+        # whatever state the failure left it, and a bot that hangs on the way
+        # out is the same deaf bot. Ending the container's main process stops
+        # every child with it, and restart=always brings the bot back.
+        os._exit(1)
 
     def _perform_periodic_pre_warm(self):
         logging.info("Starting periodic pre-warming for services...")
