@@ -80,7 +80,16 @@ This changes what `.githooks/pre-push` actually checks, depending on where you p
 - **From inside WSL** both halves run for real: the distro has `jq` at `/usr/bin/jq` and the
   `streamerbot:test` image is already built there, so neither half degrades to a warning.
 
-Push from WSL when you want the hook to mean what it claims.
+Push from WSL when you want the hook to mean what it claims. Two things have to be true for that to work:
+
+- **WSL's git needs a credential helper.** Without one, `git push` waits on a "Username for
+  github.com" prompt; started from a hidden window or a background job, it waits there indefinitely with
+  no output. On this host WSL borrows Windows' Git Credential Manager
+  (`credential.helper=/mnt/c/Program\ Files/Git/ucrt64/bin/git-credential-manager.exe` in WSL's
+  `~/.gitconfig`), so both share one GitHub login.
+- **Scripts must be LF in the working tree.** `.gitattributes` pins `*.sh` and `.githooks/*` to
+  `eol=lf` ([064]). A clone made before that rule has CRLF copies, and the hook fails with "cannot exec
+  '.githooks/pre-push'". Check those files out again once to fix it.
 
 ## Building the image
 

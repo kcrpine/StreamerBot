@@ -6,6 +6,15 @@ issue or a commit message. Numbering continues across releases.
 
 ## Unreleased
 
+- **[064]** Shell scripts and git hooks now check out with LF line endings on Windows too. A Windows
+  clone with `core.autocrlf=true` wrote every `.sh` file and `.githooks/pre-push` with CRLF, though the
+  repository stores them as LF. Run from WSL against that working tree, which `CLAUDE.md` says is the
+  only place the pre-push hook tests anything, bash stopped at the first line: the hook failed with
+  "cannot exec '.githooks/pre-push': No such file or directory", and the 12 tests in
+  `test_youtube_egress` failed because they source `youtube_egress.sh`. A new `.gitattributes` pins
+  `*.sh` and `.githooks/*` to `eol=lf`. The stored files are unchanged, so Linux hosts and CI see no
+  difference; an existing Windows clone picks it up after those files are checked out again.
+
 - **[063]** The portal's "Signing in" page now follows the sign-in by itself, and the YouTube import
   page explains how to get a cookies.txt file on an Android phone. The progress page had an empty status
   region and no script, so it said "Waiting for the service to confirm" until someone pressed Check

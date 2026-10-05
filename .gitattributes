@@ -1,0 +1,6 @@
+# Shell scripts and git hooks run under bash, which reads a CRLF line ending
+# as part of the command ("cannot exec", "$'\r': command not found"). Keep
+# them LF in every checkout, including a Windows one with core.autocrlf=true,
+# so they run from WSL against the same working tree. See [064].
+*.sh            text eol=lf
+.githooks/*     text eol=lf
