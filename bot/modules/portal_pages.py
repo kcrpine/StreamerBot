@@ -441,10 +441,75 @@ class PageBuilder:
             f'<p><a href="/progress/{esc(service)}?t={esc(token)}">'
             f'{esc(self._("Check again"))}</a></p>\n'
             f'<p><a href="/connect/{esc(service)}/cancel?t={esc(token)}">'
-            f'{esc(self._("Cancel this sign-in"))}</a></p>'
+            f'{esc(self._("Cancel this sign-in"))}</a></p>\n'
+            + self.progress_script(token, service)
         )
         return self.page(
             self._("Signing in to %(service)s") % {"service": name}, body
+        )
+
+    def progress_script(self, token: str, service: str) -> str:
+        """Poll the sign-in and move on by itself when it needs the person.
+
+        Without this the page sat on "Waiting" until someone thought to press
+        Check again, so a sign-in Google refused in seconds looked like one that
+        hung. The links above stay as the no-script route.
+
+        From the accessibility review: the status says where the page is going,
+        in words, before it goes, and focus is never moved; the next page's
+        title says the rest. Waiting messages carry the elapsed time, so the
+        live region never repeats itself (some readers skip identical text),
+        and thin out after two minutes. Hidden tabs are polled the moment they
+        come back, because the person is usually away on their phone approving
+        or reading a code, and mobile browsers pause background timers.
+        """
+        state_url = f"/progress/{service}/state?t={token}"
+        messages = {
+            "otp": self._("Google needs a verification code. Opening that page."),
+            "approve": self._("Google needs you to approve the sign-in on your phone. Opening that page."),
+            "success": self._("Signed in. Opening the confirmation page."),
+            "failure": self._("The sign-in did not complete. Opening the page that says why."),
+            "home": self._("This sign-in is no longer running. Going back to your accounts."),
+            "seconds": self._("Still signing in. %(seconds)s seconds so far."),
+            "minutes": self._("Still signing in. %(minutes)s minutes so far."),
+            "gone": self._("This link has expired or the sign-in was cancelled. To get a new link, send the li command to StreamerBot in TeamTalk."),
+            "lost": self._("Lost contact with StreamerBot. Use Check again in a moment."),
+            "slow": self._("This is taking longer than expected. Use Check again, or Cancel this sign-in."),
+        }
+        import json
+
+        table = json.dumps(messages).replace("<", "\\u003c").replace(">", "\\u003e")
+        return (
+            "<script>(function(){"
+            f"var M={table},U={self._js_string(state_url)},"
+            "s=document.getElementById('poll-status');"
+            "if(!s||!window.fetch)return;"
+            "var t0=Date.now(),said=0,fails=0,lost=false,stopped=false,busy=false,timer=null;"
+            "function say(x){s.textContent=x;}"
+            # 30, 60, 90, 120 seconds, then every 90.
+            "function due(e){return e<120?Math.floor(e/30)*30:120+Math.floor((e-120)/90)*90;}"
+            "function stop(x){stopped=true;clearTimeout(timer);if(x)say(x);}"
+            "function safe(n){return typeof n==='string'&&n.charAt(0)==='/'&&n.charAt(1)!=='/'"
+            "&&n.indexOf('/progress/')!==0;}"
+            "function tick(){if(stopped||busy)return;clearTimeout(timer);"
+            "var e=Math.floor((Date.now()-t0)/1000);"
+            "if(e>=660){stop(M.slow);return;}"
+            "var d=due(e);if(!lost&&d>=30&&d>said){said=d;"
+            "say(d<120?M.seconds.replace('%(seconds)s',d):M.minutes.replace('%(minutes)s',Math.floor(d/60)));}"
+            "busy=true;fetch(U,{cache:'no-store',credentials:'same-origin'}).then(function(r){busy=false;"
+            "if(r.status===404||r.status===410){stop(M.gone);return null;}"
+            "if(!r.ok)throw new Error(r.status);return r.json();"
+            "}).then(function(j){if(!j||stopped)return;fails=0;lost=false;"
+            "if(j.done&&safe(j.next)){stop(M[j.kind]||'');"
+            "setTimeout(function(){location.replace(j.next);},1500);return;}"
+            "timer=setTimeout(tick,2000);"
+            "}).catch(function(){busy=false;if(stopped)return;fails++;"
+            "if(fails>=5&&!lost){lost=true;say(M.lost);}"
+            "timer=setTimeout(tick,fails>=5?5000:2000);});}"
+            "document.addEventListener('visibilitychange',function(){"
+            "if(document.visibilityState==='visible')tick();});"
+            "timer=setTimeout(tick,1000);"
+            "})();</script>"
         )
 
     def success_page(self, token: str, service: str) -> str:
@@ -591,7 +656,10 @@ class PageBuilder:
         has_error = "cookies" in error_for
 
         file_input = (
-            '<input id="cookies-file" name="cookies_file" type="file" accept=".txt,text/plain"'
+            # No accept filter: Android's file picker can hide a download whose
+            # type it does not recognise, and a wrong file is refused with a
+            # clear message anyway.
+            '<input id="cookies-file" name="cookies_file" type="file"'
             + (' aria-invalid="true" aria-describedby="cookies-file-error"' if has_error else "")
             + ">"
         )
@@ -614,20 +682,40 @@ class PageBuilder:
         body = (
             f'<h1>{esc(self._("Import a %(service)s session") % {"service": name})}</h1>\n'
             + self.error_summary([("cookies-file", msg) for _field, msg in errors])
-            + f'<p>{esc(self._("Use this when Google will not sign in from the bot, or when the bot cannot run a browser."))}</p>\n'
+            + f'<p>{esc(self._("Use this when Google will not sign in from the bot, or when the bot cannot run a browser. You need a cookies.txt file from a browser that is signed in to YouTube."))}</p>\n'
+            # Targets the input, as the error summary does, so focus really
+            # moves. For people who already have the file.
+            + f'<p><a href="#cookies-file">{esc(self._("I already have the file. Go to the import form."))}</a></p>\n'
+            + self.separate_account_notice(token, import_link=False)
+            # One h2 with a h3 per device, so a screen reader user can jump
+            # straight to their own device by heading. iPhone is second, not
+            # last: most blind phone users are on VoiceOver.
+            + f'<h2>{esc(self._("How to get a cookies.txt file"))}</h2>\n'
+            + f'<h3>{esc(self._("On an Android phone"))}</h3>\n'
+            + f'<p>{esc(self._("No computer is needed. This uses the Firefox browser, which can add a small cookie exporter on Android."))}</p>\n'
+            + '<ol class="steps">\n'
+            + f'<li>{esc(self._("Install Firefox from the Google Play Store, and open this page in Firefox."))}</li>\n'
+            + f'<li>{esc(self._("In Firefox, open the menu, choose Extensions, then find and add the extension called cookies.txt."))}</li>\n'
+            + f'<li>{esc(self._("Go to youtube.com in Firefox and sign in with the Google account made for StreamerBot."))}</li>\n'
+            + f'<li>{esc(self._("While still on youtube.com, open the Firefox menu, choose Extensions, then cookies.txt, and export the cookies for the current site. The file is saved to your Downloads."))}</li>\n'
+            + f'<li>{esc(self._("Come back to this page in Firefox and choose that file in the import form below."))}</li>\n'
+            + "</ol>\n"
+            + f'<h3>{esc(self._("On an iPhone or iPad"))}</h3>\n'
+            + f'<p>{esc(self._("There is no reliable way to export this file on an iPhone or iPad. Use an Android phone or a computer, or ask someone who has one to do it for you. They must sign in with the Google account made for StreamerBot, never their own."))}</p>\n'
+            + f'<h3>{esc(self._("On a computer"))}</h3>\n'
             + '<ol class="steps">\n'
             + f'<li>{esc(self._("In your own browser, sign in to YouTube with the Google account made for StreamerBot."))}</li>\n'
             + f'<li>{esc(self._("While on youtube.com, use a cookie export extension to save the cookies in Netscape cookies.txt format."))}</li>\n'
-            + f'<li>{esc(self._("Choose that file below, or open it, copy everything in it, and paste it into the box below."))}</li>\n'
-            + f'<li>{esc(self._("Select Import the session."))}</li>\n'
+            + f'<li>{esc(self._("Choose that file in the import form below, or open it, copy everything in it, and paste it into the box below."))}</li>\n'
             + "</ol>\n"
-            + self.separate_account_notice(token, import_link=False)
+            + f'<p>{esc(self._("Afterwards, do not sign out of YouTube in that browser. Signing out ends the session StreamerBot is using. Closing the browser is fine."))}</p>\n'
             + f'<p>{esc(self._("Google sometimes ends a session that is used from a different place. If that happens, StreamerBot tells you in TeamTalk and you can import again."))}</p>\n'
             + (
                 ""
                 if browser_available
                 else f'<p>{esc(self._("This server cannot run a browser, so nothing can keep an imported session alive. Expect to import again from time to time."))}</p>\n'
             )
+            + f'<h2>{esc(self._("Import your file"))}</h2>\n'
             + f'<form method="post" action="/import/yt?t={esc(token)}" enctype="multipart/form-data" novalidate>\n'
             + self.token_field(token)
             + "\n"
@@ -746,6 +834,7 @@ font-family:system-ui,sans-serif;max-inline-size:70ch;margin-inline:auto;padding
 a{color:var(--link);text-decoration:underline;text-underline-offset:.2em}
 h1{font-size:1.6rem;margin-block:1rem .5rem}
 h2{font-size:1.2rem;margin-block:1rem .25rem}
+h3{font-size:1.05rem;margin-block:1rem .25rem}
 .brand{color:var(--muted);font-weight:700;margin-block:1rem 0}
 /* clip-path, never display:none or width:0, all of which drop the node from
    the accessibility tree. white-space stops per-character wrapping. */

@@ -194,6 +194,23 @@ class PageMarkupTests(TestCase):
         # role=status already implies both.
         self.assertNotIn("aria-live", html)
 
+    def test_the_progress_page_polls_its_own_state_and_never_moves_focus(self):
+        html = self.pages.progress_page("tok", "yt")
+
+        self.assertIn('"/progress/yt/state?t=tok"', html)
+        self.assertIn("visibilitychange", html)
+        self.assertIn("location.replace", html)
+        self.assertNotIn(".focus(", html)
+        # The no-script routes stay.
+        self.assertIn(">Check again</a>", html)
+        self.assertIn(">Cancel this sign-in</a>", html)
+
+    def test_the_progress_script_refuses_to_follow_anywhere_off_site_or_back_to_itself(self):
+        html = self.pages.progress_page("tok", "yt")
+
+        self.assertIn("n.charAt(1)!=='/'", html)
+        self.assertIn("n.indexOf('/progress/')!==0", html)
+
     def test_no_meta_refresh_anywhere(self):
         for html in (
             self.pages.progress_page("tok", "nf"),
@@ -383,6 +400,35 @@ class YouTubePortalPageTests(TestCase):
         self.assertLess(html.index('id="cookies-file"'), html.index('id="cookies"'))
         self.assertIn("<ol", html)
 
+    def test_the_import_page_has_a_heading_per_device_with_iphone_before_computer(self):
+        html = self.pages.import_page("tok")
+
+        self.assertIn("<h2>How to get a cookies.txt file</h2>", html)
+        android = html.index("<h3>On an Android phone</h3>")
+        iphone = html.index("<h3>On an iPhone or iPad</h3>")
+        computer = html.index("<h3>On a computer</h3>")
+        self.assertLess(android, iphone)
+        self.assertLess(iphone, computer)
+        self.assertLess(computer, html.index("<h2>Import your file</h2>"))
+        self.assertLess(html.index("<h2>Import your file</h2>"), html.index("<form"))
+
+    def test_the_import_page_can_skip_straight_to_the_file_field(self):
+        html = self.pages.import_page("tok")
+
+        self.assertIn('<a href="#cookies-file">', html)
+        self.assertLess(html.index('<a href="#cookies-file">'), html.index("<h3>On an Android phone</h3>"))
+
+    def test_the_import_page_warns_not_to_sign_out_afterwards(self):
+        self.assertIn("do not sign out of YouTube", self.pages.import_page("tok"))
+
+    def test_the_file_picker_does_not_filter_by_type(self):
+        """Android's picker can hide a download whose type it does not know."""
+        html = self.pages.import_page("tok")
+        file_input = html[html.index('<input id="cookies-file"'):]
+        file_input = file_input[:file_input.index(">")]
+
+        self.assertNotIn("accept=", file_input)
+
     def test_the_paste_box_does_not_send_a_credential_to_spellcheck_or_grammarly(self):
         html = self.pages.import_page("tok")
         textarea = html[html.index("<textarea"):html.index("</textarea>")]
@@ -536,6 +582,55 @@ class YouTubePortalRoutingTests(TestCase):
 
         self.assertEqual(status, 303)
         self.assertTrue(headers["location"].startswith("/progress/yt"))
+
+    def state(self):
+        import json
+
+        status, headers, body = self.request(f"/progress/yt/state?t={self.token}")
+        self.assertEqual(status, 200)
+        self.assertTrue(headers["content-type"].startswith("application/json"))
+        self.assertEqual(headers["cache-control"], "no-store")
+        return json.loads(body)
+
+    def test_the_progress_state_says_working_while_the_job_runs(self):
+        """What the progress page polls. Without it the page sat on "Waiting"
+        until someone pressed Check again, so a sign-in Google had refused in
+        seconds looked like one that hung."""
+        self.portal.jobs.start("yt")
+
+        self.assertEqual(self.state(), {"done": False, "kind": "", "next": ""})
+
+    def test_the_progress_state_points_at_the_failure_once_the_job_fails(self):
+        job = self.portal.jobs.start("yt")
+        job.fail("Google refused to sign in from the bot's browser.")
+
+        state = self.state()
+
+        self.assertTrue(state["done"])
+        self.assertEqual(state["kind"], "failure")
+        self.assertTrue(state["next"].startswith("/failure/yt?t="))
+
+    def test_the_progress_state_points_at_the_code_page_when_one_is_needed(self):
+        from bot.auth.session import AuthState
+
+        job = self.portal.jobs.start("yt")
+        job.set_state(AuthState.AwaitingOtp)
+
+        self.assertTrue(self.state()["next"].startswith("/otp/yt?t="))
+
+    def test_the_progress_state_without_a_job_goes_back_to_the_accounts(self):
+        self.assertEqual(self.state(), {"done": True, "kind": "home", "next": f"/?t={self.token}"})
+
+    def test_the_progress_state_needs_a_token_like_every_other_route(self):
+        status, _, _ = self.request("/progress/yt/state")
+
+        self.assertEqual(status, 404)
+
+    def test_pages_may_poll_their_own_origin_and_nothing_else(self):
+        _, headers, _ = self.request(f"/?t={self.token}")
+
+        self.assertIn("connect-src 'self'", headers["content-security-policy"])
+        self.assertIn("default-src 'none'", headers["content-security-policy"])
 
 
 if __name__ == "__main__":

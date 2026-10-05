@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: StreamerBot 2.3.0\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-09-15 22:33-0400\n"
+"POT-Creation-Date: 2026-10-04 23:30+0000\n"
 "PO-Revision-Date: 2022-05-12 15:06+0200\n"
 "Last-Translator: Iván Novegil Cancelas <ivan.novegil.cancelas@gmail.com>\n"
 "Language: es\n"
@@ -29,7 +29,7 @@ msgstr ""
 msgid "Spotify is unavailable: the player could not start."
 msgstr ""
 
-#: bot/__init__.py:261 bot/__init__.py:264 bot/modules/portal_pages.py:478
+#: bot/__init__.py:261 bot/__init__.py:264 bot/modules/portal_pages.py:543
 msgid "The sign-in did not complete."
 msgstr ""
 
@@ -68,14 +68,14 @@ msgid ""
 "patience!"
 msgstr ""
 
-#: bot/__init__.py:408
+#: bot/__init__.py:410
 msgid ""
 "Hello there! It's me, the Streamer Bot, just coming in here to let you "
 "know that an update is in progress and I will restart in a few moments to"
 " apply it. Thank you!"
 msgstr ""
 
-#: bot/__init__.py:440
+#: bot/__init__.py:467
 msgid "The bot is restarting now to apply the update. See you in a moment!"
 msgstr ""
 "El bot se está reiniciando ahora para aplicar la actualización. ¡Vuelvo "
@@ -346,8 +346,8 @@ msgid ""
 msgstr ""
 
 # | msgid "This user is not banned"
-#: bot/commands/admin_commands.py:409 bot/modules/auth_portal.py:268
-#: bot/modules/auth_portal.py:303
+#: bot/commands/admin_commands.py:409 bot/modules/auth_portal.py:283
+#: bot/modules/auth_portal.py:318
 #, fuzzy
 msgid "The YouTube service is not enabled."
 msgstr "Este usuario no está bloqueado"
@@ -998,9 +998,9 @@ msgstr "No hay resultados disponibles. Usa 'p CONSULTA' para buscar primero"
 msgid "{nickname} selected: {track}"
 msgstr "{nickname} seleccionó: {track}"
 
+# | msgid "Loaded {count} tracks"
 #: bot/commands/user_commands.py:1163
 #, fuzzy, python-brace-format
-#| msgid "Loaded {count} tracks"
 msgid "Playing {name}, {count} tracks"
 msgstr "Cargadas {count} pistas"
 
@@ -1435,34 +1435,34 @@ msgstr ""
 msgid "1. Yes. 2. No. 3. Yes, and remember. 4. No, and remember."
 msgstr ""
 
-#: bot/modules/auth_portal.py:347
+#: bot/modules/auth_portal.py:362
 msgid "Enter the Google account email address"
 msgstr ""
 
-#: bot/modules/auth_portal.py:349
+#: bot/modules/auth_portal.py:364
 #, python-format
 msgid "Enter your %(service)s email address or username"
 msgstr ""
 
-#: bot/modules/auth_portal.py:354
+#: bot/modules/auth_portal.py:369
 msgid "Enter the Google account password"
 msgstr ""
 
-#: bot/modules/auth_portal.py:356
+#: bot/modules/auth_portal.py:371
 #, python-format
 msgid "Enter your %(service)s password"
 msgstr ""
 
-#: bot/modules/auth_portal.py:398
+#: bot/modules/auth_portal.py:413
 msgid "Enter the verification code"
 msgstr ""
 
-#: bot/modules/auth_portal.py:604
+#: bot/modules/auth_portal.py:630
 msgid "Signing in to this service is not available yet."
 msgstr ""
 
 # | msgid "Cache cleared"
-#: bot/modules/auth_portal.py:621
+#: bot/modules/auth_portal.py:647
 #, fuzzy
 msgid "Cancelled."
 msgstr "Caché vaciada"
@@ -1516,9 +1516,9 @@ msgstr ""
 msgid "Back to your accounts"
 msgstr ""
 
-#: bot/modules/portal_pages.py:174 bot/modules/portal_pages.py:470
-#: bot/modules/portal_pages.py:498 bot/modules/portal_pages.py:562
-#: bot/modules/portal_pages.py:615 bot/modules/portal_pages.py:661
+#: bot/modules/portal_pages.py:174 bot/modules/portal_pages.py:535
+#: bot/modules/portal_pages.py:563 bot/modules/portal_pages.py:627
+#: bot/modules/portal_pages.py:683 bot/modules/portal_pages.py:749
 #, python-format
 msgid "Import a %(service)s session"
 msgstr ""
@@ -1533,7 +1533,7 @@ msgstr ""
 msgid "Connected"
 msgstr ""
 
-#: bot/modules/portal_pages.py:202 bot/modules/portal_pages.py:699
+#: bot/modules/portal_pages.py:202 bot/modules/portal_pages.py:787
 #, python-format
 msgid "Disconnect %(service)s"
 msgstr ""
@@ -1653,11 +1653,11 @@ msgid "Send a new code"
 msgstr ""
 
 #: bot/modules/portal_pages.py:424 bot/modules/portal_pages.py:444
-#: bot/modules/portal_pages.py:565
+#: bot/modules/portal_pages.py:630
 msgid "Cancel this sign-in"
 msgstr ""
 
-#: bot/modules/portal_pages.py:435 bot/modules/portal_pages.py:447
+#: bot/modules/portal_pages.py:435 bot/modules/portal_pages.py:448
 #, python-format
 msgid "Signing in to %(service)s"
 msgstr ""
@@ -1670,177 +1670,293 @@ msgstr ""
 msgid "Check again"
 msgstr ""
 
-#: bot/modules/portal_pages.py:453 bot/modules/portal_pages.py:457
+#: bot/modules/portal_pages.py:468
+msgid "Google needs a verification code. Opening that page."
+msgstr ""
+
+#: bot/modules/portal_pages.py:469
+msgid "Google needs you to approve the sign-in on your phone. Opening that page."
+msgstr ""
+
+#: bot/modules/portal_pages.py:470
+msgid "Signed in. Opening the confirmation page."
+msgstr ""
+
+#: bot/modules/portal_pages.py:471
+msgid "The sign-in did not complete. Opening the page that says why."
+msgstr ""
+
+#: bot/modules/portal_pages.py:472
+msgid "This sign-in is no longer running. Going back to your accounts."
+msgstr ""
+
+#: bot/modules/portal_pages.py:473
+#, python-format
+msgid "Still signing in. %(seconds)s seconds so far."
+msgstr ""
+
+#: bot/modules/portal_pages.py:474
+#, python-format
+msgid "Still signing in. %(minutes)s minutes so far."
+msgstr ""
+
+#: bot/modules/portal_pages.py:475
+msgid ""
+"This link has expired or the sign-in was cancelled. To get a new link, "
+"send the li command to StreamerBot in TeamTalk."
+msgstr ""
+
+#: bot/modules/portal_pages.py:476
+msgid "Lost contact with StreamerBot. Use Check again in a moment."
+msgstr ""
+
+#: bot/modules/portal_pages.py:477
+msgid ""
+"This is taking longer than expected. Use Check again, or Cancel this "
+"sign-in."
+msgstr ""
+
+#: bot/modules/portal_pages.py:518 bot/modules/portal_pages.py:522
 #, python-format
 msgid "%(service)s connected"
 msgstr ""
 
-#: bot/modules/portal_pages.py:454
+#: bot/modules/portal_pages.py:519
 #, python-format
 msgid "StreamerBot can now stream from your %(service)s account."
 msgstr ""
 
-#: bot/modules/portal_pages.py:463
+#: bot/modules/portal_pages.py:528
 msgid "Try again"
 msgstr ""
 
-#: bot/modules/portal_pages.py:477 bot/modules/portal_pages.py:483
+#: bot/modules/portal_pages.py:542 bot/modules/portal_pages.py:548
 #, python-format
 msgid "%(service)s could not be connected"
 msgstr ""
 
-#: bot/modules/portal_pages.py:496
+#: bot/modules/portal_pages.py:561
 msgid ""
 "If Google refuses to sign in here, import a session from your own browser"
 " instead:"
 msgstr ""
 
-#: bot/modules/portal_pages.py:502
+#: bot/modules/portal_pages.py:567
 msgid "Use a separate Google account"
 msgstr ""
 
-#: bot/modules/portal_pages.py:503
+#: bot/modules/portal_pages.py:568
 msgid ""
 "Google may restrict an account that plays videos automatically from a "
 "server. Make a Google account just for StreamerBot rather than using your"
 " personal one."
 msgstr ""
 
-#: bot/modules/portal_pages.py:527 bot/modules/portal_pages.py:550
+#: bot/modules/portal_pages.py:592 bot/modules/portal_pages.py:615
 msgid "Approve the sign-in on your phone"
 msgstr ""
 
-#: bot/modules/portal_pages.py:531
+#: bot/modules/portal_pages.py:596
 msgid "Not approved yet. Approve the sign-in on your phone"
 msgstr ""
 
-#: bot/modules/portal_pages.py:537
+#: bot/modules/portal_pages.py:602
 msgid "Number to tap on your phone"
 msgstr ""
 
-#: bot/modules/portal_pages.py:545
+#: bot/modules/portal_pages.py:610
 msgid "Google says:"
 msgstr ""
 
-#: bot/modules/portal_pages.py:551
+#: bot/modules/portal_pages.py:616
 msgid "Google has not confirmed the approval yet."
 msgstr ""
 
-#: bot/modules/portal_pages.py:554
+#: bot/modules/portal_pages.py:619
 msgid ""
 "Google sent a prompt to a phone or tablet signed in to this account. Tap "
 "Yes on it, then come back here."
 msgstr ""
 
-#: bot/modules/portal_pages.py:555
+#: bot/modules/portal_pages.py:620
 msgid ""
 "The prompt stops working after a few minutes. If it has gone, cancel and "
 "sign in again."
 msgstr ""
 
-#: bot/modules/portal_pages.py:559
+#: bot/modules/portal_pages.py:624
 msgid "I have approved it on my phone"
 msgstr ""
 
-#: bot/modules/portal_pages.py:617
+#: bot/modules/portal_pages.py:685
 msgid ""
 "Use this when Google will not sign in from the bot, or when the bot "
-"cannot run a browser."
+"cannot run a browser. You need a cookies.txt file from a browser that is "
+"signed in to YouTube."
 msgstr ""
 
-#: bot/modules/portal_pages.py:619
+#: bot/modules/portal_pages.py:688
+msgid "I already have the file. Go to the import form."
+msgstr ""
+
+#: bot/modules/portal_pages.py:693
+msgid "How to get a cookies.txt file"
+msgstr ""
+
+#: bot/modules/portal_pages.py:694
+msgid "On an Android phone"
+msgstr ""
+
+#: bot/modules/portal_pages.py:695
+msgid ""
+"No computer is needed. This uses the Firefox browser, which can add a "
+"small cookie exporter on Android."
+msgstr ""
+
+#: bot/modules/portal_pages.py:697
+msgid "Install Firefox from the Google Play Store, and open this page in Firefox."
+msgstr ""
+
+#: bot/modules/portal_pages.py:698
+msgid ""
+"In Firefox, open the menu, choose Extensions, then find and add the "
+"extension called cookies.txt."
+msgstr ""
+
+#: bot/modules/portal_pages.py:699
+msgid ""
+"Go to youtube.com in Firefox and sign in with the Google account made for"
+" StreamerBot."
+msgstr ""
+
+#: bot/modules/portal_pages.py:700
+msgid ""
+"While still on youtube.com, open the Firefox menu, choose Extensions, "
+"then cookies.txt, and export the cookies for the current site. The file "
+"is saved to your Downloads."
+msgstr ""
+
+#: bot/modules/portal_pages.py:701
+msgid ""
+"Come back to this page in Firefox and choose that file in the import form"
+" below."
+msgstr ""
+
+#: bot/modules/portal_pages.py:703
+msgid "On an iPhone or iPad"
+msgstr ""
+
+#: bot/modules/portal_pages.py:704
+msgid ""
+"There is no reliable way to export this file on an iPhone or iPad. Use an"
+" Android phone or a computer, or ask someone who has one to do it for "
+"you. They must sign in with the Google account made for StreamerBot, "
+"never their own."
+msgstr ""
+
+#: bot/modules/portal_pages.py:705
+msgid "On a computer"
+msgstr ""
+
+#: bot/modules/portal_pages.py:707
 msgid ""
 "In your own browser, sign in to YouTube with the Google account made for "
 "StreamerBot."
 msgstr ""
 
-#: bot/modules/portal_pages.py:620
+#: bot/modules/portal_pages.py:708
 msgid ""
 "While on youtube.com, use a cookie export extension to save the cookies "
 "in Netscape cookies.txt format."
 msgstr ""
 
-#: bot/modules/portal_pages.py:621
+#: bot/modules/portal_pages.py:709
 msgid ""
-"Choose that file below, or open it, copy everything in it, and paste it "
-"into the box below."
+"Choose that file in the import form below, or open it, copy everything in"
+" it, and paste it into the box below."
 msgstr ""
 
-#: bot/modules/portal_pages.py:622
-msgid "Select Import the session."
+#: bot/modules/portal_pages.py:711
+msgid ""
+"Afterwards, do not sign out of YouTube in that browser. Signing out ends "
+"the session StreamerBot is using. Closing the browser is fine."
 msgstr ""
 
-#: bot/modules/portal_pages.py:625
+#: bot/modules/portal_pages.py:712
 msgid ""
 "Google sometimes ends a session that is used from a different place. If "
 "that happens, StreamerBot tells you in TeamTalk and you can import again."
 msgstr ""
 
-#: bot/modules/portal_pages.py:629
+#: bot/modules/portal_pages.py:716
 msgid ""
 "This server cannot run a browser, so nothing can keep an imported session"
 " alive. Expect to import again from time to time."
 msgstr ""
 
-#: bot/modules/portal_pages.py:636
+#: bot/modules/portal_pages.py:718
+msgid "Import your file"
+msgstr ""
+
+#: bot/modules/portal_pages.py:724
 msgid "Your cookies.txt file"
 msgstr ""
 
-#: bot/modules/portal_pages.py:642
+#: bot/modules/portal_pages.py:730
 msgid "Or paste the contents of the file"
 msgstr ""
 
-#: bot/modules/portal_pages.py:643
+#: bot/modules/portal_pages.py:731
 msgid "Paste the whole file. It is several lines of text."
 msgstr ""
 
-#: bot/modules/portal_pages.py:650
+#: bot/modules/portal_pages.py:738
 msgid "Import the session"
 msgstr ""
 
-#: bot/modules/portal_pages.py:656
+#: bot/modules/portal_pages.py:744
 #, python-format
 msgid "Lines pasted: %(count)s"
 msgstr ""
 
-#: bot/modules/portal_pages.py:673
+#: bot/modules/portal_pages.py:761
 msgid "Choose your cookies.txt file, or paste its contents"
 msgstr ""
 
-#: bot/modules/portal_pages.py:674
+#: bot/modules/portal_pages.py:762
 msgid ""
 "This is too long to be a cookies file. Check you chose only the "
 "cookies.txt file."
 msgstr ""
 
-#: bot/modules/portal_pages.py:675
+#: bot/modules/portal_pages.py:763
 msgid ""
 "This is not a cookies.txt file. Export the cookies again in Netscape "
 "cookies.txt format."
 msgstr ""
 
-#: bot/modules/portal_pages.py:676
+#: bot/modules/portal_pages.py:764
 msgid ""
 "This file has no YouTube sign-in in it. Sign in to YouTube in your "
 "browser, then export the cookies again while on youtube.com."
 msgstr ""
 
-#: bot/modules/portal_pages.py:677
+#: bot/modules/portal_pages.py:765
 msgid ""
 "YouTube says this session is already signed out. Sign in to YouTube in "
 "your browser again, then export a fresh file."
 msgstr ""
 
-#: bot/modules/portal_pages.py:678
+#: bot/modules/portal_pages.py:766
 msgid "The session could not be imported."
 msgstr ""
 
-#: bot/modules/portal_pages.py:690 bot/modules/portal_pages.py:705
+#: bot/modules/portal_pages.py:778 bot/modules/portal_pages.py:793
 #, python-format
 msgid "Disconnect %(service)s?"
 msgstr ""
 
-#: bot/modules/portal_pages.py:691
+#: bot/modules/portal_pages.py:779
 #, python-format
 msgid ""
 "StreamerBot will stop streaming from your %(service)s account. Your "
@@ -1848,44 +1964,44 @@ msgid ""
 "time."
 msgstr ""
 
-#: bot/modules/portal_pages.py:702
+#: bot/modules/portal_pages.py:790
 #, python-format
 msgid "Cancel, keep %(service)s connected"
 msgstr ""
 
 # | msgid "help text not found"
-#: bot/modules/portal_pages.py:721
+#: bot/modules/portal_pages.py:809
 #, fuzzy
 msgid "Page not found"
 msgstr "texto de ayuda no encontrado"
 
 # | msgid "This user is not in the admin list"
-#: bot/modules/portal_pages.py:722
+#: bot/modules/portal_pages.py:810
 #, fuzzy
 msgid "This address is not quite right."
 msgstr "Este usuario no está en la lista de admins"
 
-#: bot/modules/portal_pages.py:723 bot/modules/portal_pages.py:730
+#: bot/modules/portal_pages.py:811 bot/modules/portal_pages.py:818
 msgid "To get a new link, send the li command to StreamerBot in TeamTalk."
 msgstr ""
 
-#: bot/modules/portal_pages.py:728
+#: bot/modules/portal_pages.py:816
 msgid "Link expired"
 msgstr ""
 
-#: bot/modules/portal_pages.py:729
+#: bot/modules/portal_pages.py:817
 msgid "This link has expired."
 msgstr ""
 
-#: bot/modules/portal_pages.py:735
+#: bot/modules/portal_pages.py:823
 msgid "Something went wrong"
 msgstr ""
 
-#: bot/modules/portal_pages.py:736
+#: bot/modules/portal_pages.py:824
 msgid "StreamerBot could not finish that request."
 msgstr ""
 
-#: bot/modules/portal_pages.py:737
+#: bot/modules/portal_pages.py:825
 msgid "Try again in a moment. If it keeps happening, check the bot's log."
 msgstr ""
 
@@ -1893,8 +2009,8 @@ msgstr ""
 msgid "Error: Downloaded file not found."
 msgstr "Error: Archivo descargado no encontrado."
 
-#: bot/modules/youtube_session_keeper.py:256
-#: bot/modules/youtube_session_keeper.py:263
+#: bot/modules/youtube_session_keeper.py:278
+#: bot/modules/youtube_session_keeper.py:285
 msgid ""
 "Google signed in, but YouTube did not recognise the session. Please try "
 "again."
@@ -2062,11 +2178,11 @@ msgstr ""
 msgid "Spotify tracks cannot be downloaded."
 msgstr "Las transmisiones en directo no se pueden descargar"
 
-#: bot/services/yt.py:194 bot/services/yt.py:466
+#: bot/services/yt.py:196 bot/services/yt.py:468
 msgid "Unknown Title"
 msgstr "Título desconocido"
 
-#: bot/services/yt.py:224 bot/services/ytm.py:141
+#: bot/services/yt.py:226 bot/services/ytm.py:141
 msgid "Unknown"
 msgstr "Desconocido"
 
@@ -2148,4 +2264,19 @@ msgstr "Desconocido"
 
 #~ msgid "{} (Warning: {})"
 #~ msgstr "{} (Advertencia: {})"
+
+#~ msgid ""
+#~ "Use this when Google will not sign"
+#~ " in from the bot, or when the"
+#~ " bot cannot run a browser."
+#~ msgstr ""
+
+#~ msgid ""
+#~ "Choose that file below, or open "
+#~ "it, copy everything in it, and "
+#~ "paste it into the box below."
+#~ msgstr ""
+
+#~ msgid "Select Import the session."
+#~ msgstr ""
 

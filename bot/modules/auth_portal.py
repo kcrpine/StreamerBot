@@ -15,6 +15,7 @@ something here worth attacking.
 
 from __future__ import annotations
 
+import json
 import logging
 import threading
 import time
@@ -80,8 +81,22 @@ class PortalHandler(BaseHTTPRequestHandler):
         self.send_header("x-frame-options", "DENY")
         self.send_header(
             "content-security-policy",
-            "default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; form-action 'self'",
+            # connect-src lets the progress page poll its own state route and
+            # nothing else.
+            "default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; "
+            "connect-src 'self'; form-action 'self'",
         )
+        self.end_headers()
+        self.wfile.write(payload)
+
+    def _send_json(self, status: int, data: Dict[str, Any]) -> None:
+        payload = json.dumps(data).encode("utf-8")
+        self.send_response(status)
+        self.send_header("content-type", "application/json; charset=utf-8")
+        self.send_header("content-length", str(len(payload)))
+        self.send_header("cache-control", "no-store")
+        self.send_header("referrer-policy", "no-referrer")
+        self.send_header("x-content-type-options", "nosniff")
         self.end_headers()
         self.wfile.write(payload)
 
@@ -408,25 +423,36 @@ class PortalHandler(BaseHTTPRequestHandler):
     ) -> None:
         portal = self.portal
         pages = portal.pages
-        job = portal.jobs.get(service)
+        kind, next_page = self._progress_next(service, token)
 
-        if job is None:
-            self._redirect(f"/?t={token}")
+        if tail == "state":
+            # Polled by the progress page's script, which used to have nothing
+            # to poll: the page sat on "Waiting" until someone thought to press
+            # Check again, and a sign-in Google had long since refused looked
+            # like one that was hanging. kind lets the page say where it is
+            # going before it goes.
+            self._send_json(200, {"done": next_page is not None, "kind": kind, "next": next_page or ""})
             return
-        if job.state is AuthState.AwaitingOtp:
-            self._redirect(f"/otp/{service}?t={token}")
-            return
-        if job.state is AuthState.AwaitingApproval:
-            self._redirect(f"/approve/{service}?t={token}")
-            return
-        if job.state is AuthState.Success:
-            self._redirect(f"/success/{service}?t={token}")
-            return
-        if job.state in (AuthState.Failed, AuthState.AwaitingCaptcha):
-            self._redirect(f"/failure/{service}?t={token}")
+        if next_page is not None:
+            self._redirect(next_page)
             return
 
         self._send(200, pages.progress_page(token, service))
+
+    def _progress_next(self, service: str, token: str) -> Tuple[str, Optional[str]]:
+        """(kind, page) for a sign-in that is no longer just working; ("", None) while it is."""
+        job = self.portal.jobs.get(service)
+        if job is None:
+            return "home", f"/?t={token}"
+        if job.state is AuthState.AwaitingOtp:
+            return "otp", f"/otp/{service}?t={token}"
+        if job.state is AuthState.AwaitingApproval:
+            return "approve", f"/approve/{service}?t={token}"
+        if job.state is AuthState.Success:
+            return "success", f"/success/{service}?t={token}"
+        if job.state in (AuthState.Failed, AuthState.AwaitingCaptcha):
+            return "failure", f"/failure/{service}?t={token}"
+        return "", None
 
     def _route_success(
         self, method: str, service: str, tail: str, token: str, form: Dict[str, list]

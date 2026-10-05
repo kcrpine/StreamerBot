@@ -6,6 +6,26 @@ issue or a commit message. Numbering continues across releases.
 
 ## Unreleased
 
+- **[063]** The portal's "Signing in" page now follows the sign-in by itself, and the YouTube import
+  page explains how to get a cookies.txt file on an Android phone. The progress page had an empty status
+  region and no script, so it said "Waiting for the service to confirm" until someone pressed Check
+  again. On paralleledition every password sign-in looked like it hung, though Google had refused it
+  within seconds: run in TestBot's container, Google sent the bot's Chrome to
+  `accounts.google.com/v3/signin/rejected` ("This browser or app may not be secure") right after the
+  email step, for an account that does not even exist. The page now polls a new
+  `/progress/<service>/state` route (JSON; CSP gains `connect-src 'self'`) and replaces itself with the
+  code, approval, success or failure page, saying which one first. Following the accessibility review,
+  it never moves focus. Waiting messages give the elapsed time, so the live region never repeats
+  itself, and come every 30 seconds, then every 90 after two minutes. It polls as soon as a hidden tab
+  becomes visible again, says so when the link is revoked or the bot stops answering, and follows only
+  same-site paths other than itself. The import page gains an h2 "How to get a cookies.txt file" with an
+  h3 per device. Android uses Firefox and the cookies.txt add-on, so no computer is needed. iPhone comes
+  second, because most blind phone users are on VoiceOver, and says plainly that there is no reliable
+  way there. The page also gains a link straight to the file field and a warning not to sign out of
+  YouTube afterwards. The file field drops its `accept` filter, which Android's picker can use to hide
+  the download. **Not verified on a real phone:** that the add-on installs and exports to Downloads on
+  Firefox for Android, and that its popup works with TalkBack.
+
 - **[062]** A bot whose mpv has stopped answering now restarts itself instead of hanging silently. On
   2026-10-04 a YouTube live broadcast ended on one bot of several on a host and libmpv's core thread stopped servicing
   requests at 22:00:43. Every later call into mpv blocked inside C: nine play commands, `s`, and `rs`,
