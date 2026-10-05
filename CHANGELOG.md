@@ -6,6 +6,21 @@ issue or a commit message. Numbering continues across releases.
 
 ## Unreleased
 
+- **[062]** A bot whose mpv has stopped answering now restarts itself instead of hanging silently. On
+  2026-10-04 a YouTube live broadcast ended on one bot of several on a host and libmpv's core thread stopped servicing
+  requests at 22:00:43. Every later call into mpv blocked inside C: nine play commands, `s`, and `rs`,
+  whose restart begins by terminating mpv. TeamTalk chat kept arriving and commands kept starting, so it
+  read as "the bot ignores commands" for over two hours, with nothing in the log at any level. A py-spy
+  dump showed every stuck thread parked in `mpv_get_property`, `mpv_set_property` or `mpv_command`,
+  PulseAudio healthy, and no hooks that could deadlock the core against the event thread. The end-file
+  handler was a victim, not the cause. `bot/player/mpv_watchdog.py` asks mpv for `idle-active` every 15s
+  from one thread and watches the clock from another (a blocked call cannot time itself out). After 60s
+  unanswered it logs every thread's stack at CRITICAL and exits with status 70, and the container's
+  `always` restart policy brings the bot back. Also, mpv's own messages were all logged at level 5, below
+  DEBUG, so its errors never appeared at any configured level. Now `fatal`/`error`/`warn` reach
+  CRITICAL/ERROR/WARNING and `info` reaches DEBUG, so the next freeze has mpv's last words in the log.
+  Why the core stopped is still unknown: its thread runs no Python and the image has no gdb.
+
 - **[061]** A TeamTalk event the bot does not recognise no longer leaves it deaf. Creating a user account
   on the server sends every admin-logged-in client event 410 (`CLIENTEVENT_CMD_USERACCOUNT_NEW`).
   `EventType` had no member for it, or for nine other events the 5.22 SDK defines, so `EventType(410)`

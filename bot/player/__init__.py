@@ -1,6 +1,7 @@
 from __future__ import annotations
 import html
 import logging
+import os
 import time
 import threading
 from typing import Any, Dict, Callable, List, Optional, Tuple, TYPE_CHECKING
@@ -12,6 +13,7 @@ from bot import errors
 from bot.player.enums import Mode, State, TrackType
 from bot.player.engines import PlaybackEngine
 from bot.player.engines.mpv_engine import MpvEngine
+from bot.player.mpv_watchdog import MpvWatchdog, format_all_thread_stacks
 from bot.player.track import Track
 from bot.player.queue_manager import QueueManager
 from bot.sound_devices import SoundDevice, SoundDeviceType
@@ -22,6 +24,19 @@ if TYPE_CHECKING:
 
 
 PREFETCH_DELAY_SECONDS = 0.05
+
+# mpv's own messages, by mpv's level name. Everything used to go to level 5,
+# below DEBUG, so mpv's errors were invisible at every configured level --
+# including whatever it said before its core stopped answering.
+MPV_LOG_LEVELS = {
+    "fatal": logging.CRITICAL,
+    "error": logging.ERROR,
+    "warn": logging.WARNING,
+    "info": logging.DEBUG,
+}
+
+# Exit status when mpv's core has stopped; see mpv_watchdog.
+MPV_UNRESPONSIVE_EXIT_CODE = 70
 
 # googlevideo.com playback URLs occasionally 403 on the very first fetch after
 # being signed -- an edge/token propagation lag on Google's side, confirmed by
@@ -118,6 +133,10 @@ class Player:
         self._prefetch_timer: Optional[threading.Timer] = None
 
         self.queue: QueueManager = QueueManager()
+        self._mpv_watchdog = MpvWatchdog(
+            probe=lambda: self._player.idle_active,
+            on_unresponsive=self._on_mpv_unresponsive,
+        )
 
     def initialize(self) -> None:
         logging.debug("Initializing player")
@@ -141,9 +160,11 @@ class Player:
         self._player.observe_property("time-pos", self.on_playback_progress)
         self._player.observe_property("duration", self.on_playback_progress)
         logging.debug("Player callbacks registered")
+        self._mpv_watchdog.start()
 
     def close(self) -> None:
         logging.debug("Closing player")
+        self._mpv_watchdog.close()
         self._cancel_prefetch()
         if self.state != State.Stopped:
             self.stop()
@@ -801,7 +822,30 @@ class Player:
         self._player.event_callback(callback_name)(callback_func)
 
     def log_handler(self, level: str, component: str, message: str) -> None:
-        logging.log(self._log_level, "{}: {}: {}".format(level, component, message))
+        logging.log(
+            MPV_LOG_LEVELS.get(level, self._log_level),
+            "mpv {}: {}: {}".format(level, component, message.rstrip()),
+        )
+
+    def _on_mpv_unresponsive(self, waited: float) -> None:
+        """mpv's core has stopped; nothing in-process can bring it back.
+
+        A clean shutdown is not an option -- it starts by terminating mpv, which
+        blocks like everything else -- so log what every thread is stuck in and
+        leave, for the container's restart policy to start the bot again.
+        """
+        logging.critical(
+            f"[MpvWatchdog] mpv has not answered for {waited:.0f}s; every play, "
+            f"stop and restart command would now hang. Track: {self.track.name!r}. "
+            "Exiting so the container restarts the bot. Thread stacks:\n"
+            + format_all_thread_stacks()
+        )
+        for handler in logging.getLogger().handlers:
+            try:
+                handler.flush()
+            except Exception:  # noqa: BLE001 - leaving matters more than the log
+                pass
+        os._exit(MPV_UNRESPONSIVE_EXIT_CODE)
 
     def _parse_metadata(self, metadata: Dict[str, Any]) -> str:
         stream_names = ["icy-name"]
