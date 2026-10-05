@@ -6,6 +6,15 @@ issue or a commit message. Numbering continues across releases.
 
 ## Unreleased
 
+- **[067]** `update.sh` no longer copies the whole `bots/` folder into `/tmp` on every update. The copy
+  came over from TTMediaBot as a "just in case" backup around `git reset --hard` and `git clean -fd`, but
+  `/bots/` is in `.gitignore` and neither command touches an ignored path, so it protected nothing. It cost
+  a great deal: on a cPanel host, whose `/tmp` is a 3.9 GB loop file, the 3.2 GB copy took `/tmp` to
+  86.58% for each update and cPanel emailed disk warnings (measured from `chkservd.log`: 5.5% normally,
+  80.76% and 86.58% at the two updates on 2026-10-05). The restore also wrote stale files back over
+  whatever the running bots had written during the update, such as a freshly rotated `cookies.txt`.
+  `tests/deployment/test_update_keeps_bots.py` pins the `.gitignore` rule the removal depends on by checking
+  against a scratch repository that reset and clean leave an ignored `bots/` alone.
 - **[066]** The deployment tests now run on a host whose `/tmp` is mounted `noexec`. They write stub
   commands and harness scripts into a temporary directory and execute them; on such a host the harnesses
   failed with `Permission denied`, and bash's PATH lookup silently skipped the stubs it could not execute
