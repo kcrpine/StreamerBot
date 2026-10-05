@@ -6,6 +6,14 @@ issue or a commit message. Numbering continues across releases.
 
 ## Unreleased
 
+- **[066]** The deployment tests now run on a host whose `/tmp` is mounted `noexec`. They write stub
+  commands and harness scripts into a temporary directory and execute them; on such a host the harnesses
+  failed with `Permission denied`, and bash's PATH lookup silently skipped the stubs it could not execute
+  and ran the host's real `date` and `ufw` instead, as root. That surfaced as twelve unrelated-looking
+  failures across the updater-lock, auto-updater and firewall tests, which blocked every push from the
+  host until `--no-verify` was used. `tests/deployment/__init__.py` now checks that a file in the
+  temporary directory actually executes and, if not, moves `tempfile` to `/dev/shm`, `/var/tmp` or
+  `~/.cache/streamerbot-tests`, whichever works first. No real firewall rules were left behind.
 - **[065]** Port allocation now counts a port a bot leaves unset as the default it really binds. A bot
   made before the YouTube stream relay existed has no `player.stream_proxy_port` in its config, so it
   binds the default 4420. `bot_claimed_ports` read that missing key as claiming nothing, so when a new bot
