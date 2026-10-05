@@ -2297,12 +2297,19 @@ DEFAULT_LIBRESPOT_API_PORT=3678
 DEFAULT_STREAM_PROXY_PORT=4420
 
 # Every port already claimed by a bot other than the one in $1.
+#
+# A key missing from a config claims its default, not nothing: the bot falls back
+# to the default and binds it all the same. Reading a missing key as "claims
+# nothing" let a bot made before the stream relay existed hold 4420 unseen, and
+# the next bot's portal was given 4420 and failed to bind on every start.
 bot_claimed_ports() {
     local skip_dir="$1" cfg
     for cfg in "$BOTS_ROOT"/*/config.json; do
         [ -f "$cfg" ] || continue
         [ "$(dirname "$cfg")" = "$skip_dir" ] && continue
-        jq -r '[.auth_portal.port // empty, .services.sp.api_port // empty, .player.stream_proxy_port // empty]
+        jq -r --argjson p "$DEFAULT_PORTAL_PORT" --argjson a "$DEFAULT_LIBRESPOT_API_PORT" \
+              --argjson s "$DEFAULT_STREAM_PROXY_PORT" \
+              '[.auth_portal.port // $p, .services.sp.api_port // $a, .player.stream_proxy_port // $s]
                | .[] | tostring' "$cfg" 2>/dev/null
     done
 }
@@ -2432,7 +2439,7 @@ reenable_portal_after_repair() {
 # Returns 0 whether or not anything moved; only a failure to find a free port
 # is an error, and that is reported rather than left to fail at start.
 assign_unique_bot_ports() {
-    local dir="$1" claimed portal api proxy new_portal new_api new_proxy tmp changed=0
+    local dir="$1" claimed portal api proxy new_portal new_api new_proxy tmp missing changed=0
     [ -f "$dir/config.json" ] || return 0
 
     claimed=$(bot_claimed_ports "$dir")
@@ -2489,6 +2496,12 @@ assign_unique_bot_ports() {
         changed=1
     fi
 
+    # A port left to its default is written down even when nothing moved, so
+    # the config says what the bot actually binds and the next pass reads it.
+    missing=$(jq -r '[.auth_portal.port, .services.sp.api_port, .player.stream_proxy_port]
+                     | map(select(. == null)) | length' "$dir/config.json" 2>/dev/null)
+    [[ "$missing" =~ ^[1-9] ]] && changed=1
+
     if [ "$changed" -eq 0 ]; then
         # The ports are fine. If this bot was switched off for a clash that no
         # longer exists, turn it back on.
@@ -2508,6 +2521,8 @@ assign_unique_bot_ports() {
             echo "  go-librespot port ${api} was already taken, so this bot uses ${new_api}."
         [ "$new_proxy" != "$proxy" ] &&
             echo "  YouTube stream relay port ${proxy} was already taken, so this bot uses ${new_proxy}."
+        [[ "$missing" =~ ^[1-9] ]] &&
+            echo "  Recorded this bot's ports in its configuration: portal ${new_portal}, go-librespot ${new_api}, stream relay ${new_proxy}."
         log_line "Ports for $(basename "$dir"): portal ${portal}->${new_portal} librespot ${api}->${new_api} stream_proxy ${proxy}->${new_proxy}"
         reenable_portal_after_repair "$dir" "$new_portal"
     else

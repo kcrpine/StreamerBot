@@ -230,6 +230,43 @@ class AllocationTests(PortAllocationHarness):
         self.assertEqual(len(set(apis)), len(names), apis)
         self.assertEqual(len(set(proxies)), len(names), proxies)
 
+    def make_bot_without_proxy_key(self, name, portal=4419, api=3678):
+        """A bot created before the stream relay existed: no player section."""
+        d = self.make_bot(name, portal=portal, api=api)
+        data = json.loads((d / "config.json").read_text(encoding="utf-8"))
+        del data["player"]
+        (d / "config.json").write_text(json.dumps(data), encoding="utf-8")
+        return d
+
+    def test_a_missing_stream_proxy_key_still_claims_the_default(self):
+        """The bug on a live host. "backup" predates the stream relay, has no
+        stream_proxy_port, and binds the default 4420 anyway. Allocating a new
+        bot alone, as creating one does, read that missing key as claiming
+        nothing and gave the newcomer 4420 for its portal, which then failed to
+        bind on every start. The live result was exactly 4420/3679/4421."""
+        self.make_bot_without_proxy_key("backup")
+        self.make_bot("doug")
+
+        result = self.run_shell('assign_unique_bot_ports "$BOTS_ROOT/doug"')
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        doug = list(self.ports_of("doug")) + [self.stream_proxy_port_of("doug")]
+        self.assertNotIn(4420, doug)
+        self.assertEqual(len(set(doug) | {4419, 3678, 4420}), 6, doug)
+
+    def test_a_missing_key_is_written_down_and_then_left_alone(self):
+        """Recording the default makes the config say what the bot binds, and a
+        second pass must find nothing to do."""
+        self.make_bot_without_proxy_key("solo")
+
+        first = self.run_shell('assign_unique_bot_ports "$BOTS_ROOT/solo"')
+        self.assertEqual(self.stream_proxy_port_of("solo"), 4420)
+        self.assertIn("Recorded", first.stdout)
+
+        second = self.run_shell('assign_unique_bot_ports "$BOTS_ROOT/solo"')
+        self.assertEqual(second.stdout.strip(), "")
+        self.assertEqual(self.ports_of("solo"), (4419, 3678))
+
     def test_a_teamtalk_section_is_never_touched(self):
         """The same promise the restore path makes. A bot that comes back under a
         different nickname is worse than one with no portal."""

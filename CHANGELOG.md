@@ -6,6 +6,15 @@ issue or a commit message. Numbering continues across releases.
 
 ## Unreleased
 
+- **[065]** Port allocation now counts a port a bot leaves unset as the default it really binds. A bot
+  made before the YouTube stream relay existed has no `player.stream_proxy_port` in its config, so it
+  binds the default 4420. `bot_claimed_ports` read that missing key as claiming nothing, so when a new bot
+  was allocated on its own, as creating one does, it was handed 4420 for its account portal. Measured on
+  a live host: `backup`'s relay held `127.0.0.1:4420`, `Doug`'s portal logged `Address already in use`
+  on every start, and `li` had no link to send. Missing keys now claim their defaults, and
+  `assign_unique_bot_ports` writes any missing port into the config, so the file says what the bot binds.
+  Repair All could already untangle this from the old bot's side. Allocating only the new bot could not,
+  and that is the path a new bot takes. The regression test reproduces the live result exactly.
 - **[064]** Shell scripts and git hooks now check out with LF line endings on Windows too. A Windows
   clone with `core.autocrlf=true` wrote every `.sh` file and `.githooks/pre-push` with CRLF, though the
   repository stores them as LF. Run from WSL against that working tree, which `CLAUDE.md` says is the
