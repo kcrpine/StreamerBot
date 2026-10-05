@@ -87,7 +87,7 @@ Push from WSL when you want the hook to mean what it claims. Two things have to 
   no output. On this host WSL borrows Windows' Git Credential Manager
   (`credential.helper=/mnt/c/Program\ Files/Git/ucrt64/bin/git-credential-manager.exe` in WSL's
   `~/.gitconfig`), so both share one GitHub login.
-- **Scripts must be LF in the working tree.** `.gitattributes` pins `*.sh` and `.githooks/*` to
+- **Scripts must be LF in the working tree.** `.gitattributes` pins `*.sh`, `.githooks/*` and `project.env` to
   `eol=lf` ([064]). A clone made before that rule has CRLF copies, and the hook fails with "cannot exec
   '.githooks/pre-push'". Check those files out again once to fix it.
 

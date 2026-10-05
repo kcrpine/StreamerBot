@@ -11,8 +11,10 @@ issue or a commit message. Numbering continues across releases.
   repository stores them as LF. Run from WSL against that working tree, which `CLAUDE.md` says is the
   only place the pre-push hook tests anything, bash stopped at the first line: the hook failed with
   "cannot exec '.githooks/pre-push': No such file or directory", and the 12 tests in
-  `test_youtube_egress` failed because they source `youtube_egress.sh`. A new `.gitattributes` pins
-  `*.sh` and `.githooks/*` to `eol=lf`. The stored files are unchanged, so Linux hosts and CI see no
+  `test_youtube_egress` failed because they source `youtube_egress.sh`. `project.env` had the same
+  problem: the hook sourced `IMAGE_NAME=streamerbot` with a trailing carriage return, reported "No
+  streamerbot image found", and skipped the whole in-image suite while still printing "OK. Pushing."
+  A new `.gitattributes` pins `*.sh`, `.githooks/*` and `project.env` to `eol=lf`. The stored files are unchanged, so Linux hosts and CI see no
   difference; an existing Windows clone picks it up after those files are checked out again.
 
 - **[063]** The portal's "Signing in" page now follows the sign-in by itself, and the YouTube import

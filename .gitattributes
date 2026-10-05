@@ -4,3 +4,5 @@
 # so they run from WSL against the same working tree. See [064].
 *.sh            text eol=lf
 .githooks/*     text eol=lf
+# Sourced by the scripts above; a CRLF copy turns IMAGE_NAME into "streamerbot\r".
+project.env     text eol=lf
