@@ -1,153 +1,154 @@
+"""`dlp`: download every track of a playlist, album or channel, zip them, upload the zip.
+
+Two messages, one when it starts and one when it ends, with nothing in between: a
+screen reader reads every message in full, so a progress line per track buried
+the result under dozens of lines nobody asked for. `dlp` with no argument still
+answers "where is it up to" for anyone who wants to know.
+
+YouTube refuses a stale session with LOGIN_REQUIRED. Playback commands renew it
+and retry; this job does the same through DownloadSignIn, once, rather than
+failing every track for the same reason and saying only that nothing worked.
+"""
+
 from __future__ import annotations
+
 import logging
-import threading
-import time
 import os
 import tempfile
+import threading
 import zipfile
-from typing import TYPE_CHECKING, List
-from queue import Empty
+from typing import TYPE_CHECKING, Dict, List, Optional
 
-from bot.player.track import Track
+from bot import utils
+from bot.modules.youtube_session_keeper import (
+    DownloadSignIn,
+    RefreshResult,
+    SignInLost,
+    sign_in_lost_message,
+)
 from bot.player.enums import TrackType
-from bot.TeamTalk.structs import ErrorType, User
-from bot import app_vars, utils
 
 if TYPE_CHECKING:
     from bot import Bot
+    from bot.modules.uploader import Uploader
+    from bot.player.track import Track
+    from bot.TeamTalk.structs import User
+
+YOUTUBE_SERVICES = ("yt", "ytm")
 
 
 class PlaylistUploader:
-    def __init__(self, bot: Bot):
+    def __init__(self, bot: Bot, uploader: Uploader):
         self.bot = bot
         self.config = bot.config
         self.ttclient = bot.ttclient
         self.translator = bot.translator
-        self.current_status = {} # Track status per user/channel
+        self.uploader = uploader
+        self.current_status: Dict[int, str] = {}
 
     def __call__(self, tracks: List[Track], user: User, playlist_name: str = "Playlist") -> None:
-        thread = threading.Thread(
+        threading.Thread(
             target=self.run,
+            args=(tracks, user, playlist_name),
             daemon=True,
-            args=(
-                tracks,
-                user,
-                playlist_name,
-            ),
-        )
-        thread.start()
+            name="PlaylistUploader",
+        ).start()
 
     def get_status(self, user_id: int) -> Optional[str]:
         return self.current_status.get(user_id)
 
-    def run(self, tracks: List[Track], user: User, playlist_name: str) -> None:
-        logging.info(f"PlaylistUploader started for {len(tracks)} tracks requested by {user.username}")
-        user_id = user.id
-        
-        # Unlimited playlist tracks allowed
-        pass
+    def _keeper(self):
+        return getattr(self.bot, "youtube_session", None)
 
-        error_exit = False
+    def run(self, tracks: List[Track], user: User, playlist_name: str) -> None:
+        translate = self.translator.translate
+        send = lambda text: self.ttclient.send_message(text, user)
+        logging.info(f"PlaylistUploader started for {len(tracks)} tracks requested by {user.username}")
+
+        youtube = any(track.service in YOUTUBE_SERVICES for track in tracks)
+        keeper = self._keeper() if youtube else None
+        if keeper is not None and keeper.store.needs_sign_in():
+            send(sign_in_lost_message(translate, RefreshResult.Ended, playlist_name))
+            return
+        sign_in = DownloadSignIn(
+            keeper,
+            on_renewing=lambda: send(translate(
+                "Renewing the YouTube sign-in. The download continues when it finishes."
+            )),
+        )
+
+        send(translate(
+            "Downloading the playlist {name}. Tracks: {count}. It will be uploaded to the "
+            "channel as one zip file when it is ready."
+        ).format(name=playlist_name, count=len(tracks)))
+
+        user_id = user.id
         temp_dir = tempfile.TemporaryDirectory()
         try:
-            downloaded_files = []
-            
-            status_msg = self.translator.translate("Downloading playlist: {}").format(playlist_name)
-            self.current_status[user_id] = status_msg
-            self.ttclient.send_message(status_msg, user.id, 1) # 1 = UserMessage (Private)
-
-            for i, track in enumerate(tracks):
+            downloaded: List[str] = []
+            failed = 0
+            for index, track in enumerate(tracks):
+                self.current_status[user_id] = translate(
+                    "Downloading track {number} of {total} from {name}."
+                ).format(number=index + 1, total=len(tracks), name=playlist_name)
                 try:
-                    progress_info = f"{i+1}/{len(tracks)}"
-                    current_track_msg = self.translator.translate("Downloading track {}: {}").format(progress_info, track.name)
-                    self.current_status[user_id] = current_track_msg
-                    
-                    # Update user every few tracks or for small playlists to avoid spamming too much
-                    if len(tracks) <= 10 or (i + 1) % 5 == 0 or i == 0 or (i + 1) == len(tracks):
-                        self.ttclient.send_message(current_track_msg, user.id, 1)
-                    
-                    logging.info(f"PlaylistUploader: {current_track_msg}")
-                    
-                    # Fetch stream data if it's dynamic
-                    if track.type == TrackType.Dynamic:
-                        try:
-                            track.url # Trigger fetch
-                        except Exception as e:
-                            logging.warning(f"PlaylistUploader: Failed to fetch data for track {i+1}: {e}")
-                            continue
+                    downloaded.append(self._download(track, temp_dir.name, sign_in))
+                except SignInLost as lost:
+                    logging.warning(f"PlaylistUploader: stopped at track {index + 1}, sign-in {lost.result.value}")
+                    send(sign_in_lost_message(translate, lost.result, playlist_name))
+                    return
+                except Exception as error:
+                    failed += 1
+                    logging.error(f"PlaylistUploader: failed to download track {index + 1}: {error}")
 
-                    file_path = track.download(temp_dir.name)
-                    downloaded_files.append(file_path)
-                except Exception as e:
-                    logging.error(f"PlaylistUploader: Failed to download track {i+1}: {e}")
-                    continue
-
-            if not downloaded_files:
-                self.current_status.pop(user_id, None)
-                self.ttclient.send_message(
-                    self.translator.translate("Error: Failed to download any tracks from this playlist."),
-                    user.id,
-                    1
-                )
+            if not downloaded:
+                send(translate(
+                    "No track in {name} could be downloaded. Tracks tried: {count}."
+                ).format(count=len(tracks), name=playlist_name))
                 return
 
-            zip_status = self.translator.translate("Zipping tracks...")
-            self.current_status[user_id] = zip_status
-            self.ttclient.send_message(zip_status, user.id, 1)
-
-            # Create ZIP file with subfolder
-            folder_name = utils.clean_file_name(playlist_name)
-            zip_filename = folder_name + ".zip"
-            zip_path = os.path.join(temp_dir.name, zip_filename)
-            
-            with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
-                for file in downloaded_files:
-                    # Write file into a subfolder inside the ZIP
-                    arcname = os.path.join(folder_name, os.path.basename(file))
-                    zipf.write(file, arcname)
-
-            upload_status = self.translator.translate("Uploading ZIP: {}").format(zip_filename)
-            self.current_status[user_id] = upload_status
-            logging.info(f"PlaylistUploader: Sending ZIP file '{zip_path}' to channel {self.ttclient.channel.id}")
-            self.ttclient.send_message(upload_status, user.id, 1)
-            
-            command_id = self.ttclient.send_file(self.ttclient.channel.id, zip_path)
-            
-            while True:
-                try:
-                    file = self.ttclient.uploaded_files_queue.get_nowait()
-                    if file.name == zip_filename:
-                        break
-                    else:
-                        self.ttclient.uploaded_files_queue.put(file)
-                except Empty:
-                    pass
-                try:
-                    error = self.ttclient.errors_queue.get_nowait()
-                    if error.command_id == command_id:
-                        logging.error(f"PlaylistUploader: Error uploading zip: {error.message} (Type: {error.type})")
-                        self.ttclient.send_message(
-                            self.translator.translate("Error: {}").format(error.message),
-                            user,
-                        )
-                        error_exit = True
-                        break
-                    else:
-                        self.ttclient.errors_queue.put(error)
-                except Empty:
-                    pass
-                time.sleep(app_vars.loop_timeout)
-                
-        except Exception as e:
-            logging.error(f"PlaylistUploader error: {e}", exc_info=True)
-            self.ttclient.send_message(
-                self.translator.translate("Error: {}").format(str(e)),
-                user
+            self.current_status[user_id] = translate("Uploading {name} to the channel.").format(
+                name=playlist_name
             )
+            zip_path = self._zip(downloaded, playlist_name, temp_dir.name)
+            if not self.uploader.upload_file(zip_path, user):
+                return
+            # Counts after a colon, so no language needs a plural form here.
+            message = translate(
+                "{name} is in the channel as one zip file. Tracks in it: {count}."
+            ).format(name=playlist_name, count=len(downloaded))
+            if failed:
+                message += " " + translate("Tracks that could not be downloaded: {count}.").format(count=failed)
+            send(message)
+        except Exception as error:
+            # Not passed to the channel: it may carry a path under data/.
+            logging.error(f"PlaylistUploader error: {error}", exc_info=True)
+            send(translate("Could not download {name}.").format(name=playlist_name))
         finally:
             self.current_status.pop(user_id, None)
-            logging.debug("PlaylistUploader: Cleaning up local temporary directory")
             temp_dir.cleanup()
 
-        if error_exit:
-            return
+    def _download(self, track: Track, directory: str, sign_in: DownloadSignIn) -> str:
+        if track.service in YOUTUBE_SERVICES:
+            # The bridge's download plan resolves the stream itself from the video
+            # ID. Resolving through track.url first cost a second request per
+            # track, and its autoplay side effect queued recommendations on the
+            # player.
+            if not track.format:
+                track.format = "mp3"
+            return sign_in.run(lambda: track.download(directory))
+        if track.type == TrackType.Dynamic:
+            track.url  # fetch the stream data the download needs
+        return track.download(directory)
+
+    @staticmethod
+    def _zip(files: List[str], playlist_name: str, directory: str) -> str:
+        folder_name = utils.clean_file_name(playlist_name)
+        zip_path = os.path.join(directory, folder_name + ".zip")
+        with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as archive:
+            for path in files:
+                archive.write(path, os.path.join(folder_name, os.path.basename(path)))
+        return zip_path
+
+
+__all__ = ["PlaylistUploader", "YOUTUBE_SERVICES"]

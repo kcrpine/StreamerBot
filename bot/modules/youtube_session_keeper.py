@@ -88,6 +88,76 @@ def is_login_required(error: BaseException) -> bool:
     return "LOGIN_REQUIRED" in text or "Sign in to confirm" in text
 
 
+class SignInLost(Exception):
+    """A download was refused for want of a sign-in, and renewing did not fix it."""
+
+    def __init__(self, result: RefreshResult) -> None:
+        super().__init__(result.value)
+        self.result = result
+
+
+class DownloadSignIn:
+    """Renew the YouTube session at most once for one download job, then retry.
+
+    Commands cannot wait for a refresh, so `Command.youtube_hold_or_run` hands it
+    to another thread. A download already runs on its own thread and can simply
+    wait. Without this a stale session failed every track of a `dlp` playlist
+    while `u`, sent a minute later, renewed it and played the same videos.
+
+    Once per job, because a refusal that survives a renewal will not change for
+    the next track either, and every attempt costs several seconds.
+    """
+
+    def __init__(self, keeper: Optional["YouTubeSessionKeeper"], on_renewing: Callable[[], None]) -> None:
+        self.keeper = keeper
+        self.on_renewing = on_renewing
+        self.renewed = False
+
+    def run(self, attempt: Callable[[], Any]) -> Any:
+        keeper = self.keeper
+        if keeper is not None and keeper.is_refreshing:
+            keeper.wait_until_idle()
+        try:
+            return attempt()
+        except Exception as error:
+            if keeper is None or not is_login_required(error):
+                raise
+            if self.renewed:
+                raise SignInLost(RefreshResult.Unavailable) from error
+            self.renewed = True
+            if not keeper.store.has_session():
+                raise SignInLost(RefreshResult.NoSession) from error
+            if keeper.store.needs_sign_in():
+                raise SignInLost(RefreshResult.Ended) from error
+            self.on_renewing()
+            result = keeper.on_login_required()
+            if result is not RefreshResult.Alive:
+                raise SignInLost(result) from error
+        try:
+            return attempt()
+        except Exception as error:
+            if is_login_required(error):
+                raise SignInLost(RefreshResult.Unavailable) from error
+            raise
+
+
+def sign_in_lost_message(translate: Callable[[str], str], result: RefreshResult, name: str) -> str:
+    """The one message that ends a download refused for want of a sign-in."""
+    if result is RefreshResult.NoSession:
+        return translate(
+            "YouTube refused to download {name} without a signed-in account, which is "
+            "usual on a server. To connect one, send this command: li yt"
+        ).format(name=name)
+    if result is RefreshResult.Ended:
+        # Same text as Command.youtube_signed_out_message, so one translation.
+        return translate(
+            "Google signed StreamerBot out of YouTube. To sign in again, send this command: li yt"
+        )
+    return translate(
+        "The YouTube sign-in could not be renewed, so {name} was not downloaded."
+    ).format(name=name)
+
+
 class YouTubeSessionKeeper:
     def __init__(
         self,
@@ -467,6 +537,9 @@ __all__ = [
     "PENDING_IMPORT_NAME",
     "REJECTED_IMPORT_NAME",
     "RefreshResult",
+    "DownloadSignIn",
+    "SignInLost",
     "YouTubeSessionKeeper",
     "is_login_required",
+    "sign_in_lost_message",
 ]

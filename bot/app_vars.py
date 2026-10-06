@@ -32,7 +32,7 @@ def load_project_env(path: str = "") -> Dict[str, str]:
 project_env = load_project_env()
 
 app_name = "StreamerBot"
-app_version = "1.0"
+app_version = "1.0.1"
 client_name = app_name + "-V" + app_version
 
 repo_owner = project_env.get("STREAMERBOT_REPO_OWNER", "") or "kcrpine"

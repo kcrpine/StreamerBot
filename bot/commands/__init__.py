@@ -57,6 +57,9 @@ class CommandProcessor:
             getattr(getattr(bot.config, "audio_description", None), "default", "ask")
         )
         self.pending_ad_prompt: Dict[int, Any] = {}
+        # dlp on a YouTube playlist: whole playlist or one video. Per user, for the
+        # same reason as the audio description prompt above.
+        self.pending_playlist_choice: Dict[int, Any] = {}
         self.commands_dict = {
             "h": user_commands.HelpCommand,
             "a": user_commands.AboutCommand,
@@ -143,6 +146,29 @@ class CommandProcessor:
                 # Not an answer: cancel the prompt and let it be a command, so a
                 # user who changes their mind is not stuck.
                 prompt.cancel()
+
+            if message.user.id in self.pending_playlist_choice:
+                choice = self.pending_playlist_choice.pop(message.user.id)
+                if choice.expired():
+                    if message.text.strip().isdigit():
+                        self.ttclient.send_message(
+                            self.translator.translate(
+                                "That question has expired. To ask again, send: dlp"
+                            ),
+                            message.user,
+                        )
+                        return
+                    outcome = None
+                else:
+                    outcome = choice.answer(message.text)
+                if outcome is not None:
+                    reply, still_open = outcome
+                    if still_open:
+                        self.pending_playlist_choice[message.user.id] = choice
+                    if reply:
+                        self.ttclient.send_message(reply, message.user)
+                    return
+                # Not an answer: the question is dropped and this runs as a command.
 
             if message.user.id in self.pending_playlist_download:
                 command_name = "dlp"

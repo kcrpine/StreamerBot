@@ -24,4 +24,4 @@ class ModuleManager:
         # self.task_scheduler = TaskScheduler(bot)
         self.uploader = Uploader(bot)
         self.apple_music_downloader = AppleMusicDownloader(bot, self.uploader)
-        self.playlist_uploader = PlaylistUploader(bot)
+        self.playlist_uploader = PlaylistUploader(bot, self.uploader)

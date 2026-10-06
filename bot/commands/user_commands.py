@@ -6,7 +6,10 @@ import zipfile
 from typing import List, Optional, TYPE_CHECKING
 
 from bot.commands.command import Command
+from bot.commands.playlist_choice import PlaylistChoice
+from bot.modules.playlist_uploader import YOUTUBE_SERVICES
 from bot.player.enums import Mode, State, TrackType
+from bot.player.track import Track
 from bot.TeamTalk.structs import User, UserRight
 from bot import auth, errors, app_vars, utils
 
@@ -802,7 +805,9 @@ class DownloadPlaylistCommand(Command):
     def help(self) -> str:
         return self.translator.translate(
             "Downloads all tracks from a playlist/album URL, zips them, and uploads to the channel. "
-            "Without a link while Apple Music is playing, downloads the album or playlist being played."
+            "For a YouTube playlist it asks first whether you want the whole playlist or one video "
+            "from a numbered list. Without a link while Apple Music or a YouTube playlist is "
+            "playing, it uses the album or playlist being played."
         )
 
     def __call__(self, arg: str, user: User) -> Optional[str]:
@@ -817,6 +822,12 @@ class DownloadPlaylistCommand(Command):
                 return self.module_manager.apple_music_downloader.start(
                     self.player.track, user, whole=True
                 )
+
+            # With a YouTube playlist playing, that playlist.
+            playing = self._playing_youtube_playlist()
+            if playing:
+                tracks, name = playing
+                return self._ask(tracks, name, user)
 
             # Set state to wait for link from this user
             self.command_processor.pending_playlist_download[user.id] = True
@@ -893,6 +904,9 @@ class DownloadPlaylistCommand(Command):
                     final_zip_name = f"{playlist_name} - {artist_name}"
 
             logging.info(f"PlaylistUploader determined name: {final_zip_name} (Official Album: {is_official_album})")
+            if tracks[0].service in YOUTUBE_SERVICES:
+                self.ttclient.send_message(self._ask(tracks, final_zip_name, user), user)
+                return
             self.module_manager.playlist_uploader(tracks, user, final_zip_name)
         except errors.ServiceError as e:
             self.ttclient.send_message(
@@ -905,6 +919,72 @@ class DownloadPlaylistCommand(Command):
                 self.translator.translate("Error: {}").format(str(e)),
                 user
             )
+
+    # -- YouTube: whole playlist, or one video ---------------------------------
+
+    def _ask(self, tracks: List[Track], name: str, user: User) -> str:
+        """Leave the question open for this user and return it."""
+
+        def download_whole() -> None:
+            self.module_manager.playlist_uploader(tracks, user, name)
+
+        def download_one(track: Track) -> str:
+            single = Track(
+                service=track.service,
+                url=track.get_raw()._url,
+                name=track.get_raw()._name,
+                format="mp3",
+                extra_info=dict(track.get_raw().extra_info or {}),
+                type=TrackType.Dynamic,
+            )
+            self.module_manager.uploader(single, user)
+            return self.translator.translate(
+                "Downloading {name}. It will be uploaded to the channel when it is ready."
+            ).format(name=single._name)
+
+        choice = PlaylistChoice(
+            tracks, name, self.translator.translate, download_whole, download_one
+        )
+        self.command_processor.pending_playlist_choice[user.id] = choice
+        return choice.question()
+
+    def _playing_youtube_playlist(self):
+        """The YouTube playlist being played, as fresh tracks and its title, or None.
+
+        Fresh Track objects, so downloading never touches the ones the player is
+        using. Autoplay recommendations appended after the playlist carry no
+        playlist_title, which is how they are left out.
+        """
+        if self.player.state == State.Stopped or not getattr(self.player, "is_playlist", False):
+            return None
+        current = self.player.track.get_raw()
+        if current.service not in YOUTUBE_SERVICES:
+            return None
+        title = (current.extra_info or {}).get("playlist_title")
+        if not title:
+            return None
+        tracks: List[Track] = []
+        seen = set()
+        for queued in self.player.track_list:
+            raw = queued.get_raw()
+            info = raw.extra_info or {}
+            if raw.service not in YOUTUBE_SERVICES or info.get("playlist_title") != title:
+                continue
+            video_id = info.get("videoId") or info.get("id") or raw._url
+            if video_id in seen:
+                continue
+            seen.add(video_id)
+            tracks.append(
+                Track(
+                    service=raw.service,
+                    url=raw._url,
+                    name=raw._name,
+                    extra_info=dict(info),
+                    type=TrackType.Dynamic,
+                )
+            )
+        return (tracks, title) if tracks else None
+
 
 # ===========================================================================
 # COMANDOS DE FILA

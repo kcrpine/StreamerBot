@@ -6,6 +6,33 @@ issue or a commit message. Numbering continues across releases.
 
 ## Unreleased
 
+## StreamerBot 1.0.1 (2026-10-06)
+
+- **[068]** `dlp` downloads YouTube playlists again, and can fetch one video from one. On kuhao every
+  playlist answered "Failed to download any tracks from this playlist". The log showed each track refused
+  with `LOGIN_REQUIRED: Sign in to confirm you're not a bot`, the signed-in attempt included: the bot's
+  YouTube session had gone stale. Playback commands already deal with that (`youtube_hold_or_run` renews
+  the session and retries) and `u` with the same playlist a minute later renewed it and played the very
+  videos `dlp` had given up on. `PlaylistUploader` never asked. Downloads now go through `DownloadSignIn`
+  (`bot/modules/youtube_session_keeper.py`), which renews once per job and retries; a refusal that survives
+  the renewal stops the job with one message instead of spending seven seconds failing each remaining
+  track, and a session Google has ended says to send `li yt`. `dl` and the single-video pick get the same
+  renewal, and a single download that fails now says so instead of failing silently in its thread.
+
+  For a YouTube playlist, `dlp` now asks first: 1 for the whole playlist as one zip, 2 for a numbered list
+  to pick one video. The list comes 20 at a time and every choice is a number: 1 to 20 are the videos on
+  the page, 21 is the next 20 (back to the start on the last page), 22 the whole playlist, 0 cancels.
+  Those three never move, so they are learned once by ear. Anything that is not an answer drops the
+  question and runs as a command, as the audio description prompt does, and an unanswered question
+  expires after half an hour. `dlp` with no link while a YouTube playlist is playing uses that playlist;
+  autoplay recommendations queued after it are left out, since they carry no `playlist_title`.
+
+  The playlist download also stopped resolving each track's stream before downloading it. The download
+  plan resolves its own; the extra resolve cost a request per track and its autoplay side effect queued
+  recommendations on the player. Chat is one message when it starts and one when it ends, with how many
+  tracks could not be downloaded, where it used to post a line per track (every fifth on long playlists).
+  `dlp` with no argument during a download still answers with how far it has got.
+
 - **[067]** `update.sh` no longer copies the whole `bots/` folder into `/tmp` on every update. The copy
   came over from TTMediaBot as a "just in case" backup around `git reset --hard` and `git clean -fd`, but
   `/bots/` is in `.gitignore` and neither command touches an ignored path, so it protected nothing. It cost
