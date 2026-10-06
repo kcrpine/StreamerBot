@@ -6,6 +6,14 @@ issue or a commit message. Numbering continues across releases.
 
 ## Unreleased
 
+- **[069]** Playlist downloads say which track they are on and how much of the playlist is done:
+  "Track 3 of 11, 18 percent done: Sunday Mass". Asked for by users, and it replaces [068]'s silence
+  between the start and finish messages. A screen reader reads each message in full, so the pace is
+  capped: a playlist of up to 20 tracks reports every track, a longer one only as it crosses each
+  10 percent step, about ten lines whatever its size. Each line is a new message rather than one that
+  rewrites itself, and the title goes last because it is the longest and least predictable part. The
+  percent counts finished tracks, so the first line says 0. Applies to every `dlp`, not only YouTube.
+
 ## StreamerBot 1.0.1 (2026-10-06)
 
 - **[068]** `dlp` downloads YouTube playlists again, and can fetch one video from one. On kuhao every

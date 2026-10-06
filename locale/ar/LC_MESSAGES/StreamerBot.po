@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-06 20:54+0000\n"
+"POT-Creation-Date: 2026-10-06 21:31+0000\n"
 "PO-Revision-Date: 2026-05-10 11:43+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ar\n"
@@ -448,9 +448,9 @@ msgid ""
 msgstr ""
 
 # | msgid "Loaded {count} tracks"
+# | msgid "Playing {name}, {count} tracks"
 #: bot/commands/playlist_choice.py:80
 #, fuzzy, python-brace-format
-#| msgid "Playing {name}, {count} tracks"
 msgid "The playlist {name} has {count} videos."
 msgstr "تم تحميل {count} مسار"
 
@@ -1448,7 +1448,7 @@ msgid "Could not download {name}: {reason}"
 msgstr ""
 
 #: bot/modules/apple_music_downloader.py:173
-#: bot/modules/playlist_uploader.py:126 bot/modules/uploader.py:102
+#: bot/modules/playlist_uploader.py:145 bot/modules/uploader.py:102
 #, python-brace-format
 msgid "Could not download {name}."
 msgstr ""
@@ -1496,43 +1496,42 @@ msgstr ""
 msgid "Signing in to this service is not available yet."
 msgstr ""
 
-#: bot/modules/playlist_uploader.py:76 bot/modules/uploader.py:91
+#: bot/modules/playlist_uploader.py:88 bot/modules/uploader.py:91
 msgid "Renewing the YouTube sign-in. The download continues when it finishes."
 msgstr ""
 
-#: bot/modules/playlist_uploader.py:81
+#: bot/modules/playlist_uploader.py:93
 #, python-brace-format
 msgid ""
 "Downloading the playlist {name}. Tracks: {count}. It will be uploaded to "
 "the channel as one zip file when it is ready."
 msgstr ""
 
-# | msgid "Downloading track {}: {}"
-#: bot/modules/playlist_uploader.py:92
-#, fuzzy, python-brace-format
-msgid "Downloading track {number} of {total} from {name}."
-msgstr "جاري تنزيل المسار {}: {}"
+#: bot/modules/playlist_uploader.py:104
+#, python-brace-format
+msgid "Track {number} of {total}, {percent} percent done: {title}"
+msgstr ""
 
-#: bot/modules/playlist_uploader.py:106
+#: bot/modules/playlist_uploader.py:125
 #, python-brace-format
 msgid "No track in {name} could be downloaded. Tracks tried: {count}."
 msgstr ""
 
-#: bot/modules/playlist_uploader.py:110
+#: bot/modules/playlist_uploader.py:129
 #, python-brace-format
 msgid "Uploading {name} to the channel."
 msgstr ""
 
-#: bot/modules/playlist_uploader.py:118
+#: bot/modules/playlist_uploader.py:137
 #, python-brace-format
 msgid "{name} is in the channel as one zip file. Tracks in it: {count}."
 msgstr ""
 
 # | msgid "Live streams cannot be downloaded"
 # | msgid "Spotify tracks cannot be downloaded."
-#: bot/modules/playlist_uploader.py:121
+# | msgid "{count} could not be downloaded."
+#: bot/modules/playlist_uploader.py:140
 #, fuzzy, python-brace-format
-#| msgid "{count} could not be downloaded."
 msgid "Tracks that could not be downloaded: {count}."
 msgstr "لا يمكن تنزيل البث المباشر"
 
@@ -2364,4 +2363,8 @@ msgstr "غير معروف"
 
 #~ msgid "None of the {count} tracks in {name} could be downloaded."
 #~ msgstr ""
+
+# | msgid "Downloading track {}: {}"
+#~ msgid "Downloading track {number} of {total} from {name}."
+#~ msgstr "جاري تنزيل المسار {}: {}"
 

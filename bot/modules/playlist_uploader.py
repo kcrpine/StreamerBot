@@ -1,9 +1,11 @@
 """`dlp`: download every track of a playlist, album or channel, zip them, upload the zip.
 
-Two messages, one when it starts and one when it ends, with nothing in between: a
-screen reader reads every message in full, so a progress line per track buried
-the result under dozens of lines nobody asked for. `dlp` with no argument still
-answers "where is it up to" for anyone who wants to know.
+Progress is spoken as each track starts: which track, how much of the playlist
+is done, and its title. A screen reader reads every message in full, so a
+playlist longer than PROGRESS_EVERY_TRACK_UP_TO tracks speaks only when it
+crosses a 10 percent step, about ten lines whatever its size, rather than one
+per track (users asked for progress; [069]). `dlp` with no argument answers the
+same question on demand.
 
 YouTube refuses a stale session with LOGIN_REQUIRED. Playback commands renew it
 and retry; this job does the same through DownloadSignIn, once, rather than
@@ -35,6 +37,16 @@ if TYPE_CHECKING:
     from bot.TeamTalk.structs import User
 
 YOUTUBE_SERVICES = ("yt", "ytm")
+
+# Playlists up to this many tracks report every track; longer ones every 10 percent.
+PROGRESS_EVERY_TRACK_UP_TO = 20
+
+
+def progress_due(index: int, total: int) -> bool:
+    """Whether starting track index (0-based) of total should send a progress message."""
+    if total <= PROGRESS_EVERY_TRACK_UP_TO or index == 0:
+        return True
+    return (index * 100 // total) // 10 > ((index - 1) * 100 // total) // 10
 
 
 class PlaylistUploader:
@@ -88,9 +100,16 @@ class PlaylistUploader:
             downloaded: List[str] = []
             failed = 0
             for index, track in enumerate(tracks):
-                self.current_status[user_id] = translate(
-                    "Downloading track {number} of {total} from {name}."
-                ).format(number=index + 1, total=len(tracks), name=playlist_name)
+                # The title goes last: it is the longest and least predictable part.
+                progress = translate("Track {number} of {total}, {percent} percent done: {title}").format(
+                    number=index + 1,
+                    total=len(tracks),
+                    percent=index * 100 // len(tracks),
+                    title=track.name,
+                )
+                self.current_status[user_id] = progress
+                if progress_due(index, len(tracks)):
+                    send(progress)
                 try:
                     downloaded.append(self._download(track, temp_dir.name, sign_in))
                 except SignInLost as lost:

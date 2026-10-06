@@ -15,7 +15,7 @@ from unittest.mock import Mock
 
 from bot import errors
 from bot.commands.playlist_choice import NEXT_PAGE, PAGE_SIZE, WHOLE_PLAYLIST, PlaylistChoice
-from bot.modules.playlist_uploader import PlaylistUploader
+from bot.modules.playlist_uploader import PlaylistUploader, progress_due
 from bot.modules.youtube_session_keeper import (
     DownloadSignIn,
     RefreshResult,
@@ -104,9 +104,13 @@ class PlaylistUploaderSignInTests(TestCase):
 
         keeper.on_login_required.assert_called_once()
         self.assertEqual(recorder.zips, [["Masses/a.mp3", "Masses/b.mp3", "Masses/c.mp3"]])
-        self.assertEqual(len(messages), 3, messages)  # start, renewing, finish
-        self.assertIn("Renewing", messages[1])
-        self.assertEqual(messages[2], "Masses is in the channel as one zip file. Tracks in it: 3.")
+        self.assertEqual(messages[1:], [
+            "Track 1 of 3, 0 percent done: a",
+            "Renewing the YouTube sign-in. The download continues when it finishes.",
+            "Track 2 of 3, 33 percent done: b",
+            "Track 3 of 3, 66 percent done: c",
+            "Masses is in the channel as one zip file. Tracks in it: 3.",
+        ])
 
     def test_a_session_google_ended_stops_with_the_sign_in_command(self):
         keeper = make_keeper(result=RefreshResult.Ended)
@@ -158,7 +162,7 @@ class PlaylistUploaderSignInTests(TestCase):
         uploader.run(tracks, USER, "Masses")
 
         self.assertEqual(recorder.zips, [["Masses/a.mp3"]])
-        self.assertEqual(len(messages), 2, messages)
+        self.assertEqual(len(messages), 4, messages)  # start, two tracks, finish
         self.assertEqual(
             messages[-1],
             "Masses is in the channel as one zip file. Tracks in it: 1. "
@@ -172,6 +176,28 @@ class PlaylistUploaderSignInTests(TestCase):
         uploader.run(tracks, USER, "Masses")
 
         self.assertEqual(messages[-1], "No track in Masses could be downloaded. Tracks tried: 1.")
+
+
+class ProgressTests(TestCase):
+    def test_a_short_playlist_reports_every_track(self):
+        self.assertEqual([progress_due(i, 20) for i in range(20)], [True] * 20)
+
+    def test_a_long_playlist_reports_about_every_10_percent(self):
+        for total in (21, 45, 137, 500):
+            due = [i for i in range(total) if progress_due(i, total)]
+            self.assertEqual(len(due), 10, (total, due))
+            self.assertEqual(due[0], 0)
+
+    def test_the_messages_sent_for_a_long_playlist(self):
+        tracks = [FakeTrack(f"t{n}") for n in range(1, 46)]
+        uploader, recorder, messages = make_uploader(make_keeper())
+
+        uploader.run(tracks, USER, "Masses")
+
+        progress = [m for m in messages if m.startswith("Track ")]
+        self.assertEqual(len(progress), 10)
+        self.assertEqual(progress[0], "Track 1 of 45, 0 percent done: t1")
+        self.assertEqual(progress[1], "Track 6 of 45, 11 percent done: t6")
 
 
 class DownloadSignInTests(TestCase):
