@@ -480,6 +480,16 @@ with a number in square brackets:
 - On a release, `## Unreleased` becomes that version's section and a fresh empty one is started.
   **Numbering continues across releases** so a number identifies a change on its own.
 
+### Every push asks whether it is a new version
+
+Before every push, ask the user whether it should also be released as a new version, offering the
+next number: a patch bump (1.0.1 → 1.0.2) for fixes, a minor bump (1.0 → 1.1) for a feature users will
+notice. The user asked for this so new features are not left sitting unreleased. A release is three
+things in the pushed commit and one after it: `app_version` in `bot/app_vars.py`, the CHANGELOG's
+`## Unreleased` turned into `## StreamerBot <version> (<date>)` under a fresh empty `## Unreleased`,
+and then a GitHub release tagged `v<version>` on that commit. Releases are public, so ask every time;
+a yes for one push does not carry to the next. The plan records the same rule.
+
 ### Commit messages are short; the CHANGELOG is where detail goes
 
 A commit message is read in `git log`, usually several at a time, by someone scanning for the change

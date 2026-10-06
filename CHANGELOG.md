@@ -6,6 +6,12 @@ issue or a commit message. Numbering continues across releases.
 
 ## Unreleased
 
+## StreamerBot 1.0.2 (2026-10-06)
+
+- **[070]** Every push now asks whether it should also be released as a new version (CLAUDE.md and the
+  plan). 1.0.1 and 1.0.2 went out hours apart, and the user wants new features released rather than
+  left waiting under Unreleased because nobody thought to ask. Releases are public, so it is asked each
+  time rather than assumed.
 - **[069]** Playlist downloads say which track they are on and how much of the playlist is done:
   "Track 3 of 11, 18 percent done: Sunday Mass". Asked for by users, and it replaces [068]'s silence
   between the start and finish messages. A screen reader reads each message in full, so the pace is

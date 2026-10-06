@@ -188,6 +188,14 @@ Rules that make the numbers worth having:
 - **When a release is cut**, the `## Unreleased` block becomes that version's section and a fresh
   empty one is started. Numbering continues across releases rather than restarting, so a number
   identifies a change without needing a version alongside it.
+- **Every push asks whether it is a release.** Before pushing, ask the user whether the push should
+  also cut a new version, and offer the next number (a patch bump such as 1.0.1 → 1.0.2 for fixes, a
+  minor bump such as 1.0 → 1.1 when it adds a feature users will notice). Asked for by the user on
+  2026-10-06 after 1.0.1 and 1.0.2 went out a few hours apart: new features should not sit unreleased
+  just because nobody thought to ask. A release means bumping `app_version` in `bot/app_vars.py`,
+  turning `## Unreleased` into `## StreamerBot <version> (<date>)` with a fresh empty `## Unreleased`
+  above it, and publishing a GitHub release tagged `v<version>` on the pushed commit. Releases are
+  public, so the answer is the user's every time; a yes for one push is not a yes for the next.
 - The numbers are for tracking, not for users. The prose in each entry is what a person reads; the
   number is what an issue or a commit message points at.
 
