@@ -196,6 +196,9 @@ Rules that make the numbers worth having:
   turning `## Unreleased` into `## StreamerBot <version> (<date>)` with a fresh empty `## Unreleased`
   above it, and publishing a GitHub release tagged `v<version>` on the pushed commit. Releases are
   public, so the answer is the user's every time; a yes for one push is not a yes for the next.
+  CI publishes no prerelease for a release ([071]): the branch push whose commit moves `app_version`
+  and the tag push that `gh release create` causes are both recognised, so the release is the only
+  build listed for that commit.
 - The numbers are for tracking, not for users. The prose in each entry is what a person reads; the
   number is what an issue or a commit message points at.
 

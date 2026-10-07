@@ -225,8 +225,50 @@ jobs:
         with:
           fetch-depth: 0
 
+      # A release already is the downloadable build for its commit, so a
+      # prerelease beside it is noise above the real thing on the releases
+      # page. A release reaches here twice: once as the branch push of the
+      # commit that bumps app_version, before any tag exists, and again as the
+      # push of the v<version> tag that creating the release makes. Each is
+      # caught on its own terms. The job still runs and succeeds either way,
+      # because the Report job reads a skipped prerelease job as a failure.
+      - name: Decide whether this push is a release
+        id: release
+        env:
+          REF: ${{ github.ref }}
+          BEFORE: ${{ github.event.before }}
+          AFTER: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          version_at() {
+            git show "$1:bot/app_vars.py" 2>/dev/null \
+              | sed -n 's/^app_version = "\(.*\)"$/\1/p'
+          }
+          skip=false
+          case "$REF" in
+            refs/tags/*)
+              echo "Tag push ($REF): the release is the build."
+              skip=true
+              ;;
+            *)
+              # BEFORE is all zeros for a newly created branch; fall back to
+              # the parent commit so the comparison still means something.
+              if ! git cat-file -e "${BEFORE}^{commit}" 2>/dev/null; then
+                BEFORE="$(git rev-parse "${AFTER}^" 2>/dev/null || true)"
+              fi
+              old="$( [ -n "$BEFORE" ] && version_at "$BEFORE" || true)"
+              new="$(version_at "$AFTER")"
+              if [ -n "$new" ] && [ "$old" != "$new" ]; then
+                echo "app_version moved from '${old}' to '${new}': this push is a release."
+                skip=true
+              fi
+              ;;
+          esac
+          echo "skip=$skip" >> "$GITHUB_OUTPUT"
+
       - name: Build the source zip
         id: build
+        if: steps.release.outputs.skip != 'true'
         env:
           STAMP_TAG: ${{ needs.stamp.outputs.tag }}
           GH_TOKEN: ${{ github.token }}
@@ -256,6 +298,7 @@ jobs:
           ls -lh "StreamerBot-${tag}.zip"
 
       - name: Write the release notes
+        if: steps.release.outputs.skip != 'true'
         id: notes
         env:
           COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
@@ -284,6 +327,7 @@ jobs:
 
       - name: Publish the prerelease
         id: publish
+        if: steps.release.outputs.skip != 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ steps.build.outputs.tag }}

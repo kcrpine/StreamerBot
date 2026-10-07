@@ -6,6 +6,14 @@ issue or a commit message. Numbering continues across releases.
 
 ## Unreleased
 
+- **[071]** A release no longer gets a prerelease built on top of it. Every release made two: one from
+  the branch push of the release commit, and one from the `v<version>` tag push that creating the
+  release causes, since the Tests workflow runs on every push, tags included. Both sat above the real
+  release on the releases page, so the newest download listed was never the release. The prerelease
+  job now skips building and publishing when the push is a tag, or when the pushed commit changes
+  `app_version` in `bot/app_vars.py`, since that is the only thing that marks a release before its tag
+  exists. The job still runs and reports success, because the CI email treats a skipped job as a failure.
+
 ## StreamerBot 1.0.2 (2026-10-06)
 
 - **[070]** Every push now asks whether it should also be released as a new version (CLAUDE.md and the
