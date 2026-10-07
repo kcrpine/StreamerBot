@@ -199,6 +199,17 @@ Rules that make the numbers worth having:
   CI publishes no prerelease for a release ([071]): the branch push whose commit moves `app_version`
   and the tag push that `gh release create` causes are both recognised, so the release is the only
   build listed for that commit.
+  Publishing the release also moves the `stable` branch to it ([072]): push
+  `git push origin v<version>^{commit}:refs/heads/stable` with the release. The `Stable branch`
+  workflow does the same on `release: published` and confirms it, but GitHub refuses a `GITHUB_TOKEN`
+  push across commits that change `.github/workflows/`, so the workflow alone cannot be relied on.
+- **Update channels ([072], 2026-10-07).** A server follows `stable` (released versions only, the
+  default) or `latest` (`main`, every push), chosen per server in the untracked `update_channel.env`
+  (`streamerbot.sh --channel`, or menu 6 option 4). Detection stays one `git ls-remote` of a branch
+  head on either channel; the releases API was rejected because it is rate limited and would need a
+  tag turned back into a checkout. **A switch never moves a server backwards on its own**: older code
+  refuses a `config.json` whose `config_version` is newer, so a server switched to stable while ahead
+  of the last release stays put until a release passes it. Moving back is offered by hand only.
 - The numbers are for tracking, not for users. The prose in each entry is what a person reads; the
   number is what an issue or a commit message points at.
 

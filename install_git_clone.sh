@@ -20,6 +20,7 @@ REPO_OWNER="kcrpine"
 REPO_NAME="StreamerBot"
 REPO_URL="https://github.com/${REPO_OWNER}/${REPO_NAME}.git"
 DIR_NAME="${REPO_NAME}"
+STABLE_BRANCH="stable"
 
 step() { echo; echo "Step $1. $2"; }
 ok() { echo "OK. $1"; }
@@ -92,7 +93,13 @@ elif [ -d "$DIR_NAME/.git" ]; then
     REPO_DIR="$(pwd)"
 else
     echo "Cloning $REPO_URL"
-    git clone "$REPO_URL" "$DIR_NAME" || fail "Could not clone the repository. Check the network connection and that the repository exists."
+    # A new server starts on the stable channel, so it starts on a release
+    # rather than whatever was pushed last. A repository with no release yet
+    # has no stable branch; that one gets its default branch.
+    if ! git clone --branch "$STABLE_BRANCH" "$REPO_URL" "$DIR_NAME" 2>/dev/null; then
+        rm -rf "$DIR_NAME"
+        git clone "$REPO_URL" "$DIR_NAME" || fail "Could not clone the repository. Check the network connection and that the repository exists."
+    fi
     cd "$DIR_NAME" || fail "Could not enter $DIR_NAME."
     REPO_DIR="$(pwd)"
     ok "Repository downloaded to $REPO_DIR."

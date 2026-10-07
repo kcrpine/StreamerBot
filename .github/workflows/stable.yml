@@ -1,0 +1,89 @@
+name: Stable branch
+
+# The stable branch is what servers on the stable update channel follow
+# (update_channel.sh). It only ever holds released versions: publishing a
+# release moves it to that release's v<version> tag, and nothing else moves it.
+#
+# The updater watches a branch rather than the releases API because a branch
+# head is one git ls-remote, the same cheap call the latest channel already
+# makes, with no rate limit and nothing to translate back into a checkout.
+#
+# It moves only forward. A release whose commit is not a descendant of the
+# current stable branch fails here instead of taking servers backwards, since
+# older code can refuse a config.json a newer version has migrated.
+#
+# The release procedure (CLAUDE.md) pushes stable itself, with the releaser's
+# own credentials, so this job normally finds it already in place and only
+# confirms it. It is the net for a release made without that step. GitHub
+# refuses a GITHUB_TOKEN push that moves a branch over commits changing
+# .github/workflows/, even commits already in the repository, so a release
+# carrying a workflow change needs either that step or a STABLE_BRANCH_TOKEN
+# secret (a token with the workflow scope); without both this job fails and
+# says so rather than leaving stable behind quietly.
+#
+# A push made with GITHUB_TOKEN does not start other workflows, so moving
+# stable never builds a prerelease of its own.
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag to put the stable branch on, for example v1.0.2
+        required: true
+
+permissions:
+  contents: write
+
+concurrency:
+  group: stable-branch
+  cancel-in-progress: false
+
+jobs:
+  advance:
+    name: Move stable to the release
+    runs-on: ubuntu-latest
+    # CI's own prereleases are published with GITHUB_TOKEN and never reach
+    # here, but a prerelease made by hand would, so it is excluded by name.
+    if: github.event_name == 'workflow_dispatch' || !github.event.release.prerelease
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.STABLE_BRANCH_TOKEN || github.token }}
+
+      - name: Fast-forward stable to the release tag
+        env:
+          TAG: ${{ github.event.release.tag_name || inputs.tag }}
+          STABLE: stable
+        run: |
+          set -euo pipefail
+          case "$TAG" in
+            v[0-9]*) ;;
+            *)
+              echo "$TAG is not a v<version> release tag. The stable branch is left alone."
+              exit 0
+              ;;
+          esac
+          git fetch --quiet --tags --force origin
+          target="$(git rev-parse --verify "refs/tags/${TAG}^{commit}")"
+          if current="$(git rev-parse --verify --quiet "refs/remotes/origin/${STABLE}")"; then
+            if [ "$current" = "$target" ]; then
+              echo "OK. $STABLE is already at $TAG."
+              exit 0
+            fi
+            if ! git merge-base --is-ancestor "$current" "$target"; then
+              echo "Error. $TAG ($target) does not descend from the current $STABLE ($current)."
+              echo "Moving $STABLE there would take servers on the stable channel backwards or onto another line of history."
+              exit 1
+            fi
+          fi
+          if ! git push origin "${target}:refs/heads/${STABLE}"; then
+            echo "Error. Could not move $STABLE to $TAG."
+            echo "If the push was refused for touching workflows, push it from a clone with:"
+            echo "  git push origin ${TAG}^{commit}:refs/heads/${STABLE}"
+            echo "or add a STABLE_BRANCH_TOKEN secret with the workflow scope."
+            exit 1
+          fi
+          echo "OK. $STABLE is now at $TAG ($target)."

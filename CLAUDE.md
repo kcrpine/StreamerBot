@@ -490,6 +490,39 @@ things in the pushed commit and one after it: `app_version` in `bot/app_vars.py`
 and then a GitHub release tagged `v<version>` on that commit. Releases are public, so ask every time;
 a yes for one push does not carry to the next. The plan records the same rule.
 
+**A release also moves the `stable` branch**, which is what servers on the stable update channel follow
+([072]). Push it with the release, from the clone that made it:
+
+```bash
+git push origin "v<version>^{commit}:refs/heads/stable"
+```
+
+`.github/workflows/stable.yml` does the same when the release is published and only ever moves the
+branch forward, but do not leave it to the workflow: GitHub refuses a `GITHUB_TOKEN` push that moves a
+branch across commits changing `.github/workflows/`, even commits already in the repository, so it fails
+on any release carrying a workflow change unless a `STABLE_BRANCH_TOKEN` secret with the workflow scope
+exists.
+
+### Update channels: stable or latest, chosen per server
+
+`update_channel.sh` holds the logic; `update.sh`, `auto_updater.sh`, `streamerbot.sh` and `masc.sh`
+source it after `project.env`. The choice is in the untracked `update_channel.env` (gitignored, so the
+update's `reset --hard` and `clean -fd` leave it alone); `STREAMERBOT_DEFAULT_CHANNEL` in `project.env`
+applies without it. Three rules if you touch it:
+
+- **The channel picks the branch, not the checkout.** `auto_updater.sh` used to follow whatever branch
+  was checked out and `update.sh` whatever `project.env` said; both now ask `update_branch`. `update.sh`
+  checks the followed branch out by name, so a checkout on another branch is a switch in progress.
+- **A switch never moves a server backwards unless a person asks.** Older code refuses a newer
+  `config_version`. When the followed branch's tip is an ancestor of HEAD and HEAD is on another branch,
+  both scripts leave the code alone (`channel_would_downgrade`); `STREAMERBOT_ALLOW_DOWNGRADE=true`,
+  which only the menu sets, overrides it.
+- **Only a definite "no such branch" falls back to `main`.** `ls-remote --exit-code` exits 2 for that and
+  128 for a network failure; treating both alike would put a stable server on `main` during an outage.
+
+A developer host normally wants `streamerbot.sh --channel latest`. The hazard below applies to whichever
+branch the server follows.
+
 ### Commit messages are short; the CHANGELOG is where detail goes
 
 A commit message is read in `git log`, usually several at a time, by someone scanning for the change
@@ -516,7 +549,7 @@ entry, which is numbered, citable in an issue, and read deliberately rather than
 `streamerbot-updater.service` runs `auto_updater.sh`, which wakes every `STREAMERBOT_UPDATE_INTERVAL`
 seconds — 300 in `project.env` — and invokes `AUTO_UPDATE=true update.sh` (`auto_updater.sh:197`). In
 that mode `update.sh` answers its own confirmation prompt without asking anyone (`update.sh:525`) and
-runs `git reset --hard "origin/$BRANCH"` followed by `git clean -fd` (`update.sh:567`). A commit that
+runs `git checkout -f -B "$BRANCH"` and `git reset --hard "origin/$BRANCH"` followed by `git clean -fd`. A commit that
 exists only locally is discarded, uncommitted edits with it, and `git clean -fd` removes new untracked
 files as well. **`git commit` and `git push` are one step on these hosts, not two.**
 
@@ -526,8 +559,8 @@ but the reset is reached through `NEEDS_REBUILD`, which a local commit *guarante
 set whenever `LOCAL_HASH != RUNNING_HASH` (`update.sh:445`), and `RUNNING_HASH` is the commit baked into
 the running image's `commit_hash` label. Committing is itself what triggers the rebuild that throws the
 commit away, and the reassuring message is printed on the way there. A branch is no refuge either: the
-reset targets `origin/$BRANCH` with `BRANCH` defaulting to `main` (`update.sh:381`), so it is whatever
-the updater is tracking, not whatever you are on.
+reset targets `origin/$BRANCH`, where `BRANCH` is the server's update channel's branch (`stable` or
+`main`, see above), so it is whatever the updater is tracking, not whatever you are on.
 
 Two things follow, and the first one has already cost a session:
 

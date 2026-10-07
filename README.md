@@ -163,7 +163,47 @@ Non-interactive flags, for skipping the menus:
 ```
 
 `--services`, `--start-all`, `--stop-all`, `--restart-all`, `--check-updates`,
-`--logs NAME` and `--help` all work the same way.
+`--channel`, `--logs NAME` and `--help` all work the same way.
+
+### Choosing stable or latest updates
+
+Each server picks where its updates come from:
+
+- **Stable**, the default: released versions only. Choose this for bots people
+  rely on.
+- **Latest**: every change as soon as it is pushed, including work not yet
+  released. Choose this to test new work or if you maintain StreamerBot.
+
+To see which one a server uses:
+
+```bash
+./streamerbot.sh --channel
+```
+
+To change it, give the channel name:
+
+```bash
+./streamerbot.sh --channel stable
+./streamerbot.sh --channel latest
+```
+
+Or use the menu:
+
+1. Run `./streamerbot.sh` with no arguments.
+2. Choose 6, Auto-Updates and Update Channel.
+3. Choose 4, Choose Update Channel.
+4. Choose 1 for stable or 2 for latest.
+
+The auto-updater applies the change within five minutes. Check for Updates
+(option 5 in the main menu) applies it at once.
+
+Moving from latest to stable never takes a server back to an older version
+on its own, because an older version may not understand settings a newer one
+has already changed. The server keeps what it has until the next release passes
+it. The menu offers to move back at once, and warns before doing so.
+
+The choice is saved in `update_channel.env` beside `streamerbot.sh`, which
+updates never overwrite. A new installation starts on stable.
 
 ## Accessibility
 

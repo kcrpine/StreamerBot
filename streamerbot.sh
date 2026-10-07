@@ -11,6 +11,9 @@ if [ -f "$SCRIPT_DIR/project.env" ]; then
     # shellcheck disable=SC1091
     . "$SCRIPT_DIR/project.env"
 fi
+# Update channel helpers (stable or latest).
+# shellcheck disable=SC1091
+[ -f "$SCRIPT_DIR/update_channel.sh" ] && . "$SCRIPT_DIR/update_channel.sh"
 
 # Configuration
 BOT_IMAGE="${STREAMERBOT_IMAGE:-streamerbot}"
@@ -50,6 +53,7 @@ if [ "${1:-}" = "--help" ] || [ "${1:-}" = "-h" ]; then
     echo "  --stop-all       Stop every bot."
     echo "  --restart-all    Restart every bot."
     echo "  --check-updates  Say whether an update is available, without installing it."
+    echo "  --channel [stable|latest]  Show or choose where updates come from."
     echo "  --logs NAME      Show the last 50 log lines for one bot."
     echo "  --repair-ports   Give every bot its own account portal and Spotify port."
     echo "  --firewall       Allow each bot's account portal port through ufw."
@@ -65,7 +69,7 @@ fi
 # Validate the flag name before elevating, so a typo does not cost a password
 # prompt first.
 case "${1:-}" in
-    ""|--status|--services|--start-all|--stop-all|--restart-all|--check-updates|--logs|--repair-ports|--firewall|--youtube-egress|--check-youtube-egress|--rotate-youtube-ip)
+    ""|--status|--services|--start-all|--stop-all|--restart-all|--check-updates|--channel|--logs|--repair-ports|--firewall|--youtube-egress|--check-youtube-egress|--rotate-youtube-ip)
         ;;
     *)
         echo "Error. Unknown option: $1"
@@ -3880,6 +3884,7 @@ print_cli_help() {
     echo "  --stop-all       Stop every bot."
     echo "  --restart-all    Restart every bot."
     echo "  --check-updates  Say whether an update is available, without installing it."
+    echo "  --channel [stable|latest]  Show or choose where updates come from."
     echo "  --logs NAME      Show the last 50 log lines for one bot."
     echo "  --repair-ports   Give every bot its own account portal and Spotify port."
     echo "  --firewall       Allow each bot's account portal port through ufw."
@@ -3887,6 +3892,47 @@ print_cli_help() {
     echo "  --check-youtube-egress Test YouTube; switch the VPN address only if it is blocked."
     echo "  --rotate-youtube-ip    Switch the VPN or WARP to a different address now."
     echo "  --help           This text."
+}
+
+# Show the update channel, or choose one. Choosing only records it: Check for
+# Updates applies it at once, and the auto-updater within five minutes.
+cli_update_channel() {
+    local wanted="${1:-}" channel branch target
+    if ! declare -F update_channel >/dev/null; then
+        echo "Error. update_channel.sh was not found."
+        return 1
+    fi
+    if [ -z "$wanted" ]; then
+        channel="$(update_channel)"
+        echo "This server follows the $channel channel: $(channel_description "$channel")."
+        echo "Change it with --channel stable or --channel latest."
+        return 0
+    fi
+    case "$wanted" in
+        stable|latest) ;;
+        *)
+            echo "Error. The channel is stable or latest, not $wanted."
+            return 1
+            ;;
+    esac
+    if ! set_update_channel "$wanted"; then
+        echo "Error. Could not write $UPDATE_CHANNEL_FILE."
+        return 1
+    fi
+    echo "OK. This server now follows the $wanted channel: $(channel_description "$wanted")."
+
+    branch="$(update_branch)"
+    if [ "$wanted" = stable ] && [ "$branch" != "$(stable_branch)" ]; then
+        echo "Warning. The repository has no $(stable_branch) branch yet, because nothing has been released. Updates follow $branch until the first release."
+    fi
+    if git -C "$SCRIPT_DIR" fetch -q origin "$branch" 2>/dev/null \
+            && target="$(git -C "$SCRIPT_DIR" rev-parse "origin/$branch" 2>/dev/null)" \
+            && [ "$(git -C "$SCRIPT_DIR" rev-parse --abbrev-ref HEAD 2>/dev/null)" != "$branch" ] \
+            && (cd "$SCRIPT_DIR" && channel_would_downgrade "$target"); then
+        echo "This server runs newer code than $(cd "$SCRIPT_DIR" && describe_commit "$target"), so it stays on that code until a release passes it."
+    else
+        echo "Check for Updates applies it now. Otherwise the auto-updater does within five minutes."
+    fi
 }
 
 cli_bot_names() {
@@ -3976,6 +4022,10 @@ case "${1:-}" in
         fi
         exit 0
         ;;
+    --channel)
+        cli_update_channel "${2:-}"
+        exit $?
+        ;;
     --repair-ports)
         repair_all_bot_ports
         exit 0
@@ -4041,7 +4091,7 @@ while true; do
     echo "3. Rebuild Image / Update Code"
     echo "4. Uninstall Everything (Total Cleanup)"
     echo "5. Check for Updates"
-    echo "6. Enable/Disable Auto-Updates"
+    echo "6. Auto-Updates and Update Channel (stable or latest)"
     echo "7. Clean Docker Cache (Unused)"
     echo "8. Manage Shared YouTube Servers"
     echo "9. YouTube Egress (WARP, VPN or proxy; switch a blocked address)"

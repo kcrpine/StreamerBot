@@ -22,6 +22,9 @@ if [ -f "$SCRIPT_DIR/project.env" ]; then
     # shellcheck disable=SC1091
     . "$SCRIPT_DIR/project.env"
 fi
+# Update channel: stable (releases) or latest (every push).
+# shellcheck disable=SC1091
+. "$SCRIPT_DIR/update_channel.sh"
 
 BOT_IMAGE="${STREAMERBOT_IMAGE:-streamerbot}"
 YOUTUBE_SERVICE_NAME="${STREAMERBOT_YOUTUBE_SERVICE:-streamerbot-youtube}"
@@ -55,10 +58,17 @@ UPDATE_LOCK_FILE="/tmp/streamerbot_update.lock"
 if [ "${1:-}" = "--check-only" ]; then
     cd "$SCRIPT_DIR" || exit 0
     git rev-parse --is-inside-work-tree >/dev/null 2>&1 || exit 0
-    _branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "${STREAMERBOT_BRANCH:-main}")
+    _branch=$(update_branch)
     _remote=$(timeout 5 git ls-remote origin -h "refs/heads/$_branch" 2>/dev/null | awk '{print $1}' | tr -d '[:space:]')
     _local=$(git rev-parse HEAD 2>/dev/null | tr -d '[:space:]')
     if [ -n "$_remote" ] && [ "$_remote" != "$_local" ]; then
+        # Nothing to offer while a channel switch is waiting for a release to
+        # pass the code running here. Without the commit fetched this cannot be
+        # told, and saying there is an update is the safer mistake.
+        if [ "$(git rev-parse --abbrev-ref HEAD 2>/dev/null)" != "$_branch" ] \
+                && channel_would_downgrade "$_remote"; then
+            exit 0
+        fi
         echo "An update is available. Use Check for updates to install it."
     fi
     exit 0
@@ -378,7 +388,8 @@ update_and_fix_permissions() {
     # 2. Check for Updates (GitHub API vs Local Date)
     REPO_OWNER="${STREAMERBOT_REPO_OWNER:-}"
     REPO_NAME="${STREAMERBOT_REPO_NAME:-StreamerBot}"
-    BRANCH="${STREAMERBOT_BRANCH:-main}"
+    CHANNEL="$(update_channel)"
+    BRANCH="$(update_branch)"
 
     if [ -z "$REPO_OWNER" ]; then
         echo -e "${RED}Error. STREAMERBOT_REPO_OWNER is not set in project.env, so updates cannot run.${NC}"
@@ -394,6 +405,8 @@ update_and_fix_permissions() {
         git fetch origin "$BRANCH" -q
         REMOTE_HASH=$(git rev-parse "origin/$BRANCH" | tr -d '[:space:]')
         LOCAL_HASH=$(git rev-parse HEAD | tr -d '[:space:]')
+        CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null)
+        echo "Update channel: ${CHANNEL}, $(channel_description "$CHANNEL") (branch ${BRANCH})."
         
         # Check running version
         # Use 'tr -d' to ensure no weird whitespace/newlines break the comparison
@@ -415,6 +428,10 @@ update_and_fix_permissions() {
         NEEDS_PULL=false
         NEEDS_REBUILD=false
         IS_BEHIND=false
+        # True while a switch to another channel waits for that channel to pass
+        # the code running here. The checkout is then rebuilt where it is, if
+        # it needs rebuilding at all, and never reset.
+        CHANNEL_WAIT=false
         
         # Check for uncommitted local changes
         LOCAL_CHANGES=$(git status --porcelain)
@@ -424,7 +441,20 @@ update_and_fix_permissions() {
         fi
         
         # Check if local is behind remote
-        if [ "$REMOTE_HASH" != "$LOCAL_HASH" ]; then
+        if [ "$REMOTE_HASH" != "$LOCAL_HASH" ] && [ "$CURRENT_BRANCH" != "$BRANCH" ]; then
+            # The checkout is on another channel's branch. Moving to this one is
+            # normally forward. Moving back is refused unless asked for, since
+            # older code can refuse a config.json a newer version has migrated.
+            if channel_would_downgrade "$REMOTE_HASH" \
+                    && [ "${STREAMERBOT_ALLOW_DOWNGRADE:-false}" != "true" ]; then
+                CHANNEL_WAIT=true
+                echo -e "${YELLOW}The ${CHANNEL} channel is at $(describe_commit "$REMOTE_HASH"), which is older than the code here ($(describe_commit "$LOCAL_HASH")). Staying on this code until ${CHANNEL} passes it.${NC}"
+            else
+                IS_BEHIND=true
+                NEEDS_PULL=true
+                echo -e "${YELLOW}Moving to the ${CHANNEL} channel, at $(describe_commit "$REMOTE_HASH").${NC}"
+            fi
+        elif [ "$REMOTE_HASH" != "$LOCAL_HASH" ]; then
             if git merge-base --is-ancestor "$LOCAL_HASH" "$REMOTE_HASH"; then
                 IS_BEHIND=true
                 NEEDS_PULL=true
@@ -553,7 +583,9 @@ update_and_fix_permissions() {
                 echo -e "${YELLOW}Starting update...${NC}"
                 
                 # Check if we are in a git repository
-                if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+                if [ "${CHANNEL_WAIT:-false}" = "true" ]; then
+                    echo "Keeping the current code while the ${CHANNEL} channel catches up."
+                elif git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
                     echo "Performing forced synchronization with GitHub..."
                     # No copy of bots/ is taken around this. /bots/ is in .gitignore,
                     # and neither reset --hard nor clean -fd (without -x) touches an
@@ -565,7 +597,12 @@ update_and_fix_permissions() {
                     # tests/deployment/test_update_keeps_bots.py pins the .gitignore.
 
                     # Force synchronization to match origin exactly
+                    # checkout -f -B discards local changes exactly as reset --hard
+                    # did, and also names the local branch after the one followed,
+                    # so a channel switch is visible in git branch and the
+                    # auto-updater can tell a switch still waiting from one done.
                     git fetch origin "$BRANCH"
+                    git checkout -q -f -B "$BRANCH" "origin/$BRANCH"
                     git reset --hard "origin/$BRANCH"
                     git clean -fd # Also remove untracked files that might conflict
 

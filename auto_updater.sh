@@ -19,6 +19,9 @@ if [ -f "$SCRIPT_DIR/project.env" ]; then
     # shellcheck disable=SC1091
     . "$SCRIPT_DIR/project.env"
 fi
+# Which branch to follow: the stable channel (releases) or latest (every push).
+# shellcheck disable=SC1091
+[ -f "$SCRIPT_DIR/update_channel.sh" ] && . "$SCRIPT_DIR/update_channel.sh"
 
 TICK_SECONDS=60
 UPDATE_INTERVAL="${STREAMERBOT_UPDATE_INTERVAL:-300}"
@@ -145,7 +148,11 @@ while true; do
     if [ $((NOW - LAST_GITHUB_CHECK)) -ge "$UPDATE_INTERVAL" ]; then
         LAST_GITHUB_CHECK=$NOW
 
-        BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "$DEFAULT_BRANCH")
+        # The channel decides the branch, not the checkout: a server switching
+        # channel is still on the old branch until update.sh moves it.
+        BRANCH=$(update_branch 2>/dev/null) || BRANCH="$DEFAULT_BRANCH"
+        [ -n "$BRANCH" ] || BRANCH="$DEFAULT_BRANCH"
+        CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null)
 
         # ls-remote does not download objects and is not rate limited.
         REMOTE_HASH=$(git ls-remote origin -h "refs/heads/$BRANCH" 2>/dev/null | awk '{print $1}' | tr -d '[:space:]')
@@ -164,14 +171,28 @@ while true; do
                 # make it differ from the running image's commit label, and the
                 # branch below would then rebuild anyway. The skipped files arrive
                 # with the next push that touches code, or with a manual update.
+                #
+                # A server just switched to the stable channel is usually ahead of
+                # the last release. It stays on what it runs rather than being
+                # moved back, because older code can refuse a newer config.json;
+                # see channel_would_downgrade.
+                FETCHED=false
+                if [ "$REMOTE_HASH" != "$LAST_SKIPPED_REMOTE" ] \
+                        && git fetch --quiet origin "$BRANCH" 2>/dev/null; then
+                    FETCHED=true
+                fi
                 if [ "$REMOTE_HASH" = "$LAST_SKIPPED_REMOTE" ]; then
                     :
-                elif git fetch --quiet origin "$BRANCH" 2>/dev/null \
+                elif [ "$FETCHED" = true ] && [ "$CURRENT_BRANCH" != "$BRANCH" ] \
+                        && channel_would_downgrade "$REMOTE_HASH"; then
+                    echo "$(date): The $BRANCH branch ($REMOTE_HASH) is older than the code running here. Staying on it until $BRANCH passes it."
+                    LAST_SKIPPED_REMOTE="$REMOTE_HASH"
+                elif [ "$FETCHED" = true ] \
                         && only_non_code_changes "$LOCAL_HASH" "$REMOTE_HASH"; then
                     echo "$(date): GitHub moved to $REMOTE_HASH, but only the plan, documentation or GitHub settings changed. Not rebuilding or restarting any bot."
                     LAST_SKIPPED_REMOTE="$REMOTE_HASH"
                 else
-                    echo "$(date): New version detected on GitHub ($REMOTE_HASH). Triggering update..."
+                    echo "$(date): New version detected on GitHub ($REMOTE_HASH, branch $BRANCH). Triggering update..."
                     SHOULD_UPDATE=true
                 fi
             elif [ "$LOCAL_HASH" != "$RUNNING_HASH" ]; then

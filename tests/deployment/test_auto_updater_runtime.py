@@ -30,9 +30,11 @@ class AutoUpdaterRuntimeTests(unittest.TestCase):
             """
 case "$*" in
   "config "*) exit 0 ;;
-  "rev-parse --abbrev-ref HEAD") echo master ;;
+  "rev-parse --abbrev-ref HEAD") echo "${TEST_BRANCH:-stable}" ;;
   "rev-parse HEAD") echo "${TEST_LOCAL_HASH:-same}" ;;
-  "ls-remote "*) echo "${TEST_REMOTE_HASH:-same} refs/heads/master" ;;
+  "ls-remote "*) echo "${TEST_REMOTE_HASH:-same} refs/heads/stable" ;;
+  "merge-base --is-ancestor "*) exit "${TEST_IS_ANCESTOR:-1}" ;;
+  "diff --name-only "*) echo bot/__init__.py ;;
 esac
 """,
         )
@@ -72,6 +74,7 @@ exit 0
             encoding="utf-8",
         )
         update.chmod(0o755)
+        self.sandbox.copy("update_channel.sh")
         return script.name
 
     def _backoff_harness(self) -> str:
@@ -158,6 +161,66 @@ exit 0
         self.assertIn("owns the lock", result.stdout)
         self.assertNotIn("recovery failed", result.stdout.lower())
         self.assertIn("state=0:0", result.stdout)
+
+    def test_a_channel_switch_never_moves_a_server_backwards(self) -> None:
+        """Checked out on main, following stable, and stable's tip is an
+        ancestor of what runs: that is a switch waiting for a release."""
+        result = self.sandbox.run(
+            [self._one_cycle_script()],
+            env={
+                "TEST_HEALTH": "ok",
+                "TEST_BRANCH": "main",
+                "TEST_LOCAL_HASH": "newer",
+                "TEST_REMOTE_HASH": "release",
+                "TEST_RUNNING_HASH": "newer",
+                "TEST_IS_ANCESTOR": "0",
+            },
+        )
+
+        self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+        self.assertFalse(self.sandbox.trace.exists(), result.stdout)
+        self.assertIn("older than the code running here", result.stdout)
+
+    @unittest.skipUnless(
+        flock_available(), "flock does not exclude a second holder on this host"
+    )
+    def test_a_channel_switch_forward_updates(self) -> None:
+        result = self.sandbox.run(
+            [self._one_cycle_script()],
+            env={
+                "TEST_HEALTH": "ok",
+                "TEST_BRANCH": "main",
+                "TEST_LOCAL_HASH": "old",
+                "TEST_REMOTE_HASH": "release",
+                "TEST_RUNNING_HASH": "old",
+                "TEST_IS_ANCESTOR": "1",
+            },
+        )
+
+        self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+        self.assertEqual("update AUTO_UPDATE=true\n", self.sandbox.trace.read_text())
+        self.assertIn("branch stable", result.stdout)
+
+    @unittest.skipUnless(
+        flock_available(), "flock does not exclude a second holder on this host"
+    )
+    def test_the_latest_channel_follows_main(self) -> None:
+        (self.sandbox.root / "update_channel.env").write_text(
+            "STREAMERBOT_CHANNEL=latest\n", encoding="utf-8"
+        )
+        result = self.sandbox.run(
+            [self._one_cycle_script()],
+            env={
+                "TEST_HEALTH": "ok",
+                "TEST_BRANCH": "main",
+                "TEST_LOCAL_HASH": "old",
+                "TEST_REMOTE_HASH": "new",
+                "TEST_RUNNING_HASH": "old",
+            },
+        )
+
+        self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+        self.assertIn("branch main", result.stdout)
 
 
 if __name__ == "__main__":

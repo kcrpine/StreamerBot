@@ -1,5 +1,9 @@
 /bots/
 
+# Per-server update channel (stable or latest). Untracked so an update's
+# reset --hard leaves it alone; see update_channel.sh.
+/update_channel.env
+
 # Manager log, written by streamerbot.sh on the host.
 /logs/
 /TeamTalk_DLL/

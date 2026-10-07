@@ -6,6 +6,35 @@ issue or a commit message. Numbering continues across releases.
 
 ## Unreleased
 
+## StreamerBot 1.0.3 (2026-10-07)
+
+- **[072]** Each server now chooses an update channel: **stable**, which only ever receives released
+  versions, or **latest**, which receives every push to `main` as before. Stable is the default, so a
+  server no longer picks up half-finished work minutes after it is pushed. Choose with
+  `streamerbot.sh --channel stable` or `--channel latest` (no argument says which is in use), or from
+  the main menu: 6, Auto-Updates and Update Channel, then 4. The choice is kept in
+  `update_channel.env`, which is untracked so that an update's `reset --hard` cannot undo it;
+  `project.env` gains `STREAMERBOT_STABLE_BRANCH` and `STREAMERBOT_DEFAULT_CHANNEL`.
+
+  Stable is a real branch, `stable`, holding nothing but release commits and moved only forward. A
+  release pushes it alongside the `v<version>` tag, and a new `Stable branch` workflow does the same
+  when a release is published and refuses to move it anywhere but forward. The updater watches it
+  exactly as it watches `main`, with one `git ls-remote` every five minutes. The releases API was
+  the alternative and was not taken: it is rate limited, and a release would have to be turned back
+  into something to check out. The workflow is a safety net, not the mechanism, because GitHub
+  refuses a push made with the workflow's own token when it moves a branch across commits that
+  change `.github/workflows/`, which most releases will do.
+
+  **A server switched to stable is never moved backwards on its own.** A server that followed
+  `latest` usually runs code newer than the last release, and older code refuses a `config.json`
+  whose `config_version` a newer version raised, so its bots could fail to start. It stays on what
+  it runs, and the updater says so once, until a release passes it. The menu offers to move back at
+  once, with that warning; the flag never does. A repository that has not released yet has no
+  `stable` branch, and a server on stable then follows `main` rather than never updating; a network
+  failure is told apart from a missing branch, so it cannot flip a server onto `main` for a cycle.
+  The README's Configuring section has the steps for choosing a channel. `update.sh` now checks out
+  the followed branch by name (`checkout -f -B`), so `git branch` on a
+  server shows its channel. The installer clones `stable` when it exists.
 - **[071]** A release no longer gets a prerelease built on top of it. Every release made two: one from
   the branch push of the release commit, and one from the `v<version>` tag push that creating the
   release causes, since the Tests workflow runs on every push, tags included. Both sat above the real

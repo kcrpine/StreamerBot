@@ -17,6 +17,11 @@ NC='\033[0m' # No Color
 SERVICE_NAME="streamerbot-updater.service"
 SERVICE_PATH="/etc/systemd/system/$SERVICE_NAME"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR" || exit 1
+# shellcheck disable=SC1091
+[ -f "$SCRIPT_DIR/project.env" ] && . "$SCRIPT_DIR/project.env"
+# shellcheck disable=SC1091
+. "$SCRIPT_DIR/update_channel.sh"
 
 
 # Template to ensure we can always restore the service
@@ -114,6 +119,53 @@ disable_auto_update() {
     sleep 2
 }
 
+# Stable or latest. Choosing stable on a server that runs newer code than the
+# last release offers to wait for the next one, which is the default because
+# older code can refuse a configuration a newer version has migrated.
+choose_update_channel() {
+    local current choice wanted branch target
+    current="$(update_channel)"
+    echo ""
+    echo "This server follows the $current channel: $(channel_description "$current")."
+    echo ""
+    echo "1. Stable: $(channel_description stable)"
+    echo "2. Latest: $(channel_description latest)"
+    echo "3. Return"
+    echo ""
+    read -p "Choose an option: " choice
+    case "$choice" in
+        1) wanted=stable ;;
+        2) wanted=latest ;;
+        *) return 0 ;;
+    esac
+    if ! set_update_channel "$wanted"; then
+        echo -e "${RED}Error. Could not write $UPDATE_CHANNEL_FILE.${NC}"
+        sleep 2
+        return 1
+    fi
+    echo -e "${GREEN}OK. This server now follows the $wanted channel.${NC}"
+
+    branch="$(update_branch)"
+    if git fetch -q origin "$branch" 2>/dev/null \
+            && target="$(git rev-parse "origin/$branch" 2>/dev/null)" \
+            && [ "$(git rev-parse --abbrev-ref HEAD 2>/dev/null)" != "$branch" ] \
+            && channel_would_downgrade "$target"; then
+        echo ""
+        echo "This server runs newer code than the $wanted channel, which is at $(describe_commit "$target")."
+        echo "1. Stay on this code until a release passes it (recommended)"
+        echo "2. Move back to $(describe_commit "$target") now. Bots whose configuration a newer version changed may refuse to start."
+        read -p "Choose an option: " choice
+        if [ "$choice" = "2" ]; then
+            STREAMERBOT_ALLOW_DOWNGRADE=true bash "$SCRIPT_DIR/update.sh"
+        fi
+        return 0
+    fi
+    read -p "Update from the $wanted channel now? [y/N]: " choice
+    if [[ "$choice" =~ ^[yY]$ ]]; then
+        bash "$SCRIPT_DIR/update.sh"
+    fi
+}
+
 while true; do
     header
     echo "Current Status:"
@@ -122,6 +174,7 @@ while true; do
     echo "1. Enable Auto-Updates"
     echo "2. Disable Auto-Updates"
     echo "3. Return to Main Menu"
+    echo "4. Choose Update Channel (now $(update_channel): $(channel_description "$(update_channel)"))"
     echo ""
     read -p "Choose an option: " choice
     
@@ -134,6 +187,9 @@ while true; do
             ;;
         3)
             exit 0
+            ;;
+        4)
+            choose_update_channel
             ;;
         *)
             echo -e "${RED}Invalid option.${NC}"
