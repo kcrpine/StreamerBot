@@ -6,6 +6,7 @@ config_version 2 against a ConfigManager that understood 1 went unnoticed, and
 how a config copied from TTMediaBot dies on a KeyError for a service named "vk".
 """
 
+import copy
 import json
 import os
 import tempfile
@@ -57,7 +58,9 @@ class ForeignLineageTests(unittest.TestCase):
         migrate() returns early when the number matches, so such a file used to
         pass through untouched, keeping a default_service the bot dies on.
         """
-        foreign = dict(TTMEDIABOT_CONFIG, config_version=ConfigManager.version)
+        # Deep copies: the migrations edit nested sections in place, and the
+        # shared fixture must still look foreign to the tests after this one.
+        foreign = dict(copy.deepcopy(TTMEDIABOT_CONFIG), config_version=ConfigManager.version)
         self.assertTrue(is_foreign_lineage(foreign))
 
         migrated = foreign
@@ -68,11 +71,23 @@ class ForeignLineageTests(unittest.TestCase):
         self.assertEqual(migrated["logger"]["file_name"], "StreamerBot.log")
 
     def test_the_inherited_server_details_are_never_touched(self):
-        migrated = dict(TTMEDIABOT_CONFIG)
+        migrated = copy.deepcopy(TTMEDIABOT_CONFIG)
         for ver in sorted(migrate_functs):
             migrated = migrate_functs[ver](migrated)
         self.assertEqual(migrated["teamtalk"]["hostname"], "tt.example.org")
         self.assertEqual(migrated["teamtalk"]["nickname"], "Inherited")
+
+    def test_a_migrated_config_no_longer_looks_foreign(self):
+        """The VK and Yandex sections used to survive, so the file stayed foreign
+        for good: every start re-ran the migration and rewrote config.json, and
+        every config check warned about a migration that had already happened."""
+        migrated = copy.deepcopy(TTMEDIABOT_CONFIG)
+        for ver in sorted(migrate_functs):
+            migrated = migrate_functs[ver](migrated)
+        self.assertNotIn("vk", migrated["services"])
+        self.assertNotIn("yam", migrated["services"])
+        self.assertFalse(is_foreign_lineage(migrated))
+        self.assertNotIn("foreign_lineage", codes(inspect_config_data(migrated), WARNING))
 
 
 class InspectionTests(unittest.TestCase):

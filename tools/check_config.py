@@ -130,8 +130,17 @@ def main(argv=None):
             "Those bots will not connect until they are fixed."
         )
         return 1
+    # Adopting checks one folder at a time, and "every bot" in a report about
+    # one bot reads as a claim about bots it never looked at.
+    single = len(results) == 1
     if warnings:
-        print(f"Warning. {warnings} thing(s) worth checking. Every bot will start.")
+        print(
+            f"Warning. {warnings} thing(s) worth checking. "
+            + ("This bot will start." if single else "Every bot will start.")
+        )
+        return 0
+    if single:
+        print("OK. The configuration is ready.")
         return 0
     print(f"OK. All {len(results)} configuration(s) are ready.")
     return 0

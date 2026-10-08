@@ -6,6 +6,23 @@ issue or a commit message. Numbering continues across releases.
 
 ## Unreleased
 
+## StreamerBot 1.0.3.2 (2026-10-08)
+
+- **[074]** Adopting copied bot folders no longer starts each bot two or three times, and its config
+  check no longer warns about a migration it has just finished. Three things combined. The updater had
+  begun rebuilding the image a few minutes earlier, so adopting started the new bots on the old image,
+  and the rebuild then recreated and restarted every bot a minute later; adopting now takes the
+  updater's own lock, says once that it is waiting for a running update and once that it has
+  finished, and changes nothing until then. Adopting also started every created-but-stopped bot on the
+  host rather than only the ones it made. And the step 2 warning, "This configuration came from
+  TTMediaBot or one of its other forks… 1 thing(s) worth checking. Every bot will start.", was
+  describing step 1's work as still to come: the migration kept the old VK and Yandex Music sections,
+  which nothing reads, and their presence alone marks a file as foreign. Both the manager's migration
+  and the bot's own now drop them. That also stops every start of such a bot re-running its migration
+  and rewriting config.json, which it had been doing for good. A check of a single bot now says "This
+  bot will start" rather than "Every bot will start". Bots already migrated shed the sections on their
+  next start.
+
 ## StreamerBot 1.0.3.1 (2026-10-07)
 
 - **[073]** A bot folder copied in by hand is offered for adoption again after an image rebuild had

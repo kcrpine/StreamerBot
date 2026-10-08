@@ -2996,6 +2996,7 @@ migrate_one_bot() {
                          | IN("yt","ytm","sp","nf","dp","am","az"))
                      then (.services.default_service // "yt")
                      else "yt" end)
+                | del(.services.vk, .services.yam)
                 | .config_version = (if ((.config_version // 0) < 2) then 2 else .config_version end)
               ' "$dir/config.json" > "$tmp" 2>/dev/null; then
             rm -f "$tmp"
@@ -3342,6 +3343,39 @@ notice_adoptable_bots() {
     echo "To bring them in, choose Manage Bots, then Adopt Bot Folders Copied Into bots/."
 }
 
+# Hold update.sh's own lock while bots are being brought in.
+#
+# An update rebuilds the image and then recreates and restarts every bot. Adopt
+# while one is building and the new bots start on the old image, then are torn
+# down and started again a minute or two later when the build lands -- several
+# starts for one adoption, with nothing saying why. Holding the lock means the
+# updater skips its cycle instead of starting a rebuild underneath us, and a
+# rebuild already running finishes first.
+#
+# fd 8, not update.sh's fd 9: an update started from this menu inherits open
+# descriptors, and would wait on a lock its own parent holds.
+UPDATE_LOCK_FILE="/tmp/streamerbot_update.lock"
+
+hold_update_lock() {
+    exec 8>"$UPDATE_LOCK_FILE" || return 0
+    flock -n 8 && return 0
+    echo "An update is building a new image right now. When it finishes it restarts"
+    echo "every bot, so adopting now would start these bots twice. Nothing has been"
+    echo "changed yet. Waiting for the update to finish, for up to 30 minutes."
+    if ! flock -w 1800 8; then
+        exec 8>&-
+        echo "Error. The update was still running after 30 minutes, so nothing was"
+        echo "adopted. Run this again once it has finished."
+        return 1
+    fi
+    echo "The update has finished. Continuing."
+    echo ""
+}
+
+release_update_lock() {
+    exec 8>&-
+}
+
 adopt_copied_bots() {
     header
     echo -e "${YELLOW} --- Adopt Bot Folders Copied Into bots/ --- ${NC}"
@@ -3411,6 +3445,11 @@ adopt_copied_bots() {
     fi
 
     echo ""
+    if ! hold_update_lock; then
+        read -p "Press Enter to continue..."
+        return
+    fi
+
     echo "Step 1 of 3. Updating configurations."
     local failed=0 ready=() configs config_path
     for dir in "${adoptable[@]}"; do
@@ -3445,6 +3484,7 @@ adopt_copied_bots() {
 
     if [ "${#ready[@]}" -eq 0 ]; then
         echo "Error. No folder could be updated, so no container was created."
+        release_update_lock
         read -p "Press Enter to continue..."
         return
     fi
@@ -3463,11 +3503,12 @@ adopt_copied_bots() {
     ensure_shared_youtube_service || {
         echo "Error. The shared YouTube service could not be started, so no container"
         echo "was created. The folders are updated, and adopting again will finish the job."
+        release_update_lock
         read -p "Press Enter to continue..."
         return
     }
 
-    local created=0
+    local created=0 started=()
     for dir in "${ready[@]}"; do
         name=$(basename "$dir")
         log_line "Adopting copied bot folder $name"
@@ -3489,6 +3530,7 @@ adopt_copied_bots() {
                 "${BOT_IMAGE}"; then
             echo "  OK. Container $name created."
             created=$((created + 1))
+            started+=("$name")
         else
             echo "  Error. Container $name was not created. See logs/manager.log."
             failed=$((failed + 1))
@@ -3497,9 +3539,12 @@ adopt_copied_bots() {
 
     echo ""
     if [ "$created" -gt 0 ]; then
+        # Only the containers made here. Every created-but-stopped bot on the
+        # host used to be started along with them.
         echo "Starting the adopted bots."
-        docker start $(docker ps -a -q -f "label=role=streamerbot" -f "status=created") >/dev/null 2>&1
+        docker start "${started[@]}" >/dev/null 2>&1
     fi
+    release_update_lock
 
     echo ""
     echo "Finished. $created bot(s) adopted and started."

@@ -510,6 +510,15 @@ class AdoptingUpgradesTheConfiguration(AdoptHarness):
         during startup -- a traceback rather than anything a user can act on."""
         self.assertEqual(self.migrated["services"]["default_service"], "yt")
 
+    def test_the_sections_for_services_this_bot_lacks_are_dropped(self):
+        """Left in, they kept the file looking foreign after it was migrated, so
+        the check straight afterwards warned about a migration already done."""
+        self.assertNotIn("vk", self.migrated["services"])
+        result = self.run_shell(
+            'bot_dir_is_legacy "$BOTS_ROOT/copied" && echo LEGACY || echo CURRENT'
+        )
+        self.assertIn("CURRENT", result.stdout)
+
     def test_the_cache_and_log_names_are_renamed(self):
         self.assertEqual(
             self.migrated["general"]["cache_file_name"], "StreamerBotCache.dat"
@@ -533,6 +542,87 @@ class AdoptingUpgradesTheConfiguration(AdoptHarness):
 
     def test_the_version_is_current(self):
         self.assertEqual(self.migrated["config_version"], 2)
+
+
+class AdoptingWaitsForARunningUpdate(TestCase):
+    """An update rebuilds the image and then recreates and restarts every bot.
+    Adopting while one was building started each new bot on the old image and
+    then again on the new one a minute or two later."""
+
+    def setUp(self):
+        for tool in ("bash", "flock"):
+            if not shutil.which(tool):
+                raise unittest.SkipTest(f"{tool} is not available on this host")
+        self.script = read_script()
+        self.tmp = Path(tempfile.mkdtemp())
+        self.lock = self.tmp / "update.lock"
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp, ignore_errors=True)
+
+    def run_shell(self, body):
+        preamble = [
+            f'UPDATE_LOCK_FILE="{self.lock.as_posix()}"',
+            extract_function(self.script, "hold_update_lock"),
+            extract_function(self.script, "release_update_lock"),
+            body,
+        ]
+        return subprocess.run(
+            ["bash", "-c", "\n".join(preamble)],
+            capture_output=True, text=True, timeout=60,
+        )
+
+    def test_with_no_update_running_it_takes_the_lock_quietly(self):
+        result = self.run_shell(
+            'hold_update_lock || exit 9\n'
+            # While held, the updater's own non-blocking attempt has to fail.
+            f'flock -n "{self.lock.as_posix()}" true && echo FREE || echo HELD\n'
+            'release_update_lock\n'
+            f'flock -n "{self.lock.as_posix()}" true && echo FREE || echo HELD'
+        )
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(result.stdout.split(), ["HELD", "FREE"])
+
+    def test_a_running_update_is_waited_for_and_said_once_each_way(self):
+        holder = subprocess.Popen(
+            ["flock", self.lock.as_posix(), "sleep", "2"]
+        )
+        try:
+            # Let the holder take the lock first.
+            for _ in range(50):
+                if subprocess.run(
+                    ["flock", "-n", self.lock.as_posix(), "true"]
+                ).returncode != 0:
+                    break
+                subprocess.run(["sleep", "0.1"])
+            result = self.run_shell("hold_update_lock && echo CONTINUED")
+        finally:
+            holder.wait(timeout=30)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn("An update is building a new image", result.stdout)
+        self.assertIn("Nothing has been", result.stdout)
+        self.assertIn("The update has finished", result.stdout)
+        self.assertIn("CONTINUED", result.stdout)
+
+    def adopt(self):
+        adopt = self.script[self.script.index("adopt_copied_bots() {"):]
+        return adopt[: adopt.index("\n}\n")]
+
+    def test_the_lock_is_taken_after_agreeing_and_before_any_change(self):
+        adopt = self.adopt()
+        held_at = adopt.index("hold_update_lock")
+        self.assertLess(adopt.index('read -p "Type adopt to continue'), held_at)
+        self.assertLess(held_at, adopt.index("migrate_one_bot"))
+        self.assertLess(held_at, adopt.index("lift_adopted_bot_data"))
+
+    def test_update_sh_uses_the_same_lock_file(self):
+        update = (ROOT / "update.sh").read_text(encoding="utf-8")
+        self.assertIn(extract_assignment(self.script, "UPDATE_LOCK_FILE"), update)
+
+    def test_only_the_adopted_bots_are_started(self):
+        """It used to start every created-but-stopped bot on the host."""
+        self.assertNotIn('-f "status=created"', self.adopt())
+        self.assertIn('docker start "${started[@]}"', self.adopt())
 
 
 class AdoptedBotsGetTheirOwnPorts(AdoptHarness):

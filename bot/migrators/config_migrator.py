@@ -83,6 +83,12 @@ def to_v2(config_data: config_data_type) -> config_data_type:
                 default,
                 services["default_service"],
             )
+        # Their sections go too. Nothing reads them, and while they stay the
+        # file still looks foreign: every start re-ran this migration and
+        # rewrote the file, and every config check warned about a migration
+        # that had already happened.
+        for key in FOREIGN_SERVICE_KEYS:
+            services.pop(key, None)
     return update_version(config_data, 2)
 
 
