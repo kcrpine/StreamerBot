@@ -222,6 +222,14 @@ recreate_bot_containers() {
     for d in "$BOTS_ROOT"/*; do
         if [ -d "$d" ]; then
             bot_name=$(basename "$d")
+
+            # A folder with no config.json at the top has not been adopted yet
+            # (streamerbot.sh, Adopt Bot Folders). A container made for it here
+            # cannot start, and its existence hid the folder from adopting.
+            if [ ! -f "$d/config.json" ]; then
+                echo "  - Skipped '$bot_name': not adopted yet"
+                continue
+            fi
             
             # Remove existing container if it exists
             if [ "$(docker ps -a -q -f name=^/${bot_name}$)" ]; then
@@ -234,6 +242,9 @@ recreate_bot_containers() {
             mkdir -p "$d/secrets" "$d/browser" "$d/youtube_auth" "$d/librespot"
             chown -R 1000:1000 "$d" 2>/dev/null || true
             chmod 700 "$d/secrets" "$d/youtube_auth" "$d/librespot" 2>/dev/null || true
+            # This used to bind-mount cookies.txt, and Docker created a missing
+            # one as an empty root-owned directory. Clear that leftover.
+            [ -d "$d/cookies.txt" ] && rmdir "$d/cookies.txt" 2>/dev/null
             
             docker create \
                 --name "${bot_name}" \
@@ -244,7 +255,6 @@ recreate_bot_containers() {
                 --label "role=streamerbot" \
                 --restart always \
                 -v "${d}:/home/streamer/StreamerBot/data" \
-                -v "${d}/cookies.txt:/home/streamer/StreamerBot/data/cookies.txt" \
                 "${BOT_IMAGE}" > /dev/null 2>&1
                 
             if [ $? -eq 0 ]; then

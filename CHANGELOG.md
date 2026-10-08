@@ -6,6 +6,21 @@ issue or a commit message. Numbering continues across releases.
 
 ## Unreleased
 
+## StreamerBot 1.0.3.1 (2026-10-07)
+
+- **[073]** A bot folder copied in by hand is offered for adoption again after an image rebuild had
+  already given it a container. Rebuilding recreated a container for every directory under `bots/`,
+  adopted or not. A copy of a whole old TTMediaBot install keeps its `config.json` one level down, so
+  that container found nothing at the top of its data folder, printed "Incorrect configuration file
+  path" and restarted forever, while Adopt Bot Folders said there was nothing to adopt because "has a
+  container" was its only test. Now a container only counts as working when `config.json` sits at the
+  top of the folder; a folder without one is listed for adoption, the report says its container will be
+  replaced, and adopting removes it before creating the new one. Both copies of
+  `recreate_bot_containers` skip folders that have not been adopted, so a rebuild cannot hide one again.
+  `update.sh`'s copy also still bind-mounted `cookies.txt`, a file nothing writes any more; where it was
+  missing Docker created an empty root-owned directory in its place in every bot folder. The mount is
+  gone and rebuilds and adopting remove the empty directory.
+
 ## StreamerBot 1.0.3 (2026-10-07)
 
 - **[072]** Each server now chooses an update channel: **stable**, which only ever receives released

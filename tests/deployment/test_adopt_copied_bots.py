@@ -33,6 +33,8 @@ ROOT = Path(__file__).resolve().parents[2]
 ADOPT_FUNCTIONS = [
     "bot_name_is_valid",
     "adoptable_bot_dirs",
+    "adopted_dir_has_container",
+    "remove_stale_cookies_mountpoint",
     "find_adoptable_config",
     "lift_adopted_bot_data",
     "inspect_adoption_candidate",
@@ -218,6 +220,90 @@ class ScanFindsOnlyFoldersWithNoContainer(AdoptHarness):
 
         self.assertIn("copied", result.stdout)
         self.assertNotIn("running", result.stdout)
+
+
+class AContainerThatCannotStartDoesNotHideTheFolder(AdoptHarness):
+    """Rebuilding the image used to create a container for every directory
+    under bots/, adopted or not. A copied install with its config one level
+    down then had a container that printed "Incorrect configuration file path"
+    and restarted forever, and the scan reported nothing to adopt because a
+    container existed."""
+
+    def test_a_container_over_a_nested_config_is_a_candidate(self):
+        self.make_folder("copied", TTMEDIABOT_CONFIG, subdir="TTMediaBot")
+
+        result = self.run_shell("adoptable_bot_dirs", containers="copied")
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("copied", result.stdout)
+
+    def test_a_working_bot_beside_it_is_still_left_alone(self):
+        self.make_folder("copied", TTMEDIABOT_CONFIG, subdir="TTMediaBot")
+        self.make_folder("running", TTMEDIABOT_CONFIG)
+
+        result = self.run_shell("adoptable_bot_dirs", containers="copied running")
+
+        self.assertIn("copied", result.stdout)
+        self.assertNotIn("running", result.stdout)
+
+    def test_the_report_says_the_container_will_be_replaced(self):
+        directory = self.make_folder("copied", TTMEDIABOT_CONFIG, subdir="TTMediaBot")
+
+        result = self.run_shell(
+            f'inspect_adoption_candidate "{directory.as_posix()}"', containers="copied"
+        )
+
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn("already has a container", result.stdout)
+        self.assertIn("TTMediaBot/config.json", result.stdout)
+
+    def test_adopting_removes_the_old_container_before_creating_one(self):
+        adopt = extract_function(self.script, "adopt_copied_bots")
+        self.assertLess(adopt.index("docker rm -f"), adopt.index("docker create"))
+
+
+class TheStaleCookiesMountpointIsCleared(AdoptHarness):
+    """Docker turned a missing bind-mount source into an empty root-owned
+    directory named cookies.txt in every bot folder."""
+
+    def test_an_empty_directory_is_removed(self):
+        directory = self.make_folder("bot", TTMEDIABOT_CONFIG)
+        (directory / "cookies.txt").mkdir()
+
+        result = self.run_shell(f'remove_stale_cookies_mountpoint "{directory.as_posix()}"')
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertFalse((directory / "cookies.txt").exists())
+
+    def test_a_real_cookies_file_is_kept(self):
+        directory = self.make_folder("bot", TTMEDIABOT_CONFIG, files=("cookies.txt",))
+
+        self.run_shell(f'remove_stale_cookies_mountpoint "{directory.as_posix()}"')
+
+        self.assertTrue((directory / "cookies.txt").is_file())
+
+
+class RebuildsDoNotCreateContainersForUnadoptedFolders(TestCase):
+    """Both copies of recreate_bot_containers run on every image rebuild."""
+
+    def body(self, script_name):
+        path = ROOT / script_name
+        if not path.is_file():
+            raise unittest.SkipTest(f"{script_name} is not present")
+        return extract_function(path.read_text(encoding="utf-8"), "recreate_bot_containers")
+
+    def test_a_folder_without_a_top_level_config_is_skipped(self):
+        for script_name in ("streamerbot.sh", "update.sh"):
+            with self.subTest(script=script_name):
+                body = self.body(script_name)
+                self.assertLess(
+                    body.index('[ ! -f "$d/config.json" ]'), body.index("docker create")
+                )
+
+    def test_cookies_txt_is_no_longer_bind_mounted(self):
+        for script_name in ("streamerbot.sh", "update.sh"):
+            with self.subTest(script=script_name):
+                self.assertNotIn("cookies.txt:/home", self.body(script_name))
 
 
 class NamesThatCannotBeBotsAreRefused(AdoptHarness):

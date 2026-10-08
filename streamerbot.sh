@@ -306,11 +306,20 @@ recreate_bot_containers() {
     for d in "$BOTS_ROOT"/*; do
         if [ -d "$d" ]; then
             bot_name=$(basename "$d")
+
+            # A folder with no config.json at the top has not been adopted yet.
+            # Giving it a container here is what hid it from adopting: it
+            # restarted in a loop, and the scan saw a container and moved on.
+            if [ ! -f "$d/config.json" ]; then
+                echo "  - Skipped '$bot_name': not adopted yet. Use Adopt Bot Folders."
+                continue
+            fi
             
             # Remove existing container if it exists
             if [ "$(docker ps -a -q -f name=^/${bot_name}$)" ]; then
                 docker rm -f "$bot_name" >/dev/null 2>&1
             fi
+            remove_stale_cookies_mountpoint "$d"
             
             # Make sure the credential directories exist. Nothing writes a
             # cookies.txt any more, and cookiefile_path is no longer forced back
@@ -3144,18 +3153,45 @@ bot_name_is_valid() {
     printf '%s' "$1" | grep -Eq "$BOT_NAME_PATTERN"
 }
 
-# Every directory under bots/ that has no container. Note the -a: a bot whose
-# container exists but is stopped is not a candidate, and adopting it would
-# destroy and rebuild a container someone deliberately stopped.
+# Every directory under bots/ that has no container, or has one that cannot
+# possibly start. Note the -a: a bot whose container exists but is stopped is
+# not a candidate, and adopting it would destroy and rebuild a container someone
+# deliberately stopped.
+#
+# "Has a container" used to be the whole test, and that hid folders forever.
+# Rebuilding the image recreates a container for every directory under bots/,
+# so a copied folder that was never adopted got one anyway -- mounted at its
+# top, where there is no config.json because the copy holds a whole old install
+# with the config one level down. The bot printed "Incorrect configuration file
+# path" and restarted in a loop, and this scan said there was nothing to adopt
+# because a container existed. No config.json at the top is the one thing every
+# working bot has and no such container does, so it is what decides.
 adoptable_bot_dirs() {
     local dir name
     [ -d "$BOTS_ROOT" ] || return 0
     for dir in "$BOTS_ROOT"/*; do
         [ -d "$dir" ] || continue
         name=$(basename "$dir")
-        [ -n "$(docker ps -a -q -f "name=^/${name}$" 2>/dev/null)" ] && continue
+        if [ -n "$(docker ps -a -q -f "name=^/${name}$" 2>/dev/null)" ] \
+            && [ -f "$dir/config.json" ]; then
+            continue
+        fi
         printf '%s\n' "$dir"
     done
+}
+
+# Whether a candidate already has a container, which adopting has to replace.
+adopted_dir_has_container() {
+    [ -n "$(docker ps -a -q -f "name=^/$(basename "$1")$" 2>/dev/null)" ]
+}
+
+# An old update created every container with a bind mount of
+# bots/<name>/cookies.txt. Where that file did not exist Docker made it, as an
+# empty directory owned by root, and a directory there blocks the bot's own
+# cookies.txt handling. rmdir only removes it while it is empty.
+remove_stale_cookies_mountpoint() {
+    [ -d "$1/cookies.txt" ] && rmdir "$1/cookies.txt" 2>/dev/null
+    return 0
 }
 
 # Where this folder's config.json actually is.
@@ -3242,6 +3278,11 @@ inspect_adoption_candidate() {
         return 1
     fi
 
+    if adopted_dir_has_container "$dir"; then
+        echo "  It already has a container, but that container cannot start: there"
+        echo "  is no config.json at the top of the folder. Adopting replaces it."
+    fi
+
     configs=$(find_adoptable_config "$dir")
     count=$(printf '%s' "$configs" | grep -c . 2>/dev/null || true)
 
@@ -3296,9 +3337,8 @@ notice_adoptable_bots() {
     count=$(adoptable_bot_dirs | grep -c . 2>/dev/null || true)
     [ "${count:-0}" -gt 0 ] || return 0
     echo ""
-    echo "Note. $count folder(s) in the bots folder have no container, so they are not"
-    echo "running and no menu item lists them. This is what a bot folder copied in by"
-    echo "hand looks like."
+    echo "Note. $count folder(s) in the bots folder have no working container, so they"
+    echo "are not running. This is what a bot folder copied in by hand looks like."
     echo "To bring them in, choose Manage Bots, then Adopt Bot Folders Copied Into bots/."
 }
 
@@ -3380,6 +3420,7 @@ adopt_copied_bots() {
         # A nested configuration was reported above; move the bot's own files up
         # now that adopting has been agreed to, so a cancelled run leaves the
         # folder exactly as it was found.
+        remove_stale_cookies_mountpoint "$dir"
         if [ ! -f "$dir/config.json" ]; then
             configs=$(find_adoptable_config "$dir")
             config_path=$(printf '%s' "$configs" | head -1)
@@ -3430,6 +3471,11 @@ adopt_copied_bots() {
     for dir in "${ready[@]}"; do
         name=$(basename "$dir")
         log_line "Adopting copied bot folder $name"
+        # Only a container that could not start reaches here with one; see
+        # adoptable_bot_dirs.
+        if adopted_dir_has_container "$dir"; then
+            log_run "remove unstartable container $name" docker rm -f "$name" >/dev/null
+        fi
         if log_run "docker create for adopted bot $name" \
             docker create \
                 --name "${name}" \
