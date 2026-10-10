@@ -1818,3 +1818,23 @@ on the same OVH host (AS16276) showed the identical failure, 700-990 lines each 
   played 0 or 1 of 3 videos. Free-plan addresses are datacenter addresses YouTube already blocks. Bots were
   not recreated; the bridge was put back to direct. A different result needs a residential proxy
   (`url` mode), not another datacenter VPN.
+
+### A refused reconnect hung the bot for good (2026-10-10, changelog [075])
+
+- **Symptom:** three bots on chrisduffley.com logged "Lost the connection ... Attempt 1 of unlimited" at
+  04:06 UTC and never logged a second attempt. The processes were healthy and held no socket to the
+  server, which was accepting connections again. Every earlier CON_LOST on those bots looked the same;
+  they came back only when a restart or an update recreated the container.
+- **Cause, measured:** `TT_Connect` returns FALSE without raising any event when it cannot start (an
+  unresolvable hostname is enough). The reconnect ignored that value and the event thread blocked in
+  `getMessage(-1)`; py-spy on the stuck process showed it there. A server that accepts TCP and stays
+  silent is *not* this bug: the SDK raises CON_FAILED after 180 s and the old loop already retried it.
+- **Fix:** every attempt goes through `TeamTalkThread.start_connecting`, which checks the result and
+  schedules a retry, and `getMessage` waits at most `EVENT_WAIT_MS` (1 s). Verified against the real SDK
+  in the image: refused three times while the name did not resolve, then connected on the next attempt
+  once it did.
+- **Not verified:** what actually failed at 04:06 on chrisduffley.com's side. A refused `TT_Connect` fits
+  a DNS failure during that server's outage, but the host's resolver logs were not checked.
+- **Found alongside:** the bot `stefani` names `paralleledition,xyz`, which can never resolve, and had
+  sat silent since its start on 2026-10-08. Corrected to `paralleledition.xyz` at the user's request and
+  restarted; it connected.

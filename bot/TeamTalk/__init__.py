@@ -99,7 +99,7 @@ class TeamTalk:
     def initialize(self) -> None:
         logging.debug("Initializing TeamTalk")
         self.thread.start()
-        self.connect()
+        self.thread.start_connecting()
         logging.debug("TeamTalk initialized")
 
     def close(self) -> None:
@@ -110,7 +110,12 @@ class TeamTalk:
         self.tt.closeTeamTalk()
         logging.debug("Teamtalk closed")
 
-    def connect(self) -> None:
+    def connect(self) -> bool:
+        """Start a connection; False when the SDK refused to begin one.
+
+        A refusal raises no event at all, so nothing will ever arrive to say
+        it failed. TeamTalkThread.start_connecting is what retries it.
+        """
         self.state = State.CONNECTING
         if self.config.encrypted:
             ctx = TeamTalkPy.EncryptionContext()
@@ -135,13 +140,15 @@ class TeamTalk:
                 except Exception as e:
                     logging.warning(f"Failed to dynamically fetch server certificate: {e}")
             self.tt.setEncryptionContext(ctx)
-        self.tt.connect(
-            _str(self.config.hostname),
-            self.config.tcp_port,
-            self.config.udp_port,
-            0,
-            0,
-            self.config.encrypted,
+        return bool(
+            self.tt.connect(
+                _str(self.config.hostname),
+                self.config.tcp_port,
+                self.config.udp_port,
+                0,
+                0,
+                self.config.encrypted,
+            )
         )
 
     def disconnect(self) -> None:

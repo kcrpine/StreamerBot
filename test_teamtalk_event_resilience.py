@@ -96,3 +96,100 @@ class WatchdogTests(TestCase):
                 self.assertLogs(level="CRITICAL"):
             bot._exit_for_restart()
         exit_.assert_called_once_with(1)
+
+
+def make_connecting_thread(connect_results, reconnection_attempts=-1):
+    """A thread whose client refuses or accepts connect() in the order given."""
+    thread = TeamTalkThread.__new__(TeamTalkThread)
+    thread.config = SimpleNamespace(
+        hostname="chrisduffley.com",
+        tcp_port=1982,
+        reconnection_attempts=reconnection_attempts,
+        reconnection_timeout=10,
+        event_handling=SimpleNamespace(load_event_handlers=False),
+    )
+    thread.ttclient = Mock(reconnect=False, reconnect_attempt=0)
+    thread.ttclient.connect.side_effect = list(connect_results)
+    thread.ttclient.tt.getMessage.return_value = SimpleNamespace(
+        nClientEvent=EventType.NONE.value
+    )
+    thread._connect_at = None
+    return thread
+
+
+class RefusedConnectTests(TestCase):
+    """TT_Connect refusing to start must be retried, not waited on forever.
+
+    On 2026-10-10 chrisduffley.com dropped three bots at once. Each logged
+    "Lost the connection ... Attempt 1 of unlimited" and then nothing for more
+    than sixteen hours: the reconnect's TT_Connect returned FALSE, which the
+    SDK does without raising any event (measured: an unresolvable hostname
+    returns 0 and stays silent), and the thread sat in getMessage(-1) waiting
+    for one. Every earlier drop on those bots ended the same way.
+    """
+
+    def test_a_refused_attempt_is_logged_and_retried_after_the_timeout(self):
+        thread = make_connecting_thread([False, True])
+        with patch("bot.TeamTalk.thread.time.monotonic", return_value=100.0), \
+                self.assertLogs(level="WARNING") as logs:
+            thread.start_connecting()
+        self.assertIn("Could not start connecting to chrisduffley.com:1982", logs.output[0])
+        self.assertIn("Attempt 1 of unlimited", logs.output[0])
+        self.assertEqual(thread._connect_at, 110.0)
+
+        with patch("bot.TeamTalk.thread.time.monotonic", return_value=105.0):
+            thread.process_next_event()
+        self.assertEqual(thread.ttclient.connect.call_count, 1)
+
+        with patch("bot.TeamTalk.thread.time.monotonic", return_value=110.0):
+            thread.process_next_event()
+        self.assertEqual(thread.ttclient.connect.call_count, 2)
+        self.assertIsNone(thread._connect_at)
+
+    def test_refusals_keep_being_retried_without_limit(self):
+        thread = make_connecting_thread([False] * 5 + [True])
+        clock = [0.0]
+        with patch("bot.TeamTalk.thread.time.monotonic", side_effect=lambda: clock[0]), \
+                self.assertLogs(level="WARNING"):
+            thread.start_connecting()
+            for _ in range(5):
+                clock[0] += 10
+                thread.process_next_event()
+        self.assertEqual(thread.ttclient.connect.call_count, 6)
+        self.assertIsNone(thread._connect_at)
+
+    def test_a_lost_connection_reconnects_through_the_same_retry(self):
+        thread = make_connecting_thread([False, True])
+        thread.ttclient.get_event.return_value = SimpleNamespace(
+            event_type=EventType.CON_LOST
+        )
+        thread.ttclient.tt.getMessage.return_value = SimpleNamespace(
+            nClientEvent=EventType.CON_LOST.value
+        )
+        with patch("bot.TeamTalk.thread.time.monotonic", return_value=0.0), \
+                self.assertLogs(level="WARNING"):
+            thread.process_next_event()
+        thread.ttclient.disconnect.assert_called()
+        thread.ttclient.connect.assert_not_called()
+
+        thread.ttclient.tt.getMessage.return_value = SimpleNamespace(
+            nClientEvent=EventType.NONE.value
+        )
+        with patch("bot.TeamTalk.thread.time.monotonic", side_effect=[10.0, 10.0, 20.0, 20.0]), \
+                self.assertLogs(level="WARNING") as logs:
+            thread.process_next_event()
+            thread.process_next_event()
+        self.assertIn("Attempt 2 of unlimited", logs.output[0])
+        self.assertEqual(thread.ttclient.connect.call_count, 2)
+
+    def test_a_limited_bot_still_gives_up(self):
+        thread = make_connecting_thread([False], reconnection_attempts=0)
+        with self.assertRaises(SystemExit), self.assertLogs(level="WARNING"):
+            thread.start_connecting()
+
+    def test_the_wait_for_an_event_is_finite(self):
+        thread = make_connecting_thread([])
+        thread.process_next_event()
+        (wait,), _ = thread.ttclient.tt.getMessage.call_args
+        self.assertGreater(wait, 0)
+        thread.ttclient.get_event.assert_not_called()

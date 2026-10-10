@@ -17,6 +17,12 @@ if TYPE_CHECKING:
     from bot import Bot
     from bot.TeamTalk import TeamTalk
 
+# How long getMessage waits for an event before returning empty-handed. It
+# must be finite: TT_Connect refuses to start (an unresolvable hostname is
+# enough) by returning FALSE and raising no event at all, and a thread waiting
+# forever for one never got to retry. Bots sat disconnected for days.
+EVENT_WAIT_MS = 1000
+
 
 class TeamTalkThread(Thread):
     def __init__(self, bot: Bot, ttclient: TeamTalk):
@@ -25,6 +31,8 @@ class TeamTalkThread(Thread):
         self.bot = bot
         self.config = ttclient.config
         self.ttclient = ttclient
+        # When the next connection attempt is due (time.monotonic()), or None.
+        self._connect_at: Optional[float] = None
 
     def run(self) -> None:
         if self.config.event_handling.load_event_handlers:
@@ -41,8 +49,54 @@ class TeamTalkThread(Thread):
                 logging.exception("Error handling a TeamTalk event; skipping it")
                 time.sleep(0.1)
 
+    def may_retry(self) -> bool:
+        return (
+            self.ttclient.reconnect
+            and self.ttclient.reconnect_attempt < self.config.reconnection_attempts
+            or self.config.reconnection_attempts < 0
+        )
+
+    def give_up(self) -> None:
+        logging.error(
+            f"Giving up on {self.config.hostname}:{self.config.tcp_port} "
+            f"after {self.ttclient.reconnect_attempt} attempts. "
+            "The bot is stopping. Set teamtalk.reconnection_attempts to -1 "
+            "in this bot's config.json to keep retrying forever."
+        )
+        sys.exit(1)
+
+    def schedule_connect(self) -> None:
+        self._connect_at = time.monotonic() + self.config.reconnection_timeout
+
+    def start_connecting(self) -> None:
+        """Start a connection attempt, scheduling another if the SDK refuses it."""
+        self._connect_at = None
+        if self.ttclient.connect():
+            return
+        limit = (
+            "unlimited"
+            if self.config.reconnection_attempts < 0
+            else str(self.config.reconnection_attempts)
+        )
+        logging.warning(
+            f"Could not start connecting to {self.config.hostname}:{self.config.tcp_port}. "
+            f"Attempt {self.ttclient.reconnect_attempt + 1} of {limit}. "
+            "The hostname may not have resolved; check it and the server's DNS. "
+            f"Trying again in {self.config.reconnection_timeout} seconds."
+        )
+        if self.may_retry():
+            self.ttclient.reconnect_attempt += 1
+            self.schedule_connect()
+        else:
+            self.give_up()
+
     def process_next_event(self) -> None:
-        event = self.ttclient.get_event(self.ttclient.tt.getMessage())
+        if self._connect_at is not None and time.monotonic() >= self._connect_at:
+            self.start_connecting()
+        message = self.ttclient.tt.getMessage(EVENT_WAIT_MS)
+        if message.nClientEvent == EventType.NONE.value:
+            return
+        event = self.ttclient.get_event(message)
         if event.event_type in (EventType.NONE, EventType.UNKNOWN):
             return
         elif (
@@ -95,24 +149,13 @@ class TeamTalkThread(Thread):
                     f"Attempt {attempt} of {limit}."
                 )
             self.ttclient.disconnect()
-            if (
-                self.ttclient.reconnect
-                and self.ttclient.reconnect_attempt
-                < self.config.reconnection_attempts
-                or self.config.reconnection_attempts < 0
-            ):
-                self.ttclient.disconnect()
-                time.sleep(self.config.reconnection_timeout)
-                self.ttclient.connect()
+            if self.may_retry():
+                # Scheduled rather than slept and called here, so the attempt
+                # goes through start_connecting, which notices a refusal.
                 self.ttclient.reconnect_attempt += 1
+                self.schedule_connect()
             else:
-                logging.error(
-                    f"Giving up on {self.config.hostname}:{self.config.tcp_port} "
-                    f"after {self.ttclient.reconnect_attempt} attempts. "
-                    "The bot is stopping. Set teamtalk.reconnection_attempts to -1 "
-                    "in this bot's config.json to keep retrying forever."
-                )
-                sys.exit(1)
+                self.give_up()
         elif event.event_type == EventType.CON_SUCCESS:
             self.ttclient.reconnect_attempt = 0
             self.ttclient.login()

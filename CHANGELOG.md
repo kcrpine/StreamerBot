@@ -6,6 +6,25 @@ issue or a commit message. Numbering continues across releases.
 
 ## Unreleased
 
+## StreamerBot 1.0.3.3 (2026-10-10)
+
+- **[075]** A bot that loses its TeamTalk server now keeps trying to reconnect until it gets back in,
+  instead of trying once and then sitting disconnected until someone restarts it. On 2026-10-10 at 04:06
+  UTC chrisduffley.com dropped DaniellesMediaBot, general-bot-danielle and TestBot together; each logged
+  "Lost the connection ... Attempt 1 of unlimited" and then nothing for more than sixteen hours, and every
+  earlier drop on those bots ended the same way, recovering only when the container was restarted. The
+  reconnect called `TT_Connect` and ignored its result. The SDK refuses to start a connection, for
+  example when the hostname does not resolve for a moment, by returning FALSE and raising **no event at
+  all** (measured against the real SDK: an unresolvable host returns 0 and stays silent; a server that
+  accepts TCP and never answers does get a CON_FAILED, after 180 seconds). The event thread then waited
+  in `getMessage(-1)` for an event that would never come; py-spy on the live process showed it there.
+  `TeamTalk.connect()` now returns whether the attempt started, every attempt (startup included) goes
+  through `TeamTalkThread.start_connecting`, which logs a refusal with the host and attempt number and
+  schedules the next try, and `getMessage` waits at most a second so a scheduled try is never missed.
+  The same hang caught a bot whose config named `paralleledition,xyz` (a comma for the dot): it now logs
+  that the hostname would not resolve every `reconnection_timeout` seconds instead of saying nothing,
+  and that bot's config was corrected on paralleledition.xyz.
+
 ## StreamerBot 1.0.3.2 (2026-10-08)
 
 - **[074]** Adopting copied bot folders no longer starts each bot two or three times, and its config
