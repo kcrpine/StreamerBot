@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  StreamerBot\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-06 21:31+0000\n"
+"POT-Creation-Date: 2026-10-11 20:46+0000\n"
 "PO-Revision-Date: 2021-07-17 13:41+0400\n"
 "Last-Translator: \n"
 "Language: tr\n"
@@ -19,21 +19,21 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.18.0\n"
 
-#: bot/__init__.py:183 bot/__init__.py:246
+#: bot/__init__.py:199 bot/__init__.py:262
 msgid ""
 "This needs Google Chrome, which is not available on this machine's "
 "processor architecture."
 msgstr ""
 
-#: bot/__init__.py:228
+#: bot/__init__.py:244
 msgid "Spotify is unavailable: the player could not start."
 msgstr ""
 
-#: bot/__init__.py:261 bot/__init__.py:264 bot/modules/portal_pages.py:543
+#: bot/__init__.py:277 bot/__init__.py:280 bot/modules/portal_pages.py:543
 msgid "The sign-in did not complete."
 msgstr ""
 
-#: bot/__init__.py:277
+#: bot/__init__.py:293
 msgid ""
 "The account portal is switched off in this bot's configuration, so "
 "Netflix, Disney Plus, Apple Music and Amazon Music cannot be connected. "
@@ -43,7 +43,7 @@ msgid ""
 "Portal and Spotify Ports in the manager turns it back on."
 msgstr ""
 
-#: bot/__init__.py:330
+#: bot/__init__.py:346
 #, python-format
 msgid ""
 "The account portal could not start because port %(port)s is already in "
@@ -54,7 +54,7 @@ msgid ""
 "they sign in with a code in the channel."
 msgstr ""
 
-#: bot/__init__.py:340
+#: bot/__init__.py:356
 #, python-format
 msgid ""
 "The account portal could not start, so Netflix, Disney Plus, Apple Music "
@@ -62,20 +62,20 @@ msgid ""
 "file: %(reason)s"
 msgstr ""
 
-#: bot/__init__.py:372
+#: bot/__init__.py:391
 msgid ""
 "Hello! I'm back and ready for you to stream again. Thank you for your "
 "patience!"
 msgstr ""
 
-#: bot/__init__.py:410
+#: bot/__init__.py:429
 msgid ""
 "Hello there! It's me, the Streamer Bot, just coming in here to let you "
 "know that an update is in progress and I will restart in a few moments to"
 " apply it. Thank you!"
 msgstr ""
 
-#: bot/__init__.py:467
+#: bot/__init__.py:486
 msgid "The bot is restarting now to apply the update. See you in a moment!"
 msgstr ""
 "Bot şimdi güncellemeyi uygulamak için yeniden başlatılıyor. Yakında "
@@ -96,7 +96,7 @@ msgid ""
 "Kirill Belousov, and on the fork by Joao Almeida.\n"
 msgstr ""
 
-#: bot/TeamTalk/__init__.py:173
+#: bot/TeamTalk/__init__.py:180
 msgid "Send \"h\" for help"
 msgstr "Yardım için \"h\" gönderin"
 
@@ -104,35 +104,35 @@ msgstr "Yardım için \"h\" gönderin"
 msgid "That question has expired. To ask again, send: dlp"
 msgstr ""
 
-#: bot/commands/__init__.py:215
+#: bot/commands/__init__.py:221
 msgid "Unknown command. Send \"h\" for help."
 msgstr "Bilinmeyen komut. Yardım için \"h\" gönderin."
 
-#: bot/commands/__init__.py:221 bot/commands/user_commands.py:913
+#: bot/commands/__init__.py:227 bot/commands/user_commands.py:913
 #: bot/commands/user_commands.py:919 bot/commands/user_commands.py:1414
 #: bot/commands/user_commands.py:1496 bot/commands/user_commands.py:1568
-#: bot/commands/user_commands.py:1642 bot/modules/uploader.py:130
+#: bot/commands/user_commands.py:1642 bot/modules/uploader.py:140
 #, python-brace-format
 msgid "Error: {}"
 msgstr "Hata: {}"
 
-#: bot/commands/__init__.py:233
+#: bot/commands/__init__.py:239
 msgid "You are banned"
 msgstr "Siz engellendiniz"
 
-#: bot/commands/__init__.py:237
+#: bot/commands/__init__.py:243
 msgid "You are not in bot's channel"
 msgstr "botun kanalında değilsiniz"
 
-#: bot/commands/__init__.py:241
+#: bot/commands/__init__.py:247
 msgid "Bot is locked"
 msgstr "Bot kilitli"
 
-#: bot/commands/__init__.py:245
+#: bot/commands/__init__.py:251
 msgid "This command is blocked"
 msgstr "Bu komut kilitli"
 
-#: bot/commands/__init__.py:269
+#: bot/commands/__init__.py:275
 msgid "Unknown command"
 msgstr "Bilinmeyen komut"
 
@@ -1472,7 +1472,7 @@ msgid "Could not download {name}: {reason}"
 msgstr ""
 
 #: bot/modules/apple_music_downloader.py:173
-#: bot/modules/playlist_uploader.py:145 bot/modules/uploader.py:102
+#: bot/modules/playlist_uploader.py:145 bot/modules/uploader.py:112
 #, python-brace-format
 msgid "Could not download {name}."
 msgstr ""
@@ -1520,7 +1520,7 @@ msgstr ""
 msgid "Signing in to this service is not available yet."
 msgstr ""
 
-#: bot/modules/playlist_uploader.py:88 bot/modules/uploader.py:91
+#: bot/modules/playlist_uploader.py:88 bot/modules/uploader.py:92
 msgid "Renewing the YouTube sign-in. The download continues when it finishes."
 msgstr ""
 
@@ -2078,9 +2078,19 @@ msgstr ""
 msgid "Try again in a moment. If it keeps happening, check the bot's log."
 msgstr ""
 
-#: bot/modules/uploader.py:67
+#: bot/modules/uploader.py:68
 msgid "Error: Downloaded file not found."
 msgstr "Hata: İndirilen dosya bulunamadı."
+
+#: bot/modules/uploader.py:104
+#, python-brace-format
+msgid ""
+"{name} is a live broadcast, so it cannot be downloaded while it is on "
+"air. Try again after the broadcast ends, or play it now with the u "
+"command."
+msgstr ""
+"{name} canlı bir yayın, bu yüzden yayın sürerken indirilemez. Yayın "
+"bittikten sonra yeniden deneyin ya da şimdi u komutuyla oynatın."
 
 #: bot/modules/youtube_session_keeper.py:148
 #, python-brace-format
