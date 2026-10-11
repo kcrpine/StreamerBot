@@ -6,6 +6,8 @@ issue or a commit message. Numbering continues across releases.
 
 ## Unreleased
 
+## StreamerBot 1.0.3.4 (2026-10-11)
+
 - **[076]** YouTube downloads (`ldd`, `d`, `dv`, `dlp` and the download list) now read through the bot's windowing stream
   relay instead of handing ffmpeg the googlevideo.com URL. YouTube throttles one open-ended request to
   about real time. On 2026-10-11 `ldd` on a finished eight-hour-23-minute church broadcast on Chris-Test
