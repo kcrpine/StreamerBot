@@ -111,7 +111,7 @@ class YtmService(_Service):
         info = track.extra_info or {}
         video_id = info.get("videoId") or info.get("id")
         source_url = f"https://www.youtube.com/watch?v={video_id}" if video_id else track.url
-        self._bridge.download(source_url, file_path, video=video)
+        self._bridge.download(source_url, file_path, video=video, relay=self.bot.stream_proxy.register)
         duration = (time.perf_counter() - start_time) * 1000
         logging.info(f"YTM Download finished in {duration:.2f}ms for {track.name}")
 

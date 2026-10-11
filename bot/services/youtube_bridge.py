@@ -5,13 +5,17 @@ import os
 import subprocess
 import threading
 import time
-from typing import Any
+from typing import Any, Callable, Optional
 
 import requests
 
 from bot import errors
+from bot.services.stream_proxy import is_live_url
 
 logger = logging.getLogger(__name__)
+
+# How long a download may receive nothing before ffmpeg gives up on it.
+_STALL_TIMEOUT_MICROSECONDS = 60_000_000
 
 
 class YouTubeBridge:
@@ -131,22 +135,45 @@ class YouTubeBridge:
     def recommendations(self, video_id: str, limit: int = 20) -> dict[str, Any]:
         return self._post("/recommendations", video_id=video_id, limit=limit)
 
-    def download(self, url: str, file_path: str, video: bool = False) -> None:
+    def download(
+        self,
+        url: str,
+        file_path: str,
+        video: bool = False,
+        relay: Optional[Callable[[str, dict[str, str]], str]] = None,
+    ) -> None:
+        """Download with ffmpeg. `relay` maps a stream URL to the one ffmpeg reads.
+
+        Pass the bot's stream relay: YouTube throttles one open-ended request to
+        about real-time speed, so ffmpeg fetching an 8-hour video directly took
+        hours, while the same URL in ranged windows came at 14-21 MB/s.
+        """
         plan = self._post("/download-plan", url=url, video=video)
         headers = plan.get("http_headers") or {}
         user_agent = headers.get("User-Agent", "")
-        base_cmd = ["ffmpeg", "-y", "-loglevel", "error"]
+        # A broadcast still on air never ends, so ffmpeg would record it until
+        # it does with no word to the user. YouTube marks those URLs itself.
+        stream_urls = [(plan.get(kind) or {}).get("url") or "" for kind in ("audio", "video")]
+        if any(url and is_live_url(url) for url in stream_urls):
+            raise errors.LiveBroadcastError("The video is a live broadcast still on air")
+        # Fail a stalled connection instead of waiting on it forever; the
+        # caller turns the failure into a message.
+        base_cmd = ["ffmpeg", "-y", "-loglevel", "error", "-rw_timeout", str(_STALL_TIMEOUT_MICROSECONDS)]
         if user_agent:
             base_cmd += ["-user_agent", user_agent]
 
+        def stream(kind: str) -> str:
+            stream_url = (plan.get(kind) or {}).get("url") or ""
+            return relay(stream_url, headers) if stream_url and relay else stream_url
+
         if not video:
-            audio_url = (plan.get("audio") or {}).get("url")
+            audio_url = stream("audio")
             if not audio_url:
                 raise errors.ServiceError("YouTube.js did not return an audio stream")
             cmd = base_cmd + ["-i", audio_url, "-vn", "-codec:a", "libmp3lame", "-b:a", "320k", file_path]
         else:
-            video_url = (plan.get("video") or {}).get("url")
-            audio_url = (plan.get("audio") or {}).get("url")
+            video_url = stream("video")
+            audio_url = stream("audio")
             if not video_url or not audio_url:
                 raise errors.ServiceError("YouTube.js did not return video/audio streams")
             cmd = base_cmd + [

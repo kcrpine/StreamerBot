@@ -26,6 +26,10 @@ class ServiceError(Exception):
     pass
 
 
+class LiveBroadcastError(ServiceError):
+    """A download was asked for a broadcast still on air, which has no end to wait for."""
+
+
 class NothingFoundError(Exception):
     pass
 

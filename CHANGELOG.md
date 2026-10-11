@@ -6,6 +6,20 @@ issue or a commit message. Numbering continues across releases.
 
 ## Unreleased
 
+- **[076]** YouTube downloads (`ldd`, `d`, `dv`, `dlp` and the download list) now read through the bot's windowing stream
+  relay instead of handing ffmpeg the googlevideo.com URL. YouTube throttles one open-ended request to
+  about real time. On 2026-10-11 `ldd` on a finished eight-hour-23-minute church broadcast on Chris-Test
+  answered "Searching and downloading..." and was still converting 32 minutes later at about 2.6 times
+  real time, roughly three and a quarter hours in all. The same URL fetched in 10 MB ranges came at
+  14-21 MB/s. The link was a `/live/` one, but the broadcast had ended and its stream URL had no live
+  marks; the bridge still reports `is_live: true` for it because it ORs in `is_live_content`.
+  A broadcast that really is still on air is now refused in words ("… is a live broadcast, so it cannot
+  be downloaded while it is on air. Try again after the broadcast ends, or play it now with the u
+  command.") rather than recorded indefinitely. The check reads YouTube's own `live=1`/`noclen=1` marks
+  on the stream URL (`stream_proxy.is_live_url`), so it does not catch a finished stream's recording.
+  Every YouTube download's ffmpeg also gets a 60-second `-rw_timeout`, so a connection that stops sending
+  fails into the existing "Could not download" message rather than waiting forever.
+
 ## StreamerBot 1.0.3.3 (2026-10-10)
 
 - **[075]** A bot that loses its TeamTalk server now keeps trying to reconnect until it gets back in,

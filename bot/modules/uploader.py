@@ -12,6 +12,7 @@ from bot.player.track import Track
 from bot.player.enums import TrackType
 from bot.TeamTalk.structs import ErrorType, User
 from bot import app_vars
+from bot.errors import LiveBroadcastError
 from bot.modules.youtube_session_keeper import DownloadSignIn, SignInLost, sign_in_lost_message
 
 if TYPE_CHECKING:
@@ -96,6 +97,15 @@ class Uploader:
             return sign_in.run(lambda: track.download(directory, video=video))
         except SignInLost as lost:
             self.ttclient.send_message(sign_in_lost_message(translate, lost.result, name), user)
+        except LiveBroadcastError:
+            logging.info(f"Uploader: refused to download '{name}': it is a live broadcast")
+            self.ttclient.send_message(
+                translate(
+                    "{name} is a live broadcast, so it cannot be downloaded while it is on air. "
+                    "Try again after the broadcast ends, or play it now with the u command."
+                ).format(name=name),
+                user,
+            )
         except Exception as error:
             # Not passed to the channel: it may carry a path under data/.
             logging.error(f"Uploader: download failed for '{name}': {error}", exc_info=True)
