@@ -570,6 +570,12 @@ entry, which is numbered, citable in an issue, and read deliberately rather than
   codebase exist because the obvious version was tried and broke something. That is exactly the part
   worth the sentence, even in a two-paragraph message.
 
+### User-facing documentation is not hard-wrapped either
+
+The user asked for this on 2026-10-12. The rule above for commit messages applies to everything a person reads: README.md, CHANGELOG.md entries, GitHub release notes and any other user-facing documentation. Write each paragraph or list item as one line and break only between paragraphs, list items, headings and code blocks, never inside a sentence. A hard newline in mid-sentence reflows badly in every viewer and is awkward to read with a screen reader, and this project's users are blind.
+
+Much of the existing text, including older CHANGELOG entries, is wrapped at about 100 characters. Do not copy that style when matching the surrounding text. New and rewritten text goes unwrapped, and old text is left alone unless someone asks for it to be reflowed.
+
 ### Commit in reasonably sized pieces
 
 The user asked for this. One commit per coherent step a reviewer can read on its own — a fix with its
