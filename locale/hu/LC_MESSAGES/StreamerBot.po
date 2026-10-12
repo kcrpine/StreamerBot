@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  StreamerBot\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-12 02:41+0000\n"
+"POT-Creation-Date: 2026-10-12 04:01+0000\n"
 "PO-Revision-Date: 2024-01-18 16:31+0100\n"
 "Last-Translator: Гумеров Амир Эдуардович <gumerov.amir.e@gmail.com>\n"
 "Language: hu\n"
@@ -19,21 +19,21 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.18.0\n"
 
-#: bot/__init__.py:183 bot/__init__.py:246
+#: bot/__init__.py:215 bot/__init__.py:278
 msgid ""
 "This needs Google Chrome, which is not available on this machine's "
 "processor architecture."
 msgstr ""
 
-#: bot/__init__.py:228
+#: bot/__init__.py:260
 msgid "Spotify is unavailable: the player could not start."
 msgstr ""
 
-#: bot/__init__.py:261 bot/__init__.py:264 bot/modules/portal_pages.py:543
+#: bot/__init__.py:293 bot/__init__.py:296 bot/modules/portal_pages.py:543
 msgid "The sign-in did not complete."
 msgstr ""
 
-#: bot/__init__.py:277
+#: bot/__init__.py:309
 msgid ""
 "The account portal is switched off in this bot's configuration, so "
 "Netflix, Disney Plus, Apple Music and Amazon Music cannot be connected. "
@@ -43,7 +43,7 @@ msgid ""
 "Portal and Spotify Ports in the manager turns it back on."
 msgstr ""
 
-#: bot/__init__.py:330
+#: bot/__init__.py:362
 #, python-format
 msgid ""
 "The account portal could not start because port %(port)s is already in "
@@ -54,7 +54,7 @@ msgid ""
 "they sign in with a code in the channel."
 msgstr ""
 
-#: bot/__init__.py:340
+#: bot/__init__.py:372
 #, python-format
 msgid ""
 "The account portal could not start, so Netflix, Disney Plus, Apple Music "
@@ -62,20 +62,20 @@ msgid ""
 "file: %(reason)s"
 msgstr ""
 
-#: bot/__init__.py:372
+#: bot/__init__.py:404
 msgid ""
 "Hello! I'm back and ready for you to stream again. Thank you for your "
 "patience!"
 msgstr ""
 
-#: bot/__init__.py:410
+#: bot/__init__.py:442
 msgid ""
 "Hello there! It's me, the Streamer Bot, just coming in here to let you "
 "know that an update is in progress and I will restart in a few moments to"
 " apply it. Thank you!"
 msgstr ""
 
-#: bot/__init__.py:467
+#: bot/__init__.py:499
 msgid "The bot is restarting now to apply the update. See you in a moment!"
 msgstr "A bot most újraindul a frissítés telepítéséhez. Hamarosan találkozunk!"
 
@@ -98,39 +98,39 @@ msgstr ""
 msgid "Send \"h\" for help"
 msgstr "Küldj egy h-t a parancsok megismeréséhez"
 
-#: bot/commands/__init__.py:156
+#: bot/commands/__init__.py:172
 msgid "That question has expired. To ask again, send: dlp"
 msgstr ""
 
-#: bot/commands/__init__.py:229
+#: bot/commands/__init__.py:254
 msgid "Unknown command. Send \"h\" for help."
 msgstr "Ismeretlen parancs. Küldj egy h-t a parancsok megismeréséhez."
 
-#: bot/commands/__init__.py:235 bot/commands/user_commands.py:913
-#: bot/commands/user_commands.py:919 bot/commands/user_commands.py:1414
-#: bot/commands/user_commands.py:1496 bot/commands/user_commands.py:1568
-#: bot/commands/user_commands.py:1642 bot/modules/uploader.py:140
+#: bot/commands/__init__.py:260 bot/commands/user_commands.py:918
+#: bot/commands/user_commands.py:924 bot/commands/user_commands.py:1419
+#: bot/commands/user_commands.py:1501 bot/commands/user_commands.py:1573
+#: bot/commands/user_commands.py:1647 bot/modules/uploader.py:140
 #, python-brace-format
 msgid "Error: {}"
 msgstr "Hiba: {}"
 
-#: bot/commands/__init__.py:247
+#: bot/commands/__init__.py:272
 msgid "You are banned"
 msgstr "Tiltva vagy"
 
-#: bot/commands/__init__.py:251
+#: bot/commands/__init__.py:276
 msgid "You are not in bot's channel"
 msgstr "Nem tartózkodsz a bottal egy csatornában"
 
-#: bot/commands/__init__.py:255
+#: bot/commands/__init__.py:280
 msgid "Bot is locked"
 msgstr "A bot zárolva van"
 
-#: bot/commands/__init__.py:259
+#: bot/commands/__init__.py:284
 msgid "This command is blocked"
 msgstr "Tiltott parancs"
 
-#: bot/commands/__init__.py:283
+#: bot/commands/__init__.py:308
 msgid "Unknown command"
 msgstr "Ismeretlen parancs"
 
@@ -145,15 +145,15 @@ msgstr ""
 "nélkül a tiltólistát mutatja"
 
 #: bot/commands/admin_commands.py:32 bot/commands/admin_commands.py:322
-#: bot/commands/admin_commands.py:352 bot/commands/user_commands.py:637
-#: bot/commands/user_commands.py:649 bot/commands/user_commands.py:705
-#: bot/commands/user_commands.py:1344 bot/commands/user_commands.py:1366
-#: bot/commands/user_commands.py:1429
+#: bot/commands/admin_commands.py:352 bot/commands/user_commands.py:642
+#: bot/commands/user_commands.py:654 bot/commands/user_commands.py:710
+#: bot/commands/user_commands.py:1349 bot/commands/user_commands.py:1371
+#: bot/commands/user_commands.py:1434
 msgid "The list is empty"
 msgstr "A lista üres"
 
 #: bot/commands/admin_commands.py:37 bot/commands/admin_commands.py:304
-#: bot/commands/admin_commands.py:336 bot/commands/user_commands.py:600
+#: bot/commands/admin_commands.py:336 bot/commands/user_commands.py:605
 msgid "Added"
 msgstr "Hozzáadva"
 
@@ -162,7 +162,7 @@ msgid "This command is already added"
 msgstr "Ez a parancs már hozzá van adva"
 
 #: bot/commands/admin_commands.py:45 bot/commands/admin_commands.py:310
-#: bot/commands/admin_commands.py:342 bot/commands/user_commands.py:612
+#: bot/commands/admin_commands.py:342 bot/commands/user_commands.py:617
 msgid "Deleted"
 msgstr "Törölve"
 
@@ -410,11 +410,15 @@ msgstr ""
 msgid "The portal has been stopped."
 msgstr ""
 
+# | msgid "" "SERVICE Disconnects a streaming account and deletes its saved
+# | sign-in " "(yt, sp, nf, dp, am, az, pp, tb)"
 #: bot/commands/admin_commands.py:499
 msgid ""
 "SERVICE Disconnects a streaming account and deletes its saved sign-in "
-"(yt, sp, nf, dp, am, az)"
+"(yt, sp, nf, dp, am, az, pp, hu, tb)"
 msgstr ""
+"SZOLGÁLTATÁS Leválaszt egy streamingfiókot, és törli a mentett "
+"bejelentkezését (yt, sp, nf, dp, am, az, pp, hu, tb)"
 
 #: bot/commands/admin_commands.py:514
 #, python-format
@@ -514,6 +518,285 @@ msgid ""
 "cancel, send: 0"
 msgstr ""
 
+#: bot/commands/podcast_commands.py:69
+msgid "That podcast could not be read. Try again later."
+msgstr "Ezt a podcastot nem sikerült beolvasni. Próbáld újra később."
+
+#: bot/commands/podcast_commands.py:73
+#, python-brace-format
+msgid "{podcast} has no episodes to play."
+msgstr "A(z) {podcast} podcastnak nincs lejátszható epizódja."
+
+#: bot/commands/podcast_commands.py:90
+#, python-brace-format
+msgid "{podcast}, episodes {first} to {last} of {total}:"
+msgstr "{podcast}, epizódok: {first}–{last}, összesen {total}:"
+
+#: bot/commands/podcast_commands.py:101
+msgid "For the next ten episodes, send: pe"
+msgstr "A következő tíz epizódhoz küldd: pe"
+
+#: bot/commands/podcast_commands.py:103
+msgid "To start the list again from episode 1, send: pe"
+msgstr "Ha újra az 1. epizódtól kéred a listát, küldd: pe"
+
+#: bot/commands/podcast_commands.py:106
+msgid ""
+"pe and a number plays an episode. pa subscribes to this podcast. Spotify "
+"episodes cannot be downloaded."
+msgstr ""
+"A pe és egy szám lejátszik egy epizódot. A pa feliratkozik erre a "
+"podcastra. A Spotify-epizódok nem tölthetők le."
+
+#: bot/commands/podcast_commands.py:111
+msgid ""
+"pe and a number plays an episode. pd and a number downloads one. pd on "
+"its own downloads several as one zip file. pa subscribes to this podcast."
+msgstr ""
+"A pe és egy szám lejátszik egy epizódot. A pd és egy szám letölt egyet. A"
+" pd önmagában többet tölt le egy zip-fájlban. A pa feliratkozik erre a "
+"podcastra."
+
+#: bot/commands/podcast_commands.py:119
+#, python-brace-format
+msgid "There is no number {number}. The list goes from 1 to {total}."
+msgstr "Nincs {number}. szám. A lista 1-től {total}-ig tart."
+
+#: bot/commands/podcast_commands.py:134
+msgid ""
+"No podcast is open. To find one, send pc and a few words, for example: pc"
+" history"
+msgstr ""
+"Nincs megnyitott podcast. Kereséshez küldd a pc parancsot néhány szóval, "
+"például: pc history"
+
+#: bot/commands/podcast_commands.py:148
+#, python-brace-format
+msgid "{podcast} has episodes 1 to {total}."
+msgstr "A(z) {podcast} epizódjai: 1-től {total}-ig."
+
+#: bot/commands/podcast_commands.py:157
+msgid "WORDS Searches for podcasts. pc and a number opens one from the list"
+msgstr "SZAVAK Podcastokat keres. A pc és egy szám megnyit egyet a listából"
+
+#: bot/commands/podcast_commands.py:170 bot/commands/podcast_commands.py:396
+#, python-brace-format
+msgid "Opening {podcast}."
+msgstr "A(z) {podcast} megnyitása."
+
+#: bot/commands/podcast_commands.py:172 bot/commands/user_commands.py:48
+#: bot/commands/user_commands.py:842 bot/commands/user_commands.py:1011
+msgid "Searching..."
+msgstr "Keresés..."
+
+#: bot/commands/podcast_commands.py:181
+msgid "No podcast directory answered. Try again later."
+msgstr "Egyik podcastkönyvtár sem válaszolt. Próbáld újra később."
+
+#: bot/commands/podcast_commands.py:185
+#, python-brace-format
+msgid ""
+"{directory} did not answer. To search every directory instead, send: pcd "
+"all"
+msgstr ""
+"A(z) {directory} nem válaszolt. Ha inkább minden könyvtárban keresnél, "
+"küldd: pcd all"
+
+#: bot/commands/podcast_commands.py:190 bot/commands/user_commands.py:58
+#: bot/commands/user_commands.py:157 bot/commands/user_commands.py:850
+#: bot/commands/user_commands.py:1018 bot/commands/user_commands.py:1234
+#: bot/commands/user_commands.py:1411
+msgid "Nothing is found for your query"
+msgstr "Keresésed nem hozott eredményt"
+
+# | msgid "Search results count: {count}"
+#: bot/commands/podcast_commands.py:193
+#, python-brace-format
+msgid "Podcasts found: {count}"
+msgstr "Talált podcastok: {count}"
+
+#: bot/commands/podcast_commands.py:199
+#, python-brace-format
+msgid "{title}, by {author}, from {directory}"
+msgstr "{title}, készítő: {author}, forrás: {directory}"
+
+#: bot/commands/podcast_commands.py:203
+#, python-brace-format
+msgid "{title}, from {directory}"
+msgstr "{title}, forrás: {directory}"
+
+#: bot/commands/podcast_commands.py:208
+msgid "To open one, send pc and its number, for example: pc 1"
+msgstr "Megnyitáshoz küldd a pc parancsot a számával, például: pc 1"
+
+#: bot/commands/podcast_commands.py:219
+msgid ""
+"[DIRECTORY] Chooses where pc searches: apple, fyyd, gpodder, spotify, or "
+"all of them. On its own, says which one is chosen"
+msgstr ""
+"[KÖNYVTÁR] Kiválasztja, hol keres a pc: apple, fyyd, gpodder, spotify "
+"vagy mindegyik. Önmagában megmondja, melyik van kiválasztva"
+
+#: bot/commands/podcast_commands.py:230
+msgid ""
+"Directories: apple for Apple Podcasts, fyyd, gpodder for gpodder.net, and"
+" spotify, whose episodes play but cannot be downloaded. Send pcd and a "
+"name to choose one. To search them all, send: pcd all"
+msgstr ""
+"Könyvtárak: apple az Apple Podcastshoz, fyyd, gpodder a gpodder.nethez, "
+"és spotify, amelynek epizódjai lejátszhatók, de nem tölthetők le. "
+"Választáshoz küldd a pcd parancsot egy névvel. Ha mindben keresnél, "
+"küldd: pcd all"
+
+#: bot/commands/podcast_commands.py:237
+#, python-brace-format
+msgid "There is no directory called {name}. Send pcd on its own to hear the list."
+msgstr ""
+"Nincs {name} nevű könyvtár. A lista meghallgatásához küldd a pcd "
+"parancsot önmagában."
+
+#: bot/commands/podcast_commands.py:247
+msgid "pc searches every podcast directory."
+msgstr "A pc minden podcastkönyvtárban keres."
+
+#: bot/commands/podcast_commands.py:248
+#, python-brace-format
+msgid "pc searches {directory} only."
+msgstr "A pc csak itt keres: {directory}."
+
+#: bot/commands/podcast_commands.py:257
+msgid ""
+"[NUMBER] Plays episode NUMBER of the open podcast. On its own, lists the "
+"next ten episodes"
+msgstr ""
+"[SZÁM] Lejátssza a megnyitott podcast SZÁM. epizódját. Önmagában a "
+"következő tíz epizódot sorolja fel"
+
+#: bot/commands/podcast_commands.py:273 bot/commands/user_commands.py:1240
+#, python-brace-format
+msgid "{nickname} selected: {track}"
+msgstr "{nickname} kiválasztotta: {track}"
+
+#: bot/commands/podcast_commands.py:279 bot/commands/user_commands.py:111
+#: bot/commands/user_commands.py:267 bot/commands/user_commands.py:293
+#: bot/commands/user_commands.py:310 bot/commands/user_commands.py:523
+#: bot/commands/user_commands.py:1037 bot/commands/user_commands.py:1147
+#: bot/commands/user_commands.py:1250
+#, python-brace-format
+msgid "Playing {}"
+msgstr "Lejátszás"
+
+#: bot/commands/podcast_commands.py:286
+msgid ""
+"[NUMBER] Downloads episode NUMBER of the open podcast to the channel. On "
+"its own, asks how many of the newest episodes to download as one zip file"
+msgstr ""
+"[SZÁM] Letölti a csatornára a megnyitott podcast SZÁM. epizódját. "
+"Önmagában megkérdezi, hány legújabb epizódot töltsön le egy zip-fájlban"
+
+#. translators: pcd is a command, not a word to translate, and it stays last.
+#: bot/commands/podcast_commands.py:293
+#, python-brace-format
+msgid ""
+"{podcast} is a Spotify show, so its episodes can be played but not "
+"downloaded. Many shows also publish a public feed. To look for one, "
+"search every directory again. To switch to every directory, send: pcd all"
+msgstr ""
+"A(z) {podcast} Spotify-műsor, ezért az epizódjai lejátszhatók, de nem "
+"tölthetők le. Sok műsornak nyilvános feedje is van. Ha ilyet keresnél, "
+"keress újra minden könyvtárban. Az összes könyvtárra váltáshoz küldd: pcd"
+" all"
+
+#: bot/commands/podcast_commands.py:312 bot/commands/user_commands.py:947
+#: bot/modules/apple_music_downloader.py:116
+#, python-brace-format
+msgid "Downloading {name}. It will be uploaded to the channel when it is ready."
+msgstr "{name} letöltése folyamatban. Amint elkészül, feltöltöm a csatornára."
+
+#: bot/commands/podcast_commands.py:332
+#, python-brace-format
+msgid "Send a number from 1 to {total}."
+msgstr "Küldj egy számot 1 és {total} között."
+
+#: bot/commands/podcast_commands.py:341
+#, python-brace-format
+msgid ""
+"Episodes of {podcast}: {total}. To download the newest ones as one zip "
+"file, send how many, from 1 to {total}"
+msgstr ""
+"A(z) {podcast} epizódjai: {total}. A legújabbak egy zip-fájlban való "
+"letöltéséhez küldd el, hányat kérsz, 1 és {total} között"
+
+#: bot/commands/podcast_commands.py:350
+msgid ""
+"Subscribes you to the open podcast. The bot tells you privately when a "
+"new episode is out"
+msgstr ""
+"Feliratkoztat a megnyitott podcastra. A bot privátban szól, ha új epizód "
+"jelenik meg"
+
+#: bot/commands/podcast_commands.py:355 bot/commands/podcast_commands.py:380
+#: bot/commands/podcast_commands.py:414
+msgid "Podcast subscriptions are not available in this bot."
+msgstr "Ebben a botban nem érhetők el podcast-feliratkozások."
+
+#: bot/commands/podcast_commands.py:361
+msgid ""
+"Subscriptions are kept by TeamTalk account name, and you are logged in "
+"without one."
+msgstr ""
+"A feliratkozásokat a TeamTalk-fióknév alapján tároljuk, te pedig fióknév "
+"nélkül jelentkeztél be."
+
+#: bot/commands/podcast_commands.py:364
+#, python-brace-format
+msgid "You are already subscribed to {podcast}."
+msgstr "Már feliratkoztál erre: {podcast}."
+
+#: bot/commands/podcast_commands.py:366
+#, python-brace-format
+msgid ""
+"Subscribed to {podcast}. You will get a private message when a new "
+"episode is out, or the next time you are online. To see your "
+"subscriptions, send: ps"
+msgstr ""
+"Feliratkoztál erre: {podcast}. Privát üzenetet kapsz, ha új epizód "
+"jelenik meg, vagy amikor legközelebb online leszel. A feliratkozásaid "
+"megtekintéséhez küldd: ps"
+
+#: bot/commands/podcast_commands.py:375
+msgid ""
+"[NUMBER] Lists your podcast subscriptions. With a number, opens that "
+"podcast"
+msgstr ""
+"[SZÁM] Felsorolja a podcast-feliratkozásaidat. Számmal megnyitja azt a "
+"podcastot"
+
+#: bot/commands/podcast_commands.py:384 bot/commands/podcast_commands.py:424
+msgid "You have no podcast subscriptions. To add one, open a podcast and send: pa"
+msgstr ""
+"Nincs podcast-feliratkozásod. Hozzáadáshoz nyiss meg egy podcastot, és "
+"küldd: pa"
+
+#: bot/commands/podcast_commands.py:397
+msgid "Your podcast subscriptions:"
+msgstr "A podcast-feliratkozásaid:"
+
+#: bot/commands/podcast_commands.py:402
+msgid "ps and a number opens one, pu and a number unsubscribes. For example: ps 1"
+msgstr ""
+"A ps és egy szám megnyit egyet, a pu és egy szám leiratkoztat. Például: "
+"ps 1"
+
+#: bot/commands/podcast_commands.py:410
+msgid "NUMBER Unsubscribes from podcast NUMBER in your ps list"
+msgstr "SZÁM Leiratkoztat a ps listád SZÁM. podcastjáról"
+
+#: bot/commands/podcast_commands.py:427
+#, python-brace-format
+msgid "Unsubscribed from {podcast}."
+msgstr "Leiratkoztál erről: {podcast}."
+
 #: bot/commands/user_commands.py:23
 msgid "Shows command help"
 msgstr "Megjeleníti a parancsok súgóját"
@@ -533,19 +816,8 @@ msgstr ""
 "lejátssza vagy szünetelteti az aktuális számot. Keresési eredmény módban "
 "(sr) számozott listát jelenít meg"
 
-#: bot/commands/user_commands.py:48 bot/commands/user_commands.py:837
-#: bot/commands/user_commands.py:1006
-msgid "Searching..."
-msgstr "Keresés..."
-
-#: bot/commands/user_commands.py:58 bot/commands/user_commands.py:157
-#: bot/commands/user_commands.py:845 bot/commands/user_commands.py:1013
-#: bot/commands/user_commands.py:1229 bot/commands/user_commands.py:1406
-msgid "Nothing is found for your query"
-msgstr "Keresésed nem hozott eredményt"
-
-#: bot/commands/user_commands.py:61 bot/commands/user_commands.py:1016
-#: bot/commands/user_commands.py:1226
+#: bot/commands/user_commands.py:61 bot/commands/user_commands.py:1021
+#: bot/commands/user_commands.py:1231
 msgid "The selected service is currently unavailable"
 msgstr "A kiválasztott szolgáltatás jelenleg nem elérhető"
 
@@ -561,14 +833,6 @@ msgstr "Használd az 'sl SZÁM' parancsot egy szám kiválasztásához"
 #, python-brace-format
 msgid "{nickname} requested {request}"
 msgstr "{nickname} kérte {request}"
-
-#: bot/commands/user_commands.py:111 bot/commands/user_commands.py:267
-#: bot/commands/user_commands.py:293 bot/commands/user_commands.py:310
-#: bot/commands/user_commands.py:518 bot/commands/user_commands.py:1032
-#: bot/commands/user_commands.py:1142 bot/commands/user_commands.py:1245
-#, python-brace-format
-msgid "Playing {}"
-msgstr "Lejátszás"
 
 # | msgid "URL Plays a stream from bot given URL"
 #: bot/commands/user_commands.py:119
@@ -618,11 +882,11 @@ msgstr "{nickname} szüneteltette a lejátszást"
 #: bot/commands/user_commands.py:192 bot/commands/user_commands.py:225
 #: bot/commands/user_commands.py:244 bot/commands/user_commands.py:271
 #: bot/commands/user_commands.py:287 bot/commands/user_commands.py:299
-#: bot/commands/user_commands.py:316 bot/commands/user_commands.py:522
-#: bot/commands/user_commands.py:538 bot/commands/user_commands.py:549
-#: bot/commands/user_commands.py:602 bot/commands/user_commands.py:620
-#: bot/commands/user_commands.py:666 bot/commands/user_commands.py:732
-#: bot/commands/user_commands.py:753 bot/commands/user_commands.py:1129
+#: bot/commands/user_commands.py:316 bot/commands/user_commands.py:527
+#: bot/commands/user_commands.py:543 bot/commands/user_commands.py:554
+#: bot/commands/user_commands.py:607 bot/commands/user_commands.py:625
+#: bot/commands/user_commands.py:671 bot/commands/user_commands.py:737
+#: bot/commands/user_commands.py:758 bot/commands/user_commands.py:1134
 msgid "Nothing is playing"
 msgstr "Semmi nincs lejátszás alatt"
 
@@ -657,24 +921,24 @@ msgid ""
 "position with ?"
 msgstr ""
 
-#: bot/commands/user_commands.py:279 bot/commands/user_commands.py:530
+#: bot/commands/user_commands.py:279 bot/commands/user_commands.py:535
 msgid "Incorrect number"
 msgstr "Helytelen szám"
 
-#: bot/commands/user_commands.py:281 bot/commands/user_commands.py:532
-#: bot/commands/user_commands.py:545
+#: bot/commands/user_commands.py:281 bot/commands/user_commands.py:537
+#: bot/commands/user_commands.py:550
 #, python-brace-format
 msgid "Playing {} {}"
 msgstr "Lejátszás {} {}"
 
-#: bot/commands/user_commands.py:285 bot/commands/user_commands.py:536
-#: bot/commands/user_commands.py:614 bot/commands/user_commands.py:647
-#: bot/commands/user_commands.py:686 bot/commands/user_commands.py:1097
-#: bot/commands/user_commands.py:1214 bot/commands/user_commands.py:1373
+#: bot/commands/user_commands.py:285 bot/commands/user_commands.py:541
+#: bot/commands/user_commands.py:619 bot/commands/user_commands.py:652
+#: bot/commands/user_commands.py:691 bot/commands/user_commands.py:1102
+#: bot/commands/user_commands.py:1219 bot/commands/user_commands.py:1378
 msgid "Out of list"
 msgstr "Listán kívül"
 
-#: bot/commands/user_commands.py:297 bot/commands/user_commands.py:1146
+#: bot/commands/user_commands.py:297 bot/commands/user_commands.py:1151
 msgid "No next track"
 msgstr "Nincs több tartalom"
 
@@ -749,7 +1013,7 @@ msgid "Unknown service.{newline}{help}"
 msgstr "Ismeretlen szolgáltatás"
 
 # | msgid "" "Current service: {}\n" "Warning: {}"
-#: bot/commands/user_commands.py:382
+#: bot/commands/user_commands.py:385
 #, fuzzy, python-brace-format
 msgid "Current service: {service}{newline}{status}"
 msgstr ""
@@ -757,58 +1021,58 @@ msgstr ""
 "Figyelmeztetés: {}"
 
 # | msgid "" "Error: {error}\n" "{service} is disabled"
-#: bot/commands/user_commands.py:391
+#: bot/commands/user_commands.py:394
 #, fuzzy, python-brace-format
 msgid "Error: {error}{newline}{service} is disabled"
 msgstr ""
 "Hiba: {error}\n"
 "A {service} le van tiltva"
 
-#: bot/commands/user_commands.py:398
+#: bot/commands/user_commands.py:401
 #, python-brace-format
 msgid "{service} is disabled"
 msgstr "A {service} le van tiltva"
 
-#: bot/commands/user_commands.py:450
+#: bot/commands/user_commands.py:453
 #, python-format
 msgid "%(service)s is switched off in this bot's configuration."
 msgstr ""
 
-#: bot/commands/user_commands.py:457
+#: bot/commands/user_commands.py:460
 #, python-format
 msgid ""
 "%(service)s is not connected. To connect an account, send this command: "
 "li %(code)s"
 msgstr ""
 
-#: bot/commands/user_commands.py:462
+#: bot/commands/user_commands.py:465
 #, python-format
 msgid "%(service)s is connected and ready."
 msgstr ""
 
-#: bot/commands/user_commands.py:475
+#: bot/commands/user_commands.py:478
 #, python-format
 msgid "unavailable: %(reason)s"
 msgstr ""
 
 # | msgid "Saves bot's configuration"
-#: bot/commands/user_commands.py:477
+#: bot/commands/user_commands.py:480
 #, fuzzy
 msgid "switched off in this bot's configuration"
 msgstr "A bot beállításainak mentése"
 
-#: bot/commands/user_commands.py:480
+#: bot/commands/user_commands.py:483
 #, python-format
 msgid "not connected, send li %(code)s"
 msgstr ""
 
-#: bot/commands/user_commands.py:485
+#: bot/commands/user_commands.py:488
 msgid "ready"
 msgstr ""
 
 # | msgid "" "Current service: {current_service}\n" "Available:\n"
 # | "{available_services}\n" "send sv SERVICE h for additional help"
-#: bot/commands/user_commands.py:494
+#: bot/commands/user_commands.py:499
 #, fuzzy, python-brace-format
 msgid ""
 "Current service: "
@@ -821,7 +1085,7 @@ msgstr ""
 "további segítségért"
 
 # | msgid "NUMBER Selects track by number from the list of current results"
-#: bot/commands/user_commands.py:507
+#: bot/commands/user_commands.py:512
 #, fuzzy
 msgid "[NUMBER|?] Selects track by number, or shows current position with ?"
 msgstr ""
@@ -832,7 +1096,7 @@ msgstr ""
 # | msgid "" "SPEED Sets playback speed from bot.25 to 4. If no speed is
 # given,
 # | shows " "current speed"
-#: bot/commands/user_commands.py:556
+#: bot/commands/user_commands.py:561
 msgid ""
 "SPEED Sets playback speed from 0.25 to 4. If no speed is given, shows "
 "current speed"
@@ -840,12 +1104,12 @@ msgstr ""
 "SEBESSÉG Beállítja a lejátszási sebességet 0,25 és 4 között. Ha nincs "
 "megadva paraméter, az aktuális sebességet mutatja"
 
-#: bot/commands/user_commands.py:561
+#: bot/commands/user_commands.py:566
 #, python-brace-format
 msgid "Current rate: {}"
 msgstr "Jelenlegi sebesség: {}"
 
-#: bot/commands/user_commands.py:575
+#: bot/commands/user_commands.py:580
 msgid ""
 "+/-NUMBER Manages favorite tracks. + adds the current track to favorites."
 " - removes a track requested from favorites. If a number is specified "
@@ -855,30 +1119,30 @@ msgstr ""
 " a kedvencekhez, a - eltávolítja azt. Ha a +/- után egy szám van megadva,"
 " hozzáadja/eltávolítja az ezzel a számmal rendelkező zeneszámot"
 
-#: bot/commands/user_commands.py:581
+#: bot/commands/user_commands.py:586
 msgid "This command is not available for guest users"
 msgstr "Ez a parancs vendégfelhasználók számára nem elérhető"
 
-#: bot/commands/user_commands.py:618
+#: bot/commands/user_commands.py:623
 msgid "This track is not in favorites"
 msgstr "Ez a szám nincs a kedvencek között"
 
-#: bot/commands/user_commands.py:627 bot/commands/user_commands.py:692
+#: bot/commands/user_commands.py:632 bot/commands/user_commands.py:697
 #, python-brace-format
 msgid "{number}: {track_name}"
 msgstr "{number}: {track_name}"
 
-#: bot/commands/user_commands.py:655
+#: bot/commands/user_commands.py:660
 msgid "Gets a direct link to the current track"
 msgstr "Közvetlen linket kap az aktuális zeneszámhoz"
 
-#: bot/commands/user_commands.py:664
+#: bot/commands/user_commands.py:669
 msgid "URL is not available"
 msgstr "Ez az URL nem elérhető"
 
 # | msgid "" "NUMBER Plays a track with  the given number from bot list of
 # | recent " "tracks. Without a number shows recent tracks"
-#: bot/commands/user_commands.py:673
+#: bot/commands/user_commands.py:678
 msgid ""
 "NUMBER Plays a track with  the given number from a list of recent tracks."
 " Without a number shows recent tracks"
@@ -886,46 +1150,46 @@ msgstr ""
 "SZÁM A megadott számmal rendelkező zeneszámot játssza le a legutóbbi "
 "zeneszámok listájából. Szám megadása nélkül az előzményeket mutatja"
 
-#: bot/commands/user_commands.py:698
+#: bot/commands/user_commands.py:703
 #, python-brace-format
 msgid "{number}: {track_url}"
 msgstr "{number}: {track_url}"
 
-#: bot/commands/user_commands.py:713
+#: bot/commands/user_commands.py:718
 msgid "Downloads the current track and uploads it to the channel."
 msgstr "Letölti az aktuális számot és feltölti a csatornára."
 
-#: bot/commands/user_commands.py:728
+#: bot/commands/user_commands.py:733
 msgid "Downloading..."
 msgstr "Letöltés..."
 
-#: bot/commands/user_commands.py:730 bot/commands/user_commands.py:751
+#: bot/commands/user_commands.py:735 bot/commands/user_commands.py:756
 msgid "Live streams cannot be downloaded"
 msgstr "Élő adásokat nem lehet letölteni"
 
-#: bot/commands/user_commands.py:739
+#: bot/commands/user_commands.py:744
 msgid "Downloads the current track as video and uploads it to the channel."
 msgstr "Letölti az aktuális számot videóként, és feltölti a csatornára."
 
-#: bot/commands/user_commands.py:749
+#: bot/commands/user_commands.py:754
 msgid "Downloading video..."
 msgstr "Videó letöltése..."
 
-#: bot/commands/user_commands.py:759
+#: bot/commands/user_commands.py:764
 msgid "Makes the bot join your current channel"
 msgstr "A bot csatlakozik az aktuális csatornádhoz"
 
-#: bot/commands/user_commands.py:780 bot/commands/user_commands.py:797
+#: bot/commands/user_commands.py:785 bot/commands/user_commands.py:802
 #, python-brace-format
 msgid "Joining channel: {}"
 msgstr "Csatlakozás a csatornához: {}"
 
-#: bot/commands/user_commands.py:789
+#: bot/commands/user_commands.py:794
 #, python-brace-format
 msgid "Failed to join channel. Error: {}"
 msgstr "Nem sikerült csatlakozni a csatornához. Hiba: {}"
 
-#: bot/commands/user_commands.py:800
+#: bot/commands/user_commands.py:805
 #, python-brace-format
 msgid "Failed to join channel: {}"
 msgstr "Nem sikerült csatlakozni a csatornához: {}"
@@ -934,7 +1198,7 @@ msgstr "Nem sikerült csatlakozni a csatornához: {}"
 # | uploads to" " the channel."
 # | uploads to" " the channel. Without a link while Apple Music is playing,
 # | downloads the " "album or playlist being played."
-#: bot/commands/user_commands.py:807
+#: bot/commands/user_commands.py:812
 #, fuzzy
 msgid ""
 "Downloads all tracks from a playlist/album URL, zips them, and uploads to"
@@ -946,30 +1210,25 @@ msgstr ""
 "Letölti a lejátszási lista/album URL összes számát, ZIP-be csomagolja és "
 "feltölti a csatornára."
 
-#: bot/commands/user_commands.py:818
+#: bot/commands/user_commands.py:823
 #, python-brace-format
 msgid "Current progress: {}"
 msgstr "Jelenlegi folyamat: {}"
 
-#: bot/commands/user_commands.py:834
+#: bot/commands/user_commands.py:839
 msgid "Please send the link to the playlist or album."
 msgstr "Kérlek küldd el a lejátszási lista vagy album linkjét."
 
 # | msgid "This command is for playlists and albums. For single tracks, use
 # | 'dl'."
-#: bot/commands/user_commands.py:853
+#: bot/commands/user_commands.py:858
 #, fuzzy
 msgid ""
 "This command is for playlists, albums, and channels. For single tracks, "
 "use 'dl'."
 msgstr "Ez a parancs lejátszási listákhoz van. Egyetlen számhoz használd a 'dl'-t."
 
-#: bot/commands/user_commands.py:942 bot/modules/apple_music_downloader.py:116
-#, python-brace-format
-msgid "Downloading {name}. It will be uploaded to the channel when it is ready."
-msgstr ""
-
-#: bot/commands/user_commands.py:997
+#: bot/commands/user_commands.py:1002
 msgid ""
 "QUERY Searches for a track and adds it to the queue. If nothing is "
 "playing, starts immediately"
@@ -977,51 +1236,51 @@ msgstr ""
 "LEKÉRDEZÉS Zeneszámot keres és hozzáadja a sorhoz. Ha semmi sem szól, "
 "azonnal elkezdi"
 
-#: bot/commands/user_commands.py:1041
+#: bot/commands/user_commands.py:1046
 #, python-brace-format
 msgid "{nickname} added to queue: {track}"
 msgstr "{nickname} hozzáadta a sorhoz: {track}"
 
-#: bot/commands/user_commands.py:1047
+#: bot/commands/user_commands.py:1052
 #, python-brace-format
 msgid "Added to queue [{position}]: {track}"
 msgstr "Hozzáadva a sorhoz [{position}]: {track}"
 
-#: bot/commands/user_commands.py:1054
+#: bot/commands/user_commands.py:1059
 msgid "Lists all tracks in the queue"
 msgstr "Kilistázza a sorban lévő összes számot"
 
-#: bot/commands/user_commands.py:1060
+#: bot/commands/user_commands.py:1065
 msgid "The queue is empty"
 msgstr "A sor üres"
 
-#: bot/commands/user_commands.py:1068
+#: bot/commands/user_commands.py:1073
 #, python-brace-format
 msgid "Queue ({count} track(s)):"
 msgstr "Sor ({count} szám):"
 
-#: bot/commands/user_commands.py:1078
+#: bot/commands/user_commands.py:1083
 msgid "NUMBER Removes track number NUMBER from the queue"
 msgstr "NUMBER Eltávolítja a NUMBER számú elemet a sorból"
 
-#: bot/commands/user_commands.py:1103
+#: bot/commands/user_commands.py:1108
 #, python-brace-format
 msgid "Removed from queue: {track}"
 msgstr "Eltávolítva a sorból: {track}"
 
-#: bot/commands/user_commands.py:1110
+#: bot/commands/user_commands.py:1115
 msgid "Clears the entire queue"
 msgstr "A teljes sor törlése"
 
-#: bot/commands/user_commands.py:1114
+#: bot/commands/user_commands.py:1119
 msgid "The queue is already empty"
 msgstr "A sor már üres"
 
-#: bot/commands/user_commands.py:1117
+#: bot/commands/user_commands.py:1122
 msgid "Queue cleared"
 msgstr "A sor törölve"
 
-#: bot/commands/user_commands.py:1124
+#: bot/commands/user_commands.py:1129
 msgid ""
 "Skips current track and plays the next one from the queue. Falls back to "
 "normal next if queue is empty"
@@ -1029,12 +1288,12 @@ msgstr ""
 "Átugrorja az aktuális számot és a következőt játssza a sorból. Ha a sor "
 "üres, a normál következőre lép"
 
-#: bot/commands/user_commands.py:1135
+#: bot/commands/user_commands.py:1140
 #, python-brace-format
 msgid "Playing next from queue: {}"
 msgstr "A következő lejátszása a sorból: {}"
 
-#: bot/commands/user_commands.py:1159
+#: bot/commands/user_commands.py:1164
 msgid ""
 "Toggles search results mode. When active, 'p QUERY' reads out a numbered "
 "list and plays nothing, so whatever is playing keeps playing until 'sl "
@@ -1042,15 +1301,15 @@ msgid ""
 "how many results. Save permanently with 'sc'"
 msgstr ""
 
-#: bot/commands/user_commands.py:1167 bot/commands/user_commands.py:1177
+#: bot/commands/user_commands.py:1172 bot/commands/user_commands.py:1182
 msgid "Search results mode: ON"
 msgstr "Keresési eredmény mód: BE"
 
-#: bot/commands/user_commands.py:1171 bot/commands/user_commands.py:1179
+#: bot/commands/user_commands.py:1176 bot/commands/user_commands.py:1184
 msgid "Search results mode: OFF"
 msgstr "Keresési eredmény mód: KI"
 
-#: bot/commands/user_commands.py:1191
+#: bot/commands/user_commands.py:1196
 msgid ""
 "NUMBER Selects and plays result NUMBER from the last search list "
 "(requires search results mode to be active)"
@@ -1058,17 +1317,12 @@ msgstr ""
 "SZÁM Kiválasztja és lejátssza a SZÁM sorszámú eredményt az utolsó "
 "keresési listából (keresési eredmény mód szükséges)"
 
-#: bot/commands/user_commands.py:1210
+#: bot/commands/user_commands.py:1215
 msgid "No search results available. Use 'p QUERY' to search first"
 msgstr "Nincs elérhető keresési eredmény. Először keressen 'p KERESÉS' paranccsal"
 
-#: bot/commands/user_commands.py:1235
-#, python-brace-format
-msgid "{nickname} selected: {track}"
-msgstr "{nickname} kiválasztotta: {track}"
-
 # | msgid "Loaded {count} tracks"
-#: bot/commands/user_commands.py:1243
+#: bot/commands/user_commands.py:1248
 #, fuzzy, python-brace-format
 msgid "Playing {name}, {count} tracks"
 msgstr "{count} szám betöltve"
@@ -1077,7 +1331,7 @@ msgstr "{count} szám betöltve"
 # is
 # | " "active. Without a number shows current count. Resets to 5 on restart"
 # | " "active. Without a number shows current count. Resets to 1 on restart"
-#: bot/commands/user_commands.py:1254
+#: bot/commands/user_commands.py:1259
 #, fuzzy
 msgid ""
 "NUMBER Sets how many results are shown when search results mode is "
@@ -1088,79 +1342,79 @@ msgstr ""
 " nélkül az aktuális értéket mutatja. Újraindításkor 5-re áll vissza"
 
 # | msgid "Search results count: {count}"
-#: bot/commands/user_commands.py:1262
+#: bot/commands/user_commands.py:1267
 #, fuzzy
 msgid "Search results count: as many as the service returns"
 msgstr "Eredmények száma: {count}"
 
-#: bot/commands/user_commands.py:1264
+#: bot/commands/user_commands.py:1269
 #, python-brace-format
 msgid "Search results count: {count}"
 msgstr "Eredmények száma: {count}"
 
 # | msgid "Invalid count. Please enter a number greater than 0"
-#: bot/commands/user_commands.py:1275
+#: bot/commands/user_commands.py:1280
 #, fuzzy
 msgid "Invalid count. Please enter 0 or a number greater than 0"
 msgstr "Érvénytelen szám. Adj meg 0-nál nagyobb számot"
 
-#: bot/commands/user_commands.py:1281
+#: bot/commands/user_commands.py:1286
 msgid "Search results now show as many results as the service returns"
 msgstr ""
 
-#: bot/commands/user_commands.py:1284
+#: bot/commands/user_commands.py:1289
 #, python-brace-format
 msgid "Search results count set to {count}"
 msgstr "Eredmények száma beállítva: {count}"
 
-#: bot/commands/user_commands.py:1292
+#: bot/commands/user_commands.py:1297
 msgid "LINK Adds a link to the download list."
 msgstr "LINK Hozzáad egy linket a letöltési listához."
 
-#: bot/commands/user_commands.py:1304
+#: bot/commands/user_commands.py:1309
 #, python-brace-format
 msgid "Added link to the list. Total: {count}"
 msgstr "Link hozzáadva a listához. Összesen: {count}"
 
-#: bot/commands/user_commands.py:1313
+#: bot/commands/user_commands.py:1318
 msgid "LINK1 LINK2 ... Adds multiple space-separated links to the download list."
 msgstr ""
 "LINK1 LINK2 ... Több szöközzel elválasztott linket ad a letöltési "
 "listához."
 
-#: bot/commands/user_commands.py:1328
+#: bot/commands/user_commands.py:1333
 #, python-brace-format
 msgid "Added {added_count} links. Total list size: {count}"
 msgstr "{added_count} link hozzáadva. Lista teljes mérete: {count}"
 
-#: bot/commands/user_commands.py:1338
+#: bot/commands/user_commands.py:1343
 msgid "Lists all links in the download list."
 msgstr "Listázza a letöltési listában szereplő összes linket."
 
-#: bot/commands/user_commands.py:1357
+#: bot/commands/user_commands.py:1362
 msgid "NUMBER_OR_LINK Removes a link from the download list by its index or URL."
 msgstr ""
 "SZÁM_VAGY_LINK Eltávolít egy linket a letöltési listából az indexe vagy "
 "URL-je alapján."
 
-#: bot/commands/user_commands.py:1382
+#: bot/commands/user_commands.py:1387
 msgid "Link not found in the list"
 msgstr "A link nem található a listában"
 
-#: bot/commands/user_commands.py:1384
+#: bot/commands/user_commands.py:1389
 #, python-brace-format
 msgid "Removed link: {link}"
 msgstr "Eltávolított link: {link}"
 
-#: bot/commands/user_commands.py:1391
+#: bot/commands/user_commands.py:1396
 msgid "LINK Downloads a link directly and uploads it to the channel."
 msgstr "LINK Közvetlenül letölt egy linket, és feltölti a csatornára."
 
-#: bot/commands/user_commands.py:1399
+#: bot/commands/user_commands.py:1404
 msgid "Searching and downloading..."
 msgstr "Keresés és letöltés..."
 
-#: bot/commands/user_commands.py:1423
+#: bot/commands/user_commands.py:1428
 msgid ""
 "Downloads all links in your list and uploads them to the channel. Can "
 "download normally or as a ZIP archive."
@@ -1168,7 +1422,7 @@ msgstr ""
 "Letölti a listádon lévő összes linket, és feltölti őket a csatornára. "
 "Letölthető normálisan vagy ZIP archívumként."
 
-#: bot/commands/user_commands.py:1435
+#: bot/commands/user_commands.py:1440
 msgid ""
 "How do you want to download these links?\n"
 "1. Download individually (Normal)\n"
@@ -1180,71 +1434,71 @@ msgstr ""
 "2. Összes tömörítése egy ZIP fájlba\n"
 "Csak 1-gyel vagy 2-vel válaszoljon."
 
-#: bot/commands/user_commands.py:1446
+#: bot/commands/user_commands.py:1451
 #, python-brace-format
 msgid "Starting local download of {count} links..."
 msgstr "Helyi letöltés indítása {count} linkkel..."
 
-#: bot/commands/user_commands.py:1449
+#: bot/commands/user_commands.py:1454
 #, python-brace-format
 msgid "Starting download of {count} links..."
 msgstr "{count} link letöltésének indítása..."
 
-#: bot/commands/user_commands.py:1455
+#: bot/commands/user_commands.py:1460
 #, python-brace-format
 msgid "Resolving and zipping locally {count} links..."
 msgstr "{count} link helyi feloldása és ZIP-be tömörítése..."
 
-#: bot/commands/user_commands.py:1458
+#: bot/commands/user_commands.py:1463
 #, python-brace-format
 msgid "Resolving and zipping {count} links..."
 msgstr "{count} link feloldása és ZIP-be tömörítése..."
 
-#: bot/commands/user_commands.py:1460
+#: bot/commands/user_commands.py:1465
 msgid "Invalid option. Please send 'ads' again to select."
 msgstr ""
 "Érvénytelen opció. Kérjük, küldje el újra az 'ads' parancsot a "
 "választáshoz."
 
-#: bot/commands/user_commands.py:1466 bot/commands/user_commands.py:1504
+#: bot/commands/user_commands.py:1471 bot/commands/user_commands.py:1509
 #, python-brace-format
 msgid "Processing link {number}/{total}: {link}"
 msgstr "Link feldolgozása {number}/{total}: {link}"
 
-#: bot/commands/user_commands.py:1474 bot/commands/user_commands.py:1512
+#: bot/commands/user_commands.py:1479 bot/commands/user_commands.py:1517
 #, python-brace-format
 msgid "Nothing is found for: {link}"
 msgstr "Nem található semmi ehhez: {link}"
 
-#: bot/commands/user_commands.py:1482
+#: bot/commands/user_commands.py:1487
 #, python-brace-format
 msgid "Error downloading {link}: {error}"
 msgstr "Hiba a(z) {link} letöltése közben: {error}"
 
-#: bot/commands/user_commands.py:1532 bot/commands/user_commands.py:1649
+#: bot/commands/user_commands.py:1537 bot/commands/user_commands.py:1654
 msgid "All downloads completed successfully!"
 msgstr "Minden letöltés sikeresen befejeződött!"
 
-#: bot/commands/user_commands.py:1537 bot/commands/user_commands.py:1654
+#: bot/commands/user_commands.py:1542 bot/commands/user_commands.py:1659
 #, python-brace-format
 msgid "Downloads completed with {error_count} error(s)."
 msgstr "A letöltések {error_count} hibával fejeződtek be."
 
-#: bot/commands/user_commands.py:1546 bot/commands/user_commands.py:1576
+#: bot/commands/user_commands.py:1551 bot/commands/user_commands.py:1581
 msgid "Resolving links..."
 msgstr "Linkek feloldása..."
 
-#: bot/commands/user_commands.py:1560 bot/commands/user_commands.py:1593
+#: bot/commands/user_commands.py:1565 bot/commands/user_commands.py:1598
 msgid "Error: No valid tracks found to download."
 msgstr "Hiba: Nem található letölthető érvényes sáv."
 
-#: bot/commands/user_commands.py:1613
+#: bot/commands/user_commands.py:1618
 msgid "Error: Failed to download any tracks from this playlist."
 msgstr ""
 "Error: Failed to download any tracks from this playlist.Hiba: Nem "
 "sikerült letölteni egyetlen számot sem ebből a lejátszási listából."
 
-#: bot/commands/user_commands.py:1665
+#: bot/commands/user_commands.py:1670
 msgid ""
 "Toggles local download mode for the 'ads' command. When active, files are"
 " saved locally to the VPS instead of uploaded to TeamTalk."
@@ -1252,21 +1506,26 @@ msgstr ""
 "Váltja a helyi letöltési módot az 'ads' parancshoz. Ha aktív, a fájlok "
 "helyben mentődnek a VPS-re, ahelyett, hogy feltöltődnének a TeamTalkra."
 
-#: bot/commands/user_commands.py:1671
+#: bot/commands/user_commands.py:1676
 msgid "Local download mode (adsc) enabled."
 msgstr "Helyi letöltési mód (adsc) engedélyezve."
 
-#: bot/commands/user_commands.py:1673
+#: bot/commands/user_commands.py:1678
 msgid "Local download mode (adsc) disabled."
 msgstr "Helyi letöltési mód (adsc) letiltva."
 
-#: bot/commands/user_commands.py:1692
+# | msgid "" "[service] Shows which streaming accounts are connected. With a
+# | service " "(yt, sp, nf, dp, am, az, pp, tb) it starts connecting that one"
+#: bot/commands/user_commands.py:1697
 msgid ""
 "[service] Shows which streaming accounts are connected. With a service "
-"(yt, sp, nf, dp, am, az) it starts connecting that one"
+"(yt, sp, nf, dp, am, az, pp, hu, tb) it starts connecting that one"
 msgstr ""
+"[szolgáltatás] Megmutatja, mely streamingfiókok vannak csatlakoztatva. "
+"Szolgáltatással (yt, sp, nf, dp, am, az, pp, hu, tb) elkezdi annak "
+"csatlakoztatását"
 
-#: bot/commands/user_commands.py:1719
+#: bot/commands/user_commands.py:1724
 msgid ""
 "This server cannot run a browser, so connect YouTube by importing a "
 "session from your own browser. Use a separate Google account made for the"
@@ -1277,7 +1536,7 @@ msgstr ""
 "Használj egy külön, a bothoz létrehozott Google-fiókot. A link a "
 "következő üzenetben van."
 
-#: bot/commands/user_commands.py:1725
+#: bot/commands/user_commands.py:1730
 msgid ""
 "To connect YouTube, use a separate Google account made for the bot, not "
 "your personal one. The link is in the next message."
@@ -1285,48 +1544,63 @@ msgstr ""
 "A YouTube csatlakoztatásához használj egy külön, a bothoz létrehozott "
 "Google-fiókot, ne a személyeset. A link a következő üzenetben van."
 
-#: bot/commands/user_commands.py:1739
+#: bot/commands/user_commands.py:1744
 msgid ""
 "The account portal is not running, so Netflix, Disney Plus, Apple Music "
 "and Amazon Music cannot be connected. The reason is in this bot's log "
 "file."
 msgstr ""
 
-#: bot/commands/user_commands.py:1748
+#: bot/commands/user_commands.py:1753
 msgid "Your streaming accounts:"
-msgstr ""
-
-#: bot/commands/user_commands.py:1756
-#, python-format
-msgid "%(service)s: connected"
 msgstr ""
 
 #: bot/commands/user_commands.py:1761
 #, python-format
+msgid "%(service)s: plays without an account"
+msgstr "%(service)s: fiók nélkül is lejátszik"
+
+#: bot/commands/user_commands.py:1769
+#, python-format
+msgid "%(service)s: connected"
+msgstr ""
+
+#: bot/commands/user_commands.py:1774
+#, python-format
 msgid "%(service)s: signed out, connect again"
 msgstr ""
 
-#: bot/commands/user_commands.py:1766
+#: bot/commands/user_commands.py:1779
 #, python-format
 msgid "%(service)s: not connected"
 msgstr ""
 
-#. translators: Each link is a separate chat message sent
-#. after this one, in the order %(services)s names them.
-#: bot/commands/user_commands.py:1777
+#: bot/commands/user_commands.py:1795
 #, python-format
-msgid ""
-"The next messages are connect links, one per message, in this order: "
-"%(services)s."
+msgid "reconnect %(service)s"
+msgstr "%(service)s újracsatlakoztatása"
+
+#: bot/commands/user_commands.py:1797
+#, python-format
+msgid "connect %(service)s"
+msgstr "%(service)s csatlakoztatása"
+
+#: bot/commands/user_commands.py:1804
+msgid "your account page"
+msgstr "a fiókoldalad"
+
+# | msgid "" "The next messages are connect links, one per message, in this
+# | order: " "%(services)s."
+#. translators: Each link is a separate chat message sent after
+#. this one, in the order %(links)s names them.
+#: bot/commands/user_commands.py:1810
+#, python-format
+msgid "The next messages are links, one per message, in this order: %(links)s."
 msgstr ""
-"A következő üzenetek csatlakozási linkek, üzenetenként egy, ebben a "
-"sorrendben: %(services)s."
+"A következő üzenetek linkek, üzenetenként egy, ebben a sorrendben: "
+"%(links)s."
 
-#: bot/commands/user_commands.py:1788
-msgid "To manage them, use the link in the next message."
-msgstr "A kezelésükhöz használd a következő üzenetben lévő linket."
-
-#: bot/commands/user_commands.py:1806
+#: bot/commands/user_commands.py:1832
 #, python-format
 msgid ""
 "%(service)s is already connected. To use a different account, first "
@@ -1335,14 +1609,14 @@ msgstr ""
 "A(z) %(service)s már csatlakoztatva van. Másik fiók használatához előbb "
 "bontsd a kapcsolatot a következő üzenetben lévő linkkel."
 
-#: bot/commands/user_commands.py:1820
+#: bot/commands/user_commands.py:1846
 #, python-format
 msgid "%(service)s sign-in could not start: %(error)s"
 msgstr ""
 
 #. translators: "The next message" and "the message after that"
 #. are separate chat messages, holding the link and the code.
-#: bot/commands/user_commands.py:1829
+#: bot/commands/user_commands.py:1855
 #, python-format
 msgid ""
 "To connect %(service)s, open the link in the next message and enter the "
@@ -1354,79 +1628,79 @@ msgstr ""
 "%(spelled)s. Miután beírtad, küldd el önmagában a li parancsot, hogy "
 "ellenőrizd, sikerült-e."
 
-#: bot/commands/user_commands.py:1839
+#: bot/commands/user_commands.py:1865
 #, python-format
 msgid "To connect %(service)s, open the link in the next message."
 msgstr ""
 "A(z) %(service)s csatlakoztatásához nyisd meg a következő üzenetben lévő "
 "linket."
 
-#: bot/commands/user_commands.py:1858
+#: bot/commands/user_commands.py:1884
 msgid ""
 "[on|off|ask] Plays films and shows with audio description when it is "
 "available. With no argument, says what the current setting is"
 msgstr ""
 
-#: bot/commands/user_commands.py:1866
+#: bot/commands/user_commands.py:1892
 msgid "Audio description is not available in this bot."
 msgstr ""
 
-#: bot/commands/user_commands.py:1874
+#: bot/commands/user_commands.py:1900
 msgid ""
 "Audio description is on. Films play with the description when there is "
 "one."
 msgstr ""
 
-#: bot/commands/user_commands.py:1877
+#: bot/commands/user_commands.py:1903
 msgid "Audio description is off. Send da on to turn it on."
 msgstr ""
 
-#: bot/commands/user_commands.py:1880
+#: bot/commands/user_commands.py:1906
 msgid "The bot asks each time. Send da on or da off to stop being asked."
 msgstr ""
 
-#: bot/commands/user_commands.py:1894
+#: bot/commands/user_commands.py:1920
 msgid "Audio description is on. You will not be asked again."
 msgstr ""
 
-#: bot/commands/user_commands.py:1897
+#: bot/commands/user_commands.py:1923
 msgid "Audio description is off. You will not be asked again."
 msgstr ""
 
-#: bot/commands/user_commands.py:1900
+#: bot/commands/user_commands.py:1926
 msgid "The bot will ask each time."
 msgstr ""
 
-#: bot/commands/user_commands.py:1914
+#: bot/commands/user_commands.py:1940
 msgid ""
 "[number] Lists the profiles for the current service, or selects one by "
 "number"
 msgstr ""
 
-#: bot/commands/user_commands.py:1921
+#: bot/commands/user_commands.py:1947
 #, python-format
 msgid "%(service)s does not have profiles."
 msgstr ""
 
-#: bot/commands/user_commands.py:1927
+#: bot/commands/user_commands.py:1953
 msgid "No profiles were found. The account may not be connected yet."
 msgstr ""
 
-#: bot/commands/user_commands.py:1933
+#: bot/commands/user_commands.py:1959
 #, python-format
 msgid "%(count)s profiles:"
 msgstr ""
 
-#: bot/commands/user_commands.py:1937
+#: bot/commands/user_commands.py:1963
 msgid "Send pf and a number to choose one."
 msgstr ""
 
-#: bot/commands/user_commands.py:1949
+#: bot/commands/user_commands.py:1975
 #, python-format
 msgid "Now using the profile %(name)s."
 msgstr ""
 
-#: bot/commands/user_commands.py:1952
+#: bot/commands/user_commands.py:1978
 msgid "That profile could not be selected."
 msgstr ""
 
@@ -1596,6 +1870,27 @@ msgstr ""
 #, fuzzy, python-brace-format
 msgid "Tracks that could not be downloaded: {count}."
 msgstr "Élő adásokat nem lehet letölteni"
+
+#: bot/modules/podcast_subscriptions.py:196
+#, python-brace-format
+msgid ""
+"New episodes of {podcast}, which you subscribed to: {count}. The newest "
+"is: {episode}"
+msgstr ""
+"Új epizódok ebben a podcastban, amelyre feliratkoztál: {podcast}. "
+"Darabszám: {count}. A legújabb: {episode}"
+
+#: bot/modules/podcast_subscriptions.py:199
+#, python-brace-format
+msgid "New episode of {podcast}, which you subscribed to: {episode}"
+msgstr ""
+"Új epizód ebben a podcastban, amelyre feliratkoztál: {podcast}. Címe: "
+"{episode}"
+
+#: bot/modules/podcast_subscriptions.py:205
+#, python-brace-format
+msgid "To open the podcast, send: ps {number}"
+msgstr "A podcast megnyitásához küldd: ps {number}"
 
 #: bot/modules/portal_pages.py:45
 msgid "dash"
@@ -2201,6 +2496,42 @@ msgid ""
 "catalogue."
 msgstr ""
 
+#: bot/services/browser_service.py:262
+msgid ""
+"Paramount Plus plays films and shows, with audio description where "
+"Paramount Plus offers one. Each account has its own profiles; pf lists "
+"them and pf with a number picks one."
+msgstr ""
+"A Paramount Plus filmeket és sorozatokat játszik le, hangalámondással, ha"
+" a Paramount Plus kínál ilyet. Minden fióknak saját profiljai vannak; a "
+"pf felsorolja őket, a pf egy számmal kiválaszt egyet."
+
+# | msgid "" "Paramount Plus plays films and shows, with audio description
+# where
+# | " "Paramount Plus offers one. Each account has its own profiles; pf lists
+# "
+# | "them and pf with a number picks one."
+#: bot/services/browser_service.py:276
+msgid ""
+"Hulu plays films and shows, with audio description where Hulu offers one."
+" Hulu streams only in the United States, so it works only when this bot "
+"runs there. Each account has its own profiles; pf lists them and pf with "
+"a number picks one."
+msgstr ""
+"A Hulu filmeket és sorozatokat játszik le, hangalámondással, ha a Hulu "
+"kínál ilyet. A Hulu csak az Egyesült Államokban sugároz, ezért csak akkor"
+" működik, ha ez a bot ott fut. Minden fióknak saját profiljai vannak; a "
+"pf felsorolja őket, a pf egy számmal kiválaszt egyet."
+
+#: bot/services/browser_service.py:300
+msgid ""
+"Tubi plays free films and shows, with advertisements. It needs no "
+"account; connecting one with li tb only adds your watchlist."
+msgstr ""
+"A Tubi ingyenes filmeket és sorozatokat játszik le, reklámokkal. Nem kell"
+" hozzá fiók; ha a li tb paranccsal csatlakoztatsz egyet, az csak a "
+"figyelőlistádat adja hozzá."
+
 #: bot/services/gamdl_downloader.py:158
 msgid "The Apple Music downloader is not installed in this image."
 msgstr ""
@@ -2269,44 +2600,52 @@ msgstr ""
 msgid "Netflix titles cannot be downloaded."
 msgstr "Élő adásokat nem lehet letölteni"
 
+#: bot/services/podcasts.py:461
+msgid ""
+"Podcasts have their own commands. Send h to see pc, pcd, pe, pd, pa, ps "
+"and pu."
+msgstr ""
+"A podcastoknak saját parancsaik vannak. A pc, pcd, pe, pd, pa, ps és pu "
+"megtekintéséhez küldd: h"
+
 #: bot/services/results.py:130
 #, python-format
 msgid "%(count)s %(kind)s"
 msgstr ""
 
-#: bot/services/spotify.py:121
+#: bot/services/spotify.py:123
 msgid "Spotify is not connected yet. Send li sp to connect an account."
 msgstr ""
 
-#: bot/services/spotify.py:163
+#: bot/services/spotify.py:165
 msgid ""
 "Spotify search needs a Spotify application. Add a client ID and secret in"
 " the bot's configuration, then try again. Playing a pasted Spotify link "
 "does not need one."
 msgstr ""
 
-#: bot/services/spotify.py:225
+#: bot/services/spotify.py:227
 msgid "The Spotify session expired. Try again."
 msgstr ""
 
-#: bot/services/spotify.py:230
+#: bot/services/spotify.py:232
 msgid "Spotify refused that request. Playback needs a Premium account."
 msgstr ""
 
-#: bot/services/spotify.py:235
+#: bot/services/spotify.py:237
 msgid "Spotify is rate limiting us. Try again shortly."
 msgstr ""
 
-#: bot/services/spotify.py:296
+#: bot/services/spotify.py:298
 msgid "That is not a Spotify link."
 msgstr ""
 
-#: bot/services/spotify.py:324
+#: bot/services/spotify.py:326
 msgid "That kind of Spotify link is not supported."
 msgstr ""
 
 # | msgid "Live streams cannot be downloaded"
-#: bot/services/spotify.py:420
+#: bot/services/spotify.py:422
 #, fuzzy
 msgid "Spotify tracks cannot be downloaded."
 msgstr "Élő adásokat nem lehet letölteni"
@@ -2497,4 +2836,20 @@ msgstr "Ismeretlen"
 
 #~ msgid "To connect %(service)s, open %(url)s"
 #~ msgstr ""
+
+#~ msgid ""
+#~ "SERVICE Disconnects a streaming account "
+#~ "and deletes its saved sign-in (yt,"
+#~ " sp, nf, dp, am, az)"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "[service] Shows which streaming accounts "
+#~ "are connected. With a service (yt, "
+#~ "sp, nf, dp, am, az) it starts "
+#~ "connecting that one"
+#~ msgstr ""
+
+#~ msgid "To manage them, use the link in the next message."
+#~ msgstr "A kezelésükhöz használd a következő üzenetben lévő linket."
 

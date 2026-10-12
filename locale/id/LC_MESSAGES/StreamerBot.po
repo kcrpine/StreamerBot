@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: StreamerBot VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-12 02:41+0000\n"
+"POT-Creation-Date: 2026-10-12 04:01+0000\n"
 "PO-Revision-Date: 2022-04-15 20:17+0700\n"
 "Last-Translator: \n"
 "Language: id_ID\n"
@@ -19,21 +19,21 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.18.0\n"
 
-#: bot/__init__.py:183 bot/__init__.py:246
+#: bot/__init__.py:215 bot/__init__.py:278
 msgid ""
 "This needs Google Chrome, which is not available on this machine's "
 "processor architecture."
 msgstr ""
 
-#: bot/__init__.py:228
+#: bot/__init__.py:260
 msgid "Spotify is unavailable: the player could not start."
 msgstr ""
 
-#: bot/__init__.py:261 bot/__init__.py:264 bot/modules/portal_pages.py:543
+#: bot/__init__.py:293 bot/__init__.py:296 bot/modules/portal_pages.py:543
 msgid "The sign-in did not complete."
 msgstr ""
 
-#: bot/__init__.py:277
+#: bot/__init__.py:309
 msgid ""
 "The account portal is switched off in this bot's configuration, so "
 "Netflix, Disney Plus, Apple Music and Amazon Music cannot be connected. "
@@ -43,7 +43,7 @@ msgid ""
 "Portal and Spotify Ports in the manager turns it back on."
 msgstr ""
 
-#: bot/__init__.py:330
+#: bot/__init__.py:362
 #, python-format
 msgid ""
 "The account portal could not start because port %(port)s is already in "
@@ -54,7 +54,7 @@ msgid ""
 "they sign in with a code in the channel."
 msgstr ""
 
-#: bot/__init__.py:340
+#: bot/__init__.py:372
 #, python-format
 msgid ""
 "The account portal could not start, so Netflix, Disney Plus, Apple Music "
@@ -62,20 +62,20 @@ msgid ""
 "file: %(reason)s"
 msgstr ""
 
-#: bot/__init__.py:372
+#: bot/__init__.py:404
 msgid ""
 "Hello! I'm back and ready for you to stream again. Thank you for your "
 "patience!"
 msgstr ""
 
-#: bot/__init__.py:410
+#: bot/__init__.py:442
 msgid ""
 "Hello there! It's me, the Streamer Bot, just coming in here to let you "
 "know that an update is in progress and I will restart in a few moments to"
 " apply it. Thank you!"
 msgstr ""
 
-#: bot/__init__.py:467
+#: bot/__init__.py:499
 msgid "The bot is restarting now to apply the update. See you in a moment!"
 msgstr ""
 "Bot sedang memulai ulang sekarang untuk menerapkan pembaruan. Sampai "
@@ -100,39 +100,39 @@ msgstr ""
 msgid "Send \"h\" for help"
 msgstr "Kirim \"h\" untuk bantuan."
 
-#: bot/commands/__init__.py:156
+#: bot/commands/__init__.py:172
 msgid "That question has expired. To ask again, send: dlp"
 msgstr ""
 
-#: bot/commands/__init__.py:229
+#: bot/commands/__init__.py:254
 msgid "Unknown command. Send \"h\" for help."
 msgstr "Perintah tidak dikenal. Kirim \"h\" untuk bantuan."
 
-#: bot/commands/__init__.py:235 bot/commands/user_commands.py:913
-#: bot/commands/user_commands.py:919 bot/commands/user_commands.py:1414
-#: bot/commands/user_commands.py:1496 bot/commands/user_commands.py:1568
-#: bot/commands/user_commands.py:1642 bot/modules/uploader.py:140
+#: bot/commands/__init__.py:260 bot/commands/user_commands.py:918
+#: bot/commands/user_commands.py:924 bot/commands/user_commands.py:1419
+#: bot/commands/user_commands.py:1501 bot/commands/user_commands.py:1573
+#: bot/commands/user_commands.py:1647 bot/modules/uploader.py:140
 #, python-brace-format
 msgid "Error: {}"
 msgstr "Kesalahan: {}."
 
-#: bot/commands/__init__.py:247
+#: bot/commands/__init__.py:272
 msgid "You are banned"
 msgstr "Anda dilarang."
 
-#: bot/commands/__init__.py:251
+#: bot/commands/__init__.py:276
 msgid "You are not in bot's channel"
 msgstr "Anda tidak berada di saluran bot."
 
-#: bot/commands/__init__.py:255
+#: bot/commands/__init__.py:280
 msgid "Bot is locked"
 msgstr "Bot dikunci."
 
-#: bot/commands/__init__.py:259
+#: bot/commands/__init__.py:284
 msgid "This command is blocked"
 msgstr "Perintah ini diblokir."
 
-#: bot/commands/__init__.py:283
+#: bot/commands/__init__.py:308
 msgid "Unknown command"
 msgstr "Perintah tidak diketahui."
 
@@ -147,15 +147,15 @@ msgstr ""
 " Tanpa argumen apapun, tampilkan daftar blokir."
 
 #: bot/commands/admin_commands.py:32 bot/commands/admin_commands.py:322
-#: bot/commands/admin_commands.py:352 bot/commands/user_commands.py:637
-#: bot/commands/user_commands.py:649 bot/commands/user_commands.py:705
-#: bot/commands/user_commands.py:1344 bot/commands/user_commands.py:1366
-#: bot/commands/user_commands.py:1429
+#: bot/commands/admin_commands.py:352 bot/commands/user_commands.py:642
+#: bot/commands/user_commands.py:654 bot/commands/user_commands.py:710
+#: bot/commands/user_commands.py:1349 bot/commands/user_commands.py:1371
+#: bot/commands/user_commands.py:1434
 msgid "The list is empty"
 msgstr "Daftar kosong."
 
 #: bot/commands/admin_commands.py:37 bot/commands/admin_commands.py:304
-#: bot/commands/admin_commands.py:336 bot/commands/user_commands.py:600
+#: bot/commands/admin_commands.py:336 bot/commands/user_commands.py:605
 msgid "Added"
 msgstr "Ditambahkan."
 
@@ -164,7 +164,7 @@ msgid "This command is already added"
 msgstr "Perintah ini sudah ditambahkan."
 
 #: bot/commands/admin_commands.py:45 bot/commands/admin_commands.py:310
-#: bot/commands/admin_commands.py:342 bot/commands/user_commands.py:612
+#: bot/commands/admin_commands.py:342 bot/commands/user_commands.py:617
 msgid "Deleted"
 msgstr "Dihapus."
 
@@ -414,11 +414,15 @@ msgstr ""
 msgid "The portal has been stopped."
 msgstr ""
 
+# | msgid "" "SERVICE Disconnects a streaming account and deletes its saved
+# | sign-in " "(yt, sp, nf, dp, am, az, pp, tb)"
 #: bot/commands/admin_commands.py:499
 msgid ""
 "SERVICE Disconnects a streaming account and deletes its saved sign-in "
-"(yt, sp, nf, dp, am, az)"
+"(yt, sp, nf, dp, am, az, pp, hu, tb)"
 msgstr ""
+"LAYANAN Memutuskan akun streaming dan menghapus info masuk yang tersimpan"
+" (yt, sp, nf, dp, am, az, pp, hu, tb)"
 
 #: bot/commands/admin_commands.py:514
 #, python-format
@@ -518,6 +522,286 @@ msgid ""
 "cancel, send: 0"
 msgstr ""
 
+#: bot/commands/podcast_commands.py:69
+msgid "That podcast could not be read. Try again later."
+msgstr "Podcast itu tidak dapat dibaca. Coba lagi nanti."
+
+#: bot/commands/podcast_commands.py:73
+#, python-brace-format
+msgid "{podcast} has no episodes to play."
+msgstr "{podcast} tidak punya episode untuk diputar."
+
+#: bot/commands/podcast_commands.py:90
+#, python-brace-format
+msgid "{podcast}, episodes {first} to {last} of {total}:"
+msgstr "{podcast}, episode {first} sampai {last} dari {total}:"
+
+#: bot/commands/podcast_commands.py:101
+msgid "For the next ten episodes, send: pe"
+msgstr "Untuk sepuluh episode berikutnya, kirim: pe"
+
+#: bot/commands/podcast_commands.py:103
+msgid "To start the list again from episode 1, send: pe"
+msgstr "Untuk memulai daftar lagi dari episode 1, kirim: pe"
+
+#: bot/commands/podcast_commands.py:106
+msgid ""
+"pe and a number plays an episode. pa subscribes to this podcast. Spotify "
+"episodes cannot be downloaded."
+msgstr ""
+"pe dan sebuah nomor memutar satu episode. pa berlangganan podcast ini. "
+"Episode Spotify tidak dapat diunduh."
+
+#: bot/commands/podcast_commands.py:111
+msgid ""
+"pe and a number plays an episode. pd and a number downloads one. pd on "
+"its own downloads several as one zip file. pa subscribes to this podcast."
+msgstr ""
+"pe dan sebuah nomor memutar satu episode. pd dan sebuah nomor mengunduh "
+"satu. pd saja mengunduh beberapa sebagai satu file zip. pa berlangganan "
+"podcast ini."
+
+#: bot/commands/podcast_commands.py:119
+#, python-brace-format
+msgid "There is no number {number}. The list goes from 1 to {total}."
+msgstr "Tidak ada nomor {number}. Daftar berisi nomor 1 sampai {total}."
+
+#: bot/commands/podcast_commands.py:134
+msgid ""
+"No podcast is open. To find one, send pc and a few words, for example: pc"
+" history"
+msgstr ""
+"Tidak ada podcast yang dibuka. Untuk mencarinya, kirim pc dan beberapa "
+"kata, misalnya: pc history"
+
+#: bot/commands/podcast_commands.py:148
+#, python-brace-format
+msgid "{podcast} has episodes 1 to {total}."
+msgstr "{podcast} punya episode 1 sampai {total}."
+
+#: bot/commands/podcast_commands.py:157
+msgid "WORDS Searches for podcasts. pc and a number opens one from the list"
+msgstr "KATA Mencari podcast. pc dan sebuah nomor membuka salah satu dari daftar"
+
+#: bot/commands/podcast_commands.py:170 bot/commands/podcast_commands.py:396
+#, python-brace-format
+msgid "Opening {podcast}."
+msgstr "Membuka {podcast}."
+
+#: bot/commands/podcast_commands.py:172 bot/commands/user_commands.py:48
+#: bot/commands/user_commands.py:842 bot/commands/user_commands.py:1011
+msgid "Searching..."
+msgstr "Mencari..."
+
+#: bot/commands/podcast_commands.py:181
+msgid "No podcast directory answered. Try again later."
+msgstr "Tidak ada direktori podcast yang menjawab. Coba lagi nanti."
+
+#: bot/commands/podcast_commands.py:185
+#, python-brace-format
+msgid ""
+"{directory} did not answer. To search every directory instead, send: pcd "
+"all"
+msgstr ""
+"{directory} tidak menjawab. Untuk mencari di semua direktori, kirim: pcd "
+"all"
+
+#: bot/commands/podcast_commands.py:190 bot/commands/user_commands.py:58
+#: bot/commands/user_commands.py:157 bot/commands/user_commands.py:850
+#: bot/commands/user_commands.py:1018 bot/commands/user_commands.py:1234
+#: bot/commands/user_commands.py:1411
+msgid "Nothing is found for your query"
+msgstr "Tidak ada yang ditemukan untuk kueri Anda."
+
+# | msgid "Search results count: {count}"
+#: bot/commands/podcast_commands.py:193
+#, python-brace-format
+msgid "Podcasts found: {count}"
+msgstr "Podcast yang ditemukan: {count}"
+
+#: bot/commands/podcast_commands.py:199
+#, python-brace-format
+msgid "{title}, by {author}, from {directory}"
+msgstr "{title}, oleh {author}, dari {directory}"
+
+#: bot/commands/podcast_commands.py:203
+#, python-brace-format
+msgid "{title}, from {directory}"
+msgstr "{title}, dari {directory}"
+
+#: bot/commands/podcast_commands.py:208
+msgid "To open one, send pc and its number, for example: pc 1"
+msgstr "Untuk membuka salah satunya, kirim pc dan nomornya, misalnya: pc 1"
+
+#: bot/commands/podcast_commands.py:219
+msgid ""
+"[DIRECTORY] Chooses where pc searches: apple, fyyd, gpodder, spotify, or "
+"all of them. On its own, says which one is chosen"
+msgstr ""
+"[DIREKTORI] Memilih tempat pc mencari: apple, fyyd, gpodder, spotify, "
+"atau semuanya. Tanpa argumen, menyebutkan mana yang dipilih"
+
+#: bot/commands/podcast_commands.py:230
+msgid ""
+"Directories: apple for Apple Podcasts, fyyd, gpodder for gpodder.net, and"
+" spotify, whose episodes play but cannot be downloaded. Send pcd and a "
+"name to choose one. To search them all, send: pcd all"
+msgstr ""
+"Direktori: apple untuk Apple Podcasts, fyyd, gpodder untuk gpodder.net, "
+"dan spotify, yang episodenya bisa diputar tetapi tidak bisa diunduh. "
+"Kirim pcd dan sebuah nama untuk memilih. Untuk mencari di semuanya, "
+"kirim: pcd all"
+
+#: bot/commands/podcast_commands.py:237
+#, python-brace-format
+msgid "There is no directory called {name}. Send pcd on its own to hear the list."
+msgstr ""
+"Tidak ada direktori bernama {name}. Kirim pcd saja untuk mendengar "
+"daftarnya."
+
+#: bot/commands/podcast_commands.py:247
+msgid "pc searches every podcast directory."
+msgstr "pc mencari di semua direktori podcast."
+
+#: bot/commands/podcast_commands.py:248
+#, python-brace-format
+msgid "pc searches {directory} only."
+msgstr "pc hanya mencari di {directory}."
+
+#: bot/commands/podcast_commands.py:257
+msgid ""
+"[NUMBER] Plays episode NUMBER of the open podcast. On its own, lists the "
+"next ten episodes"
+msgstr ""
+"[NOMOR] Memutar episode NOMOR dari podcast yang dibuka. Tanpa nomor, "
+"menampilkan sepuluh episode berikutnya"
+
+#: bot/commands/podcast_commands.py:273 bot/commands/user_commands.py:1240
+#, python-brace-format
+msgid "{nickname} selected: {track}"
+msgstr "{nickname} memilih: {track}"
+
+#: bot/commands/podcast_commands.py:279 bot/commands/user_commands.py:111
+#: bot/commands/user_commands.py:267 bot/commands/user_commands.py:293
+#: bot/commands/user_commands.py:310 bot/commands/user_commands.py:523
+#: bot/commands/user_commands.py:1037 bot/commands/user_commands.py:1147
+#: bot/commands/user_commands.py:1250
+#, python-brace-format
+msgid "Playing {}"
+msgstr "Memutar {}."
+
+#: bot/commands/podcast_commands.py:286
+msgid ""
+"[NUMBER] Downloads episode NUMBER of the open podcast to the channel. On "
+"its own, asks how many of the newest episodes to download as one zip file"
+msgstr ""
+"[NOMOR] Mengunduh episode NOMOR dari podcast yang dibuka ke kanal. Tanpa "
+"nomor, menanyakan berapa episode terbaru yang diunduh sebagai satu file "
+"zip"
+
+#. translators: pcd is a command, not a word to translate, and it stays last.
+#: bot/commands/podcast_commands.py:293
+#, python-brace-format
+msgid ""
+"{podcast} is a Spotify show, so its episodes can be played but not "
+"downloaded. Many shows also publish a public feed. To look for one, "
+"search every directory again. To switch to every directory, send: pcd all"
+msgstr ""
+"{podcast} adalah acara Spotify, jadi episodenya bisa diputar tetapi tidak"
+" bisa diunduh. Banyak acara juga menerbitkan feed publik. Untuk "
+"mencarinya, cari lagi di semua direktori. Untuk beralih ke semua "
+"direktori, kirim: pcd all"
+
+#: bot/commands/podcast_commands.py:312 bot/commands/user_commands.py:947
+#: bot/modules/apple_music_downloader.py:116
+#, python-brace-format
+msgid "Downloading {name}. It will be uploaded to the channel when it is ready."
+msgstr "Mengunduh {name}. File akan diunggah ke kanal setelah siap."
+
+#: bot/commands/podcast_commands.py:332
+#, python-brace-format
+msgid "Send a number from 1 to {total}."
+msgstr "Kirim angka dari 1 sampai {total}."
+
+#: bot/commands/podcast_commands.py:341
+#, python-brace-format
+msgid ""
+"Episodes of {podcast}: {total}. To download the newest ones as one zip "
+"file, send how many, from 1 to {total}"
+msgstr ""
+"Episode {podcast}: {total}. Untuk mengunduh yang terbaru sebagai satu "
+"file zip, kirim jumlahnya, dari 1 sampai {total}"
+
+#: bot/commands/podcast_commands.py:350
+msgid ""
+"Subscribes you to the open podcast. The bot tells you privately when a "
+"new episode is out"
+msgstr ""
+"Berlangganan podcast yang dibuka. Bot memberi tahu Anda secara pribadi "
+"saat episode baru keluar"
+
+#: bot/commands/podcast_commands.py:355 bot/commands/podcast_commands.py:380
+#: bot/commands/podcast_commands.py:414
+msgid "Podcast subscriptions are not available in this bot."
+msgstr "Langganan podcast tidak tersedia di bot ini."
+
+#: bot/commands/podcast_commands.py:361
+msgid ""
+"Subscriptions are kept by TeamTalk account name, and you are logged in "
+"without one."
+msgstr ""
+"Langganan disimpan berdasarkan nama akun TeamTalk, dan Anda masuk tanpa "
+"nama akun."
+
+#: bot/commands/podcast_commands.py:364
+#, python-brace-format
+msgid "You are already subscribed to {podcast}."
+msgstr "Anda sudah berlangganan {podcast}."
+
+#: bot/commands/podcast_commands.py:366
+#, python-brace-format
+msgid ""
+"Subscribed to {podcast}. You will get a private message when a new "
+"episode is out, or the next time you are online. To see your "
+"subscriptions, send: ps"
+msgstr ""
+"Anda berlangganan {podcast}. Anda akan menerima pesan pribadi saat "
+"episode baru keluar, atau saat Anda online berikutnya. Untuk melihat "
+"langganan Anda, kirim: ps"
+
+#: bot/commands/podcast_commands.py:375
+msgid ""
+"[NUMBER] Lists your podcast subscriptions. With a number, opens that "
+"podcast"
+msgstr ""
+"[NOMOR] Menampilkan langganan podcast Anda. Dengan nomor, membuka podcast"
+" itu"
+
+#: bot/commands/podcast_commands.py:384 bot/commands/podcast_commands.py:424
+msgid "You have no podcast subscriptions. To add one, open a podcast and send: pa"
+msgstr ""
+"Anda belum berlangganan podcast apa pun. Untuk menambahkan, buka sebuah "
+"podcast lalu kirim: pa"
+
+#: bot/commands/podcast_commands.py:397
+msgid "Your podcast subscriptions:"
+msgstr "Langganan podcast Anda:"
+
+#: bot/commands/podcast_commands.py:402
+msgid "ps and a number opens one, pu and a number unsubscribes. For example: ps 1"
+msgstr ""
+"ps dan sebuah nomor membuka salah satunya, pu dan sebuah nomor berhenti "
+"berlangganan. Misalnya: ps 1"
+
+#: bot/commands/podcast_commands.py:410
+msgid "NUMBER Unsubscribes from podcast NUMBER in your ps list"
+msgstr "NOMOR Berhenti berlangganan podcast NOMOR di daftar ps Anda"
+
+#: bot/commands/podcast_commands.py:427
+#, python-brace-format
+msgid "Unsubscribed from {podcast}."
+msgstr "Berhenti berlangganan {podcast}."
+
 #: bot/commands/user_commands.py:23
 msgid "Shows command help"
 msgstr "Tampilkan bantuan perintah."
@@ -537,19 +821,8 @@ msgstr ""
 " saat ini. Dengan mode hasil pencarian (sr) aktif, menampilkan daftar "
 "bernomor"
 
-#: bot/commands/user_commands.py:48 bot/commands/user_commands.py:837
-#: bot/commands/user_commands.py:1006
-msgid "Searching..."
-msgstr "Mencari..."
-
-#: bot/commands/user_commands.py:58 bot/commands/user_commands.py:157
-#: bot/commands/user_commands.py:845 bot/commands/user_commands.py:1013
-#: bot/commands/user_commands.py:1229 bot/commands/user_commands.py:1406
-msgid "Nothing is found for your query"
-msgstr "Tidak ada yang ditemukan untuk kueri Anda."
-
-#: bot/commands/user_commands.py:61 bot/commands/user_commands.py:1016
-#: bot/commands/user_commands.py:1226
+#: bot/commands/user_commands.py:61 bot/commands/user_commands.py:1021
+#: bot/commands/user_commands.py:1231
 msgid "The selected service is currently unavailable"
 msgstr "Layanan yang dipilih saat ini tidak tersedia."
 
@@ -565,14 +838,6 @@ msgstr "Gunakan 'sl NOMOR' untuk memilih trek"
 #, python-brace-format
 msgid "{nickname} requested {request}"
 msgstr "{nickname} meminta {request}."
-
-#: bot/commands/user_commands.py:111 bot/commands/user_commands.py:267
-#: bot/commands/user_commands.py:293 bot/commands/user_commands.py:310
-#: bot/commands/user_commands.py:518 bot/commands/user_commands.py:1032
-#: bot/commands/user_commands.py:1142 bot/commands/user_commands.py:1245
-#, python-brace-format
-msgid "Playing {}"
-msgstr "Memutar {}."
 
 #: bot/commands/user_commands.py:119
 msgid "URL Plays a stream from a given URL"
@@ -621,11 +886,11 @@ msgstr "{nickname} menghentikan pemutaran."
 #: bot/commands/user_commands.py:192 bot/commands/user_commands.py:225
 #: bot/commands/user_commands.py:244 bot/commands/user_commands.py:271
 #: bot/commands/user_commands.py:287 bot/commands/user_commands.py:299
-#: bot/commands/user_commands.py:316 bot/commands/user_commands.py:522
-#: bot/commands/user_commands.py:538 bot/commands/user_commands.py:549
-#: bot/commands/user_commands.py:602 bot/commands/user_commands.py:620
-#: bot/commands/user_commands.py:666 bot/commands/user_commands.py:732
-#: bot/commands/user_commands.py:753 bot/commands/user_commands.py:1129
+#: bot/commands/user_commands.py:316 bot/commands/user_commands.py:527
+#: bot/commands/user_commands.py:543 bot/commands/user_commands.py:554
+#: bot/commands/user_commands.py:607 bot/commands/user_commands.py:625
+#: bot/commands/user_commands.py:671 bot/commands/user_commands.py:737
+#: bot/commands/user_commands.py:758 bot/commands/user_commands.py:1134
 msgid "Nothing is playing"
 msgstr "Tidak ada yang diputar."
 
@@ -654,24 +919,24 @@ msgid ""
 "position with ?"
 msgstr ""
 
-#: bot/commands/user_commands.py:279 bot/commands/user_commands.py:530
+#: bot/commands/user_commands.py:279 bot/commands/user_commands.py:535
 msgid "Incorrect number"
 msgstr "Nomor salah."
 
-#: bot/commands/user_commands.py:281 bot/commands/user_commands.py:532
-#: bot/commands/user_commands.py:545
+#: bot/commands/user_commands.py:281 bot/commands/user_commands.py:537
+#: bot/commands/user_commands.py:550
 #, python-brace-format
 msgid "Playing {} {}"
 msgstr "Memutar {} {}."
 
-#: bot/commands/user_commands.py:285 bot/commands/user_commands.py:536
-#: bot/commands/user_commands.py:614 bot/commands/user_commands.py:647
-#: bot/commands/user_commands.py:686 bot/commands/user_commands.py:1097
-#: bot/commands/user_commands.py:1214 bot/commands/user_commands.py:1373
+#: bot/commands/user_commands.py:285 bot/commands/user_commands.py:541
+#: bot/commands/user_commands.py:619 bot/commands/user_commands.py:652
+#: bot/commands/user_commands.py:691 bot/commands/user_commands.py:1102
+#: bot/commands/user_commands.py:1219 bot/commands/user_commands.py:1378
 msgid "Out of list"
 msgstr "Daftar terlampaui."
 
-#: bot/commands/user_commands.py:297 bot/commands/user_commands.py:1146
+#: bot/commands/user_commands.py:297 bot/commands/user_commands.py:1151
 msgid "No next track"
 msgstr "Tidak ada trek berikutnya."
 
@@ -748,7 +1013,7 @@ msgstr ""
 "{}"
 
 # | msgid "" "Current service: {}\n" "Warning: {}"
-#: bot/commands/user_commands.py:382
+#: bot/commands/user_commands.py:385
 #, fuzzy, python-brace-format
 msgid "Current service: {service}{newline}{status}"
 msgstr ""
@@ -756,58 +1021,58 @@ msgstr ""
 "Peringatan: {}"
 
 # | msgid "" "Error: {error}\n" "{service} is disabled"
-#: bot/commands/user_commands.py:391
+#: bot/commands/user_commands.py:394
 #, fuzzy, python-brace-format
 msgid "Error: {error}{newline}{service} is disabled"
 msgstr ""
 "Kesalahan: {error}\n"
 "{service} dinonaktifkan."
 
-#: bot/commands/user_commands.py:398
+#: bot/commands/user_commands.py:401
 #, python-brace-format
 msgid "{service} is disabled"
 msgstr "{service} dinonaktifkan."
 
-#: bot/commands/user_commands.py:450
+#: bot/commands/user_commands.py:453
 #, python-format
 msgid "%(service)s is switched off in this bot's configuration."
 msgstr ""
 
-#: bot/commands/user_commands.py:457
+#: bot/commands/user_commands.py:460
 #, python-format
 msgid ""
 "%(service)s is not connected. To connect an account, send this command: "
 "li %(code)s"
 msgstr ""
 
-#: bot/commands/user_commands.py:462
+#: bot/commands/user_commands.py:465
 #, python-format
 msgid "%(service)s is connected and ready."
 msgstr ""
 
-#: bot/commands/user_commands.py:475
+#: bot/commands/user_commands.py:478
 #, python-format
 msgid "unavailable: %(reason)s"
 msgstr ""
 
 # | msgid "Saves bot's configuration"
-#: bot/commands/user_commands.py:477
+#: bot/commands/user_commands.py:480
 #, fuzzy
 msgid "switched off in this bot's configuration"
 msgstr "Simpan konfigurasi bot."
 
-#: bot/commands/user_commands.py:480
+#: bot/commands/user_commands.py:483
 #, python-format
 msgid "not connected, send li %(code)s"
 msgstr ""
 
-#: bot/commands/user_commands.py:485
+#: bot/commands/user_commands.py:488
 msgid "ready"
 msgstr ""
 
 # | msgid "" "Current service: {current_service}\n" "Available:\n"
 # | "{available_services}\n" "send sv SERVICE h for additional help"
-#: bot/commands/user_commands.py:494
+#: bot/commands/user_commands.py:499
 #, fuzzy, python-brace-format
 msgid ""
 "Current service: "
@@ -820,12 +1085,12 @@ msgstr ""
 "kirim sv LAYANAN h untuk bantuan tambahan."
 
 # | msgid "NUMBER Selects track by number from the list of current results"
-#: bot/commands/user_commands.py:507
+#: bot/commands/user_commands.py:512
 #, fuzzy
 msgid "[NUMBER|?] Selects track by number, or shows current position with ?"
 msgstr "NOMOR Memilih trek dengan nomor dari daftar hasil saat ini."
 
-#: bot/commands/user_commands.py:556
+#: bot/commands/user_commands.py:561
 msgid ""
 "SPEED Sets playback speed from 0.25 to 4. If no speed is given, shows "
 "current speed"
@@ -833,12 +1098,12 @@ msgstr ""
 "KECEPATAN Mengatur kecepatan pemutaran dari 0,25 hingga 4. Jika tidak ada"
 " kecepatan yang ditetapkan, tampilkan kecepatan saat ini."
 
-#: bot/commands/user_commands.py:561
+#: bot/commands/user_commands.py:566
 #, python-brace-format
 msgid "Current rate: {}"
 msgstr "Kecepatan saat ini: {}."
 
-#: bot/commands/user_commands.py:575
+#: bot/commands/user_commands.py:580
 msgid ""
 "+/-NUMBER Manages favorite tracks. + adds the current track to favorites."
 " - removes a track requested from favorites. If a number is specified "
@@ -848,28 +1113,28 @@ msgstr ""
 "favorit. -NOMOR hapus trek yang diminta dari daftar favorit. Jika nomor "
 "ditentukan setelah +/-, tambahkan/hapus trek dengan nomor itu."
 
-#: bot/commands/user_commands.py:581
+#: bot/commands/user_commands.py:586
 msgid "This command is not available for guest users"
 msgstr "Perintah ini tidak tersedia untuk pengguna guest."
 
-#: bot/commands/user_commands.py:618
+#: bot/commands/user_commands.py:623
 msgid "This track is not in favorites"
 msgstr "Lagu ini tidak ada di daftar favorit."
 
-#: bot/commands/user_commands.py:627 bot/commands/user_commands.py:692
+#: bot/commands/user_commands.py:632 bot/commands/user_commands.py:697
 #, python-brace-format
 msgid "{number}: {track_name}"
 msgstr "{number}: {track_name}"
 
-#: bot/commands/user_commands.py:655
+#: bot/commands/user_commands.py:660
 msgid "Gets a direct link to the current track"
 msgstr "Dapatkan tautan langsung ke trek saat ini."
 
-#: bot/commands/user_commands.py:664
+#: bot/commands/user_commands.py:669
 msgid "URL is not available"
 msgstr "URL tidak tersedia."
 
-#: bot/commands/user_commands.py:673
+#: bot/commands/user_commands.py:678
 msgid ""
 "NUMBER Plays a track with  the given number from a list of recent tracks."
 " Without a number shows recent tracks"
@@ -877,46 +1142,46 @@ msgstr ""
 "NOMOR PUTAR trek dengan nomor tertentu dari daftar trek terbaru. Tanpa "
 "nomor TAMPILKAN DAFTAR trek terbaru."
 
-#: bot/commands/user_commands.py:698
+#: bot/commands/user_commands.py:703
 #, python-brace-format
 msgid "{number}: {track_url}"
 msgstr "{number}: {track_url}"
 
-#: bot/commands/user_commands.py:713
+#: bot/commands/user_commands.py:718
 msgid "Downloads the current track and uploads it to the channel."
 msgstr "Unduh trek saat ini dan unggah ke saluran.."
 
-#: bot/commands/user_commands.py:728
+#: bot/commands/user_commands.py:733
 msgid "Downloading..."
 msgstr "Mengunduh..."
 
-#: bot/commands/user_commands.py:730 bot/commands/user_commands.py:751
+#: bot/commands/user_commands.py:735 bot/commands/user_commands.py:756
 msgid "Live streams cannot be downloaded"
 msgstr "Streaming langsung tidak dapat diunduh."
 
-#: bot/commands/user_commands.py:739
+#: bot/commands/user_commands.py:744
 msgid "Downloads the current track as video and uploads it to the channel."
 msgstr "Mengunduh trek saat ini sebagai video dan mengunggahnya ke saluran."
 
-#: bot/commands/user_commands.py:749
+#: bot/commands/user_commands.py:754
 msgid "Downloading video..."
 msgstr "Mengunduh video..."
 
-#: bot/commands/user_commands.py:759
+#: bot/commands/user_commands.py:764
 msgid "Makes the bot join your current channel"
 msgstr "Membuat bot bergabung ke saluran Anda saat ini"
 
-#: bot/commands/user_commands.py:780 bot/commands/user_commands.py:797
+#: bot/commands/user_commands.py:785 bot/commands/user_commands.py:802
 #, python-brace-format
 msgid "Joining channel: {}"
 msgstr "Bergabung ke saluran: {}"
 
-#: bot/commands/user_commands.py:789
+#: bot/commands/user_commands.py:794
 #, python-brace-format
 msgid "Failed to join channel. Error: {}"
 msgstr "Gagal bergabung ke saluran. Kesalahan: {}"
 
-#: bot/commands/user_commands.py:800
+#: bot/commands/user_commands.py:805
 #, python-brace-format
 msgid "Failed to join channel: {}"
 msgstr "Gagal bergabung ke saluran: {}"
@@ -925,7 +1190,7 @@ msgstr "Gagal bergabung ke saluran: {}"
 # | uploads to" " the channel."
 # | uploads to" " the channel. Without a link while Apple Music is playing,
 # | downloads the " "album or playlist being played."
-#: bot/commands/user_commands.py:807
+#: bot/commands/user_commands.py:812
 #, fuzzy
 msgid ""
 "Downloads all tracks from a playlist/album URL, zips them, and uploads to"
@@ -937,18 +1202,18 @@ msgstr ""
 "Mengunduh semua lagu dari URL playlist/album, mengompresnya dalam ZIP, "
 "dan mengunggahnya ke saluran."
 
-#: bot/commands/user_commands.py:818
+#: bot/commands/user_commands.py:823
 #, python-brace-format
 msgid "Current progress: {}"
 msgstr "Kemajuan saat ini: {}"
 
-#: bot/commands/user_commands.py:834
+#: bot/commands/user_commands.py:839
 msgid "Please send the link to the playlist or album."
 msgstr "Silakan kirim tautan ke daftar putar atau album."
 
 # | msgid "This command is for playlists and albums. For single tracks, use
 # | 'dl'."
-#: bot/commands/user_commands.py:853
+#: bot/commands/user_commands.py:858
 #, fuzzy
 msgid ""
 "This command is for playlists, albums, and channels. For single tracks, "
@@ -957,12 +1222,7 @@ msgstr ""
 "Perintah ini untuk daftar putar dan album. Untuk lagu tunggal, gunakan "
 "'dl'."
 
-#: bot/commands/user_commands.py:942 bot/modules/apple_music_downloader.py:116
-#, python-brace-format
-msgid "Downloading {name}. It will be uploaded to the channel when it is ready."
-msgstr ""
-
-#: bot/commands/user_commands.py:997
+#: bot/commands/user_commands.py:1002
 msgid ""
 "QUERY Searches for a track and adds it to the queue. If nothing is "
 "playing, starts immediately"
@@ -970,51 +1230,51 @@ msgstr ""
 "KUERI Mencari lagu dan menambahkannya ke antrean. Jika tidak ada yang "
 "diputar, langsung dimulai"
 
-#: bot/commands/user_commands.py:1041
+#: bot/commands/user_commands.py:1046
 #, python-brace-format
 msgid "{nickname} added to queue: {track}"
 msgstr "{nickname} menambahkan ke antrean: {track}"
 
-#: bot/commands/user_commands.py:1047
+#: bot/commands/user_commands.py:1052
 #, python-brace-format
 msgid "Added to queue [{position}]: {track}"
 msgstr "Ditambahkan ke antrean [{position}]: {track}"
 
-#: bot/commands/user_commands.py:1054
+#: bot/commands/user_commands.py:1059
 msgid "Lists all tracks in the queue"
 msgstr "Daftar semua lagu dalam antrean"
 
-#: bot/commands/user_commands.py:1060
+#: bot/commands/user_commands.py:1065
 msgid "The queue is empty"
 msgstr "Antrean kosong"
 
-#: bot/commands/user_commands.py:1068
+#: bot/commands/user_commands.py:1073
 #, python-brace-format
 msgid "Queue ({count} track(s)):"
 msgstr "Antrean ({count} lagu):"
 
-#: bot/commands/user_commands.py:1078
+#: bot/commands/user_commands.py:1083
 msgid "NUMBER Removes track number NUMBER from the queue"
 msgstr "NUMBER Menghapus lagu nomor NUMBER dari antrean"
 
-#: bot/commands/user_commands.py:1103
+#: bot/commands/user_commands.py:1108
 #, python-brace-format
 msgid "Removed from queue: {track}"
 msgstr "Dihapus dari antrean: {track}"
 
-#: bot/commands/user_commands.py:1110
+#: bot/commands/user_commands.py:1115
 msgid "Clears the entire queue"
 msgstr "Membersihkan seluruh antrean"
 
-#: bot/commands/user_commands.py:1114
+#: bot/commands/user_commands.py:1119
 msgid "The queue is already empty"
 msgstr "Antrean sudah kosong"
 
-#: bot/commands/user_commands.py:1117
+#: bot/commands/user_commands.py:1122
 msgid "Queue cleared"
 msgstr "Antrean dibersihkan"
 
-#: bot/commands/user_commands.py:1124
+#: bot/commands/user_commands.py:1129
 msgid ""
 "Skips current track and plays the next one from the queue. Falls back to "
 "normal next if queue is empty"
@@ -1022,7 +1282,7 @@ msgstr ""
 "Melewati lagu saat ini dan memutar lagu berikutnya dari antrean. Jika "
 "antrean kosong, beralih ke lagu berikutnya secara normal"
 
-#: bot/commands/user_commands.py:1135
+#: bot/commands/user_commands.py:1140
 #, python-brace-format
 msgid "Playing next from queue: {}"
 msgstr "Memutar berikutnya dari antrean: {}"
@@ -1030,7 +1290,7 @@ msgstr "Memutar berikutnya dari antrean: {}"
 # | msgid "" "Toggles search results mode. When active, 'p QUERY' shows a
 # | numbered " "list. Use 'sr on' or 'sr off' to set explicitly. Save
 # | permanently with " "'sc'"
-#: bot/commands/user_commands.py:1159
+#: bot/commands/user_commands.py:1164
 #, fuzzy
 msgid ""
 "Toggles search results mode. When active, 'p QUERY' reads out a numbered "
@@ -1042,15 +1302,15 @@ msgstr ""
 "daftar bernomor. Gunakan 'sr on' atau 'sr off'. Simpan permanen dengan "
 "'sc'"
 
-#: bot/commands/user_commands.py:1167 bot/commands/user_commands.py:1177
+#: bot/commands/user_commands.py:1172 bot/commands/user_commands.py:1182
 msgid "Search results mode: ON"
 msgstr "Mode hasil pencarian: AKTIF"
 
-#: bot/commands/user_commands.py:1171 bot/commands/user_commands.py:1179
+#: bot/commands/user_commands.py:1176 bot/commands/user_commands.py:1184
 msgid "Search results mode: OFF"
 msgstr "Mode hasil pencarian: NONAKTIF"
 
-#: bot/commands/user_commands.py:1191
+#: bot/commands/user_commands.py:1196
 msgid ""
 "NUMBER Selects and plays result NUMBER from the last search list "
 "(requires search results mode to be active)"
@@ -1058,17 +1318,12 @@ msgstr ""
 "NOMOR Memilih dan memutar hasil NOMOR dari daftar pencarian terakhir "
 "(memerlukan mode hasil pencarian aktif)"
 
-#: bot/commands/user_commands.py:1210
+#: bot/commands/user_commands.py:1215
 msgid "No search results available. Use 'p QUERY' to search first"
 msgstr "Tidak ada hasil pencarian. Gunakan 'p QUERY' untuk mencari terlebih dahulu"
 
-#: bot/commands/user_commands.py:1235
-#, python-brace-format
-msgid "{nickname} selected: {track}"
-msgstr "{nickname} memilih: {track}"
-
 # | msgid "Loaded {count} tracks"
-#: bot/commands/user_commands.py:1243
+#: bot/commands/user_commands.py:1248
 #, fuzzy, python-brace-format
 msgid "Playing {name}, {count} tracks"
 msgstr "{count} trek dimuat"
@@ -1077,7 +1332,7 @@ msgstr "{count} trek dimuat"
 # is
 # | " "active. Without a number shows current count. Resets to 5 on restart"
 # | " "active. Without a number shows current count. Resets to 1 on restart"
-#: bot/commands/user_commands.py:1254
+#: bot/commands/user_commands.py:1259
 #, fuzzy
 msgid ""
 "NUMBER Sets how many results are shown when search results mode is "
@@ -1088,79 +1343,79 @@ msgstr ""
 "nomor menampilkan jumlah saat ini. Diatur ulang ke 5 saat restart"
 
 # | msgid "Search results count: {count}"
-#: bot/commands/user_commands.py:1262
+#: bot/commands/user_commands.py:1267
 #, fuzzy
 msgid "Search results count: as many as the service returns"
 msgstr "Jumlah hasil pencarian: {count}"
 
-#: bot/commands/user_commands.py:1264
+#: bot/commands/user_commands.py:1269
 #, python-brace-format
 msgid "Search results count: {count}"
 msgstr "Jumlah hasil pencarian: {count}"
 
 # | msgid "Invalid count. Please enter a number greater than 0"
-#: bot/commands/user_commands.py:1275
+#: bot/commands/user_commands.py:1280
 #, fuzzy
 msgid "Invalid count. Please enter 0 or a number greater than 0"
 msgstr "Jumlah tidak valid. Masukkan angka lebih dari 0"
 
-#: bot/commands/user_commands.py:1281
+#: bot/commands/user_commands.py:1286
 msgid "Search results now show as many results as the service returns"
 msgstr ""
 
-#: bot/commands/user_commands.py:1284
+#: bot/commands/user_commands.py:1289
 #, python-brace-format
 msgid "Search results count set to {count}"
 msgstr "Jumlah hasil pencarian diatur ke {count}"
 
-#: bot/commands/user_commands.py:1292
+#: bot/commands/user_commands.py:1297
 msgid "LINK Adds a link to the download list."
 msgstr "LINK Menambahkan tautan ke daftar unduhan."
 
-#: bot/commands/user_commands.py:1304
+#: bot/commands/user_commands.py:1309
 #, python-brace-format
 msgid "Added link to the list. Total: {count}"
 msgstr "Tautan ditambahkan ke daftar. Total: {count}"
 
-#: bot/commands/user_commands.py:1313
+#: bot/commands/user_commands.py:1318
 msgid "LINK1 LINK2 ... Adds multiple space-separated links to the download list."
 msgstr ""
 "LINK1 LINK2 ... Menambahkan beberapa tautan yang dipisahkan spasi ke "
 "daftar unduhan."
 
-#: bot/commands/user_commands.py:1328
+#: bot/commands/user_commands.py:1333
 #, python-brace-format
 msgid "Added {added_count} links. Total list size: {count}"
 msgstr "Berhasil menambahkan {added_count} tautan. Total ukuran daftar: {count}"
 
-#: bot/commands/user_commands.py:1338
+#: bot/commands/user_commands.py:1343
 msgid "Lists all links in the download list."
 msgstr "Menampilkan semua tautan dalam daftar unduhan."
 
-#: bot/commands/user_commands.py:1357
+#: bot/commands/user_commands.py:1362
 msgid "NUMBER_OR_LINK Removes a link from the download list by its index or URL."
 msgstr ""
 "NOMOR_ATAU_TAUTAN Menghapus tautan dari daftar unduhan berdasarkan indeks"
 " atau URL."
 
-#: bot/commands/user_commands.py:1382
+#: bot/commands/user_commands.py:1387
 msgid "Link not found in the list"
 msgstr "Tautan tidak ditemukan dalam daftar"
 
-#: bot/commands/user_commands.py:1384
+#: bot/commands/user_commands.py:1389
 #, python-brace-format
 msgid "Removed link: {link}"
 msgstr "Tautan yang dihapus: {link}"
 
-#: bot/commands/user_commands.py:1391
+#: bot/commands/user_commands.py:1396
 msgid "LINK Downloads a link directly and uploads it to the channel."
 msgstr "LINK Mengunduh tautan secara langsung dan mengunggahnya ke saluran."
 
-#: bot/commands/user_commands.py:1399
+#: bot/commands/user_commands.py:1404
 msgid "Searching and downloading..."
 msgstr "Mencari dan mengunduh..."
 
-#: bot/commands/user_commands.py:1423
+#: bot/commands/user_commands.py:1428
 msgid ""
 "Downloads all links in your list and uploads them to the channel. Can "
 "download normally or as a ZIP archive."
@@ -1168,7 +1423,7 @@ msgstr ""
 "Mengunduh semua tautan di daftar Anda dan mengunggahnya ke saluran. Bisa "
 "diunduh secara normal atau sebagai arsip ZIP."
 
-#: bot/commands/user_commands.py:1435
+#: bot/commands/user_commands.py:1440
 msgid ""
 "How do you want to download these links?\n"
 "1. Download individually (Normal)\n"
@@ -1180,67 +1435,67 @@ msgstr ""
 "2. Kompres semua ke dalam file ZIP\n"
 "Jawab hanya dengan 1 atau 2."
 
-#: bot/commands/user_commands.py:1446
+#: bot/commands/user_commands.py:1451
 #, python-brace-format
 msgid "Starting local download of {count} links..."
 msgstr "Memulai pengunduhan lokal {count} tautan..."
 
-#: bot/commands/user_commands.py:1449
+#: bot/commands/user_commands.py:1454
 #, python-brace-format
 msgid "Starting download of {count} links..."
 msgstr "Memulai pengunduhan {count} tautan..."
 
-#: bot/commands/user_commands.py:1455
+#: bot/commands/user_commands.py:1460
 #, python-brace-format
 msgid "Resolving and zipping locally {count} links..."
 msgstr "Mengurai dan mengompres secara lokal {count} tautan..."
 
-#: bot/commands/user_commands.py:1458
+#: bot/commands/user_commands.py:1463
 #, python-brace-format
 msgid "Resolving and zipping {count} links..."
 msgstr "Mengurai dan mengompres {count} tautan..."
 
-#: bot/commands/user_commands.py:1460
+#: bot/commands/user_commands.py:1465
 msgid "Invalid option. Please send 'ads' again to select."
 msgstr "Pilihan tidak valid. Silakan kirim 'ads' lagi untuk memilih."
 
-#: bot/commands/user_commands.py:1466 bot/commands/user_commands.py:1504
+#: bot/commands/user_commands.py:1471 bot/commands/user_commands.py:1509
 #, python-brace-format
 msgid "Processing link {number}/{total}: {link}"
 msgstr "Memproses tautan {number}/{total}: {link}"
 
-#: bot/commands/user_commands.py:1474 bot/commands/user_commands.py:1512
+#: bot/commands/user_commands.py:1479 bot/commands/user_commands.py:1517
 #, python-brace-format
 msgid "Nothing is found for: {link}"
 msgstr "Tidak ada hasil yang ditemukan untuk: {link}"
 
-#: bot/commands/user_commands.py:1482
+#: bot/commands/user_commands.py:1487
 #, python-brace-format
 msgid "Error downloading {link}: {error}"
 msgstr "Gagal mengunduh {link}: {error}"
 
-#: bot/commands/user_commands.py:1532 bot/commands/user_commands.py:1649
+#: bot/commands/user_commands.py:1537 bot/commands/user_commands.py:1654
 msgid "All downloads completed successfully!"
 msgstr "Semua unduhan selesai dengan sukses!"
 
-#: bot/commands/user_commands.py:1537 bot/commands/user_commands.py:1654
+#: bot/commands/user_commands.py:1542 bot/commands/user_commands.py:1659
 #, python-brace-format
 msgid "Downloads completed with {error_count} error(s)."
 msgstr "Unduhan selesai dengan {error_count} kesalahan."
 
-#: bot/commands/user_commands.py:1546 bot/commands/user_commands.py:1576
+#: bot/commands/user_commands.py:1551 bot/commands/user_commands.py:1581
 msgid "Resolving links..."
 msgstr "Mengurai tautan..."
 
-#: bot/commands/user_commands.py:1560 bot/commands/user_commands.py:1593
+#: bot/commands/user_commands.py:1565 bot/commands/user_commands.py:1598
 msgid "Error: No valid tracks found to download."
 msgstr "Error: Tidak ada trek valid yang ditemukan untuk diunduh."
 
-#: bot/commands/user_commands.py:1613
+#: bot/commands/user_commands.py:1618
 msgid "Error: Failed to download any tracks from this playlist."
 msgstr "Kesalahan: Gagal mengunduh lagu apa pun dari daftar putar ini."
 
-#: bot/commands/user_commands.py:1665
+#: bot/commands/user_commands.py:1670
 msgid ""
 "Toggles local download mode for the 'ads' command. When active, files are"
 " saved locally to the VPS instead of uploaded to TeamTalk."
@@ -1248,21 +1503,25 @@ msgstr ""
 "Beralih mode unduh lokal untuk perintah 'ads'. Saat aktif, file disimpan "
 "secara lokal di VPS alih-alih diunggah ke TeamTalk."
 
-#: bot/commands/user_commands.py:1671
+#: bot/commands/user_commands.py:1676
 msgid "Local download mode (adsc) enabled."
 msgstr "Mode unduh lokal (adsc) diaktifkan."
 
-#: bot/commands/user_commands.py:1673
+#: bot/commands/user_commands.py:1678
 msgid "Local download mode (adsc) disabled."
 msgstr "Mode unduh lokal (adsc) dinonaktifkan."
 
-#: bot/commands/user_commands.py:1692
+# | msgid "" "[service] Shows which streaming accounts are connected. With a
+# | service " "(yt, sp, nf, dp, am, az, pp, tb) it starts connecting that one"
+#: bot/commands/user_commands.py:1697
 msgid ""
 "[service] Shows which streaming accounts are connected. With a service "
-"(yt, sp, nf, dp, am, az) it starts connecting that one"
+"(yt, sp, nf, dp, am, az, pp, hu, tb) it starts connecting that one"
 msgstr ""
+"[layanan] Menampilkan akun streaming yang terhubung. Dengan sebuah "
+"layanan (yt, sp, nf, dp, am, az, pp, hu, tb), mulai menghubungkannya"
 
-#: bot/commands/user_commands.py:1719
+#: bot/commands/user_commands.py:1724
 msgid ""
 "This server cannot run a browser, so connect YouTube by importing a "
 "session from your own browser. Use a separate Google account made for the"
@@ -1272,7 +1531,7 @@ msgstr ""
 " mengimpor sesi dari browser Anda sendiri. Gunakan akun Google terpisah "
 "yang dibuat untuk bot. Tautannya ada di pesan berikutnya."
 
-#: bot/commands/user_commands.py:1725
+#: bot/commands/user_commands.py:1730
 msgid ""
 "To connect YouTube, use a separate Google account made for the bot, not "
 "your personal one. The link is in the next message."
@@ -1280,48 +1539,63 @@ msgstr ""
 "Untuk menghubungkan YouTube, gunakan akun Google terpisah yang dibuat "
 "untuk bot, bukan akun pribadi Anda. Tautannya ada di pesan berikutnya."
 
-#: bot/commands/user_commands.py:1739
+#: bot/commands/user_commands.py:1744
 msgid ""
 "The account portal is not running, so Netflix, Disney Plus, Apple Music "
 "and Amazon Music cannot be connected. The reason is in this bot's log "
 "file."
 msgstr ""
 
-#: bot/commands/user_commands.py:1748
+#: bot/commands/user_commands.py:1753
 msgid "Your streaming accounts:"
-msgstr ""
-
-#: bot/commands/user_commands.py:1756
-#, python-format
-msgid "%(service)s: connected"
 msgstr ""
 
 #: bot/commands/user_commands.py:1761
 #, python-format
+msgid "%(service)s: plays without an account"
+msgstr "%(service)s: bisa diputar tanpa akun"
+
+#: bot/commands/user_commands.py:1769
+#, python-format
+msgid "%(service)s: connected"
+msgstr ""
+
+#: bot/commands/user_commands.py:1774
+#, python-format
 msgid "%(service)s: signed out, connect again"
 msgstr ""
 
-#: bot/commands/user_commands.py:1766
+#: bot/commands/user_commands.py:1779
 #, python-format
 msgid "%(service)s: not connected"
 msgstr ""
 
-#. translators: Each link is a separate chat message sent
-#. after this one, in the order %(services)s names them.
-#: bot/commands/user_commands.py:1777
+#: bot/commands/user_commands.py:1795
 #, python-format
-msgid ""
-"The next messages are connect links, one per message, in this order: "
-"%(services)s."
+msgid "reconnect %(service)s"
+msgstr "hubungkan ulang %(service)s"
+
+#: bot/commands/user_commands.py:1797
+#, python-format
+msgid "connect %(service)s"
+msgstr "hubungkan %(service)s"
+
+#: bot/commands/user_commands.py:1804
+msgid "your account page"
+msgstr "halaman akun Anda"
+
+# | msgid "" "The next messages are connect links, one per message, in this
+# | order: " "%(services)s."
+#. translators: Each link is a separate chat message sent after
+#. this one, in the order %(links)s names them.
+#: bot/commands/user_commands.py:1810
+#, python-format
+msgid "The next messages are links, one per message, in this order: %(links)s."
 msgstr ""
-"Pesan-pesan berikutnya adalah tautan untuk menghubungkan, satu per pesan,"
-" dengan urutan ini: %(services)s."
+"Pesan-pesan berikutnya adalah tautan, satu per pesan, dengan urutan ini: "
+"%(links)s."
 
-#: bot/commands/user_commands.py:1788
-msgid "To manage them, use the link in the next message."
-msgstr "Untuk mengelolanya, gunakan tautan di pesan berikutnya."
-
-#: bot/commands/user_commands.py:1806
+#: bot/commands/user_commands.py:1832
 #, python-format
 msgid ""
 "%(service)s is already connected. To use a different account, first "
@@ -1330,14 +1604,14 @@ msgstr ""
 "%(service)s sudah terhubung. Untuk memakai akun lain, putuskan dulu "
 "sambungannya menggunakan tautan di pesan berikutnya."
 
-#: bot/commands/user_commands.py:1820
+#: bot/commands/user_commands.py:1846
 #, python-format
 msgid "%(service)s sign-in could not start: %(error)s"
 msgstr ""
 
 #. translators: "The next message" and "the message after that"
 #. are separate chat messages, holding the link and the code.
-#: bot/commands/user_commands.py:1829
+#: bot/commands/user_commands.py:1855
 #, python-format
 msgid ""
 "To connect %(service)s, open the link in the next message and enter the "
@@ -1349,77 +1623,77 @@ msgstr ""
 " %(spelled)s. Setelah memasukkannya, kirim li saja untuk memeriksa apakah"
 " berhasil."
 
-#: bot/commands/user_commands.py:1839
+#: bot/commands/user_commands.py:1865
 #, python-format
 msgid "To connect %(service)s, open the link in the next message."
 msgstr "Untuk menghubungkan %(service)s, buka tautan di pesan berikutnya."
 
-#: bot/commands/user_commands.py:1858
+#: bot/commands/user_commands.py:1884
 msgid ""
 "[on|off|ask] Plays films and shows with audio description when it is "
 "available. With no argument, says what the current setting is"
 msgstr ""
 
-#: bot/commands/user_commands.py:1866
+#: bot/commands/user_commands.py:1892
 msgid "Audio description is not available in this bot."
 msgstr ""
 
-#: bot/commands/user_commands.py:1874
+#: bot/commands/user_commands.py:1900
 msgid ""
 "Audio description is on. Films play with the description when there is "
 "one."
 msgstr ""
 
-#: bot/commands/user_commands.py:1877
+#: bot/commands/user_commands.py:1903
 msgid "Audio description is off. Send da on to turn it on."
 msgstr ""
 
-#: bot/commands/user_commands.py:1880
+#: bot/commands/user_commands.py:1906
 msgid "The bot asks each time. Send da on or da off to stop being asked."
 msgstr ""
 
-#: bot/commands/user_commands.py:1894
+#: bot/commands/user_commands.py:1920
 msgid "Audio description is on. You will not be asked again."
 msgstr ""
 
-#: bot/commands/user_commands.py:1897
+#: bot/commands/user_commands.py:1923
 msgid "Audio description is off. You will not be asked again."
 msgstr ""
 
-#: bot/commands/user_commands.py:1900
+#: bot/commands/user_commands.py:1926
 msgid "The bot will ask each time."
 msgstr ""
 
-#: bot/commands/user_commands.py:1914
+#: bot/commands/user_commands.py:1940
 msgid ""
 "[number] Lists the profiles for the current service, or selects one by "
 "number"
 msgstr ""
 
-#: bot/commands/user_commands.py:1921
+#: bot/commands/user_commands.py:1947
 #, python-format
 msgid "%(service)s does not have profiles."
 msgstr ""
 
-#: bot/commands/user_commands.py:1927
+#: bot/commands/user_commands.py:1953
 msgid "No profiles were found. The account may not be connected yet."
 msgstr ""
 
-#: bot/commands/user_commands.py:1933
+#: bot/commands/user_commands.py:1959
 #, python-format
 msgid "%(count)s profiles:"
 msgstr ""
 
-#: bot/commands/user_commands.py:1937
+#: bot/commands/user_commands.py:1963
 msgid "Send pf and a number to choose one."
 msgstr ""
 
-#: bot/commands/user_commands.py:1949
+#: bot/commands/user_commands.py:1975
 #, python-format
 msgid "Now using the profile %(name)s."
 msgstr ""
 
-#: bot/commands/user_commands.py:1952
+#: bot/commands/user_commands.py:1978
 msgid "That profile could not be selected."
 msgstr ""
 
@@ -1589,6 +1863,25 @@ msgstr ""
 #, fuzzy, python-brace-format
 msgid "Tracks that could not be downloaded: {count}."
 msgstr "Streaming langsung tidak dapat diunduh."
+
+#: bot/modules/podcast_subscriptions.py:196
+#, python-brace-format
+msgid ""
+"New episodes of {podcast}, which you subscribed to: {count}. The newest "
+"is: {episode}"
+msgstr ""
+"Episode baru {podcast}, yang Anda langgani: {count}. Yang terbaru: "
+"{episode}"
+
+#: bot/modules/podcast_subscriptions.py:199
+#, python-brace-format
+msgid "New episode of {podcast}, which you subscribed to: {episode}"
+msgstr "Episode baru {podcast}, yang Anda langgani: {episode}"
+
+#: bot/modules/podcast_subscriptions.py:205
+#, python-brace-format
+msgid "To open the podcast, send: ps {number}"
+msgstr "Untuk membuka podcast itu, kirim: ps {number}"
 
 #: bot/modules/portal_pages.py:45
 msgid "dash"
@@ -2195,6 +2488,41 @@ msgid ""
 "catalogue."
 msgstr ""
 
+#: bot/services/browser_service.py:262
+msgid ""
+"Paramount Plus plays films and shows, with audio description where "
+"Paramount Plus offers one. Each account has its own profiles; pf lists "
+"them and pf with a number picks one."
+msgstr ""
+"Paramount Plus memutar film dan acara, dengan deskripsi audio jika "
+"Paramount Plus menyediakannya. Setiap akun punya profilnya sendiri; pf "
+"menampilkannya dan pf dengan nomor memilih salah satunya."
+
+# | msgid "" "Paramount Plus plays films and shows, with audio description
+# where
+# | " "Paramount Plus offers one. Each account has its own profiles; pf lists
+# "
+# | "them and pf with a number picks one."
+#: bot/services/browser_service.py:276
+msgid ""
+"Hulu plays films and shows, with audio description where Hulu offers one."
+" Hulu streams only in the United States, so it works only when this bot "
+"runs there. Each account has its own profiles; pf lists them and pf with "
+"a number picks one."
+msgstr ""
+"Hulu memutar film dan acara, dengan deskripsi audio jika Hulu "
+"menyediakannya. Hulu hanya tersedia di Amerika Serikat, jadi hanya "
+"berfungsi jika bot ini berjalan di sana. Setiap akun punya profilnya "
+"sendiri; pf menampilkannya dan pf dengan nomor memilih salah satunya."
+
+#: bot/services/browser_service.py:300
+msgid ""
+"Tubi plays free films and shows, with advertisements. It needs no "
+"account; connecting one with li tb only adds your watchlist."
+msgstr ""
+"Tubi memutar film dan acara gratis, dengan iklan. Tidak perlu akun; "
+"menghubungkan akun dengan li tb hanya menambahkan daftar tontonan Anda."
+
 #: bot/services/gamdl_downloader.py:158
 msgid "The Apple Music downloader is not installed in this image."
 msgstr ""
@@ -2263,44 +2591,52 @@ msgstr ""
 msgid "Netflix titles cannot be downloaded."
 msgstr "Streaming langsung tidak dapat diunduh."
 
+#: bot/services/podcasts.py:461
+msgid ""
+"Podcasts have their own commands. Send h to see pc, pcd, pe, pd, pa, ps "
+"and pu."
+msgstr ""
+"Podcast punya perintah sendiri. Kirim h untuk melihat pc, pcd, pe, pd, "
+"pa, ps, dan pu."
+
 #: bot/services/results.py:130
 #, python-format
 msgid "%(count)s %(kind)s"
 msgstr ""
 
-#: bot/services/spotify.py:121
+#: bot/services/spotify.py:123
 msgid "Spotify is not connected yet. Send li sp to connect an account."
 msgstr ""
 
-#: bot/services/spotify.py:163
+#: bot/services/spotify.py:165
 msgid ""
 "Spotify search needs a Spotify application. Add a client ID and secret in"
 " the bot's configuration, then try again. Playing a pasted Spotify link "
 "does not need one."
 msgstr ""
 
-#: bot/services/spotify.py:225
+#: bot/services/spotify.py:227
 msgid "The Spotify session expired. Try again."
 msgstr ""
 
-#: bot/services/spotify.py:230
+#: bot/services/spotify.py:232
 msgid "Spotify refused that request. Playback needs a Premium account."
 msgstr ""
 
-#: bot/services/spotify.py:235
+#: bot/services/spotify.py:237
 msgid "Spotify is rate limiting us. Try again shortly."
 msgstr ""
 
-#: bot/services/spotify.py:296
+#: bot/services/spotify.py:298
 msgid "That is not a Spotify link."
 msgstr ""
 
-#: bot/services/spotify.py:324
+#: bot/services/spotify.py:326
 msgid "That kind of Spotify link is not supported."
 msgstr ""
 
 # | msgid "Live streams cannot be downloaded"
-#: bot/services/spotify.py:420
+#: bot/services/spotify.py:422
 #, fuzzy
 msgid "Spotify tracks cannot be downloaded."
 msgstr "Streaming langsung tidak dapat diunduh."
@@ -2471,4 +2807,20 @@ msgstr "Tidak Diketahui"
 
 #~ msgid "To connect %(service)s, open %(url)s"
 #~ msgstr ""
+
+#~ msgid ""
+#~ "SERVICE Disconnects a streaming account "
+#~ "and deletes its saved sign-in (yt,"
+#~ " sp, nf, dp, am, az)"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "[service] Shows which streaming accounts "
+#~ "are connected. With a service (yt, "
+#~ "sp, nf, dp, am, az) it starts "
+#~ "connecting that one"
+#~ msgstr ""
+
+#~ msgid "To manage them, use the link in the next message."
+#~ msgstr "Untuk mengelolanya, gunakan tautan di pesan berikutnya."
 

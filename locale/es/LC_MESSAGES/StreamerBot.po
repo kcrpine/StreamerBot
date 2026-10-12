@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: StreamerBot 2.3.0\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-12 02:41+0000\n"
+"POT-Creation-Date: 2026-10-12 04:01+0000\n"
 "PO-Revision-Date: 2022-05-12 15:06+0200\n"
 "Last-Translator: Iván Novegil Cancelas <ivan.novegil.cancelas@gmail.com>\n"
 "Language: es\n"
@@ -19,21 +19,21 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.18.0\n"
 
-#: bot/__init__.py:183 bot/__init__.py:246
+#: bot/__init__.py:215 bot/__init__.py:278
 msgid ""
 "This needs Google Chrome, which is not available on this machine's "
 "processor architecture."
 msgstr ""
 
-#: bot/__init__.py:228
+#: bot/__init__.py:260
 msgid "Spotify is unavailable: the player could not start."
 msgstr ""
 
-#: bot/__init__.py:261 bot/__init__.py:264 bot/modules/portal_pages.py:543
+#: bot/__init__.py:293 bot/__init__.py:296 bot/modules/portal_pages.py:543
 msgid "The sign-in did not complete."
 msgstr ""
 
-#: bot/__init__.py:277
+#: bot/__init__.py:309
 msgid ""
 "The account portal is switched off in this bot's configuration, so "
 "Netflix, Disney Plus, Apple Music and Amazon Music cannot be connected. "
@@ -43,7 +43,7 @@ msgid ""
 "Portal and Spotify Ports in the manager turns it back on."
 msgstr ""
 
-#: bot/__init__.py:330
+#: bot/__init__.py:362
 #, python-format
 msgid ""
 "The account portal could not start because port %(port)s is already in "
@@ -54,7 +54,7 @@ msgid ""
 "they sign in with a code in the channel."
 msgstr ""
 
-#: bot/__init__.py:340
+#: bot/__init__.py:372
 #, python-format
 msgid ""
 "The account portal could not start, so Netflix, Disney Plus, Apple Music "
@@ -62,20 +62,20 @@ msgid ""
 "file: %(reason)s"
 msgstr ""
 
-#: bot/__init__.py:372
+#: bot/__init__.py:404
 msgid ""
 "Hello! I'm back and ready for you to stream again. Thank you for your "
 "patience!"
 msgstr ""
 
-#: bot/__init__.py:410
+#: bot/__init__.py:442
 msgid ""
 "Hello there! It's me, the Streamer Bot, just coming in here to let you "
 "know that an update is in progress and I will restart in a few moments to"
 " apply it. Thank you!"
 msgstr ""
 
-#: bot/__init__.py:467
+#: bot/__init__.py:499
 msgid "The bot is restarting now to apply the update. See you in a moment!"
 msgstr ""
 "El bot se está reiniciando ahora para aplicar la actualización. ¡Vuelvo "
@@ -100,39 +100,39 @@ msgstr ""
 msgid "Send \"h\" for help"
 msgstr "Envía \"h\" para ayuda"
 
-#: bot/commands/__init__.py:156
+#: bot/commands/__init__.py:172
 msgid "That question has expired. To ask again, send: dlp"
 msgstr ""
 
-#: bot/commands/__init__.py:229
+#: bot/commands/__init__.py:254
 msgid "Unknown command. Send \"h\" for help."
 msgstr "Orden desconocida. Envía \"h\" para ayuda."
 
-#: bot/commands/__init__.py:235 bot/commands/user_commands.py:913
-#: bot/commands/user_commands.py:919 bot/commands/user_commands.py:1414
-#: bot/commands/user_commands.py:1496 bot/commands/user_commands.py:1568
-#: bot/commands/user_commands.py:1642 bot/modules/uploader.py:140
+#: bot/commands/__init__.py:260 bot/commands/user_commands.py:918
+#: bot/commands/user_commands.py:924 bot/commands/user_commands.py:1419
+#: bot/commands/user_commands.py:1501 bot/commands/user_commands.py:1573
+#: bot/commands/user_commands.py:1647 bot/modules/uploader.py:140
 #, python-brace-format
 msgid "Error: {}"
 msgstr "Error: {}"
 
-#: bot/commands/__init__.py:247
+#: bot/commands/__init__.py:272
 msgid "You are banned"
 msgstr "Estás bloqueado"
 
-#: bot/commands/__init__.py:251
+#: bot/commands/__init__.py:276
 msgid "You are not in bot's channel"
 msgstr "No estás en el mismo canal que el bot"
 
-#: bot/commands/__init__.py:255
+#: bot/commands/__init__.py:280
 msgid "Bot is locked"
 msgstr "El bot está bloqueado"
 
-#: bot/commands/__init__.py:259
+#: bot/commands/__init__.py:284
 msgid "This command is blocked"
 msgstr "Esta orden está bloqueada"
 
-#: bot/commands/__init__.py:283
+#: bot/commands/__init__.py:308
 msgid "Unknown command"
 msgstr "Orden desconocida"
 
@@ -147,15 +147,15 @@ msgstr ""
 "la lista de bloqueadas"
 
 #: bot/commands/admin_commands.py:32 bot/commands/admin_commands.py:322
-#: bot/commands/admin_commands.py:352 bot/commands/user_commands.py:637
-#: bot/commands/user_commands.py:649 bot/commands/user_commands.py:705
-#: bot/commands/user_commands.py:1344 bot/commands/user_commands.py:1366
-#: bot/commands/user_commands.py:1429
+#: bot/commands/admin_commands.py:352 bot/commands/user_commands.py:642
+#: bot/commands/user_commands.py:654 bot/commands/user_commands.py:710
+#: bot/commands/user_commands.py:1349 bot/commands/user_commands.py:1371
+#: bot/commands/user_commands.py:1434
 msgid "The list is empty"
 msgstr "La lista está vacía"
 
 #: bot/commands/admin_commands.py:37 bot/commands/admin_commands.py:304
-#: bot/commands/admin_commands.py:336 bot/commands/user_commands.py:600
+#: bot/commands/admin_commands.py:336 bot/commands/user_commands.py:605
 msgid "Added"
 msgstr "Añadida"
 
@@ -164,7 +164,7 @@ msgid "This command is already added"
 msgstr "Esta orden ya está añadida"
 
 #: bot/commands/admin_commands.py:45 bot/commands/admin_commands.py:310
-#: bot/commands/admin_commands.py:342 bot/commands/user_commands.py:612
+#: bot/commands/admin_commands.py:342 bot/commands/user_commands.py:617
 msgid "Deleted"
 msgstr "Eliminada"
 
@@ -410,11 +410,15 @@ msgstr ""
 msgid "The portal has been stopped."
 msgstr ""
 
+# | msgid "" "SERVICE Disconnects a streaming account and deletes its saved
+# | sign-in " "(yt, sp, nf, dp, am, az, pp, tb)"
 #: bot/commands/admin_commands.py:499
 msgid ""
 "SERVICE Disconnects a streaming account and deletes its saved sign-in "
-"(yt, sp, nf, dp, am, az)"
+"(yt, sp, nf, dp, am, az, pp, hu, tb)"
 msgstr ""
+"SERVICIO Desconecta una cuenta de streaming y borra su inicio de sesión "
+"guardado (yt, sp, nf, dp, am, az, pp, hu, tb)"
 
 #: bot/commands/admin_commands.py:514
 #, python-format
@@ -514,6 +518,282 @@ msgid ""
 "cancel, send: 0"
 msgstr ""
 
+#: bot/commands/podcast_commands.py:69
+msgid "That podcast could not be read. Try again later."
+msgstr "No se pudo leer ese pódcast. Inténtalo más tarde."
+
+#: bot/commands/podcast_commands.py:73
+#, python-brace-format
+msgid "{podcast} has no episodes to play."
+msgstr "{podcast} no tiene episodios para reproducir."
+
+#: bot/commands/podcast_commands.py:90
+#, python-brace-format
+msgid "{podcast}, episodes {first} to {last} of {total}:"
+msgstr "{podcast}, episodios {first} a {last} de {total}:"
+
+#: bot/commands/podcast_commands.py:101
+msgid "For the next ten episodes, send: pe"
+msgstr "Para los diez episodios siguientes, envía: pe"
+
+#: bot/commands/podcast_commands.py:103
+msgid "To start the list again from episode 1, send: pe"
+msgstr "Para empezar la lista de nuevo desde el episodio 1, envía: pe"
+
+#: bot/commands/podcast_commands.py:106
+msgid ""
+"pe and a number plays an episode. pa subscribes to this podcast. Spotify "
+"episodes cannot be downloaded."
+msgstr ""
+"pe y un número reproduce un episodio. pa te suscribe a este pódcast. Los "
+"episodios de Spotify no se pueden descargar."
+
+#: bot/commands/podcast_commands.py:111
+msgid ""
+"pe and a number plays an episode. pd and a number downloads one. pd on "
+"its own downloads several as one zip file. pa subscribes to this podcast."
+msgstr ""
+"pe y un número reproduce un episodio. pd y un número descarga uno. pd "
+"solo descarga varios en un archivo zip. pa te suscribe a este pódcast."
+
+#: bot/commands/podcast_commands.py:119
+#, python-brace-format
+msgid "There is no number {number}. The list goes from 1 to {total}."
+msgstr "No hay ningún número {number}. La lista va del 1 al {total}."
+
+#: bot/commands/podcast_commands.py:134
+msgid ""
+"No podcast is open. To find one, send pc and a few words, for example: pc"
+" history"
+msgstr ""
+"No hay ningún pódcast abierto. Para buscar uno, envía pc y unas palabras,"
+" por ejemplo: pc history"
+
+#: bot/commands/podcast_commands.py:148
+#, python-brace-format
+msgid "{podcast} has episodes 1 to {total}."
+msgstr "{podcast} tiene los episodios del 1 al {total}."
+
+#: bot/commands/podcast_commands.py:157
+msgid "WORDS Searches for podcasts. pc and a number opens one from the list"
+msgstr "PALABRAS Busca pódcasts. pc y un número abre uno de la lista"
+
+#: bot/commands/podcast_commands.py:170 bot/commands/podcast_commands.py:396
+#, python-brace-format
+msgid "Opening {podcast}."
+msgstr "Abriendo {podcast}."
+
+#: bot/commands/podcast_commands.py:172 bot/commands/user_commands.py:48
+#: bot/commands/user_commands.py:842 bot/commands/user_commands.py:1011
+msgid "Searching..."
+msgstr "Buscando..."
+
+#: bot/commands/podcast_commands.py:181
+msgid "No podcast directory answered. Try again later."
+msgstr "Ningún directorio de pódcasts respondió. Inténtalo más tarde."
+
+#: bot/commands/podcast_commands.py:185
+#, python-brace-format
+msgid ""
+"{directory} did not answer. To search every directory instead, send: pcd "
+"all"
+msgstr ""
+"{directory} no respondió. Para buscar en todos los directorios, envía: "
+"pcd all"
+
+#: bot/commands/podcast_commands.py:190 bot/commands/user_commands.py:58
+#: bot/commands/user_commands.py:157 bot/commands/user_commands.py:850
+#: bot/commands/user_commands.py:1018 bot/commands/user_commands.py:1234
+#: bot/commands/user_commands.py:1411
+msgid "Nothing is found for your query"
+msgstr "No se encuentra nada para tu texto de búsqueda"
+
+# | msgid "Search results count: {count}"
+#: bot/commands/podcast_commands.py:193
+#, python-brace-format
+msgid "Podcasts found: {count}"
+msgstr "Pódcasts encontrados: {count}"
+
+#: bot/commands/podcast_commands.py:199
+#, python-brace-format
+msgid "{title}, by {author}, from {directory}"
+msgstr "{title}, de {author}, en {directory}"
+
+#: bot/commands/podcast_commands.py:203
+#, python-brace-format
+msgid "{title}, from {directory}"
+msgstr "{title}, en {directory}"
+
+#: bot/commands/podcast_commands.py:208
+msgid "To open one, send pc and its number, for example: pc 1"
+msgstr "Para abrir uno, envía pc y su número, por ejemplo: pc 1"
+
+#: bot/commands/podcast_commands.py:219
+msgid ""
+"[DIRECTORY] Chooses where pc searches: apple, fyyd, gpodder, spotify, or "
+"all of them. On its own, says which one is chosen"
+msgstr ""
+"[DIRECTORIO] Elige dónde busca pc: apple, fyyd, gpodder, spotify o todos."
+" Solo, dice cuál está elegido"
+
+#: bot/commands/podcast_commands.py:230
+msgid ""
+"Directories: apple for Apple Podcasts, fyyd, gpodder for gpodder.net, and"
+" spotify, whose episodes play but cannot be downloaded. Send pcd and a "
+"name to choose one. To search them all, send: pcd all"
+msgstr ""
+"Directorios: apple para Apple Podcasts, fyyd, gpodder para gpodder.net y "
+"spotify, cuyos episodios se reproducen pero no se pueden descargar. Envía"
+" pcd y un nombre para elegir uno. Para buscar en todos, envía: pcd all"
+
+#: bot/commands/podcast_commands.py:237
+#, python-brace-format
+msgid "There is no directory called {name}. Send pcd on its own to hear the list."
+msgstr "No hay ningún directorio llamado {name}. Envía pcd solo para oír la lista."
+
+#: bot/commands/podcast_commands.py:247
+msgid "pc searches every podcast directory."
+msgstr "pc busca en todos los directorios de pódcasts."
+
+#: bot/commands/podcast_commands.py:248
+#, python-brace-format
+msgid "pc searches {directory} only."
+msgstr "pc busca solo en {directory}."
+
+#: bot/commands/podcast_commands.py:257
+msgid ""
+"[NUMBER] Plays episode NUMBER of the open podcast. On its own, lists the "
+"next ten episodes"
+msgstr ""
+"[NÚMERO] Reproduce el episodio NÚMERO del pódcast abierto. Solo, muestra "
+"los diez episodios siguientes"
+
+#: bot/commands/podcast_commands.py:273 bot/commands/user_commands.py:1240
+#, python-brace-format
+msgid "{nickname} selected: {track}"
+msgstr "{nickname} seleccionó: {track}"
+
+#: bot/commands/podcast_commands.py:279 bot/commands/user_commands.py:111
+#: bot/commands/user_commands.py:267 bot/commands/user_commands.py:293
+#: bot/commands/user_commands.py:310 bot/commands/user_commands.py:523
+#: bot/commands/user_commands.py:1037 bot/commands/user_commands.py:1147
+#: bot/commands/user_commands.py:1250
+#, python-brace-format
+msgid "Playing {}"
+msgstr "Reproduciendo {}"
+
+#: bot/commands/podcast_commands.py:286
+msgid ""
+"[NUMBER] Downloads episode NUMBER of the open podcast to the channel. On "
+"its own, asks how many of the newest episodes to download as one zip file"
+msgstr ""
+"[NÚMERO] Descarga al canal el episodio NÚMERO del pódcast abierto. Solo, "
+"pregunta cuántos de los episodios más recientes descargar en un archivo "
+"zip"
+
+#. translators: pcd is a command, not a word to translate, and it stays last.
+#: bot/commands/podcast_commands.py:293
+#, python-brace-format
+msgid ""
+"{podcast} is a Spotify show, so its episodes can be played but not "
+"downloaded. Many shows also publish a public feed. To look for one, "
+"search every directory again. To switch to every directory, send: pcd all"
+msgstr ""
+"{podcast} es un programa de Spotify: sus episodios se pueden reproducir, "
+"pero no descargar. Muchos programas también publican un feed público. "
+"Para buscarlo, vuelve a buscar en todos los directorios. Para cambiar a "
+"todos los directorios, envía: pcd all"
+
+#: bot/commands/podcast_commands.py:312 bot/commands/user_commands.py:947
+#: bot/modules/apple_music_downloader.py:116
+#, python-brace-format
+msgid "Downloading {name}. It will be uploaded to the channel when it is ready."
+msgstr "Descargando {name}. Se subirá al canal cuando esté listo."
+
+#: bot/commands/podcast_commands.py:332
+#, python-brace-format
+msgid "Send a number from 1 to {total}."
+msgstr "Envía un número del 1 al {total}."
+
+#: bot/commands/podcast_commands.py:341
+#, python-brace-format
+msgid ""
+"Episodes of {podcast}: {total}. To download the newest ones as one zip "
+"file, send how many, from 1 to {total}"
+msgstr ""
+"Episodios de {podcast}: {total}. Para descargar los más recientes en un "
+"archivo zip, envía cuántos, del 1 al {total}"
+
+#: bot/commands/podcast_commands.py:350
+msgid ""
+"Subscribes you to the open podcast. The bot tells you privately when a "
+"new episode is out"
+msgstr ""
+"Te suscribe al pódcast abierto. El bot te avisa en privado cuando sale un"
+" episodio nuevo"
+
+#: bot/commands/podcast_commands.py:355 bot/commands/podcast_commands.py:380
+#: bot/commands/podcast_commands.py:414
+msgid "Podcast subscriptions are not available in this bot."
+msgstr "Las suscripciones a pódcasts no están disponibles en este bot."
+
+#: bot/commands/podcast_commands.py:361
+msgid ""
+"Subscriptions are kept by TeamTalk account name, and you are logged in "
+"without one."
+msgstr ""
+"Las suscripciones se guardan por nombre de cuenta de TeamTalk, y has "
+"entrado sin ninguno."
+
+#: bot/commands/podcast_commands.py:364
+#, python-brace-format
+msgid "You are already subscribed to {podcast}."
+msgstr "Ya estás suscrito a {podcast}."
+
+#: bot/commands/podcast_commands.py:366
+#, python-brace-format
+msgid ""
+"Subscribed to {podcast}. You will get a private message when a new "
+"episode is out, or the next time you are online. To see your "
+"subscriptions, send: ps"
+msgstr ""
+"Te has suscrito a {podcast}. Recibirás un mensaje privado cuando salga un"
+" episodio nuevo, o la próxima vez que estés conectado. Para ver tus "
+"suscripciones, envía: ps"
+
+#: bot/commands/podcast_commands.py:375
+msgid ""
+"[NUMBER] Lists your podcast subscriptions. With a number, opens that "
+"podcast"
+msgstr ""
+"[NÚMERO] Muestra tus suscripciones a pódcasts. Con un número, abre ese "
+"pódcast"
+
+#: bot/commands/podcast_commands.py:384 bot/commands/podcast_commands.py:424
+msgid "You have no podcast subscriptions. To add one, open a podcast and send: pa"
+msgstr ""
+"No tienes suscripciones a pódcasts. Para añadir una, abre un pódcast y "
+"envía: pa"
+
+#: bot/commands/podcast_commands.py:397
+msgid "Your podcast subscriptions:"
+msgstr "Tus suscripciones a pódcasts:"
+
+#: bot/commands/podcast_commands.py:402
+msgid "ps and a number opens one, pu and a number unsubscribes. For example: ps 1"
+msgstr ""
+"ps y un número abre uno, pu y un número cancela la suscripción. Por "
+"ejemplo: ps 1"
+
+#: bot/commands/podcast_commands.py:410
+msgid "NUMBER Unsubscribes from podcast NUMBER in your ps list"
+msgstr "NÚMERO Cancela la suscripción al pódcast NÚMERO de tu lista ps"
+
+#: bot/commands/podcast_commands.py:427
+#, python-brace-format
+msgid "Unsubscribed from {podcast}."
+msgstr "Has cancelado la suscripción a {podcast}."
+
 #: bot/commands/user_commands.py:23
 msgid "Shows command help"
 msgstr "muestra la ayuda de órdenes"
@@ -533,19 +813,8 @@ msgstr ""
 "la pista actual. Con el modo de resultados (sr) activo, muestra una lista"
 " numerada"
 
-#: bot/commands/user_commands.py:48 bot/commands/user_commands.py:837
-#: bot/commands/user_commands.py:1006
-msgid "Searching..."
-msgstr "Buscando..."
-
-#: bot/commands/user_commands.py:58 bot/commands/user_commands.py:157
-#: bot/commands/user_commands.py:845 bot/commands/user_commands.py:1013
-#: bot/commands/user_commands.py:1229 bot/commands/user_commands.py:1406
-msgid "Nothing is found for your query"
-msgstr "No se encuentra nada para tu texto de búsqueda"
-
-#: bot/commands/user_commands.py:61 bot/commands/user_commands.py:1016
-#: bot/commands/user_commands.py:1226
+#: bot/commands/user_commands.py:61 bot/commands/user_commands.py:1021
+#: bot/commands/user_commands.py:1231
 msgid "The selected service is currently unavailable"
 msgstr "El servicio seleccionado está actualmente no disponible"
 
@@ -561,14 +830,6 @@ msgstr "Usa 'sl NÚMERO' para seleccionar una pista"
 #, python-brace-format
 msgid "{nickname} requested {request}"
 msgstr "{nickname} ha solicitado {request}"
-
-#: bot/commands/user_commands.py:111 bot/commands/user_commands.py:267
-#: bot/commands/user_commands.py:293 bot/commands/user_commands.py:310
-#: bot/commands/user_commands.py:518 bot/commands/user_commands.py:1032
-#: bot/commands/user_commands.py:1142 bot/commands/user_commands.py:1245
-#, python-brace-format
-msgid "Playing {}"
-msgstr "Reproduciendo {}"
 
 #: bot/commands/user_commands.py:119
 msgid "URL Plays a stream from a given URL"
@@ -617,11 +878,11 @@ msgstr "{nickname} ha detenido la reproducción"
 #: bot/commands/user_commands.py:192 bot/commands/user_commands.py:225
 #: bot/commands/user_commands.py:244 bot/commands/user_commands.py:271
 #: bot/commands/user_commands.py:287 bot/commands/user_commands.py:299
-#: bot/commands/user_commands.py:316 bot/commands/user_commands.py:522
-#: bot/commands/user_commands.py:538 bot/commands/user_commands.py:549
-#: bot/commands/user_commands.py:602 bot/commands/user_commands.py:620
-#: bot/commands/user_commands.py:666 bot/commands/user_commands.py:732
-#: bot/commands/user_commands.py:753 bot/commands/user_commands.py:1129
+#: bot/commands/user_commands.py:316 bot/commands/user_commands.py:527
+#: bot/commands/user_commands.py:543 bot/commands/user_commands.py:554
+#: bot/commands/user_commands.py:607 bot/commands/user_commands.py:625
+#: bot/commands/user_commands.py:671 bot/commands/user_commands.py:737
+#: bot/commands/user_commands.py:758 bot/commands/user_commands.py:1134
 msgid "Nothing is playing"
 msgstr "Nada en reproducción"
 
@@ -656,24 +917,24 @@ msgid ""
 "position with ?"
 msgstr ""
 
-#: bot/commands/user_commands.py:279 bot/commands/user_commands.py:530
+#: bot/commands/user_commands.py:279 bot/commands/user_commands.py:535
 msgid "Incorrect number"
 msgstr "Número incorrecto"
 
-#: bot/commands/user_commands.py:281 bot/commands/user_commands.py:532
-#: bot/commands/user_commands.py:545
+#: bot/commands/user_commands.py:281 bot/commands/user_commands.py:537
+#: bot/commands/user_commands.py:550
 #, python-brace-format
 msgid "Playing {} {}"
 msgstr "Reproduciendo {} {}"
 
-#: bot/commands/user_commands.py:285 bot/commands/user_commands.py:536
-#: bot/commands/user_commands.py:614 bot/commands/user_commands.py:647
-#: bot/commands/user_commands.py:686 bot/commands/user_commands.py:1097
-#: bot/commands/user_commands.py:1214 bot/commands/user_commands.py:1373
+#: bot/commands/user_commands.py:285 bot/commands/user_commands.py:541
+#: bot/commands/user_commands.py:619 bot/commands/user_commands.py:652
+#: bot/commands/user_commands.py:691 bot/commands/user_commands.py:1102
+#: bot/commands/user_commands.py:1219 bot/commands/user_commands.py:1378
 msgid "Out of list"
 msgstr "Fuera de la lista"
 
-#: bot/commands/user_commands.py:297 bot/commands/user_commands.py:1146
+#: bot/commands/user_commands.py:297 bot/commands/user_commands.py:1151
 msgid "No next track"
 msgstr "Sin pista siguiente"
 
@@ -750,7 +1011,7 @@ msgstr ""
 "{}"
 
 # | msgid "" "Current service: {}\n" "Warning: {}"
-#: bot/commands/user_commands.py:382
+#: bot/commands/user_commands.py:385
 #, fuzzy, python-brace-format
 msgid "Current service: {service}{newline}{status}"
 msgstr ""
@@ -758,58 +1019,58 @@ msgstr ""
 "Advertencia: {}"
 
 # | msgid "" "Error: {error}\n" "{service} is disabled"
-#: bot/commands/user_commands.py:391
+#: bot/commands/user_commands.py:394
 #, fuzzy, python-brace-format
 msgid "Error: {error}{newline}{service} is disabled"
 msgstr ""
 "Error: {error}\n"
 "{service} está desactivado"
 
-#: bot/commands/user_commands.py:398
+#: bot/commands/user_commands.py:401
 #, python-brace-format
 msgid "{service} is disabled"
 msgstr "{service} está desactivado"
 
-#: bot/commands/user_commands.py:450
+#: bot/commands/user_commands.py:453
 #, python-format
 msgid "%(service)s is switched off in this bot's configuration."
 msgstr ""
 
-#: bot/commands/user_commands.py:457
+#: bot/commands/user_commands.py:460
 #, python-format
 msgid ""
 "%(service)s is not connected. To connect an account, send this command: "
 "li %(code)s"
 msgstr ""
 
-#: bot/commands/user_commands.py:462
+#: bot/commands/user_commands.py:465
 #, python-format
 msgid "%(service)s is connected and ready."
 msgstr ""
 
-#: bot/commands/user_commands.py:475
+#: bot/commands/user_commands.py:478
 #, python-format
 msgid "unavailable: %(reason)s"
 msgstr ""
 
 # | msgid "Saves bot's configuration"
-#: bot/commands/user_commands.py:477
+#: bot/commands/user_commands.py:480
 #, fuzzy
 msgid "switched off in this bot's configuration"
 msgstr "Guarda la configuración del bot"
 
-#: bot/commands/user_commands.py:480
+#: bot/commands/user_commands.py:483
 #, python-format
 msgid "not connected, send li %(code)s"
 msgstr ""
 
-#: bot/commands/user_commands.py:485
+#: bot/commands/user_commands.py:488
 msgid "ready"
 msgstr ""
 
 # | msgid "" "Current service: {current_service}\n" "Available:\n"
 # | "{available_services}\n" "send sv SERVICE h for additional help"
-#: bot/commands/user_commands.py:494
+#: bot/commands/user_commands.py:499
 #, fuzzy, python-brace-format
 msgid ""
 "Current service: "
@@ -822,12 +1083,12 @@ msgstr ""
 "envía sv SERVICIO h para ayuda adicional"
 
 # | msgid "NUMBER Selects track by number from the list of current results"
-#: bot/commands/user_commands.py:507
+#: bot/commands/user_commands.py:512
 #, fuzzy
 msgid "[NUMBER|?] Selects track by number, or shows current position with ?"
 msgstr "NÚMERO Selecciona la pista por número de la lista actual de resultados"
 
-#: bot/commands/user_commands.py:556
+#: bot/commands/user_commands.py:561
 msgid ""
 "SPEED Sets playback speed from 0.25 to 4. If no speed is given, shows "
 "current speed"
@@ -836,12 +1097,12 @@ msgstr ""
 "separador decimal es el punto). Si no se especifica ninguna velocidad, "
 "muestra la velocidad actual."
 
-#: bot/commands/user_commands.py:561
+#: bot/commands/user_commands.py:566
 #, python-brace-format
 msgid "Current rate: {}"
 msgstr "Velocidad actual: {}"
 
-#: bot/commands/user_commands.py:575
+#: bot/commands/user_commands.py:580
 msgid ""
 "+/-NUMBER Manages favorite tracks. + adds the current track to favorites."
 " - removes a track requested from favorites. If a number is specified "
@@ -851,28 +1112,28 @@ msgstr ""
 "favoritos. - elimina una pista solicitada de favoritos. Si se especifica "
 "un número tras +/-, añade/elimina una pista con ese número"
 
-#: bot/commands/user_commands.py:581
+#: bot/commands/user_commands.py:586
 msgid "This command is not available for guest users"
 msgstr "Esta orden no está disponible para usuarios invitados"
 
-#: bot/commands/user_commands.py:618
+#: bot/commands/user_commands.py:623
 msgid "This track is not in favorites"
 msgstr "Esta pista no está en favoritos"
 
-#: bot/commands/user_commands.py:627 bot/commands/user_commands.py:692
+#: bot/commands/user_commands.py:632 bot/commands/user_commands.py:697
 #, python-brace-format
 msgid "{number}: {track_name}"
 msgstr "{number}: {track_name}"
 
-#: bot/commands/user_commands.py:655
+#: bot/commands/user_commands.py:660
 msgid "Gets a direct link to the current track"
 msgstr "Obtiene un enlace directo a la pista actual"
 
-#: bot/commands/user_commands.py:664
+#: bot/commands/user_commands.py:669
 msgid "URL is not available"
 msgstr "La URL no está disponible"
 
-#: bot/commands/user_commands.py:673
+#: bot/commands/user_commands.py:678
 msgid ""
 "NUMBER Plays a track with  the given number from a list of recent tracks."
 " Without a number shows recent tracks"
@@ -880,46 +1141,46 @@ msgstr ""
 "NÚMERO Reproduce una pista con el número dado de una lista de pistas "
 "recientes. Sin ningún número muestra las pistas recientes"
 
-#: bot/commands/user_commands.py:698
+#: bot/commands/user_commands.py:703
 #, python-brace-format
 msgid "{number}: {track_url}"
 msgstr "{number}: {track_url}"
 
-#: bot/commands/user_commands.py:713
+#: bot/commands/user_commands.py:718
 msgid "Downloads the current track and uploads it to the channel."
 msgstr "Descarga la pista actual y la sube al canal."
 
-#: bot/commands/user_commands.py:728
+#: bot/commands/user_commands.py:733
 msgid "Downloading..."
 msgstr "Descargando..."
 
-#: bot/commands/user_commands.py:730 bot/commands/user_commands.py:751
+#: bot/commands/user_commands.py:735 bot/commands/user_commands.py:756
 msgid "Live streams cannot be downloaded"
 msgstr "Las transmisiones en directo no se pueden descargar"
 
-#: bot/commands/user_commands.py:739
+#: bot/commands/user_commands.py:744
 msgid "Downloads the current track as video and uploads it to the channel."
 msgstr "Descarga la pista actual como video y la sube al canal."
 
-#: bot/commands/user_commands.py:749
+#: bot/commands/user_commands.py:754
 msgid "Downloading video..."
 msgstr "Descargando video..."
 
-#: bot/commands/user_commands.py:759
+#: bot/commands/user_commands.py:764
 msgid "Makes the bot join your current channel"
 msgstr "Hace que el bot se una a tu canal actual"
 
-#: bot/commands/user_commands.py:780 bot/commands/user_commands.py:797
+#: bot/commands/user_commands.py:785 bot/commands/user_commands.py:802
 #, python-brace-format
 msgid "Joining channel: {}"
 msgstr "Uniéndose al canal: {}"
 
-#: bot/commands/user_commands.py:789
+#: bot/commands/user_commands.py:794
 #, python-brace-format
 msgid "Failed to join channel. Error: {}"
 msgstr "Error al unirse al canal. Error: {}"
 
-#: bot/commands/user_commands.py:800
+#: bot/commands/user_commands.py:805
 #, python-brace-format
 msgid "Failed to join channel: {}"
 msgstr "Error al unirse al canal: {}"
@@ -928,7 +1189,7 @@ msgstr "Error al unirse al canal: {}"
 # | uploads to" " the channel."
 # | uploads to" " the channel. Without a link while Apple Music is playing,
 # | downloads the " "album or playlist being played."
-#: bot/commands/user_commands.py:807
+#: bot/commands/user_commands.py:812
 #, fuzzy
 msgid ""
 "Downloads all tracks from a playlist/album URL, zips them, and uploads to"
@@ -940,18 +1201,18 @@ msgstr ""
 "Descarga todas las pistas de una URL de lista de reproducción/álbum, las "
 "comprime en ZIP y las sube al canal."
 
-#: bot/commands/user_commands.py:818
+#: bot/commands/user_commands.py:823
 #, python-brace-format
 msgid "Current progress: {}"
 msgstr "Progresso actual: {}"
 
-#: bot/commands/user_commands.py:834
+#: bot/commands/user_commands.py:839
 msgid "Please send the link to the playlist or album."
 msgstr "Por favor, envíe el enlace a la lista de reproducción o álbum."
 
 # | msgid "This command is for playlists and albums. For single tracks, use
 # | 'dl'."
-#: bot/commands/user_commands.py:853
+#: bot/commands/user_commands.py:858
 #, fuzzy
 msgid ""
 "This command is for playlists, albums, and channels. For single tracks, "
@@ -961,12 +1222,7 @@ msgstr ""
 "'dl'.Este comando es para listas de reproducción y álbumes. Para pistas "
 "sueltas, usa 'dl'."
 
-#: bot/commands/user_commands.py:942 bot/modules/apple_music_downloader.py:116
-#, python-brace-format
-msgid "Downloading {name}. It will be uploaded to the channel when it is ready."
-msgstr ""
-
-#: bot/commands/user_commands.py:997
+#: bot/commands/user_commands.py:1002
 msgid ""
 "QUERY Searches for a track and adds it to the queue. If nothing is "
 "playing, starts immediately"
@@ -974,51 +1230,51 @@ msgstr ""
 "TEXTOBÚSQL Busca una pista y la añade a la cola. Si no se está "
 "reproduciendo nada, comienza inmediatamente"
 
-#: bot/commands/user_commands.py:1041
+#: bot/commands/user_commands.py:1046
 #, python-brace-format
 msgid "{nickname} added to queue: {track}"
 msgstr "{nickname} añadió a la cola: {track}"
 
-#: bot/commands/user_commands.py:1047
+#: bot/commands/user_commands.py:1052
 #, python-brace-format
 msgid "Added to queue [{position}]: {track}"
 msgstr "Añadido a la cola [{position}]: {track}"
 
-#: bot/commands/user_commands.py:1054
+#: bot/commands/user_commands.py:1059
 msgid "Lists all tracks in the queue"
 msgstr "Enumera todas las pistas de la cola"
 
-#: bot/commands/user_commands.py:1060
+#: bot/commands/user_commands.py:1065
 msgid "The queue is empty"
 msgstr "La cola está vacía"
 
-#: bot/commands/user_commands.py:1068
+#: bot/commands/user_commands.py:1073
 #, python-brace-format
 msgid "Queue ({count} track(s)):"
 msgstr "Cola ({count} pista(s)):"
 
-#: bot/commands/user_commands.py:1078
+#: bot/commands/user_commands.py:1083
 msgid "NUMBER Removes track number NUMBER from the queue"
 msgstr "NUMBER Elimina la pista número NUMBER de la cola"
 
-#: bot/commands/user_commands.py:1103
+#: bot/commands/user_commands.py:1108
 #, python-brace-format
 msgid "Removed from queue: {track}"
 msgstr "Eliminado de la cola: {track}"
 
-#: bot/commands/user_commands.py:1110
+#: bot/commands/user_commands.py:1115
 msgid "Clears the entire queue"
 msgstr "Limpia toda la cola"
 
-#: bot/commands/user_commands.py:1114
+#: bot/commands/user_commands.py:1119
 msgid "The queue is already empty"
 msgstr "La cola ya está vacía"
 
-#: bot/commands/user_commands.py:1117
+#: bot/commands/user_commands.py:1122
 msgid "Queue cleared"
 msgstr "Cola vaciada"
 
-#: bot/commands/user_commands.py:1124
+#: bot/commands/user_commands.py:1129
 msgid ""
 "Skips current track and plays the next one from the queue. Falls back to "
 "normal next if queue is empty"
@@ -1026,7 +1282,7 @@ msgstr ""
 "Omite la pista actual y reproduce la siguiente de la cola. Si la cola "
 "está vacía, pasa a la siguiente normal"
 
-#: bot/commands/user_commands.py:1135
+#: bot/commands/user_commands.py:1140
 #, python-brace-format
 msgid "Playing next from queue: {}"
 msgstr "Reproduciendo el siguiente de la cola: {}"
@@ -1034,7 +1290,7 @@ msgstr "Reproduciendo el siguiente de la cola: {}"
 # | msgid "" "Toggles search results mode. When active, 'p QUERY' shows a
 # | numbered " "list. Use 'sr on' or 'sr off' to set explicitly. Save
 # | permanently with " "'sc'"
-#: bot/commands/user_commands.py:1159
+#: bot/commands/user_commands.py:1164
 #, fuzzy
 msgid ""
 "Toggles search results mode. When active, 'p QUERY' reads out a numbered "
@@ -1045,15 +1301,15 @@ msgstr ""
 "Activa o desactiva el modo de resultados. Con 'p CONSULTA' muestra lista "
 "numerada. Usa 'sr on' o 'sr off'. Guarda permanentemente con 'sc'"
 
-#: bot/commands/user_commands.py:1167 bot/commands/user_commands.py:1177
+#: bot/commands/user_commands.py:1172 bot/commands/user_commands.py:1182
 msgid "Search results mode: ON"
 msgstr "Modo de resultados de búsqueda: ACTIVADO"
 
-#: bot/commands/user_commands.py:1171 bot/commands/user_commands.py:1179
+#: bot/commands/user_commands.py:1176 bot/commands/user_commands.py:1184
 msgid "Search results mode: OFF"
 msgstr "Modo de resultados de búsqueda: DESACTIVADO"
 
-#: bot/commands/user_commands.py:1191
+#: bot/commands/user_commands.py:1196
 msgid ""
 "NUMBER Selects and plays result NUMBER from the last search list "
 "(requires search results mode to be active)"
@@ -1061,17 +1317,12 @@ msgstr ""
 "NÚMERO Selecciona y reproduce el resultado NÚMERO de la última búsqueda "
 "(requiere modo de resultados activo)"
 
-#: bot/commands/user_commands.py:1210
+#: bot/commands/user_commands.py:1215
 msgid "No search results available. Use 'p QUERY' to search first"
 msgstr "No hay resultados disponibles. Usa 'p CONSULTA' para buscar primero"
 
-#: bot/commands/user_commands.py:1235
-#, python-brace-format
-msgid "{nickname} selected: {track}"
-msgstr "{nickname} seleccionó: {track}"
-
 # | msgid "Loaded {count} tracks"
-#: bot/commands/user_commands.py:1243
+#: bot/commands/user_commands.py:1248
 #, fuzzy, python-brace-format
 msgid "Playing {name}, {count} tracks"
 msgstr "Cargadas {count} pistas"
@@ -1080,7 +1331,7 @@ msgstr "Cargadas {count} pistas"
 # is
 # | " "active. Without a number shows current count. Resets to 5 on restart"
 # | " "active. Without a number shows current count. Resets to 1 on restart"
-#: bot/commands/user_commands.py:1254
+#: bot/commands/user_commands.py:1259
 #, fuzzy
 msgid ""
 "NUMBER Sets how many results are shown when search results mode is "
@@ -1091,79 +1342,79 @@ msgstr ""
 "número muestra el valor actual. Se restablece a 5 al reiniciar"
 
 # | msgid "Search results count: {count}"
-#: bot/commands/user_commands.py:1262
+#: bot/commands/user_commands.py:1267
 #, fuzzy
 msgid "Search results count: as many as the service returns"
 msgstr "Cantidad de resultados: {count}"
 
-#: bot/commands/user_commands.py:1264
+#: bot/commands/user_commands.py:1269
 #, python-brace-format
 msgid "Search results count: {count}"
 msgstr "Cantidad de resultados: {count}"
 
 # | msgid "Invalid count. Please enter a number greater than 0"
-#: bot/commands/user_commands.py:1275
+#: bot/commands/user_commands.py:1280
 #, fuzzy
 msgid "Invalid count. Please enter 0 or a number greater than 0"
 msgstr "Cantidad inválida. Ingresa un número mayor que 0"
 
-#: bot/commands/user_commands.py:1281
+#: bot/commands/user_commands.py:1286
 msgid "Search results now show as many results as the service returns"
 msgstr ""
 
-#: bot/commands/user_commands.py:1284
+#: bot/commands/user_commands.py:1289
 #, python-brace-format
 msgid "Search results count set to {count}"
 msgstr "Cantidad de resultados establecida en {count}"
 
-#: bot/commands/user_commands.py:1292
+#: bot/commands/user_commands.py:1297
 msgid "LINK Adds a link to the download list."
 msgstr "LINK Añade un enlace a la lista de descargas."
 
-#: bot/commands/user_commands.py:1304
+#: bot/commands/user_commands.py:1309
 #, python-brace-format
 msgid "Added link to the list. Total: {count}"
 msgstr "Enlace añadido a la lista. Total: {count}"
 
-#: bot/commands/user_commands.py:1313
+#: bot/commands/user_commands.py:1318
 msgid "LINK1 LINK2 ... Adds multiple space-separated links to the download list."
 msgstr ""
 "LINK1 LINK2 ... Añade múltiples enlaces separados por espacios a la lista"
 " de descargas."
 
-#: bot/commands/user_commands.py:1328
+#: bot/commands/user_commands.py:1333
 #, python-brace-format
 msgid "Added {added_count} links. Total list size: {count}"
 msgstr "Se añadieron {added_count} enlaces. Tamaño total de la lista: {count}"
 
-#: bot/commands/user_commands.py:1338
+#: bot/commands/user_commands.py:1343
 msgid "Lists all links in the download list."
 msgstr "Muestra todos los enlaces en la lista de descargas."
 
-#: bot/commands/user_commands.py:1357
+#: bot/commands/user_commands.py:1362
 msgid "NUMBER_OR_LINK Removes a link from the download list by its index or URL."
 msgstr ""
 "NÚMERO_O_ENLACE Elimina un enlace de la lista de descargas por su índice "
 "o URL."
 
-#: bot/commands/user_commands.py:1382
+#: bot/commands/user_commands.py:1387
 msgid "Link not found in the list"
 msgstr "Enlace no encontrado en la lista"
 
-#: bot/commands/user_commands.py:1384
+#: bot/commands/user_commands.py:1389
 #, python-brace-format
 msgid "Removed link: {link}"
 msgstr "Enlace eliminado: {link}"
 
-#: bot/commands/user_commands.py:1391
+#: bot/commands/user_commands.py:1396
 msgid "LINK Downloads a link directly and uploads it to the channel."
 msgstr "LINK Descarga un enlace directamente y lo sube al canal."
 
-#: bot/commands/user_commands.py:1399
+#: bot/commands/user_commands.py:1404
 msgid "Searching and downloading..."
 msgstr "Buscando y descargando..."
 
-#: bot/commands/user_commands.py:1423
+#: bot/commands/user_commands.py:1428
 msgid ""
 "Downloads all links in your list and uploads them to the channel. Can "
 "download normally or as a ZIP archive."
@@ -1171,7 +1422,7 @@ msgstr ""
 "Descarga todos los enlaces de tu lista y los sube al canal. Se puede "
 "descargar normalmente o como un archivo ZIP."
 
-#: bot/commands/user_commands.py:1435
+#: bot/commands/user_commands.py:1440
 msgid ""
 "How do you want to download these links?\n"
 "1. Download individually (Normal)\n"
@@ -1183,67 +1434,67 @@ msgstr ""
 "2. Comprimir todos en un archivo ZIP\n"
 "Responde solo con 1 o 2."
 
-#: bot/commands/user_commands.py:1446
+#: bot/commands/user_commands.py:1451
 #, python-brace-format
 msgid "Starting local download of {count} links..."
 msgstr "Iniciando la descarga local de {count} enlaces..."
 
-#: bot/commands/user_commands.py:1449
+#: bot/commands/user_commands.py:1454
 #, python-brace-format
 msgid "Starting download of {count} links..."
 msgstr "Iniciando la descarga de {count} enlaces..."
 
-#: bot/commands/user_commands.py:1455
+#: bot/commands/user_commands.py:1460
 #, python-brace-format
 msgid "Resolving and zipping locally {count} links..."
 msgstr "Resolviendo y comprimiendo localmente {count} enlaces..."
 
-#: bot/commands/user_commands.py:1458
+#: bot/commands/user_commands.py:1463
 #, python-brace-format
 msgid "Resolving and zipping {count} links..."
 msgstr "Resolviendo y comprimiendo {count} enlaces..."
 
-#: bot/commands/user_commands.py:1460
+#: bot/commands/user_commands.py:1465
 msgid "Invalid option. Please send 'ads' again to select."
 msgstr "Opción no válida. Por favor, envía 'ads' de nuevo para seleccionar."
 
-#: bot/commands/user_commands.py:1466 bot/commands/user_commands.py:1504
+#: bot/commands/user_commands.py:1471 bot/commands/user_commands.py:1509
 #, python-brace-format
 msgid "Processing link {number}/{total}: {link}"
 msgstr "Procesando enlace {number}/{total}: {link}"
 
-#: bot/commands/user_commands.py:1474 bot/commands/user_commands.py:1512
+#: bot/commands/user_commands.py:1479 bot/commands/user_commands.py:1517
 #, python-brace-format
 msgid "Nothing is found for: {link}"
 msgstr "No se encontró nada para: {link}"
 
-#: bot/commands/user_commands.py:1482
+#: bot/commands/user_commands.py:1487
 #, python-brace-format
 msgid "Error downloading {link}: {error}"
 msgstr "Error al descargar {link}: {error}"
 
-#: bot/commands/user_commands.py:1532 bot/commands/user_commands.py:1649
+#: bot/commands/user_commands.py:1537 bot/commands/user_commands.py:1654
 msgid "All downloads completed successfully!"
 msgstr "¡Todas las descargas se completaron con éxito!"
 
-#: bot/commands/user_commands.py:1537 bot/commands/user_commands.py:1654
+#: bot/commands/user_commands.py:1542 bot/commands/user_commands.py:1659
 #, python-brace-format
 msgid "Downloads completed with {error_count} error(s)."
 msgstr "Descargas completadas con {error_count} error(es)."
 
-#: bot/commands/user_commands.py:1546 bot/commands/user_commands.py:1576
+#: bot/commands/user_commands.py:1551 bot/commands/user_commands.py:1581
 msgid "Resolving links..."
 msgstr "Resolviendo enlaces..."
 
-#: bot/commands/user_commands.py:1560 bot/commands/user_commands.py:1593
+#: bot/commands/user_commands.py:1565 bot/commands/user_commands.py:1598
 msgid "Error: No valid tracks found to download."
 msgstr "Error: No se encontraron pistas válidas para descargar."
 
-#: bot/commands/user_commands.py:1613
+#: bot/commands/user_commands.py:1618
 msgid "Error: Failed to download any tracks from this playlist."
 msgstr "Error: No se pudo descargar ninguna pista de esta lista de reproducción."
 
-#: bot/commands/user_commands.py:1665
+#: bot/commands/user_commands.py:1670
 msgid ""
 "Toggles local download mode for the 'ads' command. When active, files are"
 " saved locally to the VPS instead of uploaded to TeamTalk."
@@ -1252,21 +1503,25 @@ msgstr ""
 "activo, los archivos se guardan localmente en el VPS en lugar de subirse "
 "a TeamTalk."
 
-#: bot/commands/user_commands.py:1671
+#: bot/commands/user_commands.py:1676
 msgid "Local download mode (adsc) enabled."
 msgstr "Modo de descarga local (adsc) activado."
 
-#: bot/commands/user_commands.py:1673
+#: bot/commands/user_commands.py:1678
 msgid "Local download mode (adsc) disabled."
 msgstr "Modo de descarga local (adsc) desactivado."
 
-#: bot/commands/user_commands.py:1692
+# | msgid "" "[service] Shows which streaming accounts are connected. With a
+# | service " "(yt, sp, nf, dp, am, az, pp, tb) it starts connecting that one"
+#: bot/commands/user_commands.py:1697
 msgid ""
 "[service] Shows which streaming accounts are connected. With a service "
-"(yt, sp, nf, dp, am, az) it starts connecting that one"
+"(yt, sp, nf, dp, am, az, pp, hu, tb) it starts connecting that one"
 msgstr ""
+"[servicio] Muestra qué cuentas de streaming están conectadas. Con un "
+"servicio (yt, sp, nf, dp, am, az, pp, hu, tb) empieza a conectarlo"
 
-#: bot/commands/user_commands.py:1719
+#: bot/commands/user_commands.py:1724
 msgid ""
 "This server cannot run a browser, so connect YouTube by importing a "
 "session from your own browser. Use a separate Google account made for the"
@@ -1276,7 +1531,7 @@ msgstr ""
 "importando una sesión desde tu propio navegador. Usa una cuenta de Google"
 " aparte, creada para el bot. El enlace está en el siguiente mensaje."
 
-#: bot/commands/user_commands.py:1725
+#: bot/commands/user_commands.py:1730
 msgid ""
 "To connect YouTube, use a separate Google account made for the bot, not "
 "your personal one. The link is in the next message."
@@ -1284,48 +1539,63 @@ msgstr ""
 "Para conectar YouTube, usa una cuenta de Google aparte creada para el "
 "bot, no tu cuenta personal. El enlace está en el siguiente mensaje."
 
-#: bot/commands/user_commands.py:1739
+#: bot/commands/user_commands.py:1744
 msgid ""
 "The account portal is not running, so Netflix, Disney Plus, Apple Music "
 "and Amazon Music cannot be connected. The reason is in this bot's log "
 "file."
 msgstr ""
 
-#: bot/commands/user_commands.py:1748
+#: bot/commands/user_commands.py:1753
 msgid "Your streaming accounts:"
-msgstr ""
-
-#: bot/commands/user_commands.py:1756
-#, python-format
-msgid "%(service)s: connected"
 msgstr ""
 
 #: bot/commands/user_commands.py:1761
 #, python-format
+msgid "%(service)s: plays without an account"
+msgstr "%(service)s: funciona sin cuenta"
+
+#: bot/commands/user_commands.py:1769
+#, python-format
+msgid "%(service)s: connected"
+msgstr ""
+
+#: bot/commands/user_commands.py:1774
+#, python-format
 msgid "%(service)s: signed out, connect again"
 msgstr ""
 
-#: bot/commands/user_commands.py:1766
+#: bot/commands/user_commands.py:1779
 #, python-format
 msgid "%(service)s: not connected"
 msgstr ""
 
-#. translators: Each link is a separate chat message sent
-#. after this one, in the order %(services)s names them.
-#: bot/commands/user_commands.py:1777
+#: bot/commands/user_commands.py:1795
 #, python-format
-msgid ""
-"The next messages are connect links, one per message, in this order: "
-"%(services)s."
+msgid "reconnect %(service)s"
+msgstr "volver a conectar %(service)s"
+
+#: bot/commands/user_commands.py:1797
+#, python-format
+msgid "connect %(service)s"
+msgstr "conectar %(service)s"
+
+#: bot/commands/user_commands.py:1804
+msgid "your account page"
+msgstr "tu página de cuentas"
+
+# | msgid "" "The next messages are connect links, one per message, in this
+# | order: " "%(services)s."
+#. translators: Each link is a separate chat message sent after
+#. this one, in the order %(links)s names them.
+#: bot/commands/user_commands.py:1810
+#, python-format
+msgid "The next messages are links, one per message, in this order: %(links)s."
 msgstr ""
-"Los siguientes mensajes son enlaces para conectar, uno por mensaje, en "
-"este orden: %(services)s."
+"Los siguientes mensajes son enlaces, uno por mensaje, en este orden: "
+"%(links)s."
 
-#: bot/commands/user_commands.py:1788
-msgid "To manage them, use the link in the next message."
-msgstr "Para gestionarlas, usa el enlace del siguiente mensaje."
-
-#: bot/commands/user_commands.py:1806
+#: bot/commands/user_commands.py:1832
 #, python-format
 msgid ""
 "%(service)s is already connected. To use a different account, first "
@@ -1334,14 +1604,14 @@ msgstr ""
 "%(service)s ya está conectado. Para usar otra cuenta, primero "
 "desconéctalo con el enlace del siguiente mensaje."
 
-#: bot/commands/user_commands.py:1820
+#: bot/commands/user_commands.py:1846
 #, python-format
 msgid "%(service)s sign-in could not start: %(error)s"
 msgstr ""
 
 #. translators: "The next message" and "the message after that"
 #. are separate chat messages, holding the link and the code.
-#: bot/commands/user_commands.py:1829
+#: bot/commands/user_commands.py:1855
 #, python-format
 msgid ""
 "To connect %(service)s, open the link in the next message and enter the "
@@ -1353,77 +1623,77 @@ msgstr ""
 "letra, es %(spelled)s. Cuando lo hayas introducido, envía li solo para "
 "comprobar que ha funcionado."
 
-#: bot/commands/user_commands.py:1839
+#: bot/commands/user_commands.py:1865
 #, python-format
 msgid "To connect %(service)s, open the link in the next message."
 msgstr "Para conectar %(service)s, abre el enlace del siguiente mensaje."
 
-#: bot/commands/user_commands.py:1858
+#: bot/commands/user_commands.py:1884
 msgid ""
 "[on|off|ask] Plays films and shows with audio description when it is "
 "available. With no argument, says what the current setting is"
 msgstr ""
 
-#: bot/commands/user_commands.py:1866
+#: bot/commands/user_commands.py:1892
 msgid "Audio description is not available in this bot."
 msgstr ""
 
-#: bot/commands/user_commands.py:1874
+#: bot/commands/user_commands.py:1900
 msgid ""
 "Audio description is on. Films play with the description when there is "
 "one."
 msgstr ""
 
-#: bot/commands/user_commands.py:1877
+#: bot/commands/user_commands.py:1903
 msgid "Audio description is off. Send da on to turn it on."
 msgstr ""
 
-#: bot/commands/user_commands.py:1880
+#: bot/commands/user_commands.py:1906
 msgid "The bot asks each time. Send da on or da off to stop being asked."
 msgstr ""
 
-#: bot/commands/user_commands.py:1894
+#: bot/commands/user_commands.py:1920
 msgid "Audio description is on. You will not be asked again."
 msgstr ""
 
-#: bot/commands/user_commands.py:1897
+#: bot/commands/user_commands.py:1923
 msgid "Audio description is off. You will not be asked again."
 msgstr ""
 
-#: bot/commands/user_commands.py:1900
+#: bot/commands/user_commands.py:1926
 msgid "The bot will ask each time."
 msgstr ""
 
-#: bot/commands/user_commands.py:1914
+#: bot/commands/user_commands.py:1940
 msgid ""
 "[number] Lists the profiles for the current service, or selects one by "
 "number"
 msgstr ""
 
-#: bot/commands/user_commands.py:1921
+#: bot/commands/user_commands.py:1947
 #, python-format
 msgid "%(service)s does not have profiles."
 msgstr ""
 
-#: bot/commands/user_commands.py:1927
+#: bot/commands/user_commands.py:1953
 msgid "No profiles were found. The account may not be connected yet."
 msgstr ""
 
-#: bot/commands/user_commands.py:1933
+#: bot/commands/user_commands.py:1959
 #, python-format
 msgid "%(count)s profiles:"
 msgstr ""
 
-#: bot/commands/user_commands.py:1937
+#: bot/commands/user_commands.py:1963
 msgid "Send pf and a number to choose one."
 msgstr ""
 
-#: bot/commands/user_commands.py:1949
+#: bot/commands/user_commands.py:1975
 #, python-format
 msgid "Now using the profile %(name)s."
 msgstr ""
 
-#: bot/commands/user_commands.py:1952
+#: bot/commands/user_commands.py:1978
 msgid "That profile could not be selected."
 msgstr ""
 
@@ -1593,6 +1863,25 @@ msgstr ""
 #, fuzzy, python-brace-format
 msgid "Tracks that could not be downloaded: {count}."
 msgstr "Las transmisiones en directo no se pueden descargar"
+
+#: bot/modules/podcast_subscriptions.py:196
+#, python-brace-format
+msgid ""
+"New episodes of {podcast}, which you subscribed to: {count}. The newest "
+"is: {episode}"
+msgstr ""
+"Episodios nuevos de {podcast}, al que estás suscrito: {count}. El más "
+"reciente es: {episode}"
+
+#: bot/modules/podcast_subscriptions.py:199
+#, python-brace-format
+msgid "New episode of {podcast}, which you subscribed to: {episode}"
+msgstr "Episodio nuevo de {podcast}, al que estás suscrito: {episode}"
+
+#: bot/modules/podcast_subscriptions.py:205
+#, python-brace-format
+msgid "To open the podcast, send: ps {number}"
+msgstr "Para abrir el pódcast, envía: ps {number}"
 
 #: bot/modules/portal_pages.py:45
 msgid "dash"
@@ -2199,6 +2488,41 @@ msgid ""
 "catalogue."
 msgstr ""
 
+#: bot/services/browser_service.py:262
+msgid ""
+"Paramount Plus plays films and shows, with audio description where "
+"Paramount Plus offers one. Each account has its own profiles; pf lists "
+"them and pf with a number picks one."
+msgstr ""
+"Paramount Plus reproduce películas y series, con audiodescripción cuando "
+"Paramount Plus la ofrece. Cada cuenta tiene sus propios perfiles; pf los "
+"muestra y pf con un número elige uno."
+
+# | msgid "" "Paramount Plus plays films and shows, with audio description
+# where
+# | " "Paramount Plus offers one. Each account has its own profiles; pf lists
+# "
+# | "them and pf with a number picks one."
+#: bot/services/browser_service.py:276
+msgid ""
+"Hulu plays films and shows, with audio description where Hulu offers one."
+" Hulu streams only in the United States, so it works only when this bot "
+"runs there. Each account has its own profiles; pf lists them and pf with "
+"a number picks one."
+msgstr ""
+"Hulu reproduce películas y series, con audiodescripción cuando Hulu la "
+"ofrece. Hulu solo emite en Estados Unidos, así que solo funciona si este "
+"bot se ejecuta allí. Cada cuenta tiene sus propios perfiles; pf los "
+"muestra y pf con un número elige uno."
+
+#: bot/services/browser_service.py:300
+msgid ""
+"Tubi plays free films and shows, with advertisements. It needs no "
+"account; connecting one with li tb only adds your watchlist."
+msgstr ""
+"Tubi reproduce películas y series gratis, con anuncios. No necesita "
+"cuenta; conectar una con li tb solo añade tu lista de seguimiento."
+
 #: bot/services/gamdl_downloader.py:158
 msgid "The Apple Music downloader is not installed in this image."
 msgstr ""
@@ -2267,44 +2591,52 @@ msgstr ""
 msgid "Netflix titles cannot be downloaded."
 msgstr "Las transmisiones en directo no se pueden descargar"
 
+#: bot/services/podcasts.py:461
+msgid ""
+"Podcasts have their own commands. Send h to see pc, pcd, pe, pd, pa, ps "
+"and pu."
+msgstr ""
+"Los pódcasts tienen sus propios comandos. Envía h para ver pc, pcd, pe, "
+"pd, pa, ps y pu."
+
 #: bot/services/results.py:130
 #, python-format
 msgid "%(count)s %(kind)s"
 msgstr ""
 
-#: bot/services/spotify.py:121
+#: bot/services/spotify.py:123
 msgid "Spotify is not connected yet. Send li sp to connect an account."
 msgstr ""
 
-#: bot/services/spotify.py:163
+#: bot/services/spotify.py:165
 msgid ""
 "Spotify search needs a Spotify application. Add a client ID and secret in"
 " the bot's configuration, then try again. Playing a pasted Spotify link "
 "does not need one."
 msgstr ""
 
-#: bot/services/spotify.py:225
+#: bot/services/spotify.py:227
 msgid "The Spotify session expired. Try again."
 msgstr ""
 
-#: bot/services/spotify.py:230
+#: bot/services/spotify.py:232
 msgid "Spotify refused that request. Playback needs a Premium account."
 msgstr ""
 
-#: bot/services/spotify.py:235
+#: bot/services/spotify.py:237
 msgid "Spotify is rate limiting us. Try again shortly."
 msgstr ""
 
-#: bot/services/spotify.py:296
+#: bot/services/spotify.py:298
 msgid "That is not a Spotify link."
 msgstr ""
 
-#: bot/services/spotify.py:324
+#: bot/services/spotify.py:326
 msgid "That kind of Spotify link is not supported."
 msgstr ""
 
 # | msgid "Live streams cannot be downloaded"
-#: bot/services/spotify.py:420
+#: bot/services/spotify.py:422
 #, fuzzy
 msgid "Spotify tracks cannot be downloaded."
 msgstr "Las transmisiones en directo no se pueden descargar"
@@ -2479,4 +2811,20 @@ msgstr "Desconocido"
 
 #~ msgid "To connect %(service)s, open %(url)s"
 #~ msgstr ""
+
+#~ msgid ""
+#~ "SERVICE Disconnects a streaming account "
+#~ "and deletes its saved sign-in (yt,"
+#~ " sp, nf, dp, am, az)"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "[service] Shows which streaming accounts "
+#~ "are connected. With a service (yt, "
+#~ "sp, nf, dp, am, az) it starts "
+#~ "connecting that one"
+#~ msgstr ""
+
+#~ msgid "To manage them, use the link in the next message."
+#~ msgstr "Para gestionarlas, usa el enlace del siguiente mensaje."
 
