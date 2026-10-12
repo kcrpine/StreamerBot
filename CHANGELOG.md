@@ -7,6 +7,8 @@ issue or a commit message. Numbering continues across releases. A major version
 
 ## Unreleased
 
+## StreamerBot 2.0 (2026-10-12) - New major version!
+
 - **[081]** `li` now always ends with a YouTube link, even when YouTube is connected, and `li yt` sends the
   sign-in link instead of "already connected". A stored YouTube session can stop working well before the
   bot notices, and the link's sign-in page replaces it without disconnecting first. When every account is
