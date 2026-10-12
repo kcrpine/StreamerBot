@@ -192,18 +192,27 @@ class LiLinkMessageTests(TestCase):
         result = command("", self.user)
 
         self.assertEqual(result[1:], [
+            "https://bot.example/connect/yt?t=tok",
             "https://bot.example/connect/nf?t=tok",
             "https://bot.example/connect/am?t=tok",
         ])
         self.assertNotIn("https://", result[0])
-        self.assertLess(result[0].index("Netflix"), result[0].index("Apple Music"))
+        self.assertIn("this order: reconnect YouTube, connect Netflix, connect Apple Music", result[0])
 
-    def test_the_overview_with_everything_connected_sends_the_portal_link_alone(self):
-        command, _portal = make_li(Mock(), statuses={"yt": "connected"})
+    def test_youtube_gets_a_link_even_when_connected_and_so_does_the_account_page(self):
+        command, _portal = make_li(Mock(browser_available=True), statuses={"yt": "connected"})
 
         result = command("", self.user)
 
-        self.assertEqual(result[1:], ["https://bot.example/?t=tok"])
+        self.assertEqual(result[1:], ["https://bot.example/connect/yt?t=tok", "https://bot.example/?t=tok"])
+        self.assertIn("reconnect YouTube, your account page", result[0])
+
+    def test_li_yt_when_connected_offers_signing_in_again(self):
+        command, _portal = make_li(Mock(browser_available=True), statuses={"yt": "connected"})
+
+        result = command("yt", self.user)
+
+        self.assertEqual(result[-1], "https://bot.example/connect/yt?t=tok")
 
 
 class SeveralMessageReplyTests(TestCase):
@@ -215,6 +224,7 @@ class SeveralMessageReplyTests(TestCase):
         processor.pending_playlist_choice = {}
         processor.pending_playlist_download = {}
         processor.pending_ads_option = {}
+        processor.pending_podcast_count = {}
         processor.ttclient = Mock()
         processor.parse_command = Mock(return_value=("li", "nf"))
         processor.check_access = Mock(return_value=True)

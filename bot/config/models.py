@@ -118,6 +118,16 @@ class BrowserServiceModel(BaseModel):
     profile: str = ""
 
 
+class PodcastModel(BaseModel):
+    enabled: bool = True
+    # How often subscribed feeds are read for new episodes. 0 stops checking;
+    # searching, playing and downloading are unaffected.
+    check_hours: float = 6
+    # Which country's Spotify catalogue podcast search and episode lists use.
+    # Spotify offers some shows only in some countries.
+    spotify_market: str = "US"
+
+
 class ServicesModel(BaseModel):
     default_service: str = "yt"
     yt: YtModel = YtModel()
@@ -127,6 +137,10 @@ class ServicesModel(BaseModel):
     dp: BrowserServiceModel = BrowserServiceModel()
     am: BrowserServiceModel = BrowserServiceModel()
     az: BrowserServiceModel = BrowserServiceModel()
+    pp: BrowserServiceModel = BrowserServiceModel()
+    hu: BrowserServiceModel = BrowserServiceModel()
+    tb: BrowserServiceModel = BrowserServiceModel()
+    pc: PodcastModel = PodcastModel()
 
 
 class LoggerModel(BaseModel):

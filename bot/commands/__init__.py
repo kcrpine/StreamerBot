@@ -8,7 +8,7 @@ from typing import Any, Dict, List, TYPE_CHECKING, Tuple
 
 from bot import app_vars, errors
 from bot.TeamTalk.structs import Message, User, UserType
-from bot.commands import admin_commands, user_commands
+from bot.commands import admin_commands, podcast_commands, user_commands
 from bot.commands.task_processor import TaskProcessor
 from bot.modules.audio_description import (
     AudioDescriptionPreference,
@@ -60,6 +60,14 @@ class CommandProcessor:
         # dlp on a YouTube playlist: whole playlist or one video. Per user, for the
         # same reason as the audio description prompt above.
         self.pending_playlist_choice: Dict[int, Any] = {}
+        # Podcasts: the last search's shows, the show each user has open, and the
+        # "how many episodes" question pd asks. Per user, like the two above.
+        self.pending_podcast_results: Dict[int, Any] = {}
+        self.open_podcast: Dict[int, Any] = {}
+        self.pending_podcast_count: Dict[int, Any] = {}
+        # pcd for someone with no account name, who has nowhere saved to keep it.
+        self.podcast_directory_choice: Dict[int, str] = {}
+        self.podcast_subscriptions = None
         self.commands_dict = {
             "h": user_commands.HelpCommand,
             "a": user_commands.AboutCommand,
@@ -103,6 +111,14 @@ class CommandProcessor:
             "li": user_commands.LoginCommand,
             "da": user_commands.AudioDescriptionCommand,
             "pf": user_commands.ProfileCommand,
+            # --- Podcasts ---
+            "pc": podcast_commands.PodcastSearchCommand,
+            "pcd": podcast_commands.PodcastDirectoryCommand,
+            "pe": podcast_commands.PodcastEpisodeCommand,
+            "pd": podcast_commands.PodcastDownloadCommand,
+            "pa": podcast_commands.PodcastSubscribeCommand,
+            "ps": podcast_commands.PodcastSubscriptionsCommand,
+            "pu": podcast_commands.PodcastUnsubscribeCommand,
         }
         self.admin_commands_dict = {
             "cg": admin_commands.ChangeGenderCommand,
@@ -169,6 +185,15 @@ class CommandProcessor:
                         self.ttclient.send_message(reply, message.user)
                     return
                 # Not an answer: the question is dropped and this runs as a command.
+
+            if message.user.id in self.pending_podcast_count:
+                answer = self.pending_podcast_count.pop(message.user.id)
+                reply = answer(message.text)
+                if reply is not None:
+                    if reply:
+                        self.ttclient.send_message(reply, message.user)
+                    return
+                # Not a number: the question is dropped and this runs as a command.
 
             if message.user.id in self.pending_playlist_download:
                 command_name = "dlp"

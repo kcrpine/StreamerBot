@@ -74,6 +74,11 @@ class SpotifyService(Service):
         self.error_message = ""
         self.warning_message = ""
         self._engine = None
+        # These sat after the return in help() from dc54ce3 on and never ran, so
+        # every search ended in "no attribute '_token'". See [080].
+        self._store = None
+        self._token = ""
+        self._token_at = 0.0
 
     @property
     def help(self) -> str:
@@ -109,9 +114,6 @@ class SpotifyService(Service):
                 t("To pair your account, send this command: li sp"),
             ]
         )
-        self._store = None
-        self._token = ""
-        self._token_at = 0.0
 
     def initialize(self) -> None:
         # The engine is attached by Player after ServiceManager exists, so this

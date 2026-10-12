@@ -3,7 +3,7 @@ import logging
 import os
 import re
 import sys
-from typing import AnyStr, List, TYPE_CHECKING, Optional, Union
+from typing import AnyStr, Dict, List, TYPE_CHECKING, Optional, Union
 from queue import Queue
 
 from bot import app_vars
@@ -323,6 +323,18 @@ class TeamTalk:
             else False,
             _str(user.szUsername) in self.config.users.banned_users,
         )
+
+    def online_usernames(self) -> Dict[str, int]:
+        """Account name to user id for everyone on the server with an account name.
+
+        Anonymous users have no name to be found again by, so they are left out.
+        """
+        result: Dict[str, int] = {}
+        for user in self.tt.getServerUsers():
+            name = _str(user.szUsername)
+            if name and user.nUserID != self.tt.getMyUserID():
+                result[name] = user.nUserID
+        return result
 
     def get_user_account(self, username: str) -> UserAccount:
         return UserAccount(username, "", "", UserType.Null, UserRight.Null, "/")

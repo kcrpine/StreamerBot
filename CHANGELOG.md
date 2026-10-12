@@ -2,9 +2,54 @@
 
 Every change gets a number in square brackets. Numbers only ever go up and are
 never reused, so `[004]` refers to one change permanently and can be cited in an
-issue or a commit message. Numbering continues across releases.
+issue or a commit message. Numbering continues across releases. A major version
+(2.0, 3.0 and so on) has "New major version!" at the end of its heading.
 
 ## Unreleased
+
+- **[081]** `li` now always ends with a YouTube link, even when YouTube is connected, and `li yt` sends the
+  sign-in link instead of "already connected". A stored YouTube session can stop working well before the
+  bot notices, and the link's sign-in page replaces it without disconnecting first. When every account is
+  connected the account page link follows it, for disconnecting. Other services are unchanged: a
+  connected Netflix still says to disconnect before using a different account.
+- **[080]** Spotify search works again. Since dc54ce3 (2026-09-15) the three lines that set up its search
+  token sat after the `return` in the `help` property and never ran, so every search, and every Spotify
+  podcast search, ended in "Error: 'SpotifyService' object has no attribute '_token'". The tests built
+  the service by hand and set those fields themselves, which is why nothing failed; a new test builds it
+  through its real constructor.
+- **[079]** Paramount Plus (`pp`), Hulu (`hu`) and Tubi (`tb`) join the browser services, built on the
+  Disney Plus pattern: `sv pp`, `sv hu` or `sv tb`, then `p` to search and play, with `li pp` or `li hu`
+  to connect an account and `pf` for its profiles. Paramount Plus and Hulu share one adapter base
+  (`bot/services/web/video_site.py`), each declaring only its addresses and selectors. Hulu streams only
+  in the United States, which its help says, and Disney has been moving Hulu into the Disney Plus app, so
+  if hulu.com stops serving a player of its own the logged page URL will show it. Tubi is free with advertisements and needs no account, so it searches
+  and plays without one; `li` lists it as "plays without an account" and sends no connect link for it,
+  though `li tb` still connects one for a watchlist. Both adapters accept a pasted `https://` link as well
+  as their own search results. **Not yet measured against the live sites**: the sign-in, search and
+  player selectors are written from each site's public page structure, as Disney's were, and the first
+  live run should be read in the log (each failure logs the page URL it was on) before changing code.
+  Advertisements on Tubi play in the channel; nothing tries to skip them.
+- **[078]** Podcasts: search, play, download and subscribe. `pc` and a few words searches every podcast
+  directory at once (Apple Podcasts, fyyd, gpodder.net and Spotify), lists each show once even when two
+  directories have it, and names the directory on every line; `pcd` picks one directory instead, or
+  `pcd all` goes back to all of them, and the choice is kept with the user's subscriptions. Searching all
+  waits 12 seconds and lists what has answered, so one slow directory holds up nothing. fyyd is searched
+  by title: searching by its "term" field took 16 to 25 seconds per query on 2026-10-11, by title about
+  one. Spotify shows have no public feed: they are listed through the Spotify Web API, play through the
+  Spotify engine, and cannot be downloaded, which `pd` says in words. Whether go-librespot plays an
+  episode URI as it does a track URI is **not yet tried** on a paired account. `pc` with a number opens a
+  show and lists its newest ten episodes; `pe` lists the next ten, `pe` with a number plays one, `pd` with a number downloads one to the
+  channel, and `pd` on its own asks how many of the newest to download and uploads them as one zip, the
+  way `dlp` does. A back catalogue can run past a thousand episodes, which is why the whole feed is never
+  the default. `pa` subscribes to the open show, `ps` lists subscriptions and `ps` with a number opens one,
+  `pu` unsubscribes. Every `services.pc.check_hours` (6) the bot reads each subscribed feed and tells each
+  subscriber privately about new episodes, holding the notice until they are next online; several new
+  episodes of one show become a single notice, and episodes already out when subscribing are never
+  announced. Subscriptions are kept per TeamTalk account name in `data/podcasts.json`, since a user id
+  changes with every connection. Episodes download through their own fetch that checks the HTTP status:
+  the shared downloader writes an error page to disk and reports success, which would upload a broken
+  file. Checked live on 2026-10-11: a search returned shows and a real feed read 235 episodes, newest
+  first.
 
 ## StreamerBot 1.0.3.5 (2026-10-11)
 

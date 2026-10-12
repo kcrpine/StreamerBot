@@ -376,6 +376,9 @@ class ServiceCommand(Command):
                 )
             service = self.service_manager.services[service_name]
             if len(args) == 1:
+                if service.hidden:
+                    # Podcasts: their own commands, not something to select.
+                    return service.help
                 if not service.hidden and service.is_enabled:
                     self.service_manager.service = service
                     return self.translator.translate(
@@ -489,6 +492,8 @@ class ServiceCommand(Command):
         services: List[str] = []
         for i in self.service_manager.services:
             service = self.service_manager.services[i]
+            if service.hidden:
+                continue
             services.append("{} ({})".format(service.name, self.short_status(service)))
         return self.translator.translate(
             "Current service: {current_service}{newline}Available:{newline}"
@@ -1690,7 +1695,7 @@ class LoginCommand(Command):
     def help(self) -> str:
         return self.translator.translate(
             "[service] Shows which streaming accounts are connected. "
-            "With a service (yt, sp, nf, dp, am, az) it starts connecting that one"
+            "With a service (yt, sp, nf, dp, am, az, pp, hu, tb) it starts connecting that one"
         )
 
     @staticmethod
@@ -1747,8 +1752,16 @@ class LoginCommand(Command):
         if not service:
             lines = [self.translator.translate("Your streaming accounts:")]
             unconnected = []
-            for name, state in portal.statuses().items():
+            statuses = portal.statuses()
+            for name, state in statuses.items():
                 label = auth.service_name(name)
+                if state == "disconnected" and name in auth.OPTIONAL_SIGN_IN:
+                    # Nothing to fix, so no link to copy for it.
+                    lines.append(
+                        self.translator.translate("%(service)s: plays without an account")
+                        % {"service": label}
+                    )
+                    continue
                 if state != "connected":
                     unconnected.append(name)
                 if state == "connected":
@@ -1766,29 +1779,37 @@ class LoginCommand(Command):
                         self.translator.translate("%(service)s: not connected")
                         % {"service": label}
                     )
+            # YouTube gets a link even when connected. A stored session can stop
+            # working long before the bot notices, and signing in again through
+            # the link replaces it without disconnecting first. Users asked for it.
+            linked = list(unconnected)
+            if statuses.get("yt") == "connected":
+                linked.insert(0, "yt")
             # One message per link, each holding nothing but the link, so it
             # can be copied whole. The names go here, in the same order, since
             # a label in the link's own message would be copied with it.
-            if unconnected:
-                lines.append(
-                    # translators: Each link is a separate chat message sent
-                    # after this one, in the order %(services)s names them.
-                    self.translator.translate(
-                        "The next messages are connect links, one per message, in "
-                        "this order: %(services)s."
-                    ) % {"services": ", ".join(auth.service_name(name) for name in unconnected)}
-                )
-                links = [
-                    portal.mint_link(user.username, self._connect_path(name))
-                    for name in unconnected
-                ]
-            else:
-                lines.append(
-                    self.translator.translate(
-                        "To manage them, use the link in the next message."
-                    )
-                )
-                links = [portal.mint_link(user.username)]
+            # Each named by what it does: a connected YouTube's link reconnects,
+            # and the account page connects nothing.
+            names = [
+                (
+                    self.translator.translate("reconnect %(service)s")
+                    if statuses.get(name) == "connected"
+                    else self.translator.translate("connect %(service)s")
+                ) % {"service": auth.service_name(name)}
+                for name in linked
+            ]
+            links = [portal.mint_link(user.username, self._connect_path(name)) for name in linked]
+            if not unconnected:
+                # Everything is connected: the account page, for disconnecting.
+                names.append(self.translator.translate("your account page"))
+                links.append(portal.mint_link(user.username))
+            lines.append(
+                # translators: Each link is a separate chat message sent after
+                # this one, in the order %(links)s names them.
+                self.translator.translate(
+                    "The next messages are links, one per message, in this order: %(links)s."
+                ) % {"links": ", ".join(names)}
+            )
             # A link that cannot be reached is worse than no link: the user
             # gets a browser error with no way to know the portal was only
             # listening on loopback.
@@ -1798,6 +1819,11 @@ class LoginCommand(Command):
             raise errors.InvalidArgumentError()
 
         label = auth.service_name(service)
+
+        if service == "yt":
+            # Even when connected: see the overview above. Signing in again is how
+            # a session that stopped working gets replaced.
+            return self._youtube_link(portal, user)
 
         if portal.statuses().get(service) == "connected":
             # Never silently replace a working account.

@@ -82,6 +82,22 @@
         "az": {
             "enabled": true,
             "profile": ""
+        },
+        "pp": {
+            "enabled": true,
+            "profile": ""
+        },
+        "hu": {
+            "enabled": true,
+            "profile": ""
+        },
+        "tb": {
+            "enabled": true,
+            "profile": ""
+        },
+        "pc": {
+            "enabled": true,
+            "check_hours": 6
         }
     },
     "logger": {

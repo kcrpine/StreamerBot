@@ -251,6 +251,78 @@ class AmazonMusicService(BrowserService):
         )
 
 
+class ParamountService(BrowserService):
+    name = "pp"
+    display_name = "Paramount Plus"
+    hostnames = ["paramountplus.com", "www.paramountplus.com"]
+    supports_audio_description = True
+
+    def help_intro(self) -> str:
+        return self.translator.translate(
+            "Paramount Plus plays films and shows, with audio description where "
+            "Paramount Plus offers one. Each account has its own profiles; pf lists "
+            "them and pf with a number picks one."
+        )
+
+
+class HuluService(BrowserService):
+    name = "hu"
+    display_name = "Hulu"
+    hostnames = ["hulu.com", "www.hulu.com"]
+    supports_audio_description = True
+
+    def help_intro(self) -> str:
+        return self.translator.translate(
+            "Hulu plays films and shows, with audio description where Hulu offers "
+            "one. Hulu streams only in the United States, so it works only when this "
+            "bot runs there. Each account has its own profiles; pf lists them and pf "
+            "with a number picks one."
+        )
+
+
+class TubiService(BrowserService):
+    """Free, with advertisements, and needs no account.
+
+    Signing in is optional: it only carries a watchlist and resume points, so a
+    search or a film must never be refused for want of one.
+    """
+
+    name = "tb"
+    display_name = "Tubi"
+    hostnames = ["tubitv.com", "www.tubitv.com"]
+    requires_auth = False
+    # Tubi labels its described versions in the title, not as an audio track,
+    # so there is no track for the bot to switch to.
+    supports_audio_description = False
+
+    def help_intro(self) -> str:
+        return self.translator.translate(
+            "Tubi plays free films and shows, with advertisements. It needs no "
+            "account; connecting one with li tb only adds your watchlist."
+        )
+
+    @property
+    def help(self) -> str:
+        t = self.translator.translate
+        return "\n".join(
+            [
+                self.help_intro(),
+                t(
+                    "It plays through Google Chrome on the bot's own machine, so it "
+                    "does not work on a Raspberry Pi or any other ARM machine."
+                ),
+                # Last: it says what to send.
+                t(
+                    "Search it with p and a word or two. With search results mode on "
+                    "(sr), p lists what it found and sl and a number plays one of them."
+                ),
+            ]
+        )
+
+    def _require_login(self) -> None:
+        self._require_engine()
+
+
 __all__ = [
     "BrowserService",
     "KIND_LABELS",
@@ -258,5 +330,8 @@ __all__ = [
     "DisneyService",
     "AppleMusicService",
     "AmazonMusicService",
+    "HuluService",
+    "ParamountService",
+    "TubiService",
     "KIND_ORDER",
 ]

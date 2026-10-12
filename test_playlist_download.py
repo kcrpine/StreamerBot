@@ -319,6 +319,7 @@ class CommandRoutingTests(TestCase):
             pending_playlist_choice={},
             pending_playlist_download={},
             pending_ads_option={},
+            pending_podcast_count={},
             ttclient=SimpleNamespace(send_message=lambda text, user=None: self.sent.append(text)),
             translator=SimpleNamespace(translate=translate),
             parse_command=Mock(side_effect=errors.ParseCommandError()),

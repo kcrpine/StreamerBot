@@ -2775,7 +2775,11 @@ streamerbot_config_defaults() {
       "nf": { "enabled": true, "profile": "" },
       "dp": { "enabled": true, "profile": "" },
       "am": { "enabled": true, "profile": "" },
-      "az": { "enabled": true, "profile": "" }
+      "az": { "enabled": true, "profile": "" },
+      "pp": { "enabled": true, "profile": "" },
+      "hu": { "enabled": true, "profile": "" },
+      "tb": { "enabled": true, "profile": "" },
+      "pc": { "enabled": true, "check_hours": 6 }
     },
     "auth_portal": {
       "enabled": true,
@@ -2993,7 +2997,7 @@ migrate_one_bot() {
                      else (.logger.file_name // "StreamerBot.log") end)
                 | .services.default_service =
                     (if ((.services.default_service // "yt")
-                         | IN("yt","ytm","sp","nf","dp","am","az"))
+                         | IN("yt","ytm","sp","nf","dp","am","az","pp","hu","tb"))
                      then (.services.default_service // "yt")
                      else "yt" end)
                 | del(.services.vk, .services.yam)
@@ -3031,11 +3035,11 @@ migrate_one_bot() {
         # name up in a plain dict and the bot dies during startup with a
         # traceback instead of anything a user could act on.
         case "$old_default" in
-            ""|yt|ytm|sp|nf|dp|am|az) ;;
+            ""|yt|ytm|sp|nf|dp|am|az|pp|hu|tb) ;;
             *)
                 echo "  The default service was $old_default, which this bot does not have."
                 echo "  It is now YouTube. To use another, set services.default_service"
-                echo "  in this bot's config.json to one of: yt, ytm, sp, nf, dp, am, az."
+                echo "  in this bot's config.json to one of: yt, ytm, sp, nf, dp, am, az, pp, hu, tb."
                 log_line "Default service $old_default was not available; set to yt for $name"
                 ;;
         esac

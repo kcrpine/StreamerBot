@@ -497,7 +497,7 @@ class LogoutServiceCommand(Command):
     def help(self) -> str:
         return self.translator.translate(
             "SERVICE Disconnects a streaming account and deletes its saved sign-in "
-            "(yt, sp, nf, dp, am, az)"
+            "(yt, sp, nf, dp, am, az, pp, hu, tb)"
         )
 
     def __call__(self, arg: str, user: User) -> Optional[str]:

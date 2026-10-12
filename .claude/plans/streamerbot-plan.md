@@ -190,7 +190,10 @@ Rules that make the numbers worth having:
   identifies a change without needing a version alongside it.
 - **Every push asks whether it is a release.** Before pushing, ask the user whether the push should
   also cut a new version, and offer the next number (a patch bump such as 1.0.1 → 1.0.2 for fixes, a
-  minor bump such as 1.0 → 1.1 when it adds a feature users will notice). Asked for by the user on
+  minor bump such as 1.0 → 1.1 when it adds a feature users will notice, and a major bump such as
+  1.x → 2.0 only when the user calls the change one). A major version's CHANGELOG heading ends with
+  "New major version!", as `## StreamerBot 2.0 (<date>) - New major version!`, so it stands out from
+  minor releases (asked for 2026-10-11). Asked for by the user on
   2026-10-06 after 1.0.1 and 1.0.2 went out a few hours apart: new features should not sit unreleased
   just because nobody thought to ask. A release means bumping `app_version` in `bot/app_vars.py`,
   turning `## Unreleased` into `## StreamerBot <version> (<date>)` with a fresh empty `## Unreleased`
@@ -1838,3 +1841,32 @@ on the same OVH host (AS16276) showed the identical failure, 700-990 lines each 
 - **Found alongside:** the bot `stefani` names `paralleledition,xyz`, which can never resolve, and had
   sat silent since its start on 2026-10-08. Corrected to `paralleledition.xyz` at the user's request and
   restarted; it connected.
+
+## Phase 14 — podcasts, Paramount Plus, Hulu and Tubi (2026-10-11, changelog [078] to [081])
+
+- **Podcasts are not a selectable service.** `pc` is registered in ServiceManager (hidden) only so tracks
+  and downloads resolve a service by name. A show is a list of episodes, not one thing to play, so it has
+  its own commands working on one open podcast per user: `pc` (search or open), `pe` (play or list), `pd`
+  (download one, or ask how many of the newest), `pa`/`ps`/`pu` (subscriptions).
+- **Search is a directory, playback is the feed.** Apple Podcasts, fyyd and gpodder.net need no key and
+  return feed URLs; `pcd` picks one or all (the default, 12 s, round robin, one entry per feed). fyyd is
+  searched by `title`: `term` took 16-25 s per query. Everything after search reads the RSS feed, so a
+  show leaving a directory keeps working. Enclosures are plain files: mpv plays them, downloads are an
+  HTTP fetch. **Spotify shows are the exception**: `spotify:show:` URIs stand in for feed URLs, episodes
+  play through go-librespot (episode URIs not yet tried) and cannot be downloaded.
+- **Bulk downloads are newest N, chosen by the user,** never the whole feed: back catalogues pass a
+  thousand episodes.
+- **Subscriptions key on the TeamTalk account name** (`data/podcasts.json`); a user id changes per
+  connection. Notices wait for their user to be online (`getServerUsers`), and episodes already out at
+  subscribe time are never announced.
+- **The shared `downloader.download_file` hides failures** (no status check, errors printed to stdout).
+  Podcasts download through their own fetch; the other callers of the shared one still have that flaw.
+- **Paramount Plus, Hulu and Tubi** are BrowserServices on the Disney pattern; Paramount and Hulu share
+  `VideoSiteAdapter`. Tubi needs no account (`auth.OPTIONAL_SIGN_IN`): it plays without one, and `li`
+  sends no link for it. Hulu is US only, and is being folded into Disney Plus.
+- **`li` always sends a YouTube link** ([081]), connected or not: a stored session can die unnoticed,
+  and signing in again through it replaces the session.
+- **Spotify search was broken from 2026-09-15** ([080]): its token fields were initialised after a
+  `return`. Tests built the service by hand, so only a real-constructor test catches that class of bug.
+- **Unverified:** no video site's selectors have been run against the live site. Podcast search and feed
+  reading were checked live: a search returned shows, a real feed parsed 235 episodes newest first.

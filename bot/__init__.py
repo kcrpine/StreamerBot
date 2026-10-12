@@ -38,7 +38,11 @@ from bot.services.web.amazon_music import AmazonMusicAdapter
 from bot.services.web.apple_music import AppleMusicAdapter
 from bot.services.web.disney import DisneyAdapter
 from bot.services.web.netflix import NetflixAdapter
+from bot.services.web.hulu import HuluAdapter
+from bot.services.web.paramount import ParamountAdapter
+from bot.services.web.tubi import TubiAdapter
 from bot.services.web.youtube import YouTubeAdapter
+from bot.modules.podcast_subscriptions import PodcastSubscriptions
 
 # Which browser adapter serves which service. Adding a site in Phase 6 is
 # an entry here plus one file under bot/services/web/.
@@ -47,6 +51,9 @@ WEB_ADAPTERS = {
     "dp": DisneyAdapter,
     "am": AppleMusicAdapter,
     "az": AmazonMusicAdapter,
+    "pp": ParamountAdapter,
+    "hu": HuluAdapter,
+    "tb": TubiAdapter,
 }
 
 
@@ -122,7 +129,32 @@ class Bot:
         self.service_manager.initialize()
         self._initialize_engines()
         self._initialize_auth_portal()
+        self._initialize_podcasts()
         logging.debug("Initialized")
+
+    def _initialize_podcasts(self) -> None:
+        """Load podcast subscriptions and start checking them for new episodes.
+
+        A failure here costs subscriptions only; searching, playing and
+        downloading podcasts need none of it.
+        """
+        config = self.config.services.pc
+        if not config.enabled:
+            return
+        try:
+            subscriptions = PodcastSubscriptions(
+                self.config_manager.config_dir,
+                self.translator.translate,
+                directory=self.service_manager.services["pc"].directory,
+                check_hours=config.check_hours,
+            )
+            subscriptions.start(
+                online=self.ttclient.online_usernames,
+                send=lambda text, user_id: self.ttclient.send_message(text, user_id),
+            )
+            self.command_processor.podcast_subscriptions = subscriptions
+        except Exception as error:
+            logging.error(f"Podcast subscriptions could not start: {error}", exc_info=True)
 
     def _initialize_engines(self) -> None:
         """Register the non-mpv engines and hand them to the services that use them.

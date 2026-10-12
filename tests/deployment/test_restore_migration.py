@@ -169,7 +169,7 @@ class TemplatesAreCurrentTests(TestCase):
     def test_every_service_is_present(self):
         for name in ("config.json", "config_default.json"):
             services = read_config(name)["services"]
-            for code in ("yt", "ytm", "sp", "nf", "dp", "am", "az"):
+            for code in ("yt", "ytm", "sp", "nf", "dp", "am", "az", "pp", "hu", "tb", "pc"):
                 self.assertIn(code, services, f"{name} missing {code}")
 
     def test_the_new_sections_are_present(self):
@@ -205,7 +205,7 @@ class TemplatesAreCurrentTests(TestCase):
         defaults = defaults[: defaults.index("DEFAULTSJSON\n}")]
 
         template_services = set(read_config("config.json")["services"])
-        for code in ("sp", "nf", "dp", "am", "az"):
+        for code in ("sp", "nf", "dp", "am", "az", "pp", "hu", "tb", "pc"):
             self.assertIn(f'"{code}"', defaults, f"migration defaults missing {code}")
             self.assertIn(code, template_services, f"template missing {code}")
 
