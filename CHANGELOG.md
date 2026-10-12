@@ -6,6 +6,17 @@ issue or a commit message. Numbering continues across releases.
 
 ## Unreleased
 
+## StreamerBot 1.0.3.5 (2026-10-11)
+
+- **[077]** Connect links now arrive as messages of their own. `li`, `li <service>` and `ap link` used to put
+  the instructions and the link in one message, so a screen reader user copying the link had to open the
+  message and pick the URL out of the sentence around it. The instructions now come first and each link
+  follows alone, so copying that message copies the link and nothing else. `li sp` sends the activation
+  address and the code as two more messages after the instructions. `li` on its own sends one link per
+  service that is not connected, naming the services in its first message in the same order. The names
+  are not put next to the links because a label in the link's message would be copied with it. A command
+  can now return a list, which `CommandProcessor` sends as separate messages in order.
+
 ## StreamerBot 1.0.3.4 (2026-10-11)
 
 - **[076]** YouTube downloads (`ldd`, `d`, `dv`, `dlp` and the download list) now read through the bot's windowing stream

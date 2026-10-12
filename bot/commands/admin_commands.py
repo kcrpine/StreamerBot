@@ -3,7 +3,7 @@ import os
 import subprocess
 import sys
 import time
-from typing import Optional, TYPE_CHECKING
+from typing import List, Optional, TYPE_CHECKING, Union
 from queue import Empty
 
 from bot.commands.command import Command
@@ -444,7 +444,7 @@ class AuthPortalCommand(Command):
             "revokes every existing link, or stops the portal"
         )
 
-    def __call__(self, arg: str, user: User) -> Optional[str]:
+    def __call__(self, arg: str, user: User) -> Union[str, List[str]]:
         portal = getattr(self.command_processor, "auth_portal", None)
         if portal is None:
             return self.translator.translate("The account portal is not running.")
@@ -464,7 +464,8 @@ class AuthPortalCommand(Command):
             link = portal.mint_link(user.username)
             advice = portal.link_advice() if hasattr(portal, "link_advice") else None
             source = portal.link_source() if hasattr(portal, "link_source") else ""
-            lines = [link]
+            # The link is a message of its own, last, so it can be copied whole.
+            lines = []
             if source:
                 lines.append(
                     self.translator.translate("That address came from %(source)s.")
@@ -472,7 +473,9 @@ class AuthPortalCommand(Command):
                 )
             if advice:
                 lines.append(advice)
-            return chr(10).join(lines)
+            if not lines:
+                return link
+            return [chr(10).join(lines), link]
 
         if action == "rotate":
             count = portal.tokens.revoke_all()

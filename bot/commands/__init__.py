@@ -188,15 +188,29 @@ class CommandProcessor:
                 self.current_command_id = id(command)
                 result = command(arg, message.user)
                 if result:
-                    response_started_at = time.perf_counter()
-                    self.ttclient.send_message(
-                        result,
-                        message.user,
+                    # A list is several messages, sent in order. A link the
+                    # user has to copy goes in a message of its own, so
+                    # copying the message copies the link and nothing else.
+                    replies = (
+                        [item for item in result if item]
+                        if isinstance(result, (list, tuple))
+                        else [result]
                     )
+                    response_started_at = time.perf_counter()
+                    for index, reply in enumerate(replies):
+                        if index:
+                            # A server's flood protection can drop messages
+                            # sent back to back, and a lost one breaks the
+                            # order the first message promised.
+                            time.sleep(0.15)
+                        self.ttclient.send_message(
+                            reply,
+                            message.user,
+                        )
                     response_elapsed_ms = (
                         time.perf_counter() - response_started_at
                     ) * 1000
-                    response_preview = str(result).replace("\n", "\\n")[:300]
+                    response_preview = "\n".join(map(str, replies)).replace("\n", "\\n")[:300]
                     logging.info(
                         "[PlaybackTiming] command_response_sent "
                         f"command={command_name} "

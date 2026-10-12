@@ -3,7 +3,7 @@ import logging
 import os
 import tempfile
 import zipfile
-from typing import List, Optional, TYPE_CHECKING
+from typing import List, Optional, TYPE_CHECKING, Union
 
 from bot.commands.command import Command
 from bot.commands.playlist_choice import PlaylistChoice
@@ -1693,30 +1693,41 @@ class LoginCommand(Command):
             "With a service (yt, sp, nf, dp, am, az) it starts connecting that one"
         )
 
-    def _youtube_link(self, portal, user: User) -> str:
-        """A portal link for connecting YouTube (Phase 9).
-
-        Not a device code any more: YouTube stopped serving playback to that
-        sign-in. The advice comes before the link, and the link comes last with
-        nothing after it, so a screen reader's review cursor lands on it and a
-        link detector does not swallow a full stop.
-        """
-        keeper = self.youtube_keeper()
-        if keeper is not None and not keeper.browser_available:
-            message = self.translator.translate(
-                "This server cannot run a browser, so connect YouTube by importing a "
-                "session from your own browser. Use a separate Google account made for "
-                "the bot. Open this link: %(url)s"
-            ) % {"url": portal.mint_link(user.username, "/import/yt")}
-        else:
-            message = self.translator.translate(
-                "To connect YouTube, use a separate Google account made for the bot, "
-                "not your personal one. Open this link: %(url)s"
-            ) % {"url": portal.mint_link(user.username, "/connect/yt")}
+    @staticmethod
+    def _with_advice(portal, message: str) -> str:
         advice = portal.link_advice() if hasattr(portal, "link_advice") else None
         return message + chr(10) + advice if advice else message
 
-    def __call__(self, arg: str, user: User) -> Optional[str]:
+    def _connect_path(self, service: str) -> str:
+        # Without a browser the bot cannot sign Google in itself, so the only
+        # YouTube page that can work is the import page.
+        keeper = self.youtube_keeper() if service == "yt" else None
+        if keeper is not None and not keeper.browser_available:
+            return "/import/yt"
+        return f"/connect/{service}"
+
+    def _youtube_link(self, portal, user: User) -> List[str]:
+        """A portal link for connecting YouTube (Phase 9).
+
+        Not a device code any more: YouTube stopped serving playback to that
+        sign-in. The advice is one message and the link is the next, on its
+        own, so copying that message copies the link and nothing else.
+        """
+        path = self._connect_path("yt")
+        if path == "/import/yt":
+            message = self.translator.translate(
+                "This server cannot run a browser, so connect YouTube by importing a "
+                "session from your own browser. Use a separate Google account made for "
+                "the bot. The link is in the next message."
+            )
+        else:
+            message = self.translator.translate(
+                "To connect YouTube, use a separate Google account made for the bot, "
+                "not your personal one. The link is in the next message."
+            )
+        return [self._with_advice(portal, message), portal.mint_link(user.username, path)]
+
+    def __call__(self, arg: str, user: User) -> Union[str, List[str]]:
         portal = getattr(self.command_processor, "auth_portal", None)
         if portal is None:
             # Why it is absent matters. "Switched off in this bot's
@@ -1735,8 +1746,11 @@ class LoginCommand(Command):
 
         if not service:
             lines = [self.translator.translate("Your streaming accounts:")]
+            unconnected = []
             for name, state in portal.statuses().items():
                 label = auth.service_name(name)
+                if state != "connected":
+                    unconnected.append(name)
                 if state == "connected":
                     lines.append(
                         self.translator.translate("%(service)s: connected")
@@ -1752,14 +1766,33 @@ class LoginCommand(Command):
                         self.translator.translate("%(service)s: not connected")
                         % {"service": label}
                     )
-            lines.append(portal.mint_link(user.username))
+            # One message per link, each holding nothing but the link, so it
+            # can be copied whole. The names go here, in the same order, since
+            # a label in the link's own message would be copied with it.
+            if unconnected:
+                lines.append(
+                    # translators: Each link is a separate chat message sent
+                    # after this one, in the order %(services)s names them.
+                    self.translator.translate(
+                        "The next messages are connect links, one per message, in "
+                        "this order: %(services)s."
+                    ) % {"services": ", ".join(auth.service_name(name) for name in unconnected)}
+                )
+                links = [
+                    portal.mint_link(user.username, self._connect_path(name))
+                    for name in unconnected
+                ]
+            else:
+                lines.append(
+                    self.translator.translate(
+                        "To manage them, use the link in the next message."
+                    )
+                )
+                links = [portal.mint_link(user.username)]
             # A link that cannot be reached is worse than no link: the user
             # gets a browser error with no way to know the portal was only
             # listening on loopback.
-            advice = portal.link_advice() if hasattr(portal, "link_advice") else None
-            if advice:
-                lines.append(advice)
-            return "\n".join(lines)
+            return [self._with_advice(portal, "\n".join(lines))] + links
 
         if service not in auth.SERVICES:
             raise errors.InvalidArgumentError()
@@ -1768,10 +1801,13 @@ class LoginCommand(Command):
 
         if portal.statuses().get(service) == "connected":
             # Never silently replace a working account.
-            return self.translator.translate(
-                "%(service)s is already connected. To use a different account, "
-                "disconnect it first at %(url)s"
-            ) % {"service": label, "url": portal.mint_link(user.username)}
+            return [
+                self.translator.translate(
+                    "%(service)s is already connected. To use a different account, "
+                    "first disconnect it using the link in the next message."
+                ) % {"service": label},
+                portal.mint_link(user.username),
+            ]
 
         if service == "yt":
             return self._youtube_link(portal, user)
@@ -1786,19 +1822,26 @@ class LoginCommand(Command):
             code = data.get("user_code", "")
             url = data.get("verification_url", "https://www.google.com/device")
             spelled = " ".join(code.replace("-", ""))
-            return self.translator.translate(
-                "To connect %(service)s, go to %(url)s and enter the code %(code)s. "
-                "Character by character, that is %(spelled)s. "
-                "Send li on its own to check whether it worked."
-            ) % {"service": label, "url": url, "code": code, "spelled": spelled}
+            return [
+                # translators: "The next message" and "the message after that"
+                # are separate chat messages, holding the link and the code.
+                self.translator.translate(
+                    "To connect %(service)s, open the link in the next message and "
+                    "enter the code from the message after that. The code, spelled "
+                    "out, is %(spelled)s. After you enter it, send li on its own to "
+                    "check that it worked."
+                ) % {"service": label, "spelled": spelled},
+                url,
+                code,
+            ]
 
         message = self.translator.translate(
-            "To connect %(service)s, open %(url)s"
-        ) % {"service": label, "url": portal.mint_link(user.username, f"/connect/{service}")}
-        advice = portal.link_advice() if hasattr(portal, "link_advice") else None
-        if advice:
-            return message + chr(10) + advice
-        return message
+            "To connect %(service)s, open the link in the next message."
+        ) % {"service": label}
+        return [
+            self._with_advice(portal, message),
+            portal.mint_link(user.username, f"/connect/{service}"),
+        ]
 
 
 class AudioDescriptionCommand(Command):

@@ -106,16 +106,17 @@ def make_li(keeper, statuses=None):
 class LiYouTubeTests(TestCase):
     user = SimpleNamespace(username="alice")
 
-    def test_li_yt_sends_the_sign_in_link_with_the_separate_account_advice_first(self):
+    def test_li_yt_sends_the_advice_then_the_link_in_a_message_of_its_own(self):
         keeper = Mock(browser_available=True)
         command, _portal = make_li(keeper)
 
         result = command("yt", self.user)
 
-        self.assertIn("separate Google account", result)
-        self.assertTrue(result.endswith("https://bot.example/connect/yt?t=tok"),
-                        "the link goes last, with nothing after it")
-        self.assertLess(result.index("separate"), result.index("https://"))
+        self.assertEqual(len(result), 2)
+        self.assertIn("separate Google account", result[0])
+        self.assertNotIn("https://", result[0], "the link is not repeated in the advice")
+        self.assertEqual(result[1], "https://bot.example/connect/yt?t=tok",
+                         "the link message holds the link and nothing else")
 
     def test_without_a_browser_li_yt_offers_only_the_import_page(self):
         keeper = Mock(browser_available=False)
@@ -123,15 +124,106 @@ class LiYouTubeTests(TestCase):
 
         result = command("yt", self.user)
 
-        self.assertIn("/import/yt", result)
-        self.assertNotIn("/connect/yt", result)
-        self.assertEqual(result.count("https://"), 1, "one link, not two")
+        self.assertEqual(result[-1], "https://bot.example/import/yt?t=tok")
+        self.assertNotIn("/connect/yt", "".join(result))
+        self.assertEqual("".join(result).count("https://"), 1, "one link, not two")
 
     def test_li_reports_a_session_google_ended(self):
         command, _portal = make_li(Mock(), statuses={"yt": "expired"})
-        command.command_processor.auth_portal.mint_link.side_effect = None
-        command.command_processor.auth_portal.mint_link.return_value = "https://bot.example/?t=tok"
 
         result = command("", self.user)
 
-        self.assertIn("YouTube: signed out, connect again", result)
+        self.assertIn("YouTube: signed out, connect again", result[0])
+        self.assertEqual(result[1:], ["https://bot.example/connect/yt?t=tok"])
+
+
+class LiLinkMessageTests(TestCase):
+    """Every link and code goes out alone, so copying the message copies only it."""
+
+    user = SimpleNamespace(username="alice")
+
+    def test_li_for_a_portal_service_sends_instructions_then_the_bare_link(self):
+        command, _portal = make_li(Mock(), statuses={"nf": "disconnected"})
+
+        result = command("nf", self.user)
+
+        self.assertEqual(len(result), 2)
+        self.assertIn("Netflix", result[0])
+        self.assertNotIn("https://", result[0])
+        self.assertEqual(result[1], "https://bot.example/connect/nf?t=tok")
+
+    def test_link_advice_stays_with_the_instructions(self):
+        command, portal = make_li(Mock(), statuses={"nf": "disconnected"})
+        portal.link_advice.return_value = "Set a public address."
+
+        result = command("nf", self.user)
+
+        self.assertIn("Set a public address.", result[0])
+        self.assertEqual(result[1], "https://bot.example/connect/nf?t=tok")
+
+    def test_li_sp_sends_the_url_and_the_code_each_alone(self):
+        command, portal = make_li(Mock(), statuses={"sp": "disconnected"})
+        portal.spotify_start.return_value = {
+            "user_code": "BCDF-GHJK",
+            "verification_url": "https://www.google.com/device",
+        }
+
+        result = command("sp", self.user)
+
+        self.assertEqual(result[1:], ["https://www.google.com/device", "BCDF-GHJK"])
+        self.assertIn("B C D F G H J K", result[0])
+        self.assertNotIn("https://", result[0])
+
+    def test_an_already_connected_service_gets_the_portal_link_alone(self):
+        command, _portal = make_li(Mock(), statuses={"nf": "connected"})
+
+        result = command("nf", self.user)
+
+        self.assertIn("already connected", result[0])
+        self.assertEqual(result[1], "https://bot.example/?t=tok")
+
+    def test_the_overview_sends_one_bare_link_per_unconnected_service_in_the_order_named(self):
+        keeper = Mock(browser_available=True)
+        command, _portal = make_li(
+            keeper,
+            statuses={"yt": "connected", "nf": "disconnected", "am": "expired"},
+        )
+
+        result = command("", self.user)
+
+        self.assertEqual(result[1:], [
+            "https://bot.example/connect/nf?t=tok",
+            "https://bot.example/connect/am?t=tok",
+        ])
+        self.assertNotIn("https://", result[0])
+        self.assertLess(result[0].index("Netflix"), result[0].index("Apple Music"))
+
+    def test_the_overview_with_everything_connected_sends_the_portal_link_alone(self):
+        command, _portal = make_li(Mock(), statuses={"yt": "connected"})
+
+        result = command("", self.user)
+
+        self.assertEqual(result[1:], ["https://bot.example/?t=tok"])
+
+
+class SeveralMessageReplyTests(TestCase):
+    def test_a_list_reply_is_sent_as_separate_messages_in_order(self):
+        from bot.commands import CommandProcessor
+
+        processor = object.__new__(CommandProcessor)
+        processor.pending_ad_prompt = {}
+        processor.pending_playlist_choice = {}
+        processor.pending_playlist_download = {}
+        processor.pending_ads_option = {}
+        processor.ttclient = Mock()
+        processor.parse_command = Mock(return_value=("li", "nf"))
+        processor.check_access = Mock(return_value=True)
+        processor.get_command = Mock(
+            return_value=lambda _processor: (lambda arg, user: ["Open the link.", "https://x", ""])
+        )
+        user = SimpleNamespace(id=7, username="alice")
+
+        processor._run(SimpleNamespace(user=user, text="li nf"))
+
+        sent = [call.args[0] for call in processor.ttclient.send_message.call_args_list]
+        self.assertEqual(sent, ["Open the link.", "https://x"], "empty items are not sent")
