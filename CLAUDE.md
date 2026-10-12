@@ -510,6 +510,12 @@ Its heading ends with "New major version!", so it stands out from the minor and 
 a major bump only for a change big enough that the user would call it one, and never pick it without
 asking. The user asked for this on 2026-10-11.
 
+**A major version also gets a section in README.md**, in the same commit as the release. Under "New major
+versions", near the top, add `### StreamerBot <version> (<date>)` above the previous one, newest first,
+with a short list of the big changes written for someone using the bot: what to send and what it does,
+not file names. The CHANGELOG stays the full record; the README is what a new reader sees first. Asked
+for by the user on 2026-10-12.
+
 **A release also moves the `stable` branch**, which is what servers on the stable update channel follow
 ([072]). Push it with the release, from the clone that made it:
 

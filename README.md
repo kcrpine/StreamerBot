@@ -1,16 +1,43 @@
 # StreamerBot
 
 An accessible streaming bot for TeamTalk 5. It plays YouTube, Spotify, Netflix,
-Disney+, Apple Music, Amazon Music and direct stream URLs into a voice channel,
-and it can play films and shows with the **audio description** track where the
-service offers one. One Docker container per bot, many bots per machine, managed
-from a command-line tool written to be used with a screen reader.
+Disney+, Paramount Plus, Hulu, Tubi, Apple Music, Amazon Music, podcasts and
+direct stream URLs into a voice channel, and it can play films and shows with the
+**audio description** track where the service offers one. One Docker container
+per bot, many bots per machine, managed from a command-line tool written to be
+used with a screen reader.
 
 > **Before you use the video services, read this.** Rebroadcasting Netflix,
-> Disney+, Apple Music or Amazon Music into a TeamTalk channel is very likely a
-> breach of those services' terms of service, and may be a copyright problem in your
-> country. That is your decision to make, not something this project can make for
-> you. YouTube, Spotify and direct URLs carry no such problem for ordinary use.
+> Disney+, Paramount Plus, Hulu, Tubi, Apple Music or Amazon Music into a TeamTalk
+> channel is very likely a breach of those services' terms of service, and may be a
+> copyright problem in your country. That is your decision to make, not something
+> this project can make for you. YouTube, Spotify, podcasts and direct URLs carry no
+> such problem for ordinary use.
+
+## New major versions
+
+The big changes in each major version, newest first. A major version is a new
+first number: 2.0, 3.0 and so on. Every smaller change is in
+[CHANGELOG.md](CHANGELOG.md), where a major version's heading ends with "New major
+version!".
+
+### StreamerBot 2.0 (12 October 2026)
+
+- **Podcasts.** Send `pc` and a few words to search Apple Podcasts, fyyd,
+  gpodder.net and Spotify at once, then `pc` and a number to open a show. `pe` and
+  a number plays an episode, `pd` and a number downloads one to the channel, and
+  `pd` on its own downloads the newest episodes as one zip file. `pcd` chooses
+  which directory to search. Spotify episodes play but cannot be downloaded.
+- **Podcast subscriptions.** `pa` subscribes to the open show. The bot sends you a
+  private message when a new episode is out, or the next time you are online.
+  `ps` lists your subscriptions and `pu` removes one.
+- **Three more video services.** Paramount Plus (`sv pp`) and Hulu (`sv hu`) need
+  an account, connected with `li pp` or `li hu`. Hulu streams only in the United
+  States. Tubi (`sv tb`) is free with advertisements and needs no account.
+- **Copyable links.** `li` sends each link as a message of its own, after the
+  instructions, so copying the message copies only the link. It always includes a
+  YouTube link, so a YouTube sign-in that has stopped working can be replaced.
+- **Spotify search works again.** It had failed with an error since September.
 
 ## This is a fork
 
@@ -63,10 +90,13 @@ Full detail is in [CHANGELOG.md](CHANGELOG.md).
 | --- | --- | --- |
 | YouTube, YouTube Music | mpv | Nothing where YouTube trusts the address. On most VPS hosts, a Google account made for the bot |
 | Spotify | go-librespot | Premium. A Spotify application if you want to search by name |
-| Netflix, Disney+ | Chrome | An account. **amd64 only** |
+| Netflix, Disney+, Paramount Plus | Chrome | An account. **amd64 only** |
+| Hulu | Chrome | An account, and a bot running in the United States. **amd64 only** |
+| Tubi | Chrome | Nothing. **amd64 only** |
 | Apple Music, Amazon Music | Chrome | An account. **amd64 only** |
+| Podcasts | mpv, or go-librespot for Spotify shows | Nothing. Spotify shows need what Spotify needs |
 
-**The four browser services do not work on ARM,** including Raspberry Pi. Google
+**The browser services do not work on ARM,** including Raspberry Pi. Google
 publishes no Chrome for linux/arm64, and only Chrome carries the Widevine module
 those services need to decrypt anything. On ARM they disable themselves and say
 so rather than failing when you ask for a title. YouTube, Spotify and direct URLs
@@ -138,8 +168,9 @@ To connect an account:
 - **Spotify:** send `li sp`, then enter the code at `spotify.com/pair`. Playback
   needs Premium. Searching by name additionally needs a Spotify application; `h
   connect sp` walks through it, and a pasted Spotify link works without one.
-- **Netflix, Disney+, Apple Music, Amazon Music:** send `li` and follow the link
-  it gives you. The password is typed on that page, never in the channel.
+- **Netflix, Disney+, Paramount Plus, Hulu, Apple Music, Amazon Music:** send `li`
+  and follow the link it gives you. The password is typed on that page, never in
+  the channel. Tubi needs no account.
 
 `li` on its own says what is connected. `da on` turns audio description on for
 good, `da off` turns it off, and `da` alone asks each time. `pf` lists and picks

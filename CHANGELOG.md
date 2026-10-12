@@ -7,6 +7,12 @@ issue or a commit message. Numbering continues across releases. A major version
 
 ## Unreleased
 
+- **[082]** README.md has a "New major versions" section near the top: the big changes of each major
+  version, newest first, written for someone using the bot rather than someone reading the code. 2.0 is
+  the first entry. Every major release adds one in the same commit (recorded in CLAUDE.md and the plan).
+  The README's service table, its terms-of-service warning and its connect instructions now include
+  Paramount Plus, Hulu, Tubi and podcasts, which 2.0 added and the README did not yet mention.
+
 ## StreamerBot 2.0 (2026-10-12) - New major version!
 
 - **[081]** `li` now always ends with a YouTube link, even when YouTube is connected, and `li yt` sends the

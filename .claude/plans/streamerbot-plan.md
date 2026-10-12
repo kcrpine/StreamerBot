@@ -193,7 +193,8 @@ Rules that make the numbers worth having:
   minor bump such as 1.0 → 1.1 when it adds a feature users will notice, and a major bump such as
   1.x → 2.0 only when the user calls the change one). A major version's CHANGELOG heading ends with
   "New major version!", as `## StreamerBot 2.0 (<date>) - New major version!`, so it stands out from
-  minor releases (asked for 2026-10-11). Asked for by the user on
+  minor releases (asked for 2026-10-11), and README.md's "New major versions" section gets a short,
+  user-facing list of its big changes, newest first (asked for 2026-10-12). Asked for by the user on
   2026-10-06 after 1.0.1 and 1.0.2 went out a few hours apart: new features should not sit unreleased
   just because nobody thought to ask. A release means bumping `app_version` in `bot/app_vars.py`,
   turning `## Unreleased` into `## StreamerBot <version> (<date>)` with a fresh empty `## Unreleased`
