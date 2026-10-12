@@ -504,6 +504,12 @@ things in the pushed commit and one after it: `app_version` in `bot/app_vars.py`
 and then a GitHub release tagged `v<version>` on that commit. Releases are public, so ask every time;
 a yes for one push does not carry to the next. The plan records the same rule.
 
+**A major version says so in the CHANGELOG.** A major version is a new first number: 2.0, 3.0 and so on.
+Its heading ends with "New major version!", so it stands out from the minor and patch releases around it:
+`## StreamerBot 2.0 (<date>) - New major version!`. The same words open its GitHub release title. Offer
+a major bump only for a change big enough that the user would call it one, and never pick it without
+asking. The user asked for this on 2026-10-11.
+
 **A release also moves the `stable` branch**, which is what servers on the stable update channel follow
 ([072]). Push it with the release, from the clone that made it:
 
