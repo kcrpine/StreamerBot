@@ -301,7 +301,10 @@ class BrowserProxyTests(TestCase):
         import re
         root = os.path.dirname(os.path.abspath(__file__))
         for script in ("streamerbot.sh", "update.sh"):
-            with open(os.path.join(root, script), encoding="utf-8") as f:
+            path = os.path.join(root, script)
+            if not os.path.isfile(path):  # .dockerignore keeps it out of the image
+                self.skipTest(f"{script} is not present; host-only test skipped")
+            with open(path, encoding="utf-8") as f:
                 text = f.read()
             launches = re.findall(r'(?:-e "[^"]*" \\\n\s*)+--label "role=streamerbot"', text)
             self.assertTrue(launches, script)

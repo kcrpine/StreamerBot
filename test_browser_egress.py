@@ -85,7 +85,10 @@ class MenuTextTests(unittest.TestCase):
         self.assertNotIn("\x1b[", out)
 
     def test_streamerbot_sh_sources_the_menu_and_offers_it(self):
-        text = (ROOT / "streamerbot.sh").read_text(encoding="utf-8")
+        script = ROOT / "streamerbot.sh"
+        if not script.is_file():  # .dockerignore keeps it out of the image
+            raise unittest.SkipTest("streamerbot.sh is not present; host-only test skipped")
+        text = script.read_text(encoding="utf-8")
         self.assertIn('. "$SCRIPT_DIR/browser_egress.sh"', text)
         self.assertIn("Disney Plus and Paramount Plus Proxy", text)
         self.assertIn("browser_egress_menu", text)
