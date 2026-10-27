@@ -7,6 +7,8 @@ issue or a commit message. Numbering continues across releases. A major version
 
 ## Unreleased
 
+## StreamerBot 2.0.1 (2026-10-26)
+
 - **[083]** A bot now reconnects within a second of losing its TeamTalk server, and keeps trying every second until the server is back. The `teamtalk` section of config.json has two new settings in place of the old pair: `reconnect_delay_seconds` (the wait between attempts, default 1, fractions such as 0.25 allowed) and `reconnect_max_attempts` (failed attempts in a row before the bot stops, -1 for forever, the default). The wait is fixed and never grows. The old `reconnection_timeout` was the wait before every attempt, the first one included, and configs carried over from TTMediaBot held 3600. So when the server was restarted, ana-bot logged "Lost the connection" and was not due to try again for an hour, and the log never said so. Each "Lost the connection" line now ends with "Trying again in N seconds." Configuration version 3 drops the old timeout rather than carrying it across, since every value was set under the old meaning, and moves the attempt limit across unchanged. The event loop also waits no longer than the next attempt is due, so a delay under a second really is under a second. A limited number of attempts now also applies when the bot first starts: before, a bot with a limit gave up on the first failure if the server was down at startup.
 - **[082]** README.md has a "New major versions" section near the top: the big changes of each major
   version, newest first, written for someone using the bot rather than someone reading the code. 2.0 is
