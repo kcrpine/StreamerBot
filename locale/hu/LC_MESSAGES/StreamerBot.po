@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  StreamerBot\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-27 20:23+0000\n"
+"POT-Creation-Date: 2026-10-27 20:41+0000\n"
 "PO-Revision-Date: 2024-01-18 16:31+0100\n"
 "Last-Translator: Гумеров Амир Эдуардович <gumerov.amir.e@gmail.com>\n"
 "Language: hu\n"
@@ -24,14 +24,16 @@ msgid ""
 "This needs Google Chrome, which is not available on this machine's "
 "processor architecture."
 msgstr ""
+"Ehhez Google Chrome kell, de ez nem érhető el a gép "
+"processzorarchitektúrájára."
 
 #: bot/__init__.py:268
 msgid "Spotify is unavailable: the player could not start."
-msgstr ""
+msgstr "A Spotify nem érhető el: a lejátszó nem tudott elindulni."
 
 #: bot/__init__.py:301 bot/__init__.py:304 bot/modules/portal_pages.py:543
 msgid "The sign-in did not complete."
-msgstr ""
+msgstr "A bejelentkezés nem fejeződött be."
 
 #: bot/__init__.py:317
 msgid ""
@@ -42,6 +44,12 @@ msgid ""
 "PORT_CONFLICT.txt in the bot's folder explaining it, and Repair Account "
 "Portal and Spotify Ports in the manager turns it back on."
 msgstr ""
+"A fiókportál ki van kapcsolva a bot beállításaiban, ezért a Netflix, a "
+"Disney Plus, az Apple Music és az Amazon Music nem kapcsolható be. "
+"Állítsa az auth_portal.enabled értékét true-ra a bot config.json "
+"fájljában, majd indítsa újra. Ha a kezelő portütközés miatt kapcsolta ki,"
+" a bot mappájában egy PORT_CONFLICT.txt nevű fájl magyarázza el, és a "
+"kezelő Repair Account Portal and Spotify Ports pontja visszakapcsolja."
 
 #: bot/__init__.py:370
 #, python-format
@@ -53,6 +61,13 @@ msgid ""
 "Ports, and restart this bot. YouTube and Spotify are unaffected, because "
 "they sign in with a code in the channel."
 msgstr ""
+"A fiókportál nem tudott elindulni, mert a(z) %(port)s port már foglalt, "
+"valószínűleg egy másik bot miatt ezen a gépen. Amíg ez nincs javítva, a "
+"Netflix, a Disney Plus, az Apple Music és az Amazon Music nem kapcsolható"
+" be. Futtassa a kezelőt, válassza a Manage Bots, majd a Repair Account "
+"Portal and Spotify Ports pontot, és indítsa újra ezt a botot. A YouTube-"
+"ot és a Spotifyt ez nem érinti, mert ezek a csatornában kapott kóddal "
+"jelentkeznek be."
 
 #: bot/__init__.py:380
 #, python-format
@@ -61,12 +76,17 @@ msgid ""
 "and Amazon Music cannot be connected. The reason is in this bot's log "
 "file: %(reason)s"
 msgstr ""
+"A fiókportál nem tudott elindulni, ezért a Netflix, a Disney Plus, az "
+"Apple Music és az Amazon Music nem kapcsolható be. Az ok a bot "
+"naplófájljában található: %(reason)s"
 
 #: bot/__init__.py:412
 msgid ""
 "Hello! I'm back and ready for you to stream again. Thank you for your "
 "patience!"
 msgstr ""
+"Sziasztok! Visszatértem, és újra készen állok a közvetítésre. Köszönöm a "
+"türelmet!"
 
 #: bot/__init__.py:452
 msgid ""
@@ -74,6 +94,8 @@ msgid ""
 "know that an update is in progress and I will restart in a few moments to"
 " apply it. Thank you!"
 msgstr ""
+"Sziasztok! Én vagyok a Streamer Bot, csak szólok, hogy frissítés zajlik, "
+"és néhány pillanat múlva újraindulok, hogy alkalmazzam. Köszönöm!"
 
 #: bot/__init__.py:497
 msgid "Restarted. The new settings are in use."
@@ -97,6 +119,14 @@ msgid ""
 " and\n"
 "Kirill Belousov, and on the fork by Joao Almeida.\n"
 msgstr ""
+"StreamerBot a TeamTalk 5-höz.\n"
+"YouTube, YouTube Music, Spotify, Apple Music, Amazon Music, Netflix,\n"
+"Disney Plus és közvetlen hivatkozások közvetítése egy csatornába, "
+"hangalámondás-támogatással.\n"
+"Tároló: {repo}\n"
+"TeamTalk SDK {sdk}.\n"
+"Amir Gumerov, Vladislav Kopylov, Beqa Gozalishvili és Kirill Belousov\n"
+"TTMediaBot programján, valamint Joao Almeida forkján alapul.\n"
 
 #: bot/TeamTalk/__init__.py:180
 msgid "Send \"h\" for help"
@@ -104,7 +134,7 @@ msgstr "Küldj egy h-t a parancsok megismeréséhez"
 
 #: bot/commands/__init__.py:176
 msgid "That question has expired. To ask again, send: dlp"
-msgstr ""
+msgstr "Ez a kérdés lejárt. Az újbóli kérdezéshez küldje: dlp"
 
 #: bot/commands/__init__.py:201
 msgid "That menu has expired. To open it again, send: cf"
@@ -370,47 +400,57 @@ msgid ""
 "[status|out] Shows whether this bot is signed in to YouTube, or signs it "
 "out. To sign in, send li yt"
 msgstr ""
+"[status|out] Megmutatja, hogy a bot be van-e jelentkezve a YouTube-ba, "
+"vagy kijelentkezteti. A bejelentkezéshez küldje: li yt"
 
 # | msgid "This user is not banned"
 #: bot/commands/admin_commands.py:466 bot/modules/auth_portal.py:283
 #: bot/modules/auth_portal.py:318
-#, fuzzy
 msgid "The YouTube service is not enabled."
-msgstr "Ez a felhasználó nincs tiltva"
+msgstr "A YouTube szolgáltatás nincs engedélyezve."
 
 #: bot/commands/admin_commands.py:473
 msgid "This bot is signed in to YouTube."
-msgstr ""
+msgstr "Ez a bot be van jelentkezve a YouTube-ba."
 
 #: bot/commands/admin_commands.py:476
 msgid ""
 "Google signed this bot out of YouTube. To sign in again, send this "
 "command: li yt"
 msgstr ""
+"A Google kijelentkeztette ezt a botot a YouTube-ból. Az újbóli "
+"bejelentkezéshez küldje ezt a parancsot: li yt"
 
 #: bot/commands/admin_commands.py:479
 msgid "This bot is not signed in to YouTube. To sign in, send this command: li yt"
 msgstr ""
+"Ez a bot nincs bejelentkezve a YouTube-ba. A bejelentkezéshez küldje ezt "
+"a parancsot: li yt"
 
 #: bot/commands/admin_commands.py:484
 msgid "This bot has been signed out of YouTube."
-msgstr ""
+msgstr "Ez a bot kijelentkezett a YouTube-ból."
 
 #: bot/commands/admin_commands.py:488
 msgid ""
 "YouTube is connected through the account portal now. Send this command: "
 "li yt"
 msgstr ""
+"A YouTube most már a fiókportálon keresztül kapcsolódik. Küldje ezt a "
+"parancsot: li yt"
 
 #: bot/commands/admin_commands.py:500
 msgid ""
 "[link|rotate|off] Shows the account portal's status, mints a new link, "
 "revokes every existing link, or stops the portal"
 msgstr ""
+"[link|rotate|off] Megmutatja a fiókportál állapotát, új hivatkozást hoz "
+"létre, visszavonja az összes meglévő hivatkozást, vagy leállítja a "
+"portált"
 
 #: bot/commands/admin_commands.py:507 bot/commands/admin_commands.py:563
 msgid "The account portal is not running."
-msgstr ""
+msgstr "A fiókportál nem fut."
 
 #: bot/commands/admin_commands.py:513
 #, python-format
@@ -418,20 +458,22 @@ msgid ""
 "The portal is listening on %(host)s port %(port)s with %(count)s live "
 "links."
 msgstr ""
+"A portál a(z) %(host)s címen, a(z) %(port)s porton figyel, élő "
+"hivatkozások: %(count)s."
 
 #: bot/commands/admin_commands.py:528
 #, python-format
 msgid "That address came from %(source)s."
-msgstr ""
+msgstr "Ez a cím innen származik: %(source)s."
 
 #: bot/commands/admin_commands.py:540
 #, python-format
 msgid "Revoked %(count)s links. Send ap link for a new one."
-msgstr ""
+msgstr "Visszavont hivatkozások: %(count)s. Újért küldje: ap link."
 
 #: bot/commands/admin_commands.py:545
 msgid "The portal has been stopped."
-msgstr ""
+msgstr "A portál leállt."
 
 # | msgid "" "SERVICE Disconnects a streaming account and deletes its saved
 # | sign-in " "(yt, sp, nf, dp, am, az, pp, tb)"
@@ -446,12 +488,12 @@ msgstr ""
 #: bot/commands/admin_commands.py:571
 #, python-format
 msgid "%(service)s is not connected."
-msgstr ""
+msgstr "%(service)s nincs összekapcsolva."
 
 #: bot/commands/admin_commands.py:577
 #, python-format
 msgid "%(service)s has been disconnected and its saved sign-in deleted."
-msgstr ""
+msgstr "%(service)s kapcsolata megszűnt, és a mentett bejelentkezése törölve lett."
 
 #: bot/commands/command.py:30
 msgid "help text not found"
@@ -461,12 +503,17 @@ msgstr "nem található segédszöveg"
 #, python-brace-format
 msgid "The YouTube sign-in could not be renewed, so {request} was not played."
 msgstr ""
+"A YouTube-bejelentkezést nem sikerült megújítani, ezért a(z) {request} "
+"nem lett lejátszva."
 
 #: bot/commands/command.py:102
 msgid ""
 "YouTube refused to play this without a signed-in account, which is usual "
 "on a server. To connect one, send this command: li yt"
 msgstr ""
+"A YouTube bejelentkezett fiók nélkül nem volt hajlandó lejátszani ezt, "
+"ami szerveren megszokott. Fiók csatlakoztatásához küldje ezt a parancsot:"
+" li yt"
 
 #: bot/commands/command.py:128
 #, python-brace-format
@@ -474,12 +521,16 @@ msgid ""
 "Renewing the YouTube sign-in. {request} will start playing when it "
 "finishes, usually within a minute."
 msgstr ""
+"A YouTube-bejelentkezés megújítása folyamatban. A(z) {request} lejátszása"
+" ennek végeztével indul, általában egy percen belül."
 
 #: bot/commands/command.py:137 bot/modules/youtube_session_keeper.py:154
 msgid ""
 "Google signed StreamerBot out of YouTube. To sign in again, send this "
 "command: li yt"
 msgstr ""
+"A Google kijelentkeztette a StreamerBotot a YouTube-ból. Az újbóli "
+"bejelentkezéshez küldje ezt a parancsot: li yt"
 
 #: bot/commands/config_menu.py:155
 msgid "on"
@@ -954,55 +1005,54 @@ msgstr ""
 # | msgid "Loaded {count} tracks"
 # | msgid "Playing {name}, {count} tracks"
 #: bot/commands/playlist_choice.py:80
-#, fuzzy, python-brace-format
+#, python-brace-format
 msgid "The playlist {name} has {count} videos."
-msgstr "{count} szám betöltve"
+msgstr "A(z) {name} lejátszási listában {count} videó van."
 
 #: bot/commands/playlist_choice.py:83
 msgid "For the whole playlist as one zip file, send: 1"
-msgstr ""
+msgstr "A teljes lejátszási listához egyetlen zip-fájlban küldje: 1"
 
 #: bot/commands/playlist_choice.py:84
 msgid "To pick one video from a list, send: 2"
-msgstr ""
+msgstr "Ha egy videót szeretne választani egy listából, küldje: 2"
 
 #: bot/commands/playlist_choice.py:85
 msgid "To cancel, send: 0"
-msgstr ""
+msgstr "A megszakításhoz küldje: 0"
 
 #: bot/commands/playlist_choice.py:92
 #, python-brace-format
 msgid "Page {page} of {pages} of {name}, {total} videos. Send a number:"
 msgstr ""
+"{name}, {page}. oldal a(z) {pages} oldalból, {total} videó. Küldjön egy "
+"számot:"
 
 #: bot/commands/playlist_choice.py:100
 #, python-brace-format
 msgid "Next videos, {first} to {last}"
-msgstr ""
+msgstr "Következő videók, {first}–{last}"
 
 #: bot/commands/playlist_choice.py:104
 #, python-brace-format
 msgid "Back to videos 1 to {last}"
-msgstr ""
+msgstr "Vissza az 1–{last}. videókhoz"
 
 # | msgid "Downloading playlist: {}"
 #: bot/commands/playlist_choice.py:107
-#, fuzzy
 msgid "Download the whole playlist"
-msgstr "Lejátszási lista letöltése: {}"
+msgstr "A teljes lejátszási lista letöltése"
 
 # | msgid "Cache cleared"
 # | msgid "Cancelled."
 #: bot/commands/playlist_choice.py:108
-#, fuzzy
 msgid "Cancel"
-msgstr "Gyorsítótár törölve"
+msgstr "Mégse"
 
 # | msgid "Cache cleared"
 #: bot/commands/playlist_choice.py:119 bot/modules/auth_portal.py:647
-#, fuzzy
 msgid "Cancelled."
-msgstr "Gyorsítótár törölve"
+msgstr "Megszakítva."
 
 #: bot/commands/playlist_choice.py:141
 #, python-brace-format
@@ -1010,6 +1060,8 @@ msgid ""
 "There is no {number} on this page. Send a number from 1 to {last}, or to "
 "cancel, send: 0"
 msgstr ""
+"Ezen az oldalon nincs {number}. Küldjön egy számot 1 és {last} között, "
+"vagy a megszakításhoz küldje: 0"
 
 #: bot/commands/podcast_commands.py:69
 msgid "That podcast could not be read. Try again later."
@@ -1338,7 +1390,7 @@ msgstr "URL / lejátszási lista betöltése..."
 
 #: bot/commands/user_commands.py:130
 msgid "Your link"
-msgstr ""
+msgstr "Az Ön hivatkozása"
 
 #: bot/commands/user_commands.py:135
 msgid "Incorrect protocol"
@@ -1354,9 +1406,9 @@ msgstr "Az útvonal nem található"
 
 # | msgid "{nickname} requested playing from a URL"
 #: bot/commands/user_commands.py:162
-#, fuzzy, python-brace-format
+#, python-brace-format
 msgid "{nickname} requested playing from a URL ({count} tracks)"
-msgstr "{nickname} kért egy lejátszást egy URL-ről"
+msgstr "{nickname} lejátszást kért egy URL-ről ({count} szám)"
 
 #: bot/commands/user_commands.py:169
 #, python-brace-format
@@ -1413,6 +1465,8 @@ msgid ""
 "[NUMBER|?] Plays next track, jumps to track number, or shows current "
 "position with ?"
 msgstr ""
+"[NUMBER|?] Lejátssza a következő számot, a megadott sorszámra ugrik, vagy"
+" ? esetén megmutatja az aktuális helyet"
 
 #: bot/commands/user_commands.py:279 bot/commands/user_commands.py:535
 msgid "Incorrect number"
@@ -1501,25 +1555,21 @@ msgstr ""
 
 # | msgid "" "Unknown service.\n" "{}"
 #: bot/commands/user_commands.py:374
-#, fuzzy, python-brace-format
+#, python-brace-format
 msgid "Unknown service.{newline}{help}"
-msgstr "Ismeretlen szolgáltatás"
+msgstr "Ismeretlen szolgáltatás.{newline}{help}"
 
 # | msgid "" "Current service: {}\n" "Warning: {}"
 #: bot/commands/user_commands.py:385
-#, fuzzy, python-brace-format
+#, python-brace-format
 msgid "Current service: {service}{newline}{status}"
-msgstr ""
-"Jelenlegi szolgáltatás: {}\n"
-"Figyelmeztetés: {}"
+msgstr "Jelenlegi szolgáltatás: {service}{newline}{status}"
 
 # | msgid "" "Error: {error}\n" "{service} is disabled"
 #: bot/commands/user_commands.py:394
-#, fuzzy, python-brace-format
+#, python-brace-format
 msgid "Error: {error}{newline}{service} is disabled"
-msgstr ""
-"Hiba: {error}\n"
-"A {service} le van tiltva"
+msgstr "Hiba: {error}{newline}{service} le van tiltva"
 
 #: bot/commands/user_commands.py:401
 #, python-brace-format
@@ -1529,7 +1579,7 @@ msgstr "A {service} le van tiltva"
 #: bot/commands/user_commands.py:453
 #, python-format
 msgid "%(service)s is switched off in this bot's configuration."
-msgstr ""
+msgstr "%(service)s ki van kapcsolva a bot beállításaiban."
 
 #: bot/commands/user_commands.py:460
 #, python-format
@@ -1537,54 +1587,52 @@ msgid ""
 "%(service)s is not connected. To connect an account, send this command: "
 "li %(code)s"
 msgstr ""
+"%(service)s nincs összekapcsolva. Fiók csatlakoztatásához küldje ezt a "
+"parancsot: li %(code)s"
 
 #: bot/commands/user_commands.py:465
 #, python-format
 msgid "%(service)s is connected and ready."
-msgstr ""
+msgstr "%(service)s csatlakoztatva van és készen áll."
 
 #: bot/commands/user_commands.py:478
 #, python-format
 msgid "unavailable: %(reason)s"
-msgstr ""
+msgstr "nem érhető el: %(reason)s"
 
 # | msgid "Saves bot's configuration"
 #: bot/commands/user_commands.py:480
-#, fuzzy
 msgid "switched off in this bot's configuration"
-msgstr "A bot beállításainak mentése"
+msgstr "ki van kapcsolva a bot beállításaiban"
 
 #: bot/commands/user_commands.py:483
 #, python-format
 msgid "not connected, send li %(code)s"
-msgstr ""
+msgstr "nincs összekapcsolva, küldje: li %(code)s"
 
 #: bot/commands/user_commands.py:488
 msgid "ready"
-msgstr ""
+msgstr "kész"
 
 # | msgid "" "Current service: {current_service}\n" "Available:\n"
 # | "{available_services}\n" "send sv SERVICE h for additional help"
 #: bot/commands/user_commands.py:499
-#, fuzzy, python-brace-format
+#, python-brace-format
 msgid ""
 "Current service: "
 "{current_service}{newline}Available:{newline}{available_services}{newline}send"
 " sv SERVICE h for additional help"
 msgstr ""
-"Jelenlegi szolgáltatás: {current_service}\n"
-"Elérhető szolgáltatások: {available_services}\n"
-"Add ki az \"sv h\" parancsot egy adott szolgáltatással kapcsolatos "
-"további segítségért"
+"Jelenlegi szolgáltatás: "
+"{current_service}{newline}Elérhetők:{newline}{available_services}{newline}további"
+" súgóért küldje: sv SERVICE h"
 
 # | msgid "NUMBER Selects track by number from the list of current results"
 #: bot/commands/user_commands.py:512
-#, fuzzy
 msgid "[NUMBER|?] Selects track by number, or shows current position with ?"
 msgstr ""
-"NUMBER Selects track by number from the list of current resultsSZÁM "
-"Tartalom kiválasztása annak száma szerint az aktuális eredmények "
-"listájából"
+"[NUMBER|?] Sorszám alapján kiválaszt egy számot, vagy ? esetén megmutatja"
+" az aktuális helyet"
 
 # | msgid "" "SPEED Sets playback speed from bot.25 to 4. If no speed is
 # given,
@@ -1692,7 +1740,6 @@ msgstr "Nem sikerült csatlakozni a csatornához: {}"
 # | uploads to" " the channel. Without a link while Apple Music is playing,
 # | downloads the " "album or playlist being played."
 #: bot/commands/user_commands.py:812
-#, fuzzy
 msgid ""
 "Downloads all tracks from a playlist/album URL, zips them, and uploads to"
 " the channel. For a YouTube playlist it asks first whether you want the "
@@ -1700,8 +1747,11 @@ msgid ""
 "Apple Music or a YouTube playlist is playing, it uses the album or "
 "playlist being played."
 msgstr ""
-"Letölti a lejátszási lista/album URL összes számát, ZIP-be csomagolja és "
-"feltölti a csatornára."
+"Letölti egy lejátszási lista vagy album URL-jének összes számát, zip-be "
+"tömöríti és feltölti a csatornára. YouTube lejátszási listánál előbb "
+"megkérdezi, hogy a teljes listát kéri, vagy egy videót egy számozott "
+"listából. Hivatkozás nélkül, miközben Apple Music vagy egy YouTube "
+"lejátszási lista szól, az éppen szóló albumot vagy listát használja."
 
 #: bot/commands/user_commands.py:823
 #, python-brace-format
@@ -1715,11 +1765,12 @@ msgstr "Kérlek küldd el a lejátszási lista vagy album linkjét."
 # | msgid "This command is for playlists and albums. For single tracks, use
 # | 'dl'."
 #: bot/commands/user_commands.py:858
-#, fuzzy
 msgid ""
 "This command is for playlists, albums, and channels. For single tracks, "
 "use 'dl'."
-msgstr "Ez a parancs lejátszási listákhoz van. Egyetlen számhoz használd a 'dl'-t."
+msgstr ""
+"Ez a parancs lejátszási listákhoz, albumokhoz és csatornákhoz való. Egyes"
+" számokhoz használja a 'dl' parancsot."
 
 #: bot/commands/user_commands.py:1002
 msgid ""
@@ -1793,6 +1844,11 @@ msgid ""
 "NUMBER' picks one. Use 'sr on' or 'sr off' to set explicitly, 'slc' for "
 "how many results. Save permanently with 'sc'"
 msgstr ""
+"Be- vagy kikapcsolja a keresési találatok módot. Ha be van kapcsolva, a "
+"'p QUERY' felolvas egy számozott listát, és nem játszik le semmit, így "
+"ami szól, tovább szól, amíg az 'sl NUMBER' ki nem választ egyet. "
+"Kifejezett beállításhoz használja az 'sr on' vagy 'sr off' parancsot, a "
+"találatok számához az 'slc' parancsot. Végleges mentéshez küldje: 'sc'"
 
 #: bot/commands/user_commands.py:1172 bot/commands/user_commands.py:1182
 msgid "Search results mode: ON"
@@ -1816,29 +1872,28 @@ msgstr "Nincs elérhető keresési eredmény. Először keressen 'p KERESÉS' pa
 
 # | msgid "Loaded {count} tracks"
 #: bot/commands/user_commands.py:1248
-#, fuzzy, python-brace-format
+#, python-brace-format
 msgid "Playing {name}, {count} tracks"
-msgstr "{count} szám betöltve"
+msgstr "{name} lejátszása, {count} szám"
 
 # | msgid "" "NUMBER Sets how many results are shown when search results mode
 # is
 # | " "active. Without a number shows current count. Resets to 5 on restart"
 # | " "active. Without a number shows current count. Resets to 1 on restart"
 #: bot/commands/user_commands.py:1259
-#, fuzzy
 msgid ""
 "NUMBER Sets how many results are shown when search results mode is "
 "active, or 0 for as many as the service returns. Without a number shows "
 "current count. Resets on restart"
 msgstr ""
-"SZÁM Meghatározza a megjelenített eredmények számát keresési módban. Szám"
-" nélkül az aktuális értéket mutatja. Újraindításkor 5-re áll vissza"
+"NUMBER Beállítja, hány találat jelenjen meg, amikor a keresési találatok "
+"mód be van kapcsolva; 0 esetén annyi, amennyit a szolgáltatás visszaad. "
+"Szám nélkül a jelenlegi értéket mutatja. Újraindításkor visszaáll"
 
 # | msgid "Search results count: {count}"
 #: bot/commands/user_commands.py:1267
-#, fuzzy
 msgid "Search results count: as many as the service returns"
-msgstr "Eredmények száma: {count}"
+msgstr "Keresési találatok száma: annyi, amennyit a szolgáltatás visszaad"
 
 #: bot/commands/user_commands.py:1269
 #, python-brace-format
@@ -1847,13 +1902,14 @@ msgstr "Eredmények száma: {count}"
 
 # | msgid "Invalid count. Please enter a number greater than 0"
 #: bot/commands/user_commands.py:1280
-#, fuzzy
 msgid "Invalid count. Please enter 0 or a number greater than 0"
-msgstr "Érvénytelen szám. Adj meg 0-nál nagyobb számot"
+msgstr "Érvénytelen szám. Adjon meg 0-t vagy 0-nál nagyobb számot"
 
 #: bot/commands/user_commands.py:1286
 msgid "Search results now show as many results as the service returns"
 msgstr ""
+"A keresési találatok mostantól annyi találatot mutatnak, amennyit a "
+"szolgáltatás visszaad"
 
 #: bot/commands/user_commands.py:1289
 #, python-brace-format
@@ -2043,10 +2099,12 @@ msgid ""
 "and Amazon Music cannot be connected. The reason is in this bot's log "
 "file."
 msgstr ""
+"A fiókportál nem fut, ezért a Netflix, a Disney Plus, az Apple Music és "
+"az Amazon Music nem kapcsolható be. Az ok a bot naplófájljában található."
 
 #: bot/commands/user_commands.py:1753
 msgid "Your streaming accounts:"
-msgstr ""
+msgstr "Az Ön streamingfiókjai:"
 
 #: bot/commands/user_commands.py:1761
 #, python-format
@@ -2056,17 +2114,17 @@ msgstr "%(service)s: fiók nélkül is lejátszik"
 #: bot/commands/user_commands.py:1769
 #, python-format
 msgid "%(service)s: connected"
-msgstr ""
+msgstr "%(service)s: csatlakoztatva"
 
 #: bot/commands/user_commands.py:1774
 #, python-format
 msgid "%(service)s: signed out, connect again"
-msgstr ""
+msgstr "%(service)s: kijelentkezett, csatlakoztassa újra"
 
 #: bot/commands/user_commands.py:1779
 #, python-format
 msgid "%(service)s: not connected"
-msgstr ""
+msgstr "%(service)s: nincs csatlakoztatva"
 
 #: bot/commands/user_commands.py:1795
 #, python-format
@@ -2105,7 +2163,7 @@ msgstr ""
 #: bot/commands/user_commands.py:1846
 #, python-format
 msgid "%(service)s sign-in could not start: %(error)s"
-msgstr ""
+msgstr "%(service)s bejelentkezése nem tudott elindulni: %(error)s"
 
 #. translators: "The next message" and "the message after that"
 #. are separate chat messages, holding the link and the code.
@@ -2133,69 +2191,75 @@ msgid ""
 "[on|off|ask] Plays films and shows with audio description when it is "
 "available. With no argument, says what the current setting is"
 msgstr ""
+"[on|off|ask] Filmeket és sorozatokat hangalámondással játszik le, ha "
+"elérhető. Argumentum nélkül megmondja az aktuális beállítást"
 
 #: bot/commands/user_commands.py:1892
 msgid "Audio description is not available in this bot."
-msgstr ""
+msgstr "A hangalámondás ebben a botban nem érhető el."
 
 #: bot/commands/user_commands.py:1900
 msgid ""
 "Audio description is on. Films play with the description when there is "
 "one."
-msgstr ""
+msgstr "A hangalámondás be van kapcsolva. A filmek a leírással szólnak, ha van."
 
 #: bot/commands/user_commands.py:1903
 msgid "Audio description is off. Send da on to turn it on."
-msgstr ""
+msgstr "A hangalámondás ki van kapcsolva. A bekapcsoláshoz küldje: da on."
 
 #: bot/commands/user_commands.py:1906
 msgid "The bot asks each time. Send da on or da off to stop being asked."
 msgstr ""
+"A bot minden alkalommal megkérdezi. Ha nem szeretne több kérdést, küldje:"
+" da on vagy da off."
 
 #: bot/commands/user_commands.py:1920
 msgid "Audio description is on. You will not be asked again."
-msgstr ""
+msgstr "A hangalámondás be van kapcsolva. Többé nem kérdezzük meg."
 
 #: bot/commands/user_commands.py:1923
 msgid "Audio description is off. You will not be asked again."
-msgstr ""
+msgstr "A hangalámondás ki van kapcsolva. Többé nem kérdezzük meg."
 
 #: bot/commands/user_commands.py:1926
 msgid "The bot will ask each time."
-msgstr ""
+msgstr "A bot minden alkalommal kérdezni fog."
 
 #: bot/commands/user_commands.py:1940
 msgid ""
 "[number] Lists the profiles for the current service, or selects one by "
 "number"
 msgstr ""
+"[number] Felsorolja a jelenlegi szolgáltatás profiljait, vagy sorszám "
+"alapján kiválaszt egyet"
 
 #: bot/commands/user_commands.py:1947
 #, python-format
 msgid "%(service)s does not have profiles."
-msgstr ""
+msgstr "%(service)s nem rendelkezik profilokkal."
 
 #: bot/commands/user_commands.py:1953
 msgid "No profiles were found. The account may not be connected yet."
-msgstr ""
+msgstr "Nem található profil. Lehet, hogy a fiók még nincs csatlakoztatva."
 
 #: bot/commands/user_commands.py:1959
 #, python-format
 msgid "%(count)s profiles:"
-msgstr ""
+msgstr "%(count)s profil:"
 
 #: bot/commands/user_commands.py:1963
 msgid "Send pf and a number to choose one."
-msgstr ""
+msgstr "A választáshoz küldje a pf parancsot és egy számot."
 
 #: bot/commands/user_commands.py:1975
 #, python-format
 msgid "Now using the profile %(name)s."
-msgstr ""
+msgstr "Mostantól a(z) %(name)s profil van használatban."
 
 #: bot/commands/user_commands.py:1978
 msgid "That profile could not be selected."
-msgstr ""
+msgstr "Ezt a profilt nem sikerült kiválasztani."
 
 #: bot/connectors/tt_player_connector.py:36
 #, python-brace-format
@@ -2219,15 +2283,15 @@ msgstr "Szüneteltetve: {stream_url}"
 
 #: bot/modules/apple_music_downloader.py:75
 msgid "Apple Music is not available on this bot."
-msgstr ""
+msgstr "Az Apple Music ebben a botban nem érhető el."
 
 #: bot/modules/apple_music_downloader.py:90
 msgid "What is playing is not an album or playlist that can be downloaded."
-msgstr ""
+msgstr "Ami most szól, nem letölthető album vagy lejátszási lista."
 
 #: bot/modules/apple_music_downloader.py:93
 msgid "the playlist"
-msgstr ""
+msgstr "a lejátszási lista"
 
 #: bot/modules/apple_music_downloader.py:95
 #, python-brace-format
@@ -2235,6 +2299,8 @@ msgid ""
 "Downloading the playlist {name}. It will be uploaded to the channel as "
 "one zip file when it is ready, which can take several minutes."
 msgstr ""
+"A(z) {name} lejátszási lista letöltése folyamatban. Ha kész, egyetlen "
+"zip-fájlként kerül fel a csatornára, ami több percig is tarthat."
 
 #: bot/modules/apple_music_downloader.py:101
 #, python-brace-format
@@ -2242,92 +2308,98 @@ msgid ""
 "Downloading the album {name}. It will be uploaded to the channel as one "
 "zip file when it is ready, which can take several minutes."
 msgstr ""
+"A(z) {name} album letöltése folyamatban. Ha kész, egyetlen zip-fájlként "
+"kerül fel a csatornára, ami több percig is tarthat."
 
 #: bot/modules/apple_music_downloader.py:107
 msgid "Apple Music is not playing a song right now."
-msgstr ""
+msgstr "Az Apple Music most nem játszik dalt."
 
 #: bot/modules/apple_music_downloader.py:112
 msgid "This song is not in the Apple Music catalog, so it cannot be downloaded."
-msgstr ""
+msgstr "Ez a dal nincs az Apple Music katalógusában, ezért nem tölthető le."
 
 #: bot/modules/apple_music_downloader.py:121
 msgid "To download the whole album or playlist instead, send dlp."
-msgstr ""
+msgstr "Ha inkább a teljes albumot vagy lejátszási listát töltené le, küldje: dlp."
 
 #: bot/modules/apple_music_downloader.py:126
 msgid ""
 "An Apple Music download is already running. Please send this again when "
 "it has finished."
-msgstr ""
+msgstr "Már fut egy Apple Music-letöltés. Kérjük, küldje el újra, ha befejeződött."
 
 #: bot/modules/apple_music_downloader.py:157
 #, python-brace-format
 msgid "{name} is in the channel: one zip file with {count} tracks."
-msgstr ""
+msgstr "{name} a csatornán van: egy zip-fájl, {count} számmal."
 
 #: bot/modules/apple_music_downloader.py:160
 #, python-brace-format
 msgid "{name} is in the channel."
-msgstr ""
+msgstr "{name} a csatornán van."
 
 #: bot/modules/apple_music_downloader.py:164
 #, python-brace-format
 msgid "Could not download {name}: {reason}"
-msgstr ""
+msgstr "Nem sikerült letölteni: {name}: {reason}"
 
 #: bot/modules/apple_music_downloader.py:173
 #: bot/modules/playlist_uploader.py:145 bot/modules/uploader.py:112
 #, python-brace-format
 msgid "Could not download {name}."
-msgstr ""
+msgstr "Nem sikerült letölteni: {name}."
 
 #: bot/modules/apple_music_downloader.py:187
 msgid "Apple Music is not signed in on this bot. Send li am to connect it."
 msgstr ""
+"Az Apple Music nincs bejelentkezve ebben a botban. A csatlakoztatáshoz "
+"küldje: li am."
 
 #: bot/modules/audio_description.py:129
 #, python-format
 msgid "%(title)s has audio description. Play it with the description?"
-msgstr ""
+msgstr "A(z) %(title)s hangalámondással is elérhető. Lejátsszuk a leírással?"
 
 #: bot/modules/audio_description.py:132
 msgid "This has audio description. Play it with the description?"
-msgstr ""
+msgstr "Ehhez hangalámondás tartozik. Lejátsszuk a leírással?"
 
 #: bot/modules/audio_description.py:136
 msgid "1. Yes. 2. No. 3. Yes, and remember. 4. No, and remember."
-msgstr ""
+msgstr "1. Igen. 2. Nem. 3. Igen, és jegyezd meg. 4. Nem, és jegyezd meg."
 
 #: bot/modules/auth_portal.py:362
 msgid "Enter the Google account email address"
-msgstr ""
+msgstr "Adja meg a Google-fiók e-mail-címét"
 
 #: bot/modules/auth_portal.py:364
 #, python-format
 msgid "Enter your %(service)s email address or username"
-msgstr ""
+msgstr "Adja meg %(service)s e-mail-címét vagy felhasználónevét"
 
 #: bot/modules/auth_portal.py:369
 msgid "Enter the Google account password"
-msgstr ""
+msgstr "Adja meg a Google-fiók jelszavát"
 
 #: bot/modules/auth_portal.py:371
 #, python-format
 msgid "Enter your %(service)s password"
-msgstr ""
+msgstr "Adja meg %(service)s jelszavát"
 
 #: bot/modules/auth_portal.py:413
 msgid "Enter the verification code"
-msgstr ""
+msgstr "Adja meg az ellenőrző kódot"
 
 #: bot/modules/auth_portal.py:630
 msgid "Signing in to this service is not available yet."
-msgstr ""
+msgstr "Ebbe a szolgáltatásba még nem lehet bejelentkezni."
 
 #: bot/modules/playlist_uploader.py:88 bot/modules/uploader.py:92
 msgid "Renewing the YouTube sign-in. The download continues when it finishes."
 msgstr ""
+"A YouTube-bejelentkezés megújítása folyamatban. A letöltés ennek "
+"végeztével folytatódik."
 
 #: bot/modules/playlist_uploader.py:93
 #, python-brace-format
@@ -2335,34 +2407,38 @@ msgid ""
 "Downloading the playlist {name}. Tracks: {count}. It will be uploaded to "
 "the channel as one zip file when it is ready."
 msgstr ""
+"A(z) {name} lejátszási lista letöltése folyamatban. Számok: {count}. Ha "
+"kész, egyetlen zip-fájlként kerül fel a csatornára."
 
 #: bot/modules/playlist_uploader.py:104
 #, python-brace-format
 msgid "Track {number} of {total}, {percent} percent done: {title}"
-msgstr ""
+msgstr "{number}. szám a(z) {total} közül, {percent} százalék kész: {title}"
 
 #: bot/modules/playlist_uploader.py:125
 #, python-brace-format
 msgid "No track in {name} could be downloaded. Tracks tried: {count}."
 msgstr ""
+"A(z) {name} egyetlen számát sem sikerült letölteni. Próbált számok: "
+"{count}."
 
 #: bot/modules/playlist_uploader.py:129
 #, python-brace-format
 msgid "Uploading {name} to the channel."
-msgstr ""
+msgstr "{name} feltöltése a csatornára."
 
 #: bot/modules/playlist_uploader.py:137
 #, python-brace-format
 msgid "{name} is in the channel as one zip file. Tracks in it: {count}."
-msgstr ""
+msgstr "{name} egyetlen zip-fájlként a csatornán van. Számok benne: {count}."
 
 # | msgid "Live streams cannot be downloaded"
 # | msgid "Spotify tracks cannot be downloaded."
 # | msgid "{count} could not be downloaded."
 #: bot/modules/playlist_uploader.py:140
-#, fuzzy, python-brace-format
+#, python-brace-format
 msgid "Tracks that could not be downloaded: {count}."
-msgstr "Élő adásokat nem lehet letölteni"
+msgstr "Nem letölthető számok: {count}."
 
 #: bot/modules/podcast_subscriptions.py:196
 #, python-brace-format
@@ -2387,262 +2463,275 @@ msgstr "A podcast megnyitásához küldd: ps {number}"
 
 #: bot/modules/portal_pages.py:45
 msgid "dash"
-msgstr ""
+msgstr "kötőjel"
 
 #: bot/modules/portal_pages.py:46
 msgid "underscore"
-msgstr ""
+msgstr "aláhúzás"
 
 #: bot/modules/portal_pages.py:47
 msgid "dot"
-msgstr ""
+msgstr "pont"
 
 #: bot/modules/portal_pages.py:48
 msgid "space"
-msgstr ""
+msgstr "szóköz"
 
 # | msgid "Error: {}"
 #: bot/modules/portal_pages.py:73 bot/modules/portal_pages.py:145
-#, fuzzy
 msgid "Error:"
-msgstr "Hiba: {}"
+msgstr "Hiba:"
 
 #: bot/modules/portal_pages.py:118
 msgid "There is a problem"
-msgstr ""
+msgstr "Probléma van"
 
 #: bot/modules/portal_pages.py:158
 msgid "Back to your accounts"
-msgstr ""
+msgstr "Vissza a fiókjaihoz"
 
 #: bot/modules/portal_pages.py:174 bot/modules/portal_pages.py:535
 #: bot/modules/portal_pages.py:563 bot/modules/portal_pages.py:627
 #: bot/modules/portal_pages.py:683 bot/modules/portal_pages.py:749
 #, python-format
 msgid "Import a %(service)s session"
-msgstr ""
+msgstr "%(service)s-munkamenet importálása"
 
 #: bot/modules/portal_pages.py:181 bot/modules/portal_pages.py:209
 #: bot/modules/portal_pages.py:216 bot/modules/portal_pages.py:257
 #, python-format
 msgid "Connect %(service)s"
-msgstr ""
+msgstr "%(service)s csatlakoztatása"
 
 #: bot/modules/portal_pages.py:197
 msgid "Connected"
-msgstr ""
+msgstr "Csatlakoztatva"
 
 #: bot/modules/portal_pages.py:202 bot/modules/portal_pages.py:787
 #, python-format
 msgid "Disconnect %(service)s"
-msgstr ""
+msgstr "%(service)s leválasztása"
 
 #: bot/modules/portal_pages.py:206
 msgid "Expired. Connect again to keep streaming."
-msgstr ""
+msgstr "Lejárt. Csatlakoztassa újra a közvetítés folytatásához."
 
 #: bot/modules/portal_pages.py:213
 msgid "Not connected"
-msgstr ""
+msgstr "Nincs csatlakoztatva"
 
 #: bot/modules/portal_pages.py:235
 msgid "Your streaming accounts"
-msgstr ""
+msgstr "Az Ön streamingfiókjai"
 
 #: bot/modules/portal_pages.py:236
 #, python-format
 msgid "%(connected)s of %(total)s services connected."
-msgstr ""
+msgstr "%(total)s szolgáltatásból %(connected)s csatlakoztatva."
 
 #: bot/modules/portal_pages.py:240
 #, python-format
 msgid "%(connected)s of %(total)s services connected"
-msgstr ""
+msgstr "%(total)s szolgáltatásból %(connected)s csatlakoztatva"
 
 #: bot/modules/portal_pages.py:259
 msgid "Go to"
-msgstr ""
+msgstr "Nyissa meg:"
 
 #: bot/modules/portal_pages.py:264
 msgid "(opens in a new tab)"
-msgstr ""
+msgstr "(új lapon nyílik meg)"
 
 #: bot/modules/portal_pages.py:265
 msgid "Enter the code below."
-msgstr ""
+msgstr "Írja be az alábbi kódot."
 
 #: bot/modules/portal_pages.py:266
 msgid "Come back here and select Check status."
-msgstr ""
+msgstr "Térjen vissza ide, és válassza az Állapot ellenőrzése lehetőséget."
 
 #: bot/modules/portal_pages.py:269
 msgid "Your device code"
-msgstr ""
+msgstr "Az eszközkódja"
 
 #: bot/modules/portal_pages.py:283
 msgid "Check status"
-msgstr ""
+msgstr "Állapot ellenőrzése"
 
 #: bot/modules/portal_pages.py:289
 #, python-format
 msgid "Connect %(service)s: enter your code"
-msgstr ""
+msgstr "%(service)s csatlakoztatása: írja be a kódot"
 
 #: bot/modules/portal_pages.py:308
 msgid "Google account email address"
-msgstr ""
+msgstr "A Google-fiók e-mail-címe"
 
 #: bot/modules/portal_pages.py:309
 msgid "The Google account made for StreamerBot, not your personal one."
-msgstr ""
+msgstr "A StreamerBot számára létrehozott Google-fiók, nem a személyes fiókja."
 
 #: bot/modules/portal_pages.py:310
 msgid "Google account password"
-msgstr ""
+msgstr "A Google-fiók jelszava"
 
 #: bot/modules/portal_pages.py:312
 #, python-format
 msgid "%(service)s email address or username"
-msgstr ""
+msgstr "%(service)s e-mail-cím vagy felhasználónév"
 
 #: bot/modules/portal_pages.py:313
 #, python-format
 msgid "The address you use to sign in to %(service)s."
-msgstr ""
+msgstr "A cím, amellyel a(z) %(service)s szolgáltatásba bejelentkezik."
 
 #: bot/modules/portal_pages.py:314
 #, python-format
 msgid "%(service)s password"
-msgstr ""
+msgstr "%(service)s jelszó"
 
 #: bot/modules/portal_pages.py:333 bot/modules/portal_pages.py:361
 #: bot/modules/portal_pages.py:366
 #, python-format
 msgid "Sign in to %(service)s"
-msgstr ""
+msgstr "Bejelentkezés: %(service)s"
 
 #: bot/modules/portal_pages.py:363
 msgid "Cancel and go back"
-msgstr ""
+msgstr "Mégse, és vissza"
 
 #: bot/modules/portal_pages.py:396
 #, python-format
 msgid "Signing in as %(username)s."
-msgstr ""
+msgstr "Bejelentkezés mint %(username)s."
 
 #: bot/modules/portal_pages.py:402 bot/modules/portal_pages.py:427
 #, python-format
 msgid "Enter your %(service)s verification code"
-msgstr ""
+msgstr "Adja meg a(z) %(service)s ellenőrző kódját"
 
 #: bot/modules/portal_pages.py:410
 msgid "Verification code"
-msgstr ""
+msgstr "Ellenőrző kód"
 
 #: bot/modules/portal_pages.py:414
 msgid "Type or paste the whole code into the box below. Spaces do not matter."
 msgstr ""
+"Írja be vagy illessze be a teljes kódot az alábbi mezőbe. A szóközök nem "
+"számítanak."
 
 #: bot/modules/portal_pages.py:419
 msgid "Verify code"
-msgstr ""
+msgstr "Kód ellenőrzése"
 
 #: bot/modules/portal_pages.py:422
 msgid "Send a new code"
-msgstr ""
+msgstr "Új kód küldése"
 
 #: bot/modules/portal_pages.py:424 bot/modules/portal_pages.py:444
 #: bot/modules/portal_pages.py:630
 msgid "Cancel this sign-in"
-msgstr ""
+msgstr "Bejelentkezés megszakítása"
 
 #: bot/modules/portal_pages.py:435 bot/modules/portal_pages.py:448
 #, python-format
 msgid "Signing in to %(service)s"
-msgstr ""
+msgstr "Bejelentkezés folyamatban: %(service)s"
 
 #: bot/modules/portal_pages.py:436
 msgid "Waiting for the service to confirm. This usually takes 10 to 30 seconds."
 msgstr ""
+"Várakozás a szolgáltatás megerősítésére. Ez általában 10–30 másodpercig "
+"tart."
 
 #: bot/modules/portal_pages.py:442
 msgid "Check again"
-msgstr ""
+msgstr "Újbóli ellenőrzés"
 
 #: bot/modules/portal_pages.py:468
 msgid "Google needs a verification code. Opening that page."
-msgstr ""
+msgstr "A Google ellenőrző kódot kér. Az oldal megnyitása."
 
 #: bot/modules/portal_pages.py:469
 msgid "Google needs you to approve the sign-in on your phone. Opening that page."
 msgstr ""
+"A Google azt kéri, hogy hagyja jóvá a bejelentkezést a telefonján. Az "
+"oldal megnyitása."
 
 #: bot/modules/portal_pages.py:470
 msgid "Signed in. Opening the confirmation page."
-msgstr ""
+msgstr "Bejelentkezve. A megerősítő oldal megnyitása."
 
 #: bot/modules/portal_pages.py:471
 msgid "The sign-in did not complete. Opening the page that says why."
-msgstr ""
+msgstr "A bejelentkezés nem fejeződött be. Az okot leíró oldal megnyitása."
 
 #: bot/modules/portal_pages.py:472
 msgid "This sign-in is no longer running. Going back to your accounts."
-msgstr ""
+msgstr "Ez a bejelentkezés már nem fut. Vissza a fiókjaihoz."
 
 #: bot/modules/portal_pages.py:473
 #, python-format
 msgid "Still signing in. %(seconds)s seconds so far."
-msgstr ""
+msgstr "A bejelentkezés még folyamatban. Eddig %(seconds)s másodperc."
 
 #: bot/modules/portal_pages.py:474
 #, python-format
 msgid "Still signing in. %(minutes)s minutes so far."
-msgstr ""
+msgstr "A bejelentkezés még folyamatban. Eddig %(minutes)s perc."
 
 #: bot/modules/portal_pages.py:475
 msgid ""
 "This link has expired or the sign-in was cancelled. To get a new link, "
 "send the li command to StreamerBot in TeamTalk."
 msgstr ""
+"Ez a hivatkozás lejárt, vagy a bejelentkezést megszakították. Új "
+"hivatkozásért küldje el a li parancsot a StreamerBotnak a TeamTalkban."
 
 #: bot/modules/portal_pages.py:476
 msgid "Lost contact with StreamerBot. Use Check again in a moment."
 msgstr ""
+"Megszakadt a kapcsolat a StreamerBottal. Egy pillanat múlva használja az "
+"Újbóli ellenőrzés gombot."
 
 #: bot/modules/portal_pages.py:477
 msgid ""
 "This is taking longer than expected. Use Check again, or Cancel this "
 "sign-in."
 msgstr ""
+"Ez a vártnál tovább tart. Használja az Újbóli ellenőrzés vagy a "
+"Bejelentkezés megszakítása gombot."
 
 #: bot/modules/portal_pages.py:518 bot/modules/portal_pages.py:522
 #, python-format
 msgid "%(service)s connected"
-msgstr ""
+msgstr "%(service)s csatlakoztatva"
 
 #: bot/modules/portal_pages.py:519
 #, python-format
 msgid "StreamerBot can now stream from your %(service)s account."
-msgstr ""
+msgstr "A StreamerBot mostantól közvetíthet az Ön %(service)s fiókjából."
 
 #: bot/modules/portal_pages.py:528
 msgid "Try again"
-msgstr ""
+msgstr "Újrapróbálkozás"
 
 #: bot/modules/portal_pages.py:542 bot/modules/portal_pages.py:548
 #, python-format
 msgid "%(service)s could not be connected"
-msgstr ""
+msgstr "%(service)s csatlakoztatása nem sikerült"
 
 #: bot/modules/portal_pages.py:561
 msgid ""
 "If Google refuses to sign in here, import a session from your own browser"
 " instead:"
 msgstr ""
+"Ha a Google itt nem engedi a bejelentkezést, importáljon helyette "
+"munkamenetet a saját böngészőjéből:"
 
 #: bot/modules/portal_pages.py:567
 msgid "Use a separate Google account"
-msgstr ""
+msgstr "Használjon külön Google-fiókot"
 
 #: bot/modules/portal_pages.py:568
 msgid ""
@@ -2650,42 +2739,50 @@ msgid ""
 "server. Make a Google account just for StreamerBot rather than using your"
 " personal one."
 msgstr ""
+"A Google korlátozhatja azt a fiókot, amely szerverről automatikusan "
+"játszik le videókat. Hozzon létre egy Google-fiókot kifejezetten a "
+"StreamerBot számára, ne a személyes fiókját használja."
 
 #: bot/modules/portal_pages.py:592 bot/modules/portal_pages.py:615
 msgid "Approve the sign-in on your phone"
-msgstr ""
+msgstr "Hagyja jóvá a bejelentkezést a telefonján"
 
 #: bot/modules/portal_pages.py:596
 msgid "Not approved yet. Approve the sign-in on your phone"
-msgstr ""
+msgstr "Még nincs jóváhagyva. Hagyja jóvá a bejelentkezést a telefonján"
 
 #: bot/modules/portal_pages.py:602
 msgid "Number to tap on your phone"
-msgstr ""
+msgstr "A telefonon megérintendő szám"
 
 #: bot/modules/portal_pages.py:610
 msgid "Google says:"
-msgstr ""
+msgstr "A Google üzenete:"
 
 #: bot/modules/portal_pages.py:616
 msgid "Google has not confirmed the approval yet."
-msgstr ""
+msgstr "A Google még nem erősítette meg a jóváhagyást."
 
 #: bot/modules/portal_pages.py:619
 msgid ""
 "Google sent a prompt to a phone or tablet signed in to this account. Tap "
 "Yes on it, then come back here."
 msgstr ""
+"A Google értesítést küldött egy telefonra vagy táblagépre, amely be van "
+"jelentkezve ebbe a fiókba. Koppintson rajta az Igen gombra, majd térjen "
+"vissza ide."
 
 #: bot/modules/portal_pages.py:620
 msgid ""
 "The prompt stops working after a few minutes. If it has gone, cancel and "
 "sign in again."
 msgstr ""
+"Az értesítés néhány perc múlva lejár. Ha eltűnt, szakítsa meg, és "
+"jelentkezzen be újra."
 
 #: bot/modules/portal_pages.py:624
 msgid "I have approved it on my phone"
-msgstr ""
+msgstr "Jóváhagytam a telefonomon"
 
 #: bot/modules/portal_pages.py:685
 msgid ""
@@ -2693,40 +2790,51 @@ msgid ""
 "cannot run a browser. You need a cookies.txt file from a browser that is "
 "signed in to YouTube."
 msgstr ""
+"Akkor használja, ha a Google nem engedi a bejelentkezést a botról, vagy "
+"ha a bot nem tud böngészőt futtatni. Egy cookies.txt fájlra lesz szüksége"
+" egy olyan böngészőből, amely be van jelentkezve a YouTube-ba."
 
 #: bot/modules/portal_pages.py:688
 msgid "I already have the file. Go to the import form."
-msgstr ""
+msgstr "Már megvan a fájl. Tovább az importálási űrlaphoz."
 
 #: bot/modules/portal_pages.py:693
 msgid "How to get a cookies.txt file"
-msgstr ""
+msgstr "Hogyan szerezhető cookies.txt fájl"
 
 #: bot/modules/portal_pages.py:694
 msgid "On an Android phone"
-msgstr ""
+msgstr "Android telefonon"
 
 #: bot/modules/portal_pages.py:695
 msgid ""
 "No computer is needed. This uses the Firefox browser, which can add a "
 "small cookie exporter on Android."
 msgstr ""
+"Nincs szükség számítógépre. A Firefox böngészőt használja, amely "
+"Androidon kis sütiexportálót tud hozzáadni."
 
 #: bot/modules/portal_pages.py:697
 msgid "Install Firefox from the Google Play Store, and open this page in Firefox."
 msgstr ""
+"Telepítse a Firefoxot a Google Play Store-ból, és nyissa meg ezt az "
+"oldalt a Firefoxban."
 
 #: bot/modules/portal_pages.py:698
 msgid ""
 "In Firefox, open the menu, choose Extensions, then find and add the "
 "extension called cookies.txt."
 msgstr ""
+"A Firefoxban nyissa meg a menüt, válassza a Kiegészítők pontot, majd "
+"keresse meg és adja hozzá a cookies.txt nevű kiegészítőt."
 
 #: bot/modules/portal_pages.py:699
 msgid ""
 "Go to youtube.com in Firefox and sign in with the Google account made for"
 " StreamerBot."
 msgstr ""
+"Nyissa meg a youtube.com oldalt a Firefoxban, és jelentkezzen be a "
+"StreamerBot számára létrehozott Google-fiókkal."
 
 #: bot/modules/portal_pages.py:700
 msgid ""
@@ -2734,16 +2842,21 @@ msgid ""
 "then cookies.txt, and export the cookies for the current site. The file "
 "is saved to your Downloads."
 msgstr ""
+"Még a youtube.com oldalon nyissa meg a Firefox menüjét, válassza a "
+"Kiegészítők, majd a cookies.txt pontot, és exportálja az aktuális oldal "
+"sütijeit. A fájl a Letöltések mappába kerül."
 
 #: bot/modules/portal_pages.py:701
 msgid ""
 "Come back to this page in Firefox and choose that file in the import form"
 " below."
 msgstr ""
+"Térjen vissza erre az oldalra a Firefoxban, és válassza ki azt a fájlt az"
+" alábbi importálási űrlapon."
 
 #: bot/modules/portal_pages.py:703
 msgid "On an iPhone or iPad"
-msgstr ""
+msgstr "iPhone-on vagy iPaden"
 
 #: bot/modules/portal_pages.py:704
 msgid ""
@@ -2752,108 +2865,134 @@ msgid ""
 "you. They must sign in with the Google account made for StreamerBot, "
 "never their own."
 msgstr ""
+"iPhone-on vagy iPaden nincs megbízható módja ennek a fájlnak az "
+"exportálására. Használjon Android telefont vagy számítógépet, vagy kérjen"
+" meg valakit, akinek van, hogy tegye meg Ön helyett. A StreamerBot "
+"számára létrehozott Google-fiókkal kell bejelentkeznie, soha nem a "
+"sajátjával."
 
 #: bot/modules/portal_pages.py:705
 msgid "On a computer"
-msgstr ""
+msgstr "Számítógépen"
 
 #: bot/modules/portal_pages.py:707
 msgid ""
 "In your own browser, sign in to YouTube with the Google account made for "
 "StreamerBot."
 msgstr ""
+"A saját böngészőjében jelentkezzen be a YouTube-ba a StreamerBot számára "
+"létrehozott Google-fiókkal."
 
 #: bot/modules/portal_pages.py:708
 msgid ""
 "While on youtube.com, use a cookie export extension to save the cookies "
 "in Netscape cookies.txt format."
 msgstr ""
+"A youtube.com oldalon egy sütiexportáló kiegészítővel mentse a sütiket "
+"Netscape cookies.txt formátumban."
 
 #: bot/modules/portal_pages.py:709
 msgid ""
 "Choose that file in the import form below, or open it, copy everything in"
 " it, and paste it into the box below."
 msgstr ""
+"Válassza ki azt a fájlt az alábbi importálási űrlapon, vagy nyissa meg, "
+"másolja ki a teljes tartalmát, és illessze be az alábbi mezőbe."
 
 #: bot/modules/portal_pages.py:711
 msgid ""
 "Afterwards, do not sign out of YouTube in that browser. Signing out ends "
 "the session StreamerBot is using. Closing the browser is fine."
 msgstr ""
+"Utána ne jelentkezzen ki a YouTube-ból abban a böngészőben. A "
+"kijelentkezés véget vet a StreamerBot által használt munkamenetnek. A "
+"böngésző bezárása nem gond."
 
 #: bot/modules/portal_pages.py:712
 msgid ""
 "Google sometimes ends a session that is used from a different place. If "
 "that happens, StreamerBot tells you in TeamTalk and you can import again."
 msgstr ""
+"A Google néha véget vet egy máshonnan használt munkamenetnek. Ha ez "
+"történik, a StreamerBot szól a TeamTalkban, és újra importálhat."
 
 #: bot/modules/portal_pages.py:716
 msgid ""
 "This server cannot run a browser, so nothing can keep an imported session"
 " alive. Expect to import again from time to time."
 msgstr ""
+"Ez a szerver nem tud böngészőt futtatni, így semmi sem tudja életben "
+"tartani az importált munkamenetet. Időnként újra importálni kell."
 
 #: bot/modules/portal_pages.py:718
 msgid "Import your file"
-msgstr ""
+msgstr "Fájl importálása"
 
 #: bot/modules/portal_pages.py:724
 msgid "Your cookies.txt file"
-msgstr ""
+msgstr "Az Ön cookies.txt fájlja"
 
 #: bot/modules/portal_pages.py:730
 msgid "Or paste the contents of the file"
-msgstr ""
+msgstr "Vagy illessze be a fájl tartalmát"
 
 #: bot/modules/portal_pages.py:731
 msgid "Paste the whole file. It is several lines of text."
-msgstr ""
+msgstr "Illessze be a teljes fájlt. Ez több sornyi szöveg."
 
 #: bot/modules/portal_pages.py:738
 msgid "Import the session"
-msgstr ""
+msgstr "Munkamenet importálása"
 
 #: bot/modules/portal_pages.py:744
 #, python-format
 msgid "Lines pasted: %(count)s"
-msgstr ""
+msgstr "Beillesztett sorok: %(count)s"
 
 #: bot/modules/portal_pages.py:761
 msgid "Choose your cookies.txt file, or paste its contents"
-msgstr ""
+msgstr "Válassza ki a cookies.txt fájlt, vagy illessze be a tartalmát"
 
 #: bot/modules/portal_pages.py:762
 msgid ""
 "This is too long to be a cookies file. Check you chose only the "
 "cookies.txt file."
 msgstr ""
+"Ez túl hosszú ahhoz, hogy sütifájl legyen. Ellenőrizze, hogy csak a "
+"cookies.txt fájlt választotta-e ki."
 
 #: bot/modules/portal_pages.py:763
 msgid ""
 "This is not a cookies.txt file. Export the cookies again in Netscape "
 "cookies.txt format."
 msgstr ""
+"Ez nem cookies.txt fájl. Exportálja újra a sütiket Netscape cookies.txt "
+"formátumban."
 
 #: bot/modules/portal_pages.py:764
 msgid ""
 "This file has no YouTube sign-in in it. Sign in to YouTube in your "
 "browser, then export the cookies again while on youtube.com."
 msgstr ""
+"Ebben a fájlban nincs YouTube-bejelentkezés. Jelentkezzen be a YouTube-ba"
+" a böngészőben, majd a youtube.com oldalon exportálja újra a sütiket."
 
 #: bot/modules/portal_pages.py:765
 msgid ""
 "YouTube says this session is already signed out. Sign in to YouTube in "
 "your browser again, then export a fresh file."
 msgstr ""
+"A YouTube szerint ebből a munkamenetből már kijelentkeztek. Jelentkezzen "
+"be újra a YouTube-ba a böngészőben, majd exportáljon egy friss fájlt."
 
 #: bot/modules/portal_pages.py:766
 msgid "The session could not be imported."
-msgstr ""
+msgstr "A munkamenetet nem sikerült importálni."
 
 #: bot/modules/portal_pages.py:778 bot/modules/portal_pages.py:793
 #, python-format
 msgid "Disconnect %(service)s?"
-msgstr ""
+msgstr "Leválasztja: %(service)s?"
 
 #: bot/modules/portal_pages.py:779
 #, python-format
@@ -2862,47 +3001,49 @@ msgid ""
 "%(service)s account itself is not affected. You can connect again at any "
 "time."
 msgstr ""
+"A StreamerBot nem közvetít tovább az Ön %(service)s fiókjából. Magát a(z)"
+" %(service)s fiókot ez nem érinti. Bármikor újra csatlakoztathatja."
 
 #: bot/modules/portal_pages.py:790
 #, python-format
 msgid "Cancel, keep %(service)s connected"
-msgstr ""
+msgstr "Mégse, %(service)s maradjon csatlakoztatva"
 
 # | msgid "help text not found"
 #: bot/modules/portal_pages.py:809
-#, fuzzy
 msgid "Page not found"
-msgstr "nem található segédszöveg"
+msgstr "Az oldal nem található"
 
 # | msgid "This user is not in the admin list"
 #: bot/modules/portal_pages.py:810
-#, fuzzy
 msgid "This address is not quite right."
-msgstr "Ez a felhasználó nem szerepel az adminisztrátor listán"
+msgstr "Ez a cím nem egészen helyes."
 
 #: bot/modules/portal_pages.py:811 bot/modules/portal_pages.py:818
 msgid "To get a new link, send the li command to StreamerBot in TeamTalk."
-msgstr ""
+msgstr "Új hivatkozásért küldje el a li parancsot a StreamerBotnak a TeamTalkban."
 
 #: bot/modules/portal_pages.py:816
 msgid "Link expired"
-msgstr ""
+msgstr "A hivatkozás lejárt"
 
 #: bot/modules/portal_pages.py:817
 msgid "This link has expired."
-msgstr ""
+msgstr "Ez a hivatkozás lejárt."
 
 #: bot/modules/portal_pages.py:823
 msgid "Something went wrong"
-msgstr ""
+msgstr "Valami hiba történt"
 
 #: bot/modules/portal_pages.py:824
 msgid "StreamerBot could not finish that request."
-msgstr ""
+msgstr "A StreamerBot nem tudta befejezni ezt a kérést."
 
 #: bot/modules/portal_pages.py:825
 msgid "Try again in a moment. If it keeps happening, check the bot's log."
 msgstr ""
+"Próbálja újra egy pillanat múlva. Ha továbbra is előfordul, nézze meg a "
+"bot naplóját."
 
 #: bot/modules/uploader.py:68
 msgid "Error: Downloaded file not found."
@@ -2924,11 +3065,16 @@ msgid ""
 "YouTube refused to download {name} without a signed-in account, which is "
 "usual on a server. To connect one, send this command: li yt"
 msgstr ""
+"A YouTube bejelentkezett fiók nélkül nem volt hajlandó letölteni ezt: "
+"{name}, ami szerveren megszokott. Fiók csatlakoztatásához küldje ezt a "
+"parancsot: li yt"
 
 #: bot/modules/youtube_session_keeper.py:157
 #, python-brace-format
 msgid "The YouTube sign-in could not be renewed, so {name} was not downloaded."
 msgstr ""
+"A YouTube-bejelentkezést nem sikerült megújítani, ezért ez nem lett "
+"letöltve: {name}."
 
 #: bot/modules/youtube_session_keeper.py:348
 #: bot/modules/youtube_session_keeper.py:355
@@ -2936,11 +3082,13 @@ msgid ""
 "Google signed in, but YouTube did not recognise the session. Please try "
 "again."
 msgstr ""
+"A Google bejelentkezett, de a YouTube nem ismerte fel a munkamenetet. "
+"Kérjük, próbálja újra."
 
 #: bot/services/browser_service.py:104
 #, python-format
 msgid "%(service)s is not ready yet."
-msgstr ""
+msgstr "%(service)s még nem áll készen."
 
 #: bot/services/browser_service.py:121
 #, python-format
@@ -2948,22 +3096,26 @@ msgid ""
 "%(service)s needs Google Chrome, which is not available on this machine's"
 " processor architecture."
 msgstr ""
+"%(service)s Google Chrome-ot igényel, de ez nem érhető el a gép "
+"processzorarchitektúrájára."
 
 #: bot/services/browser_service.py:132
 #, python-format
 msgid "%(service)s is not connected. Send li %(code)s to connect an account."
 msgstr ""
+"%(service)s nincs csatlakoztatva. Fiók csatlakoztatásához küldje: li "
+"%(code)s."
 
 #: bot/services/browser_service.py:166
 #, python-format
 msgid "That is not a %(service)s link."
-msgstr ""
+msgstr "Ez nem %(service)s hivatkozás."
 
 # | msgid "Live streams cannot be downloaded"
 #: bot/services/browser_service.py:182
-#, fuzzy, python-format
+#, python-format
 msgid "%(service)s cannot be downloaded."
-msgstr "Élő adásokat nem lehet letölteni"
+msgstr "%(service)s tartalma nem tölthető le."
 
 #: bot/services/browser_service.py:208
 msgid ""
@@ -2972,6 +3124,10 @@ msgid ""
 "watchlists and audio settings; pf lists them and pf with a number picks "
 "one."
 msgstr ""
+"A Disney Plus filmeket és sorozatokat játszik le, hangalámondással, ahol "
+"a Disney Plus kínál ilyet. Minden fióknak saját profiljai vannak, saját "
+"listákkal és hangbeállításokkal; a pf felsorolja őket, a pf egy számmal "
+"kiválaszt egyet."
 
 #: bot/services/browser_service.py:224
 msgid ""
@@ -2980,6 +3136,10 @@ msgid ""
 "told apart. dl downloads what is playing and dlp downloads the album it "
 "is from."
 msgstr ""
+"Az Apple Music dalokat, albumokat, előadókat és lejátszási listákat "
+"játszik le. A keresés mind a négyet visszaadja, mindegyiket megnevezve, "
+"így egy album és a rajta lévő dal megkülönböztethető. A dl letölti, ami "
+"szól, a dlp pedig az albumot, amelyről származik."
 
 #: bot/services/browser_service.py:247
 msgid ""
@@ -2988,6 +3148,10 @@ msgid ""
 "music subscription; a plain Prime account plays only part of the "
 "catalogue."
 msgstr ""
+"Az Amazon Music dalokat, albumokat, előadókat és lejátszási listákat "
+"játszik le. A keresés mind a négyet visszaadja, mindegyiket megnevezve. "
+"Zene-előfizetéses Amazon-fiók kell hozzá; egy egyszerű Prime fiók csak a "
+"katalógus egy részét játssza le."
 
 #: bot/services/browser_service.py:262
 msgid ""
@@ -3027,71 +3191,73 @@ msgstr ""
 
 #: bot/services/gamdl_downloader.py:158
 msgid "The Apple Music downloader is not installed in this image."
-msgstr ""
+msgstr "Az Apple Music letöltője nincs telepítve ebbe a képbe."
 
 #: bot/services/gamdl_downloader.py:165
 msgid ""
 "Downloading from Apple Music needs a subscription. Connect the account "
 "first with li am."
 msgstr ""
+"Az Apple Music letöltéséhez előfizetés kell. Előbb csatlakoztassa a "
+"fiókot: li am."
 
 #: bot/services/gamdl_downloader.py:199
 msgid "That is not an Apple Music link."
-msgstr ""
+msgstr "Ez nem Apple Music hivatkozás."
 
 #: bot/services/gamdl_downloader.py:216
 msgid "The download took too long and was stopped."
-msgstr ""
+msgstr "A letöltés túl sokáig tartott, ezért leállt."
 
 #: bot/services/gamdl_downloader.py:230
 msgid "The download produced no audio files."
-msgstr ""
+msgstr "A letöltés nem hozott létre hangfájlt."
 
 #: bot/services/gamdl_downloader.py:252
 msgid "That needs an active Apple Music subscription."
-msgstr ""
+msgstr "Ehhez aktív Apple Music-előfizetés kell."
 
 #: bot/services/gamdl_downloader.py:255
 msgid "Apple Music did not have that."
-msgstr ""
+msgstr "Az Apple Musicban ez nem volt meg."
 
 #: bot/services/gamdl_downloader.py:258
 msgid "That track needs a decryption device file the bot does not have."
-msgstr ""
+msgstr "Ehhez a számhoz egy visszafejtő eszközfájl kell, amely a botnak nincs meg."
 
 #: bot/services/gamdl_downloader.py:262
 msgid "The Apple Music sign-in has expired. Connect it again with li am."
-msgstr ""
+msgstr "Az Apple Music-bejelentkezés lejárt. Csatlakoztassa újra: li am."
 
 # | msgid "Error: Downloaded file not found."
 #: bot/services/gamdl_downloader.py:265
-#, fuzzy
 msgid "The download failed."
-msgstr "Hiba: A letöltött fájl nem található."
+msgstr "A letöltés nem sikerült."
 
 #: bot/services/netflix.py:81
 msgid "Netflix is not ready yet."
-msgstr ""
+msgstr "A Netflix még nem áll készen."
 
 #: bot/services/netflix.py:94
 msgid ""
 "Netflix needs Google Chrome, which is not available on this machine's "
 "processor architecture."
 msgstr ""
+"A Netflix Google Chrome-ot igényel, de ez nem érhető el a gép "
+"processzorarchitektúrájára."
 
 #: bot/services/netflix.py:106
 msgid "Netflix is not connected. Send li nf to connect an account."
-msgstr ""
+msgstr "A Netflix nincs csatlakoztatva. Fiók csatlakoztatásához küldje: li nf."
 
 #: bot/services/netflix.py:141
 msgid "That is not a Netflix link."
-msgstr ""
+msgstr "Ez nem Netflix hivatkozás."
 
 # | msgid "Live streams cannot be downloaded"
 #: bot/services/netflix.py:155
-#, fuzzy
 msgid "Netflix titles cannot be downloaded."
-msgstr "Élő adásokat nem lehet letölteni"
+msgstr "A Netflix tartalmai nem tölthetők le."
 
 #: bot/services/podcasts.py:461
 msgid ""
@@ -3104,11 +3270,11 @@ msgstr ""
 #: bot/services/results.py:130
 #, python-format
 msgid "%(count)s %(kind)s"
-msgstr ""
+msgstr "%(count)s %(kind)s"
 
 #: bot/services/spotify.py:123
 msgid "Spotify is not connected yet. Send li sp to connect an account."
-msgstr ""
+msgstr "A Spotify még nincs csatlakoztatva. Fiók csatlakoztatásához küldje: li sp."
 
 #: bot/services/spotify.py:165
 msgid ""
@@ -3116,32 +3282,34 @@ msgid ""
 " the bot's configuration, then try again. Playing a pasted Spotify link "
 "does not need one."
 msgstr ""
+"A Spotify kereséséhez Spotify-alkalmazás kell. Adjon meg egy "
+"kliensazonosítót és titkos kulcsot a bot beállításaiban, majd próbálja "
+"újra. Egy beillesztett Spotify-hivatkozás lejátszásához nem kell."
 
 #: bot/services/spotify.py:227
 msgid "The Spotify session expired. Try again."
-msgstr ""
+msgstr "A Spotify-munkamenet lejárt. Próbálja újra."
 
 #: bot/services/spotify.py:232
 msgid "Spotify refused that request. Playback needs a Premium account."
-msgstr ""
+msgstr "A Spotify elutasította a kérést. A lejátszáshoz Premium fiók kell."
 
 #: bot/services/spotify.py:237
 msgid "Spotify is rate limiting us. Try again shortly."
-msgstr ""
+msgstr "A Spotify korlátozza a kéréseket. Próbálja újra hamarosan."
 
 #: bot/services/spotify.py:298
 msgid "That is not a Spotify link."
-msgstr ""
+msgstr "Ez nem Spotify hivatkozás."
 
 #: bot/services/spotify.py:326
 msgid "That kind of Spotify link is not supported."
-msgstr ""
+msgstr "Ez a fajta Spotify-hivatkozás nem támogatott."
 
 # | msgid "Live streams cannot be downloaded"
 #: bot/services/spotify.py:422
-#, fuzzy
 msgid "Spotify tracks cannot be downloaded."
-msgstr "Élő adásokat nem lehet letölteni"
+msgstr "A Spotify számai nem tölthetők le."
 
 #: bot/services/yt.py:196 bot/services/yt.py:468
 msgid "Unknown Title"

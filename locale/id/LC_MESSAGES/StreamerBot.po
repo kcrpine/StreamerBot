@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: StreamerBot VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-27 20:23+0000\n"
+"POT-Creation-Date: 2026-10-27 20:41+0000\n"
 "PO-Revision-Date: 2022-04-15 20:17+0700\n"
 "Last-Translator: \n"
 "Language: id_ID\n"
@@ -24,14 +24,16 @@ msgid ""
 "This needs Google Chrome, which is not available on this machine's "
 "processor architecture."
 msgstr ""
+"Ini memerlukan Google Chrome, yang tidak tersedia untuk arsitektur "
+"prosesor mesin ini."
 
 #: bot/__init__.py:268
 msgid "Spotify is unavailable: the player could not start."
-msgstr ""
+msgstr "Spotify tidak tersedia: pemutar tidak bisa dimulai."
 
 #: bot/__init__.py:301 bot/__init__.py:304 bot/modules/portal_pages.py:543
 msgid "The sign-in did not complete."
-msgstr ""
+msgstr "Proses masuk tidak selesai."
 
 #: bot/__init__.py:317
 msgid ""
@@ -42,6 +44,12 @@ msgid ""
 "PORT_CONFLICT.txt in the bot's folder explaining it, and Repair Account "
 "Portal and Spotify Ports in the manager turns it back on."
 msgstr ""
+"Portal akun dinonaktifkan di konfigurasi bot ini, jadi Netflix, Disney "
+"Plus, Apple Music, dan Amazon Music tidak bisa dihubungkan. Atur "
+"auth_portal.enabled menjadi true di config.json bot ini lalu mulai ulang."
+" Jika pengelola menonaktifkannya karena bentrok port, ada berkas bernama "
+"PORT_CONFLICT.txt di folder bot yang menjelaskannya, dan opsi Repair "
+"Account Portal and Spotify Ports di pengelola akan mengaktifkannya lagi."
 
 #: bot/__init__.py:370
 #, python-format
@@ -53,6 +61,12 @@ msgid ""
 "Ports, and restart this bot. YouTube and Spotify are unaffected, because "
 "they sign in with a code in the channel."
 msgstr ""
+"Portal akun tidak bisa dimulai karena port %(port)s sudah dipakai, "
+"kemungkinan besar oleh bot lain di mesin ini. Netflix, Disney Plus, Apple"
+" Music, dan Amazon Music tidak bisa dihubungkan sampai ini diperbaiki. "
+"Jalankan pengelola, pilih Manage Bots, lalu Repair Account Portal and "
+"Spotify Ports, dan mulai ulang bot ini. YouTube dan Spotify tidak "
+"terpengaruh, karena keduanya masuk dengan kode di saluran."
 
 #: bot/__init__.py:380
 #, python-format
@@ -61,12 +75,17 @@ msgid ""
 "and Amazon Music cannot be connected. The reason is in this bot's log "
 "file: %(reason)s"
 msgstr ""
+"Portal akun tidak bisa dimulai, jadi Netflix, Disney Plus, Apple Music, "
+"dan Amazon Music tidak bisa dihubungkan. Alasannya ada di berkas log bot "
+"ini: %(reason)s"
 
 #: bot/__init__.py:412
 msgid ""
 "Hello! I'm back and ready for you to stream again. Thank you for your "
 "patience!"
 msgstr ""
+"Halo! Saya sudah kembali dan siap untuk siaran lagi. Terima kasih atas "
+"kesabarannya!"
 
 #: bot/__init__.py:452
 msgid ""
@@ -74,6 +93,9 @@ msgid ""
 "know that an update is in progress and I will restart in a few moments to"
 " apply it. Thank you!"
 msgstr ""
+"Halo! Ini saya, Streamer Bot, mampir untuk memberi tahu bahwa pembaruan "
+"sedang berjalan dan saya akan mulai ulang sebentar lagi untuk "
+"menerapkannya. Terima kasih!"
 
 #: bot/__init__.py:497
 msgid "Restarted. The new settings are in use."
@@ -99,6 +121,16 @@ msgid ""
 " and\n"
 "Kirill Belousov, and on the fork by Joao Almeida.\n"
 msgstr ""
+"StreamerBot untuk TeamTalk 5.\n"
+"Menyiarkan YouTube, YouTube Music, Spotify, Apple Music, Amazon Music, "
+"Netflix,\n"
+"Disney Plus, dan tautan langsung ke sebuah saluran, dengan dukungan "
+"deskripsi audio.\n"
+"Repositori: {repo}\n"
+"TeamTalk SDK {sdk}.\n"
+"Berdasarkan TTMediaBot karya Amir Gumerov, Vladislav Kopylov, Beqa "
+"Gozalishvili, dan\n"
+"Kirill Belousov, serta fork karya Joao Almeida.\n"
 
 #: bot/TeamTalk/__init__.py:180
 msgid "Send \"h\" for help"
@@ -106,7 +138,7 @@ msgstr "Kirim \"h\" untuk bantuan."
 
 #: bot/commands/__init__.py:176
 msgid "That question has expired. To ask again, send: dlp"
-msgstr ""
+msgstr "Pertanyaan itu sudah kedaluwarsa. Untuk bertanya lagi, kirim: dlp"
 
 #: bot/commands/__init__.py:201
 msgid "That menu has expired. To open it again, send: cf"
@@ -373,47 +405,54 @@ msgid ""
 "[status|out] Shows whether this bot is signed in to YouTube, or signs it "
 "out. To sign in, send li yt"
 msgstr ""
+"[status|out] Menunjukkan apakah bot ini sudah masuk ke YouTube, atau "
+"mengeluarkannya. Untuk masuk, kirim li yt"
 
 # | msgid "This user is not banned"
 #: bot/commands/admin_commands.py:466 bot/modules/auth_portal.py:283
 #: bot/modules/auth_portal.py:318
-#, fuzzy
 msgid "The YouTube service is not enabled."
-msgstr "Pengguna ini tidak dilarang."
+msgstr "Layanan YouTube tidak diaktifkan."
 
 #: bot/commands/admin_commands.py:473
 msgid "This bot is signed in to YouTube."
-msgstr ""
+msgstr "Bot ini sudah masuk ke YouTube."
 
 #: bot/commands/admin_commands.py:476
 msgid ""
 "Google signed this bot out of YouTube. To sign in again, send this "
 "command: li yt"
 msgstr ""
+"Google mengeluarkan bot ini dari YouTube. Untuk masuk lagi, kirim "
+"perintah ini: li yt"
 
 #: bot/commands/admin_commands.py:479
 msgid "This bot is not signed in to YouTube. To sign in, send this command: li yt"
-msgstr ""
+msgstr "Bot ini belum masuk ke YouTube. Untuk masuk, kirim perintah ini: li yt"
 
 #: bot/commands/admin_commands.py:484
 msgid "This bot has been signed out of YouTube."
-msgstr ""
+msgstr "Bot ini sudah keluar dari YouTube."
 
 #: bot/commands/admin_commands.py:488
 msgid ""
 "YouTube is connected through the account portal now. Send this command: "
 "li yt"
 msgstr ""
+"YouTube sekarang dihubungkan melalui portal akun. Kirim perintah ini: li "
+"yt"
 
 #: bot/commands/admin_commands.py:500
 msgid ""
 "[link|rotate|off] Shows the account portal's status, mints a new link, "
 "revokes every existing link, or stops the portal"
 msgstr ""
+"[link|rotate|off] Menampilkan status portal akun, membuat tautan baru, "
+"mencabut semua tautan yang ada, atau menghentikan portal"
 
 #: bot/commands/admin_commands.py:507 bot/commands/admin_commands.py:563
 msgid "The account portal is not running."
-msgstr ""
+msgstr "Portal akun tidak berjalan."
 
 #: bot/commands/admin_commands.py:513
 #, python-format
@@ -421,20 +460,22 @@ msgid ""
 "The portal is listening on %(host)s port %(port)s with %(count)s live "
 "links."
 msgstr ""
+"Portal mendengarkan di %(host)s port %(port)s dengan %(count)s tautan "
+"aktif."
 
 #: bot/commands/admin_commands.py:528
 #, python-format
 msgid "That address came from %(source)s."
-msgstr ""
+msgstr "Alamat itu berasal dari %(source)s."
 
 #: bot/commands/admin_commands.py:540
 #, python-format
 msgid "Revoked %(count)s links. Send ap link for a new one."
-msgstr ""
+msgstr "%(count)s tautan dicabut. Kirim ap link untuk tautan baru."
 
 #: bot/commands/admin_commands.py:545
 msgid "The portal has been stopped."
-msgstr ""
+msgstr "Portal sudah dihentikan."
 
 # | msgid "" "SERVICE Disconnects a streaming account and deletes its saved
 # | sign-in " "(yt, sp, nf, dp, am, az, pp, tb)"
@@ -449,12 +490,12 @@ msgstr ""
 #: bot/commands/admin_commands.py:571
 #, python-format
 msgid "%(service)s is not connected."
-msgstr ""
+msgstr "%(service)s tidak terhubung."
 
 #: bot/commands/admin_commands.py:577
 #, python-format
 msgid "%(service)s has been disconnected and its saved sign-in deleted."
-msgstr ""
+msgstr "%(service)s sudah diputus dan data masuk yang tersimpan sudah dihapus."
 
 #: bot/commands/command.py:30
 msgid "help text not found"
@@ -463,13 +504,15 @@ msgstr "teks bantuan tidak ditemukan."
 #: bot/commands/command.py:82
 #, python-brace-format
 msgid "The YouTube sign-in could not be renewed, so {request} was not played."
-msgstr ""
+msgstr "Data masuk YouTube tidak bisa diperbarui, jadi {request} tidak diputar."
 
 #: bot/commands/command.py:102
 msgid ""
 "YouTube refused to play this without a signed-in account, which is usual "
 "on a server. To connect one, send this command: li yt"
 msgstr ""
+"YouTube menolak memutar ini tanpa akun yang sudah masuk, hal yang biasa "
+"di server. Untuk menghubungkan akun, kirim perintah ini: li yt"
 
 #: bot/commands/command.py:128
 #, python-brace-format
@@ -477,12 +520,16 @@ msgid ""
 "Renewing the YouTube sign-in. {request} will start playing when it "
 "finishes, usually within a minute."
 msgstr ""
+"Memperbarui data masuk YouTube. {request} akan mulai diputar setelah "
+"selesai, biasanya dalam satu menit."
 
 #: bot/commands/command.py:137 bot/modules/youtube_session_keeper.py:154
 msgid ""
 "Google signed StreamerBot out of YouTube. To sign in again, send this "
 "command: li yt"
 msgstr ""
+"Google mengeluarkan StreamerBot dari YouTube. Untuk masuk lagi, kirim "
+"perintah ini: li yt"
 
 #: bot/commands/config_menu.py:155
 msgid "on"
@@ -957,55 +1004,54 @@ msgstr ""
 # | msgid "Loaded {count} tracks"
 # | msgid "Playing {name}, {count} tracks"
 #: bot/commands/playlist_choice.py:80
-#, fuzzy, python-brace-format
+#, python-brace-format
 msgid "The playlist {name} has {count} videos."
-msgstr "{count} trek dimuat"
+msgstr "Daftar putar {name} berisi {count} video."
 
 #: bot/commands/playlist_choice.py:83
 msgid "For the whole playlist as one zip file, send: 1"
-msgstr ""
+msgstr "Untuk seluruh daftar putar dalam satu berkas zip, kirim: 1"
 
 #: bot/commands/playlist_choice.py:84
 msgid "To pick one video from a list, send: 2"
-msgstr ""
+msgstr "Untuk memilih satu video dari daftar, kirim: 2"
 
 #: bot/commands/playlist_choice.py:85
 msgid "To cancel, send: 0"
-msgstr ""
+msgstr "Untuk membatalkan, kirim: 0"
 
 #: bot/commands/playlist_choice.py:92
 #, python-brace-format
 msgid "Page {page} of {pages} of {name}, {total} videos. Send a number:"
 msgstr ""
+"Halaman {page} dari {pages} untuk {name}, {total} video. Kirim sebuah "
+"nomor:"
 
 #: bot/commands/playlist_choice.py:100
 #, python-brace-format
 msgid "Next videos, {first} to {last}"
-msgstr ""
+msgstr "Video berikutnya, {first} sampai {last}"
 
 #: bot/commands/playlist_choice.py:104
 #, python-brace-format
 msgid "Back to videos 1 to {last}"
-msgstr ""
+msgstr "Kembali ke video 1 sampai {last}"
 
 # | msgid "Downloading playlist: {}"
 #: bot/commands/playlist_choice.py:107
-#, fuzzy
 msgid "Download the whole playlist"
-msgstr "Mengunduh daftar putar: {}"
+msgstr "Unduh seluruh daftar putar"
 
 # | msgid "Cache cleared"
 # | msgid "Cancelled."
 #: bot/commands/playlist_choice.py:108
-#, fuzzy
 msgid "Cancel"
-msgstr "Seluruh daftar cache dibersihkan."
+msgstr "Batal"
 
 # | msgid "Cache cleared"
 #: bot/commands/playlist_choice.py:119 bot/modules/auth_portal.py:647
-#, fuzzy
 msgid "Cancelled."
-msgstr "Seluruh daftar cache dibersihkan."
+msgstr "Dibatalkan."
 
 #: bot/commands/playlist_choice.py:141
 #, python-brace-format
@@ -1013,6 +1059,8 @@ msgid ""
 "There is no {number} on this page. Send a number from 1 to {last}, or to "
 "cancel, send: 0"
 msgstr ""
+"Tidak ada nomor {number} di halaman ini. Kirim angka dari 1 sampai "
+"{last}, atau untuk membatalkan, kirim: 0"
 
 #: bot/commands/podcast_commands.py:69
 msgid "That podcast could not be read. Try again later."
@@ -1341,7 +1389,7 @@ msgstr "Memuat URL / daftar putar..."
 
 #: bot/commands/user_commands.py:130
 msgid "Your link"
-msgstr ""
+msgstr "Tautan Anda"
 
 #: bot/commands/user_commands.py:135
 msgid "Incorrect protocol"
@@ -1357,9 +1405,9 @@ msgstr "Jalur tidak ditemukan"
 
 # | msgid "{nickname} requested playing from a URL"
 #: bot/commands/user_commands.py:162
-#, fuzzy, python-brace-format
+#, python-brace-format
 msgid "{nickname} requested playing from a URL ({count} tracks)"
-msgstr "{nickname} meminta pemutaran dari URL"
+msgstr "{nickname} meminta pemutaran dari URL ({count} lagu)"
 
 #: bot/commands/user_commands.py:169
 #, python-brace-format
@@ -1410,6 +1458,8 @@ msgid ""
 "[NUMBER|?] Plays next track, jumps to track number, or shows current "
 "position with ?"
 msgstr ""
+"[NUMBER|?] Memutar lagu berikutnya, melompat ke nomor lagu, atau "
+"menampilkan posisi saat ini dengan ?"
 
 #: bot/commands/user_commands.py:279 bot/commands/user_commands.py:535
 msgid "Incorrect number"
@@ -1498,27 +1548,21 @@ msgstr ""
 
 # | msgid "" "Unknown service.\n" "{}"
 #: bot/commands/user_commands.py:374
-#, fuzzy, python-brace-format
+#, python-brace-format
 msgid "Unknown service.{newline}{help}"
-msgstr ""
-"Layanan tidak dikenal.\n"
-"{}"
+msgstr "Layanan tidak dikenal.{newline}{help}"
 
 # | msgid "" "Current service: {}\n" "Warning: {}"
 #: bot/commands/user_commands.py:385
-#, fuzzy, python-brace-format
+#, python-brace-format
 msgid "Current service: {service}{newline}{status}"
-msgstr ""
-"Layanan saat ini: {}\n"
-"Peringatan: {}"
+msgstr "Layanan saat ini: {service}{newline}{status}"
 
 # | msgid "" "Error: {error}\n" "{service} is disabled"
 #: bot/commands/user_commands.py:394
-#, fuzzy, python-brace-format
+#, python-brace-format
 msgid "Error: {error}{newline}{service} is disabled"
-msgstr ""
-"Kesalahan: {error}\n"
-"{service} dinonaktifkan."
+msgstr "Galat: {error}{newline}{service} dinonaktifkan"
 
 #: bot/commands/user_commands.py:401
 #, python-brace-format
@@ -1528,7 +1572,7 @@ msgstr "{service} dinonaktifkan."
 #: bot/commands/user_commands.py:453
 #, python-format
 msgid "%(service)s is switched off in this bot's configuration."
-msgstr ""
+msgstr "%(service)s dinonaktifkan di konfigurasi bot ini."
 
 #: bot/commands/user_commands.py:460
 #, python-format
@@ -1536,51 +1580,52 @@ msgid ""
 "%(service)s is not connected. To connect an account, send this command: "
 "li %(code)s"
 msgstr ""
+"%(service)s tidak terhubung. Untuk menghubungkan akun, kirim perintah "
+"ini: li %(code)s"
 
 #: bot/commands/user_commands.py:465
 #, python-format
 msgid "%(service)s is connected and ready."
-msgstr ""
+msgstr "%(service)s terhubung dan siap."
 
 #: bot/commands/user_commands.py:478
 #, python-format
 msgid "unavailable: %(reason)s"
-msgstr ""
+msgstr "tidak tersedia: %(reason)s"
 
 # | msgid "Saves bot's configuration"
 #: bot/commands/user_commands.py:480
-#, fuzzy
 msgid "switched off in this bot's configuration"
-msgstr "Simpan konfigurasi bot."
+msgstr "dinonaktifkan di konfigurasi bot ini"
 
 #: bot/commands/user_commands.py:483
 #, python-format
 msgid "not connected, send li %(code)s"
-msgstr ""
+msgstr "tidak terhubung, kirim li %(code)s"
 
 #: bot/commands/user_commands.py:488
 msgid "ready"
-msgstr ""
+msgstr "siap"
 
 # | msgid "" "Current service: {current_service}\n" "Available:\n"
 # | "{available_services}\n" "send sv SERVICE h for additional help"
 #: bot/commands/user_commands.py:499
-#, fuzzy, python-brace-format
+#, python-brace-format
 msgid ""
 "Current service: "
 "{current_service}{newline}Available:{newline}{available_services}{newline}send"
 " sv SERVICE h for additional help"
 msgstr ""
-"Layanan saat ini: {current_service}\n"
-"Tersedia:\n"
-"{available_services}\n"
-"kirim sv LAYANAN h untuk bantuan tambahan."
+"Layanan saat ini: "
+"{current_service}{newline}Tersedia:{newline}{available_services}{newline}kirim"
+" sv SERVICE h untuk bantuan tambahan"
 
 # | msgid "NUMBER Selects track by number from the list of current results"
 #: bot/commands/user_commands.py:512
-#, fuzzy
 msgid "[NUMBER|?] Selects track by number, or shows current position with ?"
-msgstr "NOMOR Memilih trek dengan nomor dari daftar hasil saat ini."
+msgstr ""
+"[NUMBER|?] Memilih lagu berdasarkan nomor, atau menampilkan posisi saat "
+"ini dengan ?"
 
 #: bot/commands/user_commands.py:561
 msgid ""
@@ -1683,7 +1728,6 @@ msgstr "Gagal bergabung ke saluran: {}"
 # | uploads to" " the channel. Without a link while Apple Music is playing,
 # | downloads the " "album or playlist being played."
 #: bot/commands/user_commands.py:812
-#, fuzzy
 msgid ""
 "Downloads all tracks from a playlist/album URL, zips them, and uploads to"
 " the channel. For a YouTube playlist it asks first whether you want the "
@@ -1691,8 +1735,12 @@ msgid ""
 "Apple Music or a YouTube playlist is playing, it uses the album or "
 "playlist being played."
 msgstr ""
-"Mengunduh semua lagu dari URL playlist/album, mengompresnya dalam ZIP, "
-"dan mengunggahnya ke saluran."
+"Mengunduh semua lagu dari URL daftar putar atau album, mengemasnya dalam "
+"zip, dan mengunggahnya ke saluran. Untuk daftar putar YouTube, bot "
+"bertanya dulu apakah Anda ingin seluruh daftar putar atau satu video dari"
+" daftar bernomor. Tanpa tautan, saat Apple Music atau daftar putar "
+"YouTube sedang diputar, bot memakai album atau daftar putar yang sedang "
+"diputar."
 
 #: bot/commands/user_commands.py:823
 #, python-brace-format
@@ -1706,13 +1754,12 @@ msgstr "Silakan kirim tautan ke daftar putar atau album."
 # | msgid "This command is for playlists and albums. For single tracks, use
 # | 'dl'."
 #: bot/commands/user_commands.py:858
-#, fuzzy
 msgid ""
 "This command is for playlists, albums, and channels. For single tracks, "
 "use 'dl'."
 msgstr ""
-"Perintah ini untuk daftar putar dan album. Untuk lagu tunggal, gunakan "
-"'dl'."
+"Perintah ini untuk daftar putar, album, dan kanal. Untuk satu lagu, "
+"gunakan 'dl'."
 
 #: bot/commands/user_commands.py:1002
 msgid ""
@@ -1783,16 +1830,17 @@ msgstr "Memutar berikutnya dari antrean: {}"
 # | numbered " "list. Use 'sr on' or 'sr off' to set explicitly. Save
 # | permanently with " "'sc'"
 #: bot/commands/user_commands.py:1164
-#, fuzzy
 msgid ""
 "Toggles search results mode. When active, 'p QUERY' reads out a numbered "
 "list and plays nothing, so whatever is playing keeps playing until 'sl "
 "NUMBER' picks one. Use 'sr on' or 'sr off' to set explicitly, 'slc' for "
 "how many results. Save permanently with 'sc'"
 msgstr ""
-"Mengalihkan mode hasil pencarian. Saat aktif, 'p QUERY' menampilkan "
-"daftar bernomor. Gunakan 'sr on' atau 'sr off'. Simpan permanen dengan "
-"'sc'"
+"Mengaktifkan atau menonaktifkan mode hasil pencarian. Saat aktif, 'p "
+"QUERY' membacakan daftar bernomor dan tidak memutar apa pun, jadi yang "
+"sedang diputar terus berjalan sampai 'sl NUMBER' memilih salah satu. "
+"Gunakan 'sr on' atau 'sr off' untuk mengaturnya secara pasti, dan 'slc' "
+"untuk jumlah hasil. Simpan secara permanen dengan 'sc'"
 
 #: bot/commands/user_commands.py:1172 bot/commands/user_commands.py:1182
 msgid "Search results mode: ON"
@@ -1816,29 +1864,28 @@ msgstr "Tidak ada hasil pencarian. Gunakan 'p QUERY' untuk mencari terlebih dahu
 
 # | msgid "Loaded {count} tracks"
 #: bot/commands/user_commands.py:1248
-#, fuzzy, python-brace-format
+#, python-brace-format
 msgid "Playing {name}, {count} tracks"
-msgstr "{count} trek dimuat"
+msgstr "Memutar {name}, {count} lagu"
 
 # | msgid "" "NUMBER Sets how many results are shown when search results mode
 # is
 # | " "active. Without a number shows current count. Resets to 5 on restart"
 # | " "active. Without a number shows current count. Resets to 1 on restart"
 #: bot/commands/user_commands.py:1259
-#, fuzzy
 msgid ""
 "NUMBER Sets how many results are shown when search results mode is "
 "active, or 0 for as many as the service returns. Without a number shows "
 "current count. Resets on restart"
 msgstr ""
-"NOMOR Mengatur berapa hasil yang ditampilkan dalam mode pencarian. Tanpa "
-"nomor menampilkan jumlah saat ini. Diatur ulang ke 5 saat restart"
+"NUMBER Mengatur berapa hasil yang ditampilkan saat mode hasil pencarian "
+"aktif, atau 0 untuk sebanyak yang diberikan layanan. Tanpa angka, "
+"menampilkan jumlah saat ini. Kembali ke awal saat mulai ulang"
 
 # | msgid "Search results count: {count}"
 #: bot/commands/user_commands.py:1267
-#, fuzzy
 msgid "Search results count: as many as the service returns"
-msgstr "Jumlah hasil pencarian: {count}"
+msgstr "Jumlah hasil pencarian: sebanyak yang diberikan layanan"
 
 #: bot/commands/user_commands.py:1269
 #, python-brace-format
@@ -1847,13 +1894,12 @@ msgstr "Jumlah hasil pencarian: {count}"
 
 # | msgid "Invalid count. Please enter a number greater than 0"
 #: bot/commands/user_commands.py:1280
-#, fuzzy
 msgid "Invalid count. Please enter 0 or a number greater than 0"
-msgstr "Jumlah tidak valid. Masukkan angka lebih dari 0"
+msgstr "Jumlah tidak valid. Masukkan 0 atau angka yang lebih besar dari 0"
 
 #: bot/commands/user_commands.py:1286
 msgid "Search results now show as many results as the service returns"
-msgstr ""
+msgstr "Hasil pencarian sekarang menampilkan sebanyak hasil yang diberikan layanan"
 
 #: bot/commands/user_commands.py:1289
 #, python-brace-format
@@ -2037,10 +2083,12 @@ msgid ""
 "and Amazon Music cannot be connected. The reason is in this bot's log "
 "file."
 msgstr ""
+"Portal akun tidak berjalan, jadi Netflix, Disney Plus, Apple Music, dan "
+"Amazon Music tidak bisa dihubungkan. Alasannya ada di berkas log bot ini."
 
 #: bot/commands/user_commands.py:1753
 msgid "Your streaming accounts:"
-msgstr ""
+msgstr "Akun streaming Anda:"
 
 #: bot/commands/user_commands.py:1761
 #, python-format
@@ -2050,17 +2098,17 @@ msgstr "%(service)s: bisa diputar tanpa akun"
 #: bot/commands/user_commands.py:1769
 #, python-format
 msgid "%(service)s: connected"
-msgstr ""
+msgstr "%(service)s: terhubung"
 
 #: bot/commands/user_commands.py:1774
 #, python-format
 msgid "%(service)s: signed out, connect again"
-msgstr ""
+msgstr "%(service)s: sudah keluar, hubungkan lagi"
 
 #: bot/commands/user_commands.py:1779
 #, python-format
 msgid "%(service)s: not connected"
-msgstr ""
+msgstr "%(service)s: tidak terhubung"
 
 #: bot/commands/user_commands.py:1795
 #, python-format
@@ -2099,7 +2147,7 @@ msgstr ""
 #: bot/commands/user_commands.py:1846
 #, python-format
 msgid "%(service)s sign-in could not start: %(error)s"
-msgstr ""
+msgstr "Proses masuk %(service)s tidak bisa dimulai: %(error)s"
 
 #. translators: "The next message" and "the message after that"
 #. are separate chat messages, holding the link and the code.
@@ -2125,69 +2173,73 @@ msgid ""
 "[on|off|ask] Plays films and shows with audio description when it is "
 "available. With no argument, says what the current setting is"
 msgstr ""
+"[on|off|ask] Memutar film dan acara dengan deskripsi audio jika tersedia."
+" Tanpa argumen, menyebutkan pengaturan saat ini"
 
 #: bot/commands/user_commands.py:1892
 msgid "Audio description is not available in this bot."
-msgstr ""
+msgstr "Deskripsi audio tidak tersedia di bot ini."
 
 #: bot/commands/user_commands.py:1900
 msgid ""
 "Audio description is on. Films play with the description when there is "
 "one."
-msgstr ""
+msgstr "Deskripsi audio aktif. Film diputar dengan deskripsi jika ada."
 
 #: bot/commands/user_commands.py:1903
 msgid "Audio description is off. Send da on to turn it on."
-msgstr ""
+msgstr "Deskripsi audio nonaktif. Kirim da on untuk mengaktifkannya."
 
 #: bot/commands/user_commands.py:1906
 msgid "The bot asks each time. Send da on or da off to stop being asked."
-msgstr ""
+msgstr "Bot bertanya setiap kali. Kirim da on atau da off agar tidak ditanya lagi."
 
 #: bot/commands/user_commands.py:1920
 msgid "Audio description is on. You will not be asked again."
-msgstr ""
+msgstr "Deskripsi audio aktif. Anda tidak akan ditanya lagi."
 
 #: bot/commands/user_commands.py:1923
 msgid "Audio description is off. You will not be asked again."
-msgstr ""
+msgstr "Deskripsi audio nonaktif. Anda tidak akan ditanya lagi."
 
 #: bot/commands/user_commands.py:1926
 msgid "The bot will ask each time."
-msgstr ""
+msgstr "Bot akan bertanya setiap kali."
 
 #: bot/commands/user_commands.py:1940
 msgid ""
 "[number] Lists the profiles for the current service, or selects one by "
 "number"
 msgstr ""
+"[number] Menampilkan profil untuk layanan saat ini, atau memilih salah "
+"satu berdasarkan nomor"
 
 #: bot/commands/user_commands.py:1947
 #, python-format
 msgid "%(service)s does not have profiles."
-msgstr ""
+msgstr "%(service)s tidak memiliki profil."
 
 #: bot/commands/user_commands.py:1953
 msgid "No profiles were found. The account may not be connected yet."
-msgstr ""
+msgstr "Tidak ada profil yang ditemukan. Akun mungkin belum terhubung."
 
 #: bot/commands/user_commands.py:1959
 #, python-format
 msgid "%(count)s profiles:"
-msgstr ""
+msgstr "%(count)s profil:"
 
 #: bot/commands/user_commands.py:1963
 msgid "Send pf and a number to choose one."
-msgstr ""
+msgstr "Kirim pf dan sebuah nomor untuk memilih salah satu."
 
 #: bot/commands/user_commands.py:1975
 #, python-format
 msgid "Now using the profile %(name)s."
-msgstr ""
+msgstr "Sekarang memakai profil %(name)s."
 
 #: bot/commands/user_commands.py:1978
 msgid "That profile could not be selected."
-msgstr ""
+msgstr "Profil itu tidak bisa dipilih."
 
 #: bot/connectors/tt_player_connector.py:36
 #, python-brace-format
@@ -2211,15 +2263,15 @@ msgstr "dijeda: {stream_url}."
 
 #: bot/modules/apple_music_downloader.py:75
 msgid "Apple Music is not available on this bot."
-msgstr ""
+msgstr "Apple Music tidak tersedia di bot ini."
 
 #: bot/modules/apple_music_downloader.py:90
 msgid "What is playing is not an album or playlist that can be downloaded."
-msgstr ""
+msgstr "Yang sedang diputar bukan album atau daftar putar yang bisa diunduh."
 
 #: bot/modules/apple_music_downloader.py:93
 msgid "the playlist"
-msgstr ""
+msgstr "daftar putar"
 
 #: bot/modules/apple_music_downloader.py:95
 #, python-brace-format
@@ -2227,6 +2279,9 @@ msgid ""
 "Downloading the playlist {name}. It will be uploaded to the channel as "
 "one zip file when it is ready, which can take several minutes."
 msgstr ""
+"Mengunduh daftar putar {name}. Daftar putar ini akan diunggah ke saluran "
+"sebagai satu berkas zip saat siap, yang bisa memakan waktu beberapa "
+"menit."
 
 #: bot/modules/apple_music_downloader.py:101
 #, python-brace-format
@@ -2234,92 +2289,96 @@ msgid ""
 "Downloading the album {name}. It will be uploaded to the channel as one "
 "zip file when it is ready, which can take several minutes."
 msgstr ""
+"Mengunduh album {name}. Album ini akan diunggah ke saluran sebagai satu "
+"berkas zip saat siap, yang bisa memakan waktu beberapa menit."
 
 #: bot/modules/apple_music_downloader.py:107
 msgid "Apple Music is not playing a song right now."
-msgstr ""
+msgstr "Apple Music sedang tidak memutar lagu."
 
 #: bot/modules/apple_music_downloader.py:112
 msgid "This song is not in the Apple Music catalog, so it cannot be downloaded."
-msgstr ""
+msgstr "Lagu ini tidak ada di katalog Apple Music, jadi tidak bisa diunduh."
 
 #: bot/modules/apple_music_downloader.py:121
 msgid "To download the whole album or playlist instead, send dlp."
-msgstr ""
+msgstr "Untuk mengunduh seluruh album atau daftar putar, kirim dlp."
 
 #: bot/modules/apple_music_downloader.py:126
 msgid ""
 "An Apple Music download is already running. Please send this again when "
 "it has finished."
 msgstr ""
+"Unduhan Apple Music sedang berjalan. Silakan kirim ini lagi setelah "
+"selesai."
 
 #: bot/modules/apple_music_downloader.py:157
 #, python-brace-format
 msgid "{name} is in the channel: one zip file with {count} tracks."
-msgstr ""
+msgstr "{name} ada di saluran: satu berkas zip berisi {count} lagu."
 
 #: bot/modules/apple_music_downloader.py:160
 #, python-brace-format
 msgid "{name} is in the channel."
-msgstr ""
+msgstr "{name} ada di saluran."
 
 #: bot/modules/apple_music_downloader.py:164
 #, python-brace-format
 msgid "Could not download {name}: {reason}"
-msgstr ""
+msgstr "Tidak bisa mengunduh {name}: {reason}"
 
 #: bot/modules/apple_music_downloader.py:173
 #: bot/modules/playlist_uploader.py:145 bot/modules/uploader.py:112
 #, python-brace-format
 msgid "Could not download {name}."
-msgstr ""
+msgstr "Tidak bisa mengunduh {name}."
 
 #: bot/modules/apple_music_downloader.py:187
 msgid "Apple Music is not signed in on this bot. Send li am to connect it."
-msgstr ""
+msgstr "Apple Music belum masuk di bot ini. Kirim li am untuk menghubungkannya."
 
 #: bot/modules/audio_description.py:129
 #, python-format
 msgid "%(title)s has audio description. Play it with the description?"
-msgstr ""
+msgstr "%(title)s memiliki deskripsi audio. Putar dengan deskripsi?"
 
 #: bot/modules/audio_description.py:132
 msgid "This has audio description. Play it with the description?"
-msgstr ""
+msgstr "Ini memiliki deskripsi audio. Putar dengan deskripsi?"
 
 #: bot/modules/audio_description.py:136
 msgid "1. Yes. 2. No. 3. Yes, and remember. 4. No, and remember."
-msgstr ""
+msgstr "1. Ya. 2. Tidak. 3. Ya, dan ingat. 4. Tidak, dan ingat."
 
 #: bot/modules/auth_portal.py:362
 msgid "Enter the Google account email address"
-msgstr ""
+msgstr "Masukkan alamat email akun Google"
 
 #: bot/modules/auth_portal.py:364
 #, python-format
 msgid "Enter your %(service)s email address or username"
-msgstr ""
+msgstr "Masukkan alamat email atau nama pengguna %(service)s Anda"
 
 #: bot/modules/auth_portal.py:369
 msgid "Enter the Google account password"
-msgstr ""
+msgstr "Masukkan kata sandi akun Google"
 
 #: bot/modules/auth_portal.py:371
 #, python-format
 msgid "Enter your %(service)s password"
-msgstr ""
+msgstr "Masukkan kata sandi %(service)s Anda"
 
 #: bot/modules/auth_portal.py:413
 msgid "Enter the verification code"
-msgstr ""
+msgstr "Masukkan kode verifikasi"
 
 #: bot/modules/auth_portal.py:630
 msgid "Signing in to this service is not available yet."
-msgstr ""
+msgstr "Masuk ke layanan ini belum tersedia."
 
 #: bot/modules/playlist_uploader.py:88 bot/modules/uploader.py:92
 msgid "Renewing the YouTube sign-in. The download continues when it finishes."
-msgstr ""
+msgstr "Memperbarui data masuk YouTube. Unduhan berlanjut setelah selesai."
 
 #: bot/modules/playlist_uploader.py:93
 #, python-brace-format
@@ -2327,34 +2386,36 @@ msgid ""
 "Downloading the playlist {name}. Tracks: {count}. It will be uploaded to "
 "the channel as one zip file when it is ready."
 msgstr ""
+"Mengunduh daftar putar {name}. Lagu: {count}. Daftar putar ini akan "
+"diunggah ke saluran sebagai satu berkas zip saat siap."
 
 #: bot/modules/playlist_uploader.py:104
 #, python-brace-format
 msgid "Track {number} of {total}, {percent} percent done: {title}"
-msgstr ""
+msgstr "Lagu {number} dari {total}, {percent} persen selesai: {title}"
 
 #: bot/modules/playlist_uploader.py:125
 #, python-brace-format
 msgid "No track in {name} could be downloaded. Tracks tried: {count}."
-msgstr ""
+msgstr "Tidak ada lagu di {name} yang bisa diunduh. Lagu yang dicoba: {count}."
 
 #: bot/modules/playlist_uploader.py:129
 #, python-brace-format
 msgid "Uploading {name} to the channel."
-msgstr ""
+msgstr "Mengunggah {name} ke saluran."
 
 #: bot/modules/playlist_uploader.py:137
 #, python-brace-format
 msgid "{name} is in the channel as one zip file. Tracks in it: {count}."
-msgstr ""
+msgstr "{name} ada di saluran sebagai satu berkas zip. Lagu di dalamnya: {count}."
 
 # | msgid "Live streams cannot be downloaded"
 # | msgid "Spotify tracks cannot be downloaded."
 # | msgid "{count} could not be downloaded."
 #: bot/modules/playlist_uploader.py:140
-#, fuzzy, python-brace-format
+#, python-brace-format
 msgid "Tracks that could not be downloaded: {count}."
-msgstr "Streaming langsung tidak dapat diunduh."
+msgstr "Lagu yang tidak bisa diunduh: {count}."
 
 #: bot/modules/podcast_subscriptions.py:196
 #, python-brace-format
@@ -2377,262 +2438,271 @@ msgstr "Untuk membuka podcast itu, kirim: ps {number}"
 
 #: bot/modules/portal_pages.py:45
 msgid "dash"
-msgstr ""
+msgstr "tanda hubung"
 
 #: bot/modules/portal_pages.py:46
 msgid "underscore"
-msgstr ""
+msgstr "garis bawah"
 
 #: bot/modules/portal_pages.py:47
 msgid "dot"
-msgstr ""
+msgstr "titik"
 
 #: bot/modules/portal_pages.py:48
 msgid "space"
-msgstr ""
+msgstr "spasi"
 
 # | msgid "Error: {}"
 #: bot/modules/portal_pages.py:73 bot/modules/portal_pages.py:145
-#, fuzzy
 msgid "Error:"
-msgstr "Kesalahan: {}."
+msgstr "Galat:"
 
 #: bot/modules/portal_pages.py:118
 msgid "There is a problem"
-msgstr ""
+msgstr "Ada masalah"
 
 #: bot/modules/portal_pages.py:158
 msgid "Back to your accounts"
-msgstr ""
+msgstr "Kembali ke akun Anda"
 
 #: bot/modules/portal_pages.py:174 bot/modules/portal_pages.py:535
 #: bot/modules/portal_pages.py:563 bot/modules/portal_pages.py:627
 #: bot/modules/portal_pages.py:683 bot/modules/portal_pages.py:749
 #, python-format
 msgid "Import a %(service)s session"
-msgstr ""
+msgstr "Impor sesi %(service)s"
 
 #: bot/modules/portal_pages.py:181 bot/modules/portal_pages.py:209
 #: bot/modules/portal_pages.py:216 bot/modules/portal_pages.py:257
 #, python-format
 msgid "Connect %(service)s"
-msgstr ""
+msgstr "Hubungkan %(service)s"
 
 #: bot/modules/portal_pages.py:197
 msgid "Connected"
-msgstr ""
+msgstr "Terhubung"
 
 #: bot/modules/portal_pages.py:202 bot/modules/portal_pages.py:787
 #, python-format
 msgid "Disconnect %(service)s"
-msgstr ""
+msgstr "Putuskan %(service)s"
 
 #: bot/modules/portal_pages.py:206
 msgid "Expired. Connect again to keep streaming."
-msgstr ""
+msgstr "Kedaluwarsa. Hubungkan lagi untuk terus menyiarkan."
 
 #: bot/modules/portal_pages.py:213
 msgid "Not connected"
-msgstr ""
+msgstr "Tidak terhubung"
 
 #: bot/modules/portal_pages.py:235
 msgid "Your streaming accounts"
-msgstr ""
+msgstr "Akun streaming Anda"
 
 #: bot/modules/portal_pages.py:236
 #, python-format
 msgid "%(connected)s of %(total)s services connected."
-msgstr ""
+msgstr "%(connected)s dari %(total)s layanan terhubung."
 
 #: bot/modules/portal_pages.py:240
 #, python-format
 msgid "%(connected)s of %(total)s services connected"
-msgstr ""
+msgstr "%(connected)s dari %(total)s layanan terhubung"
 
 #: bot/modules/portal_pages.py:259
 msgid "Go to"
-msgstr ""
+msgstr "Buka"
 
 #: bot/modules/portal_pages.py:264
 msgid "(opens in a new tab)"
-msgstr ""
+msgstr "(terbuka di tab baru)"
 
 #: bot/modules/portal_pages.py:265
 msgid "Enter the code below."
-msgstr ""
+msgstr "Masukkan kode di bawah."
 
 #: bot/modules/portal_pages.py:266
 msgid "Come back here and select Check status."
-msgstr ""
+msgstr "Kembali ke sini lalu pilih Periksa status."
 
 #: bot/modules/portal_pages.py:269
 msgid "Your device code"
-msgstr ""
+msgstr "Kode perangkat Anda"
 
 #: bot/modules/portal_pages.py:283
 msgid "Check status"
-msgstr ""
+msgstr "Periksa status"
 
 #: bot/modules/portal_pages.py:289
 #, python-format
 msgid "Connect %(service)s: enter your code"
-msgstr ""
+msgstr "Hubungkan %(service)s: masukkan kode Anda"
 
 #: bot/modules/portal_pages.py:308
 msgid "Google account email address"
-msgstr ""
+msgstr "Alamat email akun Google"
 
 #: bot/modules/portal_pages.py:309
 msgid "The Google account made for StreamerBot, not your personal one."
-msgstr ""
+msgstr "Akun Google yang dibuat untuk StreamerBot, bukan akun pribadi Anda."
 
 #: bot/modules/portal_pages.py:310
 msgid "Google account password"
-msgstr ""
+msgstr "Kata sandi akun Google"
 
 #: bot/modules/portal_pages.py:312
 #, python-format
 msgid "%(service)s email address or username"
-msgstr ""
+msgstr "Alamat email atau nama pengguna %(service)s"
 
 #: bot/modules/portal_pages.py:313
 #, python-format
 msgid "The address you use to sign in to %(service)s."
-msgstr ""
+msgstr "Alamat yang Anda pakai untuk masuk ke %(service)s."
 
 #: bot/modules/portal_pages.py:314
 #, python-format
 msgid "%(service)s password"
-msgstr ""
+msgstr "Kata sandi %(service)s"
 
 #: bot/modules/portal_pages.py:333 bot/modules/portal_pages.py:361
 #: bot/modules/portal_pages.py:366
 #, python-format
 msgid "Sign in to %(service)s"
-msgstr ""
+msgstr "Masuk ke %(service)s"
 
 #: bot/modules/portal_pages.py:363
 msgid "Cancel and go back"
-msgstr ""
+msgstr "Batal dan kembali"
 
 #: bot/modules/portal_pages.py:396
 #, python-format
 msgid "Signing in as %(username)s."
-msgstr ""
+msgstr "Masuk sebagai %(username)s."
 
 #: bot/modules/portal_pages.py:402 bot/modules/portal_pages.py:427
 #, python-format
 msgid "Enter your %(service)s verification code"
-msgstr ""
+msgstr "Masukkan kode verifikasi %(service)s Anda"
 
 #: bot/modules/portal_pages.py:410
 msgid "Verification code"
-msgstr ""
+msgstr "Kode verifikasi"
 
 #: bot/modules/portal_pages.py:414
 msgid "Type or paste the whole code into the box below. Spaces do not matter."
-msgstr ""
+msgstr "Ketik atau tempel seluruh kode ke kotak di bawah. Spasi tidak berpengaruh."
 
 #: bot/modules/portal_pages.py:419
 msgid "Verify code"
-msgstr ""
+msgstr "Verifikasi kode"
 
 #: bot/modules/portal_pages.py:422
 msgid "Send a new code"
-msgstr ""
+msgstr "Kirim kode baru"
 
 #: bot/modules/portal_pages.py:424 bot/modules/portal_pages.py:444
 #: bot/modules/portal_pages.py:630
 msgid "Cancel this sign-in"
-msgstr ""
+msgstr "Batalkan proses masuk ini"
 
 #: bot/modules/portal_pages.py:435 bot/modules/portal_pages.py:448
 #, python-format
 msgid "Signing in to %(service)s"
-msgstr ""
+msgstr "Masuk ke %(service)s"
 
 #: bot/modules/portal_pages.py:436
 msgid "Waiting for the service to confirm. This usually takes 10 to 30 seconds."
 msgstr ""
+"Menunggu konfirmasi dari layanan. Biasanya memakan waktu 10 sampai 30 "
+"detik."
 
 #: bot/modules/portal_pages.py:442
 msgid "Check again"
-msgstr ""
+msgstr "Periksa lagi"
 
 #: bot/modules/portal_pages.py:468
 msgid "Google needs a verification code. Opening that page."
-msgstr ""
+msgstr "Google memerlukan kode verifikasi. Membuka halaman itu."
 
 #: bot/modules/portal_pages.py:469
 msgid "Google needs you to approve the sign-in on your phone. Opening that page."
 msgstr ""
+"Google meminta Anda menyetujui proses masuk di ponsel. Membuka halaman "
+"itu."
 
 #: bot/modules/portal_pages.py:470
 msgid "Signed in. Opening the confirmation page."
-msgstr ""
+msgstr "Sudah masuk. Membuka halaman konfirmasi."
 
 #: bot/modules/portal_pages.py:471
 msgid "The sign-in did not complete. Opening the page that says why."
-msgstr ""
+msgstr "Proses masuk tidak selesai. Membuka halaman yang menjelaskan alasannya."
 
 #: bot/modules/portal_pages.py:472
 msgid "This sign-in is no longer running. Going back to your accounts."
-msgstr ""
+msgstr "Proses masuk ini tidak lagi berjalan. Kembali ke akun Anda."
 
 #: bot/modules/portal_pages.py:473
 #, python-format
 msgid "Still signing in. %(seconds)s seconds so far."
-msgstr ""
+msgstr "Masih masuk. Sudah %(seconds)s detik."
 
 #: bot/modules/portal_pages.py:474
 #, python-format
 msgid "Still signing in. %(minutes)s minutes so far."
-msgstr ""
+msgstr "Masih masuk. Sudah %(minutes)s menit."
 
 #: bot/modules/portal_pages.py:475
 msgid ""
 "This link has expired or the sign-in was cancelled. To get a new link, "
 "send the li command to StreamerBot in TeamTalk."
 msgstr ""
+"Tautan ini sudah kedaluwarsa atau proses masuk dibatalkan. Untuk "
+"mendapatkan tautan baru, kirim perintah li ke StreamerBot di TeamTalk."
 
 #: bot/modules/portal_pages.py:476
 msgid "Lost contact with StreamerBot. Use Check again in a moment."
-msgstr ""
+msgstr "Kontak dengan StreamerBot terputus. Gunakan Periksa lagi sebentar lagi."
 
 #: bot/modules/portal_pages.py:477
 msgid ""
 "This is taking longer than expected. Use Check again, or Cancel this "
 "sign-in."
 msgstr ""
+"Ini memakan waktu lebih lama dari perkiraan. Gunakan Periksa lagi, atau "
+"Batalkan proses masuk ini."
 
 #: bot/modules/portal_pages.py:518 bot/modules/portal_pages.py:522
 #, python-format
 msgid "%(service)s connected"
-msgstr ""
+msgstr "%(service)s terhubung"
 
 #: bot/modules/portal_pages.py:519
 #, python-format
 msgid "StreamerBot can now stream from your %(service)s account."
-msgstr ""
+msgstr "StreamerBot sekarang bisa menyiarkan dari akun %(service)s Anda."
 
 #: bot/modules/portal_pages.py:528
 msgid "Try again"
-msgstr ""
+msgstr "Coba lagi"
 
 #: bot/modules/portal_pages.py:542 bot/modules/portal_pages.py:548
 #, python-format
 msgid "%(service)s could not be connected"
-msgstr ""
+msgstr "%(service)s tidak bisa dihubungkan"
 
 #: bot/modules/portal_pages.py:561
 msgid ""
 "If Google refuses to sign in here, import a session from your own browser"
 " instead:"
 msgstr ""
+"Jika Google menolak proses masuk di sini, impor sesi dari peramban Anda "
+"sendiri:"
 
 #: bot/modules/portal_pages.py:567
 msgid "Use a separate Google account"
-msgstr ""
+msgstr "Gunakan akun Google terpisah"
 
 #: bot/modules/portal_pages.py:568
 msgid ""
@@ -2640,42 +2710,49 @@ msgid ""
 "server. Make a Google account just for StreamerBot rather than using your"
 " personal one."
 msgstr ""
+"Google dapat membatasi akun yang memutar video secara otomatis dari "
+"server. Buat akun Google khusus untuk StreamerBot, jangan memakai akun "
+"pribadi Anda."
 
 #: bot/modules/portal_pages.py:592 bot/modules/portal_pages.py:615
 msgid "Approve the sign-in on your phone"
-msgstr ""
+msgstr "Setujui proses masuk di ponsel Anda"
 
 #: bot/modules/portal_pages.py:596
 msgid "Not approved yet. Approve the sign-in on your phone"
-msgstr ""
+msgstr "Belum disetujui. Setujui proses masuk di ponsel Anda"
 
 #: bot/modules/portal_pages.py:602
 msgid "Number to tap on your phone"
-msgstr ""
+msgstr "Angka yang harus diketuk di ponsel Anda"
 
 #: bot/modules/portal_pages.py:610
 msgid "Google says:"
-msgstr ""
+msgstr "Google menyatakan:"
 
 #: bot/modules/portal_pages.py:616
 msgid "Google has not confirmed the approval yet."
-msgstr ""
+msgstr "Google belum mengonfirmasi persetujuannya."
 
 #: bot/modules/portal_pages.py:619
 msgid ""
 "Google sent a prompt to a phone or tablet signed in to this account. Tap "
 "Yes on it, then come back here."
 msgstr ""
+"Google mengirim permintaan ke ponsel atau tablet yang masuk ke akun ini. "
+"Ketuk Ya di sana, lalu kembali ke sini."
 
 #: bot/modules/portal_pages.py:620
 msgid ""
 "The prompt stops working after a few minutes. If it has gone, cancel and "
 "sign in again."
 msgstr ""
+"Permintaan itu tidak berlaku lagi setelah beberapa menit. Jika sudah "
+"hilang, batalkan lalu masuk lagi."
 
 #: bot/modules/portal_pages.py:624
 msgid "I have approved it on my phone"
-msgstr ""
+msgstr "Saya sudah menyetujuinya di ponsel"
 
 #: bot/modules/portal_pages.py:685
 msgid ""
@@ -2683,40 +2760,49 @@ msgid ""
 "cannot run a browser. You need a cookies.txt file from a browser that is "
 "signed in to YouTube."
 msgstr ""
+"Gunakan ini jika Google tidak mengizinkan masuk dari bot, atau jika bot "
+"tidak bisa menjalankan peramban. Anda memerlukan berkas cookies.txt dari "
+"peramban yang sudah masuk ke YouTube."
 
 #: bot/modules/portal_pages.py:688
 msgid "I already have the file. Go to the import form."
-msgstr ""
+msgstr "Saya sudah punya berkasnya. Buka formulir impor."
 
 #: bot/modules/portal_pages.py:693
 msgid "How to get a cookies.txt file"
-msgstr ""
+msgstr "Cara mendapatkan berkas cookies.txt"
 
 #: bot/modules/portal_pages.py:694
 msgid "On an Android phone"
-msgstr ""
+msgstr "Di ponsel Android"
 
 #: bot/modules/portal_pages.py:695
 msgid ""
 "No computer is needed. This uses the Firefox browser, which can add a "
 "small cookie exporter on Android."
 msgstr ""
+"Tidak perlu komputer. Ini memakai peramban Firefox, yang bisa menambahkan"
+" pengekspor cookie kecil di Android."
 
 #: bot/modules/portal_pages.py:697
 msgid "Install Firefox from the Google Play Store, and open this page in Firefox."
-msgstr ""
+msgstr "Pasang Firefox dari Google Play Store, lalu buka halaman ini di Firefox."
 
 #: bot/modules/portal_pages.py:698
 msgid ""
 "In Firefox, open the menu, choose Extensions, then find and add the "
 "extension called cookies.txt."
 msgstr ""
+"Di Firefox, buka menu, pilih Ekstensi, lalu cari dan tambahkan ekstensi "
+"bernama cookies.txt."
 
 #: bot/modules/portal_pages.py:699
 msgid ""
 "Go to youtube.com in Firefox and sign in with the Google account made for"
 " StreamerBot."
 msgstr ""
+"Buka youtube.com di Firefox dan masuk dengan akun Google yang dibuat "
+"untuk StreamerBot."
 
 #: bot/modules/portal_pages.py:700
 msgid ""
@@ -2724,16 +2810,21 @@ msgid ""
 "then cookies.txt, and export the cookies for the current site. The file "
 "is saved to your Downloads."
 msgstr ""
+"Masih di youtube.com, buka menu Firefox, pilih Ekstensi, lalu "
+"cookies.txt, dan ekspor cookie untuk situs saat ini. Berkas disimpan di "
+"folder Unduhan Anda."
 
 #: bot/modules/portal_pages.py:701
 msgid ""
 "Come back to this page in Firefox and choose that file in the import form"
 " below."
 msgstr ""
+"Kembali ke halaman ini di Firefox dan pilih berkas itu di formulir impor "
+"di bawah."
 
 #: bot/modules/portal_pages.py:703
 msgid "On an iPhone or iPad"
-msgstr ""
+msgstr "Di iPhone atau iPad"
 
 #: bot/modules/portal_pages.py:704
 msgid ""
@@ -2742,108 +2833,135 @@ msgid ""
 "you. They must sign in with the Google account made for StreamerBot, "
 "never their own."
 msgstr ""
+"Tidak ada cara yang andal untuk mengekspor berkas ini di iPhone atau "
+"iPad. Gunakan ponsel Android atau komputer, atau minta orang yang punya "
+"untuk melakukannya. Mereka harus masuk dengan akun Google yang dibuat "
+"untuk StreamerBot, bukan akun mereka sendiri."
 
 #: bot/modules/portal_pages.py:705
 msgid "On a computer"
-msgstr ""
+msgstr "Di komputer"
 
 #: bot/modules/portal_pages.py:707
 msgid ""
 "In your own browser, sign in to YouTube with the Google account made for "
 "StreamerBot."
 msgstr ""
+"Di peramban Anda sendiri, masuk ke YouTube dengan akun Google yang dibuat"
+" untuk StreamerBot."
 
 #: bot/modules/portal_pages.py:708
 msgid ""
 "While on youtube.com, use a cookie export extension to save the cookies "
 "in Netscape cookies.txt format."
 msgstr ""
+"Saat di youtube.com, gunakan ekstensi pengekspor cookie untuk menyimpan "
+"cookie dalam format Netscape cookies.txt."
 
 #: bot/modules/portal_pages.py:709
 msgid ""
 "Choose that file in the import form below, or open it, copy everything in"
 " it, and paste it into the box below."
 msgstr ""
+"Pilih berkas itu di formulir impor di bawah, atau buka berkasnya, salin "
+"seluruh isinya, dan tempel ke kotak di bawah."
 
 #: bot/modules/portal_pages.py:711
 msgid ""
 "Afterwards, do not sign out of YouTube in that browser. Signing out ends "
 "the session StreamerBot is using. Closing the browser is fine."
 msgstr ""
+"Setelah itu, jangan keluar dari YouTube di peramban tersebut. Keluar akan"
+" mengakhiri sesi yang dipakai StreamerBot. Menutup peramban tidak "
+"masalah."
 
 #: bot/modules/portal_pages.py:712
 msgid ""
 "Google sometimes ends a session that is used from a different place. If "
 "that happens, StreamerBot tells you in TeamTalk and you can import again."
 msgstr ""
+"Google terkadang mengakhiri sesi yang dipakai dari tempat lain. Jika itu "
+"terjadi, StreamerBot akan memberi tahu Anda di TeamTalk dan Anda bisa "
+"mengimpor lagi."
 
 #: bot/modules/portal_pages.py:716
 msgid ""
 "This server cannot run a browser, so nothing can keep an imported session"
 " alive. Expect to import again from time to time."
 msgstr ""
+"Server ini tidak bisa menjalankan peramban, jadi tidak ada yang bisa "
+"menjaga sesi yang diimpor tetap hidup. Bersiaplah untuk mengimpor lagi "
+"sesekali."
 
 #: bot/modules/portal_pages.py:718
 msgid "Import your file"
-msgstr ""
+msgstr "Impor berkas Anda"
 
 #: bot/modules/portal_pages.py:724
 msgid "Your cookies.txt file"
-msgstr ""
+msgstr "Berkas cookies.txt Anda"
 
 #: bot/modules/portal_pages.py:730
 msgid "Or paste the contents of the file"
-msgstr ""
+msgstr "Atau tempel isi berkasnya"
 
 #: bot/modules/portal_pages.py:731
 msgid "Paste the whole file. It is several lines of text."
-msgstr ""
+msgstr "Tempel seluruh berkas. Isinya beberapa baris teks."
 
 #: bot/modules/portal_pages.py:738
 msgid "Import the session"
-msgstr ""
+msgstr "Impor sesi"
 
 #: bot/modules/portal_pages.py:744
 #, python-format
 msgid "Lines pasted: %(count)s"
-msgstr ""
+msgstr "Baris yang ditempel: %(count)s"
 
 #: bot/modules/portal_pages.py:761
 msgid "Choose your cookies.txt file, or paste its contents"
-msgstr ""
+msgstr "Pilih berkas cookies.txt Anda, atau tempel isinya"
 
 #: bot/modules/portal_pages.py:762
 msgid ""
 "This is too long to be a cookies file. Check you chose only the "
 "cookies.txt file."
 msgstr ""
+"Ini terlalu panjang untuk berkas cookie. Pastikan Anda hanya memilih "
+"berkas cookies.txt."
 
 #: bot/modules/portal_pages.py:763
 msgid ""
 "This is not a cookies.txt file. Export the cookies again in Netscape "
 "cookies.txt format."
 msgstr ""
+"Ini bukan berkas cookies.txt. Ekspor cookie lagi dalam format Netscape "
+"cookies.txt."
 
 #: bot/modules/portal_pages.py:764
 msgid ""
 "This file has no YouTube sign-in in it. Sign in to YouTube in your "
 "browser, then export the cookies again while on youtube.com."
 msgstr ""
+"Berkas ini tidak berisi data masuk YouTube. Masuk ke YouTube di peramban "
+"Anda, lalu ekspor cookie lagi saat berada di youtube.com."
 
 #: bot/modules/portal_pages.py:765
 msgid ""
 "YouTube says this session is already signed out. Sign in to YouTube in "
 "your browser again, then export a fresh file."
 msgstr ""
+"YouTube menyatakan sesi ini sudah keluar. Masuk ke YouTube lagi di "
+"peramban Anda, lalu ekspor berkas yang baru."
 
 #: bot/modules/portal_pages.py:766
 msgid "The session could not be imported."
-msgstr ""
+msgstr "Sesi tidak bisa diimpor."
 
 #: bot/modules/portal_pages.py:778 bot/modules/portal_pages.py:793
 #, python-format
 msgid "Disconnect %(service)s?"
-msgstr ""
+msgstr "Putuskan %(service)s?"
 
 #: bot/modules/portal_pages.py:779
 #, python-format
@@ -2852,47 +2970,50 @@ msgid ""
 "%(service)s account itself is not affected. You can connect again at any "
 "time."
 msgstr ""
+"StreamerBot akan berhenti menyiarkan dari akun %(service)s Anda. Akun "
+"%(service)s Anda sendiri tidak terpengaruh. Anda bisa menghubungkannya "
+"lagi kapan saja."
 
 #: bot/modules/portal_pages.py:790
 #, python-format
 msgid "Cancel, keep %(service)s connected"
-msgstr ""
+msgstr "Batal, biarkan %(service)s tetap terhubung"
 
 # | msgid "help text not found"
 #: bot/modules/portal_pages.py:809
-#, fuzzy
 msgid "Page not found"
-msgstr "teks bantuan tidak ditemukan."
+msgstr "Halaman tidak ditemukan"
 
 # | msgid "This user is not in the admin list"
 #: bot/modules/portal_pages.py:810
-#, fuzzy
 msgid "This address is not quite right."
-msgstr "Pengguna ini tidak ada dalam daftar administrator."
+msgstr "Alamat ini kurang tepat."
 
 #: bot/modules/portal_pages.py:811 bot/modules/portal_pages.py:818
 msgid "To get a new link, send the li command to StreamerBot in TeamTalk."
 msgstr ""
+"Untuk mendapatkan tautan baru, kirim perintah li ke StreamerBot di "
+"TeamTalk."
 
 #: bot/modules/portal_pages.py:816
 msgid "Link expired"
-msgstr ""
+msgstr "Tautan kedaluwarsa"
 
 #: bot/modules/portal_pages.py:817
 msgid "This link has expired."
-msgstr ""
+msgstr "Tautan ini sudah kedaluwarsa."
 
 #: bot/modules/portal_pages.py:823
 msgid "Something went wrong"
-msgstr ""
+msgstr "Terjadi kesalahan"
 
 #: bot/modules/portal_pages.py:824
 msgid "StreamerBot could not finish that request."
-msgstr ""
+msgstr "StreamerBot tidak bisa menyelesaikan permintaan itu."
 
 #: bot/modules/portal_pages.py:825
 msgid "Try again in a moment. If it keeps happening, check the bot's log."
-msgstr ""
+msgstr "Coba lagi sebentar lagi. Jika terus terjadi, periksa log bot."
 
 #: bot/modules/uploader.py:68
 msgid "Error: Downloaded file not found."
@@ -2915,11 +3036,13 @@ msgid ""
 "YouTube refused to download {name} without a signed-in account, which is "
 "usual on a server. To connect one, send this command: li yt"
 msgstr ""
+"YouTube menolak mengunduh {name} tanpa akun yang sudah masuk, hal yang "
+"biasa di server. Untuk menghubungkan akun, kirim perintah ini: li yt"
 
 #: bot/modules/youtube_session_keeper.py:157
 #, python-brace-format
 msgid "The YouTube sign-in could not be renewed, so {name} was not downloaded."
-msgstr ""
+msgstr "Data masuk YouTube tidak bisa diperbarui, jadi {name} tidak diunduh."
 
 #: bot/modules/youtube_session_keeper.py:348
 #: bot/modules/youtube_session_keeper.py:355
@@ -2927,11 +3050,13 @@ msgid ""
 "Google signed in, but YouTube did not recognise the session. Please try "
 "again."
 msgstr ""
+"Google sudah masuk, tetapi YouTube tidak mengenali sesinya. Silakan coba "
+"lagi."
 
 #: bot/services/browser_service.py:104
 #, python-format
 msgid "%(service)s is not ready yet."
-msgstr ""
+msgstr "%(service)s belum siap."
 
 #: bot/services/browser_service.py:121
 #, python-format
@@ -2939,22 +3064,24 @@ msgid ""
 "%(service)s needs Google Chrome, which is not available on this machine's"
 " processor architecture."
 msgstr ""
+"%(service)s memerlukan Google Chrome, yang tidak tersedia untuk "
+"arsitektur prosesor mesin ini."
 
 #: bot/services/browser_service.py:132
 #, python-format
 msgid "%(service)s is not connected. Send li %(code)s to connect an account."
-msgstr ""
+msgstr "%(service)s tidak terhubung. Kirim li %(code)s untuk menghubungkan akun."
 
 #: bot/services/browser_service.py:166
 #, python-format
 msgid "That is not a %(service)s link."
-msgstr ""
+msgstr "Itu bukan tautan %(service)s."
 
 # | msgid "Live streams cannot be downloaded"
 #: bot/services/browser_service.py:182
-#, fuzzy, python-format
+#, python-format
 msgid "%(service)s cannot be downloaded."
-msgstr "Streaming langsung tidak dapat diunduh."
+msgstr "%(service)s tidak bisa diunduh."
 
 #: bot/services/browser_service.py:208
 msgid ""
@@ -2963,6 +3090,10 @@ msgid ""
 "watchlists and audio settings; pf lists them and pf with a number picks "
 "one."
 msgstr ""
+"Disney Plus memutar film dan acara, dengan deskripsi audio jika Disney "
+"Plus menyediakannya. Setiap akun punya profil sendiri, dengan daftar "
+"tontonan dan pengaturan audio sendiri; pf menampilkannya dan pf dengan "
+"nomor memilih salah satunya."
 
 #: bot/services/browser_service.py:224
 msgid ""
@@ -2971,6 +3102,10 @@ msgid ""
 "told apart. dl downloads what is playing and dlp downloads the album it "
 "is from."
 msgstr ""
+"Apple Music memutar lagu, album, artis, dan daftar putar. Pencarian "
+"mengembalikan keempatnya, masing-masing disebut sesuai jenisnya, sehingga"
+" album dan lagu di dalamnya bisa dibedakan. dl mengunduh yang sedang "
+"diputar dan dlp mengunduh album asalnya."
 
 #: bot/services/browser_service.py:247
 msgid ""
@@ -2979,6 +3114,10 @@ msgid ""
 "music subscription; a plain Prime account plays only part of the "
 "catalogue."
 msgstr ""
+"Amazon Music memutar lagu, album, artis, dan daftar putar. Pencarian "
+"mengembalikan keempatnya, masing-masing disebut sesuai jenisnya. "
+"Memerlukan akun Amazon dengan langganan musik; akun Prime biasa hanya "
+"memutar sebagian katalog."
 
 #: bot/services/browser_service.py:262
 msgid ""
@@ -3017,71 +3156,73 @@ msgstr ""
 
 #: bot/services/gamdl_downloader.py:158
 msgid "The Apple Music downloader is not installed in this image."
-msgstr ""
+msgstr "Pengunduh Apple Music tidak terpasang di image ini."
 
 #: bot/services/gamdl_downloader.py:165
 msgid ""
 "Downloading from Apple Music needs a subscription. Connect the account "
 "first with li am."
 msgstr ""
+"Mengunduh dari Apple Music memerlukan langganan. Hubungkan akunnya dulu "
+"dengan li am."
 
 #: bot/services/gamdl_downloader.py:199
 msgid "That is not an Apple Music link."
-msgstr ""
+msgstr "Itu bukan tautan Apple Music."
 
 #: bot/services/gamdl_downloader.py:216
 msgid "The download took too long and was stopped."
-msgstr ""
+msgstr "Unduhan terlalu lama dan dihentikan."
 
 #: bot/services/gamdl_downloader.py:230
 msgid "The download produced no audio files."
-msgstr ""
+msgstr "Unduhan tidak menghasilkan berkas audio."
 
 #: bot/services/gamdl_downloader.py:252
 msgid "That needs an active Apple Music subscription."
-msgstr ""
+msgstr "Itu memerlukan langganan Apple Music yang aktif."
 
 #: bot/services/gamdl_downloader.py:255
 msgid "Apple Music did not have that."
-msgstr ""
+msgstr "Apple Music tidak memilikinya."
 
 #: bot/services/gamdl_downloader.py:258
 msgid "That track needs a decryption device file the bot does not have."
-msgstr ""
+msgstr "Lagu itu memerlukan berkas perangkat dekripsi yang tidak dimiliki bot."
 
 #: bot/services/gamdl_downloader.py:262
 msgid "The Apple Music sign-in has expired. Connect it again with li am."
-msgstr ""
+msgstr "Data masuk Apple Music sudah kedaluwarsa. Hubungkan lagi dengan li am."
 
 # | msgid "Error: Downloaded file not found."
 #: bot/services/gamdl_downloader.py:265
-#, fuzzy
 msgid "The download failed."
-msgstr "Kesalahan: File yang diunduh tidak ditemukan."
+msgstr "Unduhan gagal."
 
 #: bot/services/netflix.py:81
 msgid "Netflix is not ready yet."
-msgstr ""
+msgstr "Netflix belum siap."
 
 #: bot/services/netflix.py:94
 msgid ""
 "Netflix needs Google Chrome, which is not available on this machine's "
 "processor architecture."
 msgstr ""
+"Netflix memerlukan Google Chrome, yang tidak tersedia untuk arsitektur "
+"prosesor mesin ini."
 
 #: bot/services/netflix.py:106
 msgid "Netflix is not connected. Send li nf to connect an account."
-msgstr ""
+msgstr "Netflix tidak terhubung. Kirim li nf untuk menghubungkan akun."
 
 #: bot/services/netflix.py:141
 msgid "That is not a Netflix link."
-msgstr ""
+msgstr "Itu bukan tautan Netflix."
 
 # | msgid "Live streams cannot be downloaded"
 #: bot/services/netflix.py:155
-#, fuzzy
 msgid "Netflix titles cannot be downloaded."
-msgstr "Streaming langsung tidak dapat diunduh."
+msgstr "Judul Netflix tidak bisa diunduh."
 
 #: bot/services/podcasts.py:461
 msgid ""
@@ -3094,11 +3235,11 @@ msgstr ""
 #: bot/services/results.py:130
 #, python-format
 msgid "%(count)s %(kind)s"
-msgstr ""
+msgstr "%(count)s %(kind)s"
 
 #: bot/services/spotify.py:123
 msgid "Spotify is not connected yet. Send li sp to connect an account."
-msgstr ""
+msgstr "Spotify belum terhubung. Kirim li sp untuk menghubungkan akun."
 
 #: bot/services/spotify.py:165
 msgid ""
@@ -3106,32 +3247,34 @@ msgid ""
 " the bot's configuration, then try again. Playing a pasted Spotify link "
 "does not need one."
 msgstr ""
+"Pencarian Spotify memerlukan aplikasi Spotify. Tambahkan ID klien dan "
+"secret di konfigurasi bot, lalu coba lagi. Memutar tautan Spotify yang "
+"ditempel tidak memerlukannya."
 
 #: bot/services/spotify.py:227
 msgid "The Spotify session expired. Try again."
-msgstr ""
+msgstr "Sesi Spotify kedaluwarsa. Coba lagi."
 
 #: bot/services/spotify.py:232
 msgid "Spotify refused that request. Playback needs a Premium account."
-msgstr ""
+msgstr "Spotify menolak permintaan itu. Pemutaran memerlukan akun Premium."
 
 #: bot/services/spotify.py:237
 msgid "Spotify is rate limiting us. Try again shortly."
-msgstr ""
+msgstr "Spotify membatasi permintaan kami. Coba lagi sebentar lagi."
 
 #: bot/services/spotify.py:298
 msgid "That is not a Spotify link."
-msgstr ""
+msgstr "Itu bukan tautan Spotify."
 
 #: bot/services/spotify.py:326
 msgid "That kind of Spotify link is not supported."
-msgstr ""
+msgstr "Jenis tautan Spotify itu tidak didukung."
 
 # | msgid "Live streams cannot be downloaded"
 #: bot/services/spotify.py:422
-#, fuzzy
 msgid "Spotify tracks cannot be downloaded."
-msgstr "Streaming langsung tidak dapat diunduh."
+msgstr "Lagu Spotify tidak bisa diunduh."
 
 #: bot/services/yt.py:196 bot/services/yt.py:468
 msgid "Unknown Title"

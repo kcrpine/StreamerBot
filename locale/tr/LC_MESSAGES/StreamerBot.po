@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  StreamerBot\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-27 20:23+0000\n"
+"POT-Creation-Date: 2026-10-27 20:41+0000\n"
 "PO-Revision-Date: 2021-07-17 13:41+0400\n"
 "Last-Translator: \n"
 "Language: tr\n"
@@ -24,14 +24,16 @@ msgid ""
 "This needs Google Chrome, which is not available on this machine's "
 "processor architecture."
 msgstr ""
+"Bunun için Google Chrome gerekir, ancak bu makinenin işlemci mimarisi "
+"için mevcut değil."
 
 #: bot/__init__.py:268
 msgid "Spotify is unavailable: the player could not start."
-msgstr ""
+msgstr "Spotify kullanılamıyor: oynatıcı başlatılamadı."
 
 #: bot/__init__.py:301 bot/__init__.py:304 bot/modules/portal_pages.py:543
 msgid "The sign-in did not complete."
-msgstr ""
+msgstr "Oturum açma tamamlanmadı."
 
 #: bot/__init__.py:317
 msgid ""
@@ -42,6 +44,13 @@ msgid ""
 "PORT_CONFLICT.txt in the bot's folder explaining it, and Repair Account "
 "Portal and Spotify Ports in the manager turns it back on."
 msgstr ""
+"Hesap portalı bu botun yapılandırmasında kapalı, bu yüzden Netflix, "
+"Disney Plus, Apple Music ve Amazon Music bağlanamaz. Bu botun config.json"
+" dosyasında auth_portal.enabled değerini true yapın ve botu yeniden "
+"başlatın. Yönetici bunu bir bağlantı noktası çakışması yüzünden "
+"kapattıysa, botun klasöründe bunu açıklayan PORT_CONFLICT.txt adlı bir "
+"dosya vardır ve yöneticideki Repair Account Portal and Spotify Ports "
+"seçeneği portalı yeniden açar."
 
 #: bot/__init__.py:370
 #, python-format
@@ -53,6 +62,12 @@ msgid ""
 "Ports, and restart this bot. YouTube and Spotify are unaffected, because "
 "they sign in with a code in the channel."
 msgstr ""
+"Hesap portalı başlatılamadı, çünkü %(port)s bağlantı noktası zaten "
+"kullanımda, büyük olasılıkla bu makinedeki başka bir bot tarafından. Bu "
+"düzeltilene kadar Netflix, Disney Plus, Apple Music ve Amazon Music "
+"bağlanamaz. Yöneticiyi çalıştırın, Manage Bots ve ardından Repair Account"
+" Portal and Spotify Ports seçeneğini seçin ve bu botu yeniden başlatın. "
+"YouTube ve Spotify etkilenmez, çünkü kanalda bir kodla oturum açarlar."
 
 #: bot/__init__.py:380
 #, python-format
@@ -61,12 +76,16 @@ msgid ""
 "and Amazon Music cannot be connected. The reason is in this bot's log "
 "file: %(reason)s"
 msgstr ""
+"Hesap portalı başlatılamadı, bu yüzden Netflix, Disney Plus, Apple Music "
+"ve Amazon Music bağlanamaz. Nedeni bu botun günlük dosyasında: %(reason)s"
 
 #: bot/__init__.py:412
 msgid ""
 "Hello! I'm back and ready for you to stream again. Thank you for your "
 "patience!"
 msgstr ""
+"Merhaba! Geri döndüm ve yeniden yayın yapmanız için hazırım. Sabrınız "
+"için teşekkürler!"
 
 #: bot/__init__.py:452
 msgid ""
@@ -74,6 +93,9 @@ msgid ""
 "know that an update is in progress and I will restart in a few moments to"
 " apply it. Thank you!"
 msgstr ""
+"Merhaba! Ben Streamer Bot. Bir güncelleme sürdüğünü ve uygulamak için "
+"birkaç dakika içinde yeniden başlayacağımı haber vermek için uğradım. "
+"Teşekkürler!"
 
 #: bot/__init__.py:497
 msgid "Restarted. The new settings are in use."
@@ -99,6 +121,14 @@ msgid ""
 " and\n"
 "Kirill Belousov, and on the fork by Joao Almeida.\n"
 msgstr ""
+"TeamTalk 5 için StreamerBot.\n"
+"YouTube, YouTube Music, Spotify, Apple Music, Amazon Music, Netflix,\n"
+"Disney Plus ve doğrudan bağlantıları sesli betimleme desteğiyle bir "
+"kanala yayınlar.\n"
+"Depo: {repo}\n"
+"TeamTalk SDK {sdk}.\n"
+"Amir Gumerov, Vladislav Kopylov, Beqa Gozalishvili ve Kirill Belousov'un\n"
+"TTMediaBot'una ve Joao Almeida'nın çatalına dayanır.\n"
 
 #: bot/TeamTalk/__init__.py:180
 msgid "Send \"h\" for help"
@@ -106,7 +136,7 @@ msgstr "Yardım için \"h\" gönderin"
 
 #: bot/commands/__init__.py:176
 msgid "That question has expired. To ask again, send: dlp"
-msgstr ""
+msgstr "Bu sorunun süresi doldu. Yeniden sormak için gönderin: dlp"
 
 #: bot/commands/__init__.py:201
 msgid "That menu has expired. To open it again, send: cf"
@@ -367,47 +397,56 @@ msgid ""
 "[status|out] Shows whether this bot is signed in to YouTube, or signs it "
 "out. To sign in, send li yt"
 msgstr ""
+"[status|out] Bu botun YouTube'da oturum açıp açmadığını gösterir ya da "
+"oturumu kapatır. Oturum açmak için li yt gönderin"
 
 # | msgid "This user is not banned"
 #: bot/commands/admin_commands.py:466 bot/modules/auth_portal.py:283
 #: bot/modules/auth_portal.py:318
-#, fuzzy
 msgid "The YouTube service is not enabled."
-msgstr "Bu kullanıcı engellenmemiştir"
+msgstr "YouTube hizmeti etkin değil."
 
 #: bot/commands/admin_commands.py:473
 msgid "This bot is signed in to YouTube."
-msgstr ""
+msgstr "Bu bot YouTube'da oturum açmış durumda."
 
 #: bot/commands/admin_commands.py:476
 msgid ""
 "Google signed this bot out of YouTube. To sign in again, send this "
 "command: li yt"
 msgstr ""
+"Google bu botun YouTube oturumunu kapattı. Yeniden oturum açmak için şu "
+"komutu gönderin: li yt"
 
 #: bot/commands/admin_commands.py:479
 msgid "This bot is not signed in to YouTube. To sign in, send this command: li yt"
 msgstr ""
+"Bu bot YouTube'da oturum açmamış. Oturum açmak için şu komutu gönderin: "
+"li yt"
 
 #: bot/commands/admin_commands.py:484
 msgid "This bot has been signed out of YouTube."
-msgstr ""
+msgstr "Bu botun YouTube oturumu kapatıldı."
 
 #: bot/commands/admin_commands.py:488
 msgid ""
 "YouTube is connected through the account portal now. Send this command: "
 "li yt"
 msgstr ""
+"YouTube artık hesap portalı üzerinden bağlanıyor. Şu komutu gönderin: li "
+"yt"
 
 #: bot/commands/admin_commands.py:500
 msgid ""
 "[link|rotate|off] Shows the account portal's status, mints a new link, "
 "revokes every existing link, or stops the portal"
 msgstr ""
+"[link|rotate|off] Hesap portalının durumunu gösterir, yeni bir bağlantı "
+"oluşturur, mevcut tüm bağlantıları iptal eder ya da portalı durdurur"
 
 #: bot/commands/admin_commands.py:507 bot/commands/admin_commands.py:563
 msgid "The account portal is not running."
-msgstr ""
+msgstr "Hesap portalı çalışmıyor."
 
 #: bot/commands/admin_commands.py:513
 #, python-format
@@ -415,20 +454,22 @@ msgid ""
 "The portal is listening on %(host)s port %(port)s with %(count)s live "
 "links."
 msgstr ""
+"Portal %(host)s adresinde, %(port)s bağlantı noktasında dinliyor; etkin "
+"bağlantı sayısı: %(count)s."
 
 #: bot/commands/admin_commands.py:528
 #, python-format
 msgid "That address came from %(source)s."
-msgstr ""
+msgstr "Bu adres şuradan geldi: %(source)s."
 
 #: bot/commands/admin_commands.py:540
 #, python-format
 msgid "Revoked %(count)s links. Send ap link for a new one."
-msgstr ""
+msgstr "İptal edilen bağlantı: %(count)s. Yeni bir bağlantı için ap link gönderin."
 
 #: bot/commands/admin_commands.py:545
 msgid "The portal has been stopped."
-msgstr ""
+msgstr "Portal durduruldu."
 
 # | msgid "" "SERVICE Disconnects a streaming account and deletes its saved
 # | sign-in " "(yt, sp, nf, dp, am, az, pp, tb)"
@@ -443,12 +484,12 @@ msgstr ""
 #: bot/commands/admin_commands.py:571
 #, python-format
 msgid "%(service)s is not connected."
-msgstr ""
+msgstr "%(service)s bağlı değil."
 
 #: bot/commands/admin_commands.py:577
 #, python-format
 msgid "%(service)s has been disconnected and its saved sign-in deleted."
-msgstr ""
+msgstr "%(service)s bağlantısı kesildi ve kayıtlı oturumu silindi."
 
 #: bot/commands/command.py:30
 msgid "help text not found"
@@ -457,13 +498,15 @@ msgstr "yardım metni bulunamadı"
 #: bot/commands/command.py:82
 #, python-brace-format
 msgid "The YouTube sign-in could not be renewed, so {request} was not played."
-msgstr ""
+msgstr "YouTube oturumu yenilenemedi, bu yüzden {request} çalınmadı."
 
 #: bot/commands/command.py:102
 msgid ""
 "YouTube refused to play this without a signed-in account, which is usual "
 "on a server. To connect one, send this command: li yt"
 msgstr ""
+"YouTube bunu oturum açılmış bir hesap olmadan çalmayı reddetti; bu bir "
+"sunucuda olağandır. Bir hesap bağlamak için şu komutu gönderin: li yt"
 
 #: bot/commands/command.py:128
 #, python-brace-format
@@ -471,12 +514,16 @@ msgid ""
 "Renewing the YouTube sign-in. {request} will start playing when it "
 "finishes, usually within a minute."
 msgstr ""
+"YouTube oturumu yenileniyor. {request}, bu bittiğinde çalmaya başlayacak;"
+" genellikle bir dakika içinde."
 
 #: bot/commands/command.py:137 bot/modules/youtube_session_keeper.py:154
 msgid ""
 "Google signed StreamerBot out of YouTube. To sign in again, send this "
 "command: li yt"
 msgstr ""
+"Google, StreamerBot'un YouTube oturumunu kapattı. Yeniden oturum açmak "
+"için şu komutu gönderin: li yt"
 
 #: bot/commands/config_menu.py:155
 msgid "on"
@@ -951,55 +998,52 @@ msgstr ""
 # | msgid "Loaded {count} tracks"
 # | msgid "Playing {name}, {count} tracks"
 #: bot/commands/playlist_choice.py:80
-#, fuzzy, python-brace-format
+#, python-brace-format
 msgid "The playlist {name} has {count} videos."
-msgstr "{count} parça yüklendi"
+msgstr "{name} çalma listesinde {count} video var."
 
 #: bot/commands/playlist_choice.py:83
 msgid "For the whole playlist as one zip file, send: 1"
-msgstr ""
+msgstr "Tüm çalma listesini tek bir zip dosyası olarak almak için gönderin: 1"
 
 #: bot/commands/playlist_choice.py:84
 msgid "To pick one video from a list, send: 2"
-msgstr ""
+msgstr "Bir listeden tek bir video seçmek için gönderin: 2"
 
 #: bot/commands/playlist_choice.py:85
 msgid "To cancel, send: 0"
-msgstr ""
+msgstr "İptal etmek için gönderin: 0"
 
 #: bot/commands/playlist_choice.py:92
 #, python-brace-format
 msgid "Page {page} of {pages} of {name}, {total} videos. Send a number:"
-msgstr ""
+msgstr "{name}, sayfa {page} / {pages}, {total} video. Bir numara gönderin:"
 
 #: bot/commands/playlist_choice.py:100
 #, python-brace-format
 msgid "Next videos, {first} to {last}"
-msgstr ""
+msgstr "Sonraki videolar, {first} ile {last} arası"
 
 #: bot/commands/playlist_choice.py:104
 #, python-brace-format
 msgid "Back to videos 1 to {last}"
-msgstr ""
+msgstr "1 ile {last} arasındaki videolara dön"
 
 # | msgid "Downloading playlist: {}"
 #: bot/commands/playlist_choice.py:107
-#, fuzzy
 msgid "Download the whole playlist"
-msgstr "Çalma listesi indiriliyor: {}"
+msgstr "Tüm çalma listesini indir"
 
 # | msgid "Cache cleared"
 # | msgid "Cancelled."
 #: bot/commands/playlist_choice.py:108
-#, fuzzy
 msgid "Cancel"
-msgstr "Önbellek temizlendi"
+msgstr "İptal"
 
 # | msgid "Cache cleared"
 #: bot/commands/playlist_choice.py:119 bot/modules/auth_portal.py:647
-#, fuzzy
 msgid "Cancelled."
-msgstr "Önbellek temizlendi"
+msgstr "İptal edildi."
 
 #: bot/commands/playlist_choice.py:141
 #, python-brace-format
@@ -1007,6 +1051,8 @@ msgid ""
 "There is no {number} on this page. Send a number from 1 to {last}, or to "
 "cancel, send: 0"
 msgstr ""
+"Bu sayfada {number} yok. 1 ile {last} arasında bir sayı gönderin, iptal "
+"etmek için gönderin: 0"
 
 #: bot/commands/podcast_commands.py:69
 msgid "That podcast could not be read. Try again later."
@@ -1331,7 +1377,7 @@ msgstr "URL / çalma listesi yükleniyor..."
 
 #: bot/commands/user_commands.py:130
 msgid "Your link"
-msgstr ""
+msgstr "Bağlantınız"
 
 #: bot/commands/user_commands.py:135
 msgid "Incorrect protocol"
@@ -1347,9 +1393,9 @@ msgstr "Yol bulunamadı"
 
 # | msgid "{nickname} requested playing from a URL"
 #: bot/commands/user_commands.py:162
-#, fuzzy, python-brace-format
+#, python-brace-format
 msgid "{nickname} requested playing from a URL ({count} tracks)"
-msgstr "{nickname} bir URL'den oynatma istedi"
+msgstr "{nickname} bir URL'den çalma istedi ({count} parça)"
 
 #: bot/commands/user_commands.py:169
 #, python-brace-format
@@ -1406,6 +1452,8 @@ msgid ""
 "[NUMBER|?] Plays next track, jumps to track number, or shows current "
 "position with ?"
 msgstr ""
+"[NUMBER|?] Sonraki parçayı çalar, belirtilen parça numarasına atlar ya da"
+" ? ile geçerli konumu gösterir"
 
 #: bot/commands/user_commands.py:279 bot/commands/user_commands.py:535
 msgid "Incorrect number"
@@ -1494,27 +1542,21 @@ msgstr ""
 
 # | msgid "" "Unknown service.\n" "{}"
 #: bot/commands/user_commands.py:374
-#, fuzzy, python-brace-format
+#, python-brace-format
 msgid "Unknown service.{newline}{help}"
-msgstr ""
-"Bilinmeyen hizmet.\n"
-"{}"
+msgstr "Bilinmeyen hizmet.{newline}{help}"
 
 # | msgid "" "Current service: {}\n" "Warning: {}"
 #: bot/commands/user_commands.py:385
-#, fuzzy, python-brace-format
+#, python-brace-format
 msgid "Current service: {service}{newline}{status}"
-msgstr ""
-"Mevcut hizmet: {}\n"
-"Uyarı: {}"
+msgstr "Geçerli hizmet: {service}{newline}{status}"
 
 # | msgid "" "Error: {error}\n" "{service} is disabled"
 #: bot/commands/user_commands.py:394
-#, fuzzy, python-brace-format
+#, python-brace-format
 msgid "Error: {error}{newline}{service} is disabled"
-msgstr ""
-"Hata: {error}\n"
-"{service} devre dışı bırakıldı"
+msgstr "Hata: {error}{newline}{service} devre dışı"
 
 #: bot/commands/user_commands.py:401
 #, python-brace-format
@@ -1524,7 +1566,7 @@ msgstr "{service} devre dışı"
 #: bot/commands/user_commands.py:453
 #, python-format
 msgid "%(service)s is switched off in this bot's configuration."
-msgstr ""
+msgstr "%(service)s bu botun yapılandırmasında kapalı."
 
 #: bot/commands/user_commands.py:460
 #, python-format
@@ -1532,51 +1574,50 @@ msgid ""
 "%(service)s is not connected. To connect an account, send this command: "
 "li %(code)s"
 msgstr ""
+"%(service)s bağlı değil. Bir hesap bağlamak için şu komutu gönderin: li "
+"%(code)s"
 
 #: bot/commands/user_commands.py:465
 #, python-format
 msgid "%(service)s is connected and ready."
-msgstr ""
+msgstr "%(service)s bağlı ve hazır."
 
 #: bot/commands/user_commands.py:478
 #, python-format
 msgid "unavailable: %(reason)s"
-msgstr ""
+msgstr "kullanılamıyor: %(reason)s"
 
 # | msgid "Saves bot's configuration"
 #: bot/commands/user_commands.py:480
-#, fuzzy
 msgid "switched off in this bot's configuration"
-msgstr "Botun konfigurasyonunu kaydeder"
+msgstr "bu botun yapılandırmasında kapalı"
 
 #: bot/commands/user_commands.py:483
 #, python-format
 msgid "not connected, send li %(code)s"
-msgstr ""
+msgstr "bağlı değil, li %(code)s gönderin"
 
 #: bot/commands/user_commands.py:488
 msgid "ready"
-msgstr ""
+msgstr "hazır"
 
 # | msgid "" "Current service: {current_service}\n" "Available:\n"
 # | "{available_services}\n" "send sv SERVICE h for additional help"
 #: bot/commands/user_commands.py:499
-#, fuzzy, python-brace-format
+#, python-brace-format
 msgid ""
 "Current service: "
 "{current_service}{newline}Available:{newline}{available_services}{newline}send"
 " sv SERVICE h for additional help"
 msgstr ""
-"Mevcut hizmet: {current_service}\n"
-"Kullanılabilir:\n"
-"{available_services}\n"
-"Ek yardım için sv HİZMET h gönderin"
+"Geçerli hizmet: {current_service}{newline}Mevcut "
+"olanlar:{newline}{available_services}{newline}ek yardım için sv SERVICE h"
+" gönderin"
 
 # | msgid "NUMBER Selects track by number from the list of current results"
 #: bot/commands/user_commands.py:512
-#, fuzzy
 msgid "[NUMBER|?] Selects track by number, or shows current position with ?"
-msgstr "NUMARA Geçerli sonuçlar listesinden parçayı numaraya göre seçer"
+msgstr "[NUMBER|?] Numarayla parça seçer ya da ? ile geçerli konumu gösterir"
 
 #: bot/commands/user_commands.py:561
 msgid ""
@@ -1679,7 +1720,6 @@ msgstr "Kanala katılma başarısız oldu: {}"
 # | uploads to" " the channel. Without a link while Apple Music is playing,
 # | downloads the " "album or playlist being played."
 #: bot/commands/user_commands.py:812
-#, fuzzy
 msgid ""
 "Downloads all tracks from a playlist/album URL, zips them, and uploads to"
 " the channel. For a YouTube playlist it asks first whether you want the "
@@ -1687,8 +1727,11 @@ msgid ""
 "Apple Music or a YouTube playlist is playing, it uses the album or "
 "playlist being played."
 msgstr ""
-"Bir playlist/albüm URL'sindeki tüm parçaları indirir, ZIP'ler ve kanala "
-"yükler."
+"Bir çalma listesi veya albüm URL'sindeki tüm parçaları indirir, zip "
+"dosyası yapar ve kanala yükler. Bir YouTube çalma listesinde önce tüm "
+"listeyi mi yoksa numaralı bir listeden tek bir videoyu mu istediğinizi "
+"sorar. Bağlantı olmadan, Apple Music ya da bir YouTube çalma listesi "
+"çalarken, çalınan albümü veya çalma listesini kullanır."
 
 #: bot/commands/user_commands.py:823
 #, python-brace-format
@@ -1702,14 +1745,12 @@ msgstr "Lütfen çalma listesi veya albüm bağlantısını gönderin."
 # | msgid "This command is for playlists and albums. For single tracks, use
 # | 'dl'."
 #: bot/commands/user_commands.py:858
-#, fuzzy
 msgid ""
 "This command is for playlists, albums, and channels. For single tracks, "
 "use 'dl'."
 msgstr ""
-"This command is for playlists and albums. For single tracks, use 'dl'.Bu "
-"komut çalma listeleri ve albümler içindir. Tekli parçalar için 'dl' "
-"kullanın."
+"Bu komut çalma listeleri, albümler ve kanallar içindir. Tek parçalar için"
+" 'dl' kullanın."
 
 #: bot/commands/user_commands.py:1002
 msgid ""
@@ -1783,6 +1824,11 @@ msgid ""
 "NUMBER' picks one. Use 'sr on' or 'sr off' to set explicitly, 'slc' for "
 "how many results. Save permanently with 'sc'"
 msgstr ""
+"Arama sonuçları modunu açar veya kapatır. Etkinken 'p QUERY' numaralı bir"
+" liste okur ve hiçbir şey çalmaz, böylece çalan şey 'sl NUMBER' biri "
+"seçilene kadar çalmaya devam eder. Açıkça ayarlamak için 'sr on' ya da "
+"'sr off', kaç sonuç gösterileceği için 'slc' kullanın. Kalıcı olarak "
+"kaydetmek için 'sc' gönderin"
 
 #: bot/commands/user_commands.py:1172 bot/commands/user_commands.py:1182
 msgid "Search results mode: ON"
@@ -1806,29 +1852,28 @@ msgstr "Mevcut arama sonucu yok. Önce 'p SORGU' ile arama yapın"
 
 # | msgid "Loaded {count} tracks"
 #: bot/commands/user_commands.py:1248
-#, fuzzy, python-brace-format
+#, python-brace-format
 msgid "Playing {name}, {count} tracks"
-msgstr "{count} parça yüklendi"
+msgstr "{name} çalınıyor, {count} parça"
 
 # | msgid "" "NUMBER Sets how many results are shown when search results mode
 # is
 # | " "active. Without a number shows current count. Resets to 5 on restart"
 # | " "active. Without a number shows current count. Resets to 1 on restart"
 #: bot/commands/user_commands.py:1259
-#, fuzzy
 msgid ""
 "NUMBER Sets how many results are shown when search results mode is "
 "active, or 0 for as many as the service returns. Without a number shows "
 "current count. Resets on restart"
 msgstr ""
-"NUMARA Arama modunda kaç sonuç gösterileceğini ayarlar. Numara olmadan "
-"mevcut sayıyı gösterir. Yeniden başlatmada 5'e sıfırlanır"
+"NUMBER Arama sonuçları modu etkinken kaç sonuç gösterileceğini ayarlar; "
+"hizmetin döndürdüğü kadar sonuç için 0. Sayı olmadan geçerli sayıyı "
+"gösterir. Yeniden başlatınca sıfırlanır"
 
 # | msgid "Search results count: {count}"
 #: bot/commands/user_commands.py:1267
-#, fuzzy
 msgid "Search results count: as many as the service returns"
-msgstr "Arama sonucu sayısı: {count}"
+msgstr "Arama sonucu sayısı: hizmetin döndürdüğü kadar"
 
 #: bot/commands/user_commands.py:1269
 #, python-brace-format
@@ -1837,13 +1882,12 @@ msgstr "Arama sonucu sayısı: {count}"
 
 # | msgid "Invalid count. Please enter a number greater than 0"
 #: bot/commands/user_commands.py:1280
-#, fuzzy
 msgid "Invalid count. Please enter 0 or a number greater than 0"
-msgstr "Geçersiz sayı. Lütfen 0'dan büyük bir sayı girin"
+msgstr "Geçersiz sayı. Lütfen 0 ya da 0'dan büyük bir sayı girin"
 
 #: bot/commands/user_commands.py:1286
 msgid "Search results now show as many results as the service returns"
-msgstr ""
+msgstr "Arama sonuçları artık hizmetin döndürdüğü kadar sonuç gösteriyor"
 
 #: bot/commands/user_commands.py:1289
 #, python-brace-format
@@ -2027,10 +2071,12 @@ msgid ""
 "and Amazon Music cannot be connected. The reason is in this bot's log "
 "file."
 msgstr ""
+"Hesap portalı çalışmıyor, bu yüzden Netflix, Disney Plus, Apple Music ve "
+"Amazon Music bağlanamaz. Nedeni bu botun günlük dosyasında."
 
 #: bot/commands/user_commands.py:1753
 msgid "Your streaming accounts:"
-msgstr ""
+msgstr "Yayın hesaplarınız:"
 
 #: bot/commands/user_commands.py:1761
 #, python-format
@@ -2040,17 +2086,17 @@ msgstr "%(service)s: hesap olmadan oynatır"
 #: bot/commands/user_commands.py:1769
 #, python-format
 msgid "%(service)s: connected"
-msgstr ""
+msgstr "%(service)s: bağlı"
 
 #: bot/commands/user_commands.py:1774
 #, python-format
 msgid "%(service)s: signed out, connect again"
-msgstr ""
+msgstr "%(service)s: oturum kapandı, yeniden bağlayın"
 
 #: bot/commands/user_commands.py:1779
 #, python-format
 msgid "%(service)s: not connected"
-msgstr ""
+msgstr "%(service)s: bağlı değil"
 
 #: bot/commands/user_commands.py:1795
 #, python-format
@@ -2089,7 +2135,7 @@ msgstr ""
 #: bot/commands/user_commands.py:1846
 #, python-format
 msgid "%(service)s sign-in could not start: %(error)s"
-msgstr ""
+msgstr "%(service)s oturumu başlatılamadı: %(error)s"
 
 #. translators: "The next message" and "the message after that"
 #. are separate chat messages, holding the link and the code.
@@ -2115,69 +2161,75 @@ msgid ""
 "[on|off|ask] Plays films and shows with audio description when it is "
 "available. With no argument, says what the current setting is"
 msgstr ""
+"[on|off|ask] Mevcut olduğunda filmleri ve dizileri sesli betimlemeyle "
+"oynatır. Bağımsız değişken olmadan geçerli ayarı söyler"
 
 #: bot/commands/user_commands.py:1892
 msgid "Audio description is not available in this bot."
-msgstr ""
+msgstr "Sesli betimleme bu botta kullanılamıyor."
 
 #: bot/commands/user_commands.py:1900
 msgid ""
 "Audio description is on. Films play with the description when there is "
 "one."
-msgstr ""
+msgstr "Sesli betimleme açık. Filmler, varsa betimlemeyle oynatılır."
 
 #: bot/commands/user_commands.py:1903
 msgid "Audio description is off. Send da on to turn it on."
-msgstr ""
+msgstr "Sesli betimleme kapalı. Açmak için da on gönderin."
 
 #: bot/commands/user_commands.py:1906
 msgid "The bot asks each time. Send da on or da off to stop being asked."
 msgstr ""
+"Bot her seferinde soruyor. Sorulmasın istiyorsanız da on ya da da off "
+"gönderin."
 
 #: bot/commands/user_commands.py:1920
 msgid "Audio description is on. You will not be asked again."
-msgstr ""
+msgstr "Sesli betimleme açık. Size bir daha sorulmayacak."
 
 #: bot/commands/user_commands.py:1923
 msgid "Audio description is off. You will not be asked again."
-msgstr ""
+msgstr "Sesli betimleme kapalı. Size bir daha sorulmayacak."
 
 #: bot/commands/user_commands.py:1926
 msgid "The bot will ask each time."
-msgstr ""
+msgstr "Bot her seferinde soracak."
 
 #: bot/commands/user_commands.py:1940
 msgid ""
 "[number] Lists the profiles for the current service, or selects one by "
 "number"
 msgstr ""
+"[number] Geçerli hizmetin profillerini listeler ya da numarayla birini "
+"seçer"
 
 #: bot/commands/user_commands.py:1947
 #, python-format
 msgid "%(service)s does not have profiles."
-msgstr ""
+msgstr "%(service)s hizmetinde profil yok."
 
 #: bot/commands/user_commands.py:1953
 msgid "No profiles were found. The account may not be connected yet."
-msgstr ""
+msgstr "Hiç profil bulunamadı. Hesap henüz bağlanmamış olabilir."
 
 #: bot/commands/user_commands.py:1959
 #, python-format
 msgid "%(count)s profiles:"
-msgstr ""
+msgstr "%(count)s profil:"
 
 #: bot/commands/user_commands.py:1963
 msgid "Send pf and a number to choose one."
-msgstr ""
+msgstr "Birini seçmek için pf ve bir numara gönderin."
 
 #: bot/commands/user_commands.py:1975
 #, python-format
 msgid "Now using the profile %(name)s."
-msgstr ""
+msgstr "Artık %(name)s profili kullanılıyor."
 
 #: bot/commands/user_commands.py:1978
 msgid "That profile could not be selected."
-msgstr ""
+msgstr "Bu profil seçilemedi."
 
 #: bot/connectors/tt_player_connector.py:36
 #, python-brace-format
@@ -2201,15 +2253,15 @@ msgstr "Duraklatıldı: {stream_url}"
 
 #: bot/modules/apple_music_downloader.py:75
 msgid "Apple Music is not available on this bot."
-msgstr ""
+msgstr "Apple Music bu botta kullanılamıyor."
 
 #: bot/modules/apple_music_downloader.py:90
 msgid "What is playing is not an album or playlist that can be downloaded."
-msgstr ""
+msgstr "Çalan şey indirilebilecek bir albüm ya da çalma listesi değil."
 
 #: bot/modules/apple_music_downloader.py:93
 msgid "the playlist"
-msgstr ""
+msgstr "çalma listesi"
 
 #: bot/modules/apple_music_downloader.py:95
 #, python-brace-format
@@ -2217,6 +2269,8 @@ msgid ""
 "Downloading the playlist {name}. It will be uploaded to the channel as "
 "one zip file when it is ready, which can take several minutes."
 msgstr ""
+"{name} çalma listesi indiriliyor. Hazır olduğunda kanala tek bir zip "
+"dosyası olarak yüklenecek; bu birkaç dakika sürebilir."
 
 #: bot/modules/apple_music_downloader.py:101
 #, python-brace-format
@@ -2224,92 +2278,96 @@ msgid ""
 "Downloading the album {name}. It will be uploaded to the channel as one "
 "zip file when it is ready, which can take several minutes."
 msgstr ""
+"{name} albümü indiriliyor. Hazır olduğunda kanala tek bir zip dosyası "
+"olarak yüklenecek; bu birkaç dakika sürebilir."
 
 #: bot/modules/apple_music_downloader.py:107
 msgid "Apple Music is not playing a song right now."
-msgstr ""
+msgstr "Apple Music şu anda bir şarkı çalmıyor."
 
 #: bot/modules/apple_music_downloader.py:112
 msgid "This song is not in the Apple Music catalog, so it cannot be downloaded."
-msgstr ""
+msgstr "Bu şarkı Apple Music kataloğunda yok, bu yüzden indirilemez."
 
 #: bot/modules/apple_music_downloader.py:121
 msgid "To download the whole album or playlist instead, send dlp."
-msgstr ""
+msgstr "Bunun yerine tüm albümü ya da çalma listesini indirmek için dlp gönderin."
 
 #: bot/modules/apple_music_downloader.py:126
 msgid ""
 "An Apple Music download is already running. Please send this again when "
 "it has finished."
 msgstr ""
+"Zaten bir Apple Music indirmesi sürüyor. Lütfen bittiğinde bunu yeniden "
+"gönderin."
 
 #: bot/modules/apple_music_downloader.py:157
 #, python-brace-format
 msgid "{name} is in the channel: one zip file with {count} tracks."
-msgstr ""
+msgstr "{name} kanalda: {count} parçalı tek bir zip dosyası."
 
 #: bot/modules/apple_music_downloader.py:160
 #, python-brace-format
 msgid "{name} is in the channel."
-msgstr ""
+msgstr "{name} kanalda."
 
 #: bot/modules/apple_music_downloader.py:164
 #, python-brace-format
 msgid "Could not download {name}: {reason}"
-msgstr ""
+msgstr "{name} indirilemedi: {reason}"
 
 #: bot/modules/apple_music_downloader.py:173
 #: bot/modules/playlist_uploader.py:145 bot/modules/uploader.py:112
 #, python-brace-format
 msgid "Could not download {name}."
-msgstr ""
+msgstr "{name} indirilemedi."
 
 #: bot/modules/apple_music_downloader.py:187
 msgid "Apple Music is not signed in on this bot. Send li am to connect it."
-msgstr ""
+msgstr "Bu botta Apple Music oturumu açık değil. Bağlamak için li am gönderin."
 
 #: bot/modules/audio_description.py:129
 #, python-format
 msgid "%(title)s has audio description. Play it with the description?"
-msgstr ""
+msgstr "%(title)s için sesli betimleme var. Betimlemeyle oynatılsın mı?"
 
 #: bot/modules/audio_description.py:132
 msgid "This has audio description. Play it with the description?"
-msgstr ""
+msgstr "Bunun sesli betimlemesi var. Betimlemeyle oynatılsın mı?"
 
 #: bot/modules/audio_description.py:136
 msgid "1. Yes. 2. No. 3. Yes, and remember. 4. No, and remember."
-msgstr ""
+msgstr "1. Evet. 2. Hayır. 3. Evet ve hatırla. 4. Hayır ve hatırla."
 
 #: bot/modules/auth_portal.py:362
 msgid "Enter the Google account email address"
-msgstr ""
+msgstr "Google hesabının e-posta adresini girin"
 
 #: bot/modules/auth_portal.py:364
 #, python-format
 msgid "Enter your %(service)s email address or username"
-msgstr ""
+msgstr "%(service)s e-posta adresinizi ya da kullanıcı adınızı girin"
 
 #: bot/modules/auth_portal.py:369
 msgid "Enter the Google account password"
-msgstr ""
+msgstr "Google hesabının parolasını girin"
 
 #: bot/modules/auth_portal.py:371
 #, python-format
 msgid "Enter your %(service)s password"
-msgstr ""
+msgstr "%(service)s parolanızı girin"
 
 #: bot/modules/auth_portal.py:413
 msgid "Enter the verification code"
-msgstr ""
+msgstr "Doğrulama kodunu girin"
 
 #: bot/modules/auth_portal.py:630
 msgid "Signing in to this service is not available yet."
-msgstr ""
+msgstr "Bu hizmette oturum açma henüz kullanılamıyor."
 
 #: bot/modules/playlist_uploader.py:88 bot/modules/uploader.py:92
 msgid "Renewing the YouTube sign-in. The download continues when it finishes."
-msgstr ""
+msgstr "YouTube oturumu yenileniyor. İndirme bu bittiğinde devam edecek."
 
 #: bot/modules/playlist_uploader.py:93
 #, python-brace-format
@@ -2317,34 +2375,36 @@ msgid ""
 "Downloading the playlist {name}. Tracks: {count}. It will be uploaded to "
 "the channel as one zip file when it is ready."
 msgstr ""
+"{name} çalma listesi indiriliyor. Parça: {count}. Hazır olduğunda kanala "
+"tek bir zip dosyası olarak yüklenecek."
 
 #: bot/modules/playlist_uploader.py:104
 #, python-brace-format
 msgid "Track {number} of {total}, {percent} percent done: {title}"
-msgstr ""
+msgstr "Parça {number} / {total}, yüzde {percent} tamamlandı: {title}"
 
 #: bot/modules/playlist_uploader.py:125
 #, python-brace-format
 msgid "No track in {name} could be downloaded. Tracks tried: {count}."
-msgstr ""
+msgstr "{name} içindeki hiçbir parça indirilemedi. Denenen parça: {count}."
 
 #: bot/modules/playlist_uploader.py:129
 #, python-brace-format
 msgid "Uploading {name} to the channel."
-msgstr ""
+msgstr "{name} kanala yükleniyor."
 
 #: bot/modules/playlist_uploader.py:137
 #, python-brace-format
 msgid "{name} is in the channel as one zip file. Tracks in it: {count}."
-msgstr ""
+msgstr "{name} kanalda tek bir zip dosyası olarak. İçindeki parça: {count}."
 
 # | msgid "Live streams cannot be downloaded"
 # | msgid "Spotify tracks cannot be downloaded."
 # | msgid "{count} could not be downloaded."
 #: bot/modules/playlist_uploader.py:140
-#, fuzzy, python-brace-format
+#, python-brace-format
 msgid "Tracks that could not be downloaded: {count}."
-msgstr "Canlı akışlar indirilemiyor"
+msgstr "İndirilemeyen parça: {count}."
 
 #: bot/modules/podcast_subscriptions.py:196
 #, python-brace-format
@@ -2367,262 +2427,271 @@ msgstr "Podcasti açmak için şunu gönderin: ps {number}"
 
 #: bot/modules/portal_pages.py:45
 msgid "dash"
-msgstr ""
+msgstr "tire"
 
 #: bot/modules/portal_pages.py:46
 msgid "underscore"
-msgstr ""
+msgstr "alt çizgi"
 
 #: bot/modules/portal_pages.py:47
 msgid "dot"
-msgstr ""
+msgstr "nokta"
 
 #: bot/modules/portal_pages.py:48
 msgid "space"
-msgstr ""
+msgstr "boşluk"
 
 # | msgid "Error: {}"
 #: bot/modules/portal_pages.py:73 bot/modules/portal_pages.py:145
-#, fuzzy
 msgid "Error:"
-msgstr "Hata: {}"
+msgstr "Hata:"
 
 #: bot/modules/portal_pages.py:118
 msgid "There is a problem"
-msgstr ""
+msgstr "Bir sorun var"
 
 #: bot/modules/portal_pages.py:158
 msgid "Back to your accounts"
-msgstr ""
+msgstr "Hesaplarınıza dönün"
 
 #: bot/modules/portal_pages.py:174 bot/modules/portal_pages.py:535
 #: bot/modules/portal_pages.py:563 bot/modules/portal_pages.py:627
 #: bot/modules/portal_pages.py:683 bot/modules/portal_pages.py:749
 #, python-format
 msgid "Import a %(service)s session"
-msgstr ""
+msgstr "Bir %(service)s oturumunu içe aktar"
 
 #: bot/modules/portal_pages.py:181 bot/modules/portal_pages.py:209
 #: bot/modules/portal_pages.py:216 bot/modules/portal_pages.py:257
 #, python-format
 msgid "Connect %(service)s"
-msgstr ""
+msgstr "%(service)s bağla"
 
 #: bot/modules/portal_pages.py:197
 msgid "Connected"
-msgstr ""
+msgstr "Bağlı"
 
 #: bot/modules/portal_pages.py:202 bot/modules/portal_pages.py:787
 #, python-format
 msgid "Disconnect %(service)s"
-msgstr ""
+msgstr "%(service)s bağlantısını kes"
 
 #: bot/modules/portal_pages.py:206
 msgid "Expired. Connect again to keep streaming."
-msgstr ""
+msgstr "Süresi doldu. Yayına devam etmek için yeniden bağlayın."
 
 #: bot/modules/portal_pages.py:213
 msgid "Not connected"
-msgstr ""
+msgstr "Bağlı değil"
 
 #: bot/modules/portal_pages.py:235
 msgid "Your streaming accounts"
-msgstr ""
+msgstr "Yayın hesaplarınız"
 
 #: bot/modules/portal_pages.py:236
 #, python-format
 msgid "%(connected)s of %(total)s services connected."
-msgstr ""
+msgstr "%(total)s hizmetten %(connected)s tanesi bağlı."
 
 #: bot/modules/portal_pages.py:240
 #, python-format
 msgid "%(connected)s of %(total)s services connected"
-msgstr ""
+msgstr "%(total)s hizmetten %(connected)s tanesi bağlı"
 
 #: bot/modules/portal_pages.py:259
 msgid "Go to"
-msgstr ""
+msgstr "Şuraya gidin:"
 
 #: bot/modules/portal_pages.py:264
 msgid "(opens in a new tab)"
-msgstr ""
+msgstr "(yeni sekmede açılır)"
 
 #: bot/modules/portal_pages.py:265
 msgid "Enter the code below."
-msgstr ""
+msgstr "Aşağıdaki kodu girin."
 
 #: bot/modules/portal_pages.py:266
 msgid "Come back here and select Check status."
-msgstr ""
+msgstr "Buraya dönün ve Durumu denetle'yi seçin."
 
 #: bot/modules/portal_pages.py:269
 msgid "Your device code"
-msgstr ""
+msgstr "Cihaz kodunuz"
 
 #: bot/modules/portal_pages.py:283
 msgid "Check status"
-msgstr ""
+msgstr "Durumu denetle"
 
 #: bot/modules/portal_pages.py:289
 #, python-format
 msgid "Connect %(service)s: enter your code"
-msgstr ""
+msgstr "%(service)s bağla: kodunuzu girin"
 
 #: bot/modules/portal_pages.py:308
 msgid "Google account email address"
-msgstr ""
+msgstr "Google hesabının e-posta adresi"
 
 #: bot/modules/portal_pages.py:309
 msgid "The Google account made for StreamerBot, not your personal one."
-msgstr ""
+msgstr "StreamerBot için açılan Google hesabı, kişisel hesabınız değil."
 
 #: bot/modules/portal_pages.py:310
 msgid "Google account password"
-msgstr ""
+msgstr "Google hesabının parolası"
 
 #: bot/modules/portal_pages.py:312
 #, python-format
 msgid "%(service)s email address or username"
-msgstr ""
+msgstr "%(service)s e-posta adresi ya da kullanıcı adı"
 
 #: bot/modules/portal_pages.py:313
 #, python-format
 msgid "The address you use to sign in to %(service)s."
-msgstr ""
+msgstr "%(service)s oturumu açarken kullandığınız adres."
 
 #: bot/modules/portal_pages.py:314
 #, python-format
 msgid "%(service)s password"
-msgstr ""
+msgstr "%(service)s parolası"
 
 #: bot/modules/portal_pages.py:333 bot/modules/portal_pages.py:361
 #: bot/modules/portal_pages.py:366
 #, python-format
 msgid "Sign in to %(service)s"
-msgstr ""
+msgstr "%(service)s oturumu aç"
 
 #: bot/modules/portal_pages.py:363
 msgid "Cancel and go back"
-msgstr ""
+msgstr "İptal et ve geri dön"
 
 #: bot/modules/portal_pages.py:396
 #, python-format
 msgid "Signing in as %(username)s."
-msgstr ""
+msgstr "%(username)s olarak oturum açılıyor."
 
 #: bot/modules/portal_pages.py:402 bot/modules/portal_pages.py:427
 #, python-format
 msgid "Enter your %(service)s verification code"
-msgstr ""
+msgstr "%(service)s doğrulama kodunuzu girin"
 
 #: bot/modules/portal_pages.py:410
 msgid "Verification code"
-msgstr ""
+msgstr "Doğrulama kodu"
 
 #: bot/modules/portal_pages.py:414
 msgid "Type or paste the whole code into the box below. Spaces do not matter."
 msgstr ""
+"Kodun tamamını aşağıdaki kutuya yazın ya da yapıştırın. Boşluklar önemli "
+"değil."
 
 #: bot/modules/portal_pages.py:419
 msgid "Verify code"
-msgstr ""
+msgstr "Kodu doğrula"
 
 #: bot/modules/portal_pages.py:422
 msgid "Send a new code"
-msgstr ""
+msgstr "Yeni kod gönder"
 
 #: bot/modules/portal_pages.py:424 bot/modules/portal_pages.py:444
 #: bot/modules/portal_pages.py:630
 msgid "Cancel this sign-in"
-msgstr ""
+msgstr "Bu oturum açmayı iptal et"
 
 #: bot/modules/portal_pages.py:435 bot/modules/portal_pages.py:448
 #, python-format
 msgid "Signing in to %(service)s"
-msgstr ""
+msgstr "%(service)s oturumu açılıyor"
 
 #: bot/modules/portal_pages.py:436
 msgid "Waiting for the service to confirm. This usually takes 10 to 30 seconds."
-msgstr ""
+msgstr "Hizmetin onaylaması bekleniyor. Bu genellikle 10 ile 30 saniye sürer."
 
 #: bot/modules/portal_pages.py:442
 msgid "Check again"
-msgstr ""
+msgstr "Yeniden denetle"
 
 #: bot/modules/portal_pages.py:468
 msgid "Google needs a verification code. Opening that page."
-msgstr ""
+msgstr "Google bir doğrulama kodu istiyor. O sayfa açılıyor."
 
 #: bot/modules/portal_pages.py:469
 msgid "Google needs you to approve the sign-in on your phone. Opening that page."
 msgstr ""
+"Google, oturum açmayı telefonunuzdan onaylamanızı istiyor. O sayfa "
+"açılıyor."
 
 #: bot/modules/portal_pages.py:470
 msgid "Signed in. Opening the confirmation page."
-msgstr ""
+msgstr "Oturum açıldı. Onay sayfası açılıyor."
 
 #: bot/modules/portal_pages.py:471
 msgid "The sign-in did not complete. Opening the page that says why."
-msgstr ""
+msgstr "Oturum açma tamamlanmadı. Nedenini açıklayan sayfa açılıyor."
 
 #: bot/modules/portal_pages.py:472
 msgid "This sign-in is no longer running. Going back to your accounts."
-msgstr ""
+msgstr "Bu oturum açma artık sürmüyor. Hesaplarınıza dönülüyor."
 
 #: bot/modules/portal_pages.py:473
 #, python-format
 msgid "Still signing in. %(seconds)s seconds so far."
-msgstr ""
+msgstr "Hâlâ oturum açılıyor. Şimdiye kadar %(seconds)s saniye."
 
 #: bot/modules/portal_pages.py:474
 #, python-format
 msgid "Still signing in. %(minutes)s minutes so far."
-msgstr ""
+msgstr "Hâlâ oturum açılıyor. Şimdiye kadar %(minutes)s dakika."
 
 #: bot/modules/portal_pages.py:475
 msgid ""
 "This link has expired or the sign-in was cancelled. To get a new link, "
 "send the li command to StreamerBot in TeamTalk."
 msgstr ""
+"Bu bağlantının süresi doldu ya da oturum açma iptal edildi. Yeni bir "
+"bağlantı almak için TeamTalk'ta StreamerBot'a li komutunu gönderin."
 
 #: bot/modules/portal_pages.py:476
 msgid "Lost contact with StreamerBot. Use Check again in a moment."
-msgstr ""
+msgstr "StreamerBot ile bağlantı kesildi. Birazdan Yeniden denetle'yi kullanın."
 
 #: bot/modules/portal_pages.py:477
 msgid ""
 "This is taking longer than expected. Use Check again, or Cancel this "
 "sign-in."
 msgstr ""
+"Bu beklenenden uzun sürüyor. Yeniden denetle'yi ya da Bu oturum açmayı "
+"iptal et'i kullanın."
 
 #: bot/modules/portal_pages.py:518 bot/modules/portal_pages.py:522
 #, python-format
 msgid "%(service)s connected"
-msgstr ""
+msgstr "%(service)s bağlandı"
 
 #: bot/modules/portal_pages.py:519
 #, python-format
 msgid "StreamerBot can now stream from your %(service)s account."
-msgstr ""
+msgstr "StreamerBot artık %(service)s hesabınızdan yayın yapabilir."
 
 #: bot/modules/portal_pages.py:528
 msgid "Try again"
-msgstr ""
+msgstr "Yeniden dene"
 
 #: bot/modules/portal_pages.py:542 bot/modules/portal_pages.py:548
 #, python-format
 msgid "%(service)s could not be connected"
-msgstr ""
+msgstr "%(service)s bağlanamadı"
 
 #: bot/modules/portal_pages.py:561
 msgid ""
 "If Google refuses to sign in here, import a session from your own browser"
 " instead:"
 msgstr ""
+"Google burada oturum açmayı reddederse, bunun yerine kendi tarayıcınızdan"
+" bir oturumu içe aktarın:"
 
 #: bot/modules/portal_pages.py:567
 msgid "Use a separate Google account"
-msgstr ""
+msgstr "Ayrı bir Google hesabı kullanın"
 
 #: bot/modules/portal_pages.py:568
 msgid ""
@@ -2630,42 +2699,49 @@ msgid ""
 "server. Make a Google account just for StreamerBot rather than using your"
 " personal one."
 msgstr ""
+"Google, bir sunucudan otomatik olarak video oynatan bir hesabı "
+"kısıtlayabilir. Kişisel hesabınızı kullanmak yerine yalnızca StreamerBot "
+"için bir Google hesabı açın."
 
 #: bot/modules/portal_pages.py:592 bot/modules/portal_pages.py:615
 msgid "Approve the sign-in on your phone"
-msgstr ""
+msgstr "Oturum açmayı telefonunuzdan onaylayın"
 
 #: bot/modules/portal_pages.py:596
 msgid "Not approved yet. Approve the sign-in on your phone"
-msgstr ""
+msgstr "Henüz onaylanmadı. Oturum açmayı telefonunuzdan onaylayın"
 
 #: bot/modules/portal_pages.py:602
 msgid "Number to tap on your phone"
-msgstr ""
+msgstr "Telefonunuzda dokunulacak sayı"
 
 #: bot/modules/portal_pages.py:610
 msgid "Google says:"
-msgstr ""
+msgstr "Google diyor ki:"
 
 #: bot/modules/portal_pages.py:616
 msgid "Google has not confirmed the approval yet."
-msgstr ""
+msgstr "Google onayı henüz doğrulamadı."
 
 #: bot/modules/portal_pages.py:619
 msgid ""
 "Google sent a prompt to a phone or tablet signed in to this account. Tap "
 "Yes on it, then come back here."
 msgstr ""
+"Google, bu hesapta oturum açılmış bir telefona veya tablete bir bildirim "
+"gönderdi. Bildirimde Evet'e dokunun, sonra buraya dönün."
 
 #: bot/modules/portal_pages.py:620
 msgid ""
 "The prompt stops working after a few minutes. If it has gone, cancel and "
 "sign in again."
 msgstr ""
+"Bildirim birkaç dakika sonra çalışmayı bırakır. Kaybolduysa, iptal edip "
+"yeniden oturum açın."
 
 #: bot/modules/portal_pages.py:624
 msgid "I have approved it on my phone"
-msgstr ""
+msgstr "Telefonumdan onayladım"
 
 #: bot/modules/portal_pages.py:685
 msgid ""
@@ -2673,40 +2749,49 @@ msgid ""
 "cannot run a browser. You need a cookies.txt file from a browser that is "
 "signed in to YouTube."
 msgstr ""
+"Bunu, Google bottan oturum açmaya izin vermediğinde ya da bot bir "
+"tarayıcı çalıştıramadığında kullanın. YouTube'da oturum açılmış bir "
+"tarayıcıdan bir cookies.txt dosyası gerekir."
 
 #: bot/modules/portal_pages.py:688
 msgid "I already have the file. Go to the import form."
-msgstr ""
+msgstr "Dosyam zaten var. İçe aktarma formuna git."
 
 #: bot/modules/portal_pages.py:693
 msgid "How to get a cookies.txt file"
-msgstr ""
+msgstr "cookies.txt dosyası nasıl alınır"
 
 #: bot/modules/portal_pages.py:694
 msgid "On an Android phone"
-msgstr ""
+msgstr "Android telefonda"
 
 #: bot/modules/portal_pages.py:695
 msgid ""
 "No computer is needed. This uses the Firefox browser, which can add a "
 "small cookie exporter on Android."
 msgstr ""
+"Bilgisayar gerekmez. Android'de küçük bir çerez dışa aktarıcı ekleyebilen"
+" Firefox tarayıcısı kullanılır."
 
 #: bot/modules/portal_pages.py:697
 msgid "Install Firefox from the Google Play Store, and open this page in Firefox."
-msgstr ""
+msgstr "Google Play Store'dan Firefox'u kurun ve bu sayfayı Firefox'ta açın."
 
 #: bot/modules/portal_pages.py:698
 msgid ""
 "In Firefox, open the menu, choose Extensions, then find and add the "
 "extension called cookies.txt."
 msgstr ""
+"Firefox'ta menüyü açın, Uzantılar'ı seçin, sonra cookies.txt adlı "
+"uzantıyı bulup ekleyin."
 
 #: bot/modules/portal_pages.py:699
 msgid ""
 "Go to youtube.com in Firefox and sign in with the Google account made for"
 " StreamerBot."
 msgstr ""
+"Firefox'ta youtube.com adresine gidin ve StreamerBot için açılan Google "
+"hesabıyla oturum açın."
 
 #: bot/modules/portal_pages.py:700
 msgid ""
@@ -2714,16 +2799,21 @@ msgid ""
 "then cookies.txt, and export the cookies for the current site. The file "
 "is saved to your Downloads."
 msgstr ""
+"Hâlâ youtube.com üzerindeyken Firefox menüsünü açın, Uzantılar'ı, "
+"ardından cookies.txt'yi seçin ve geçerli sitenin çerezlerini dışa "
+"aktarın. Dosya İndirilenler klasörünüze kaydedilir."
 
 #: bot/modules/portal_pages.py:701
 msgid ""
 "Come back to this page in Firefox and choose that file in the import form"
 " below."
 msgstr ""
+"Firefox'ta bu sayfaya dönün ve aşağıdaki içe aktarma formunda o dosyayı "
+"seçin."
 
 #: bot/modules/portal_pages.py:703
 msgid "On an iPhone or iPad"
-msgstr ""
+msgstr "iPhone veya iPad'de"
 
 #: bot/modules/portal_pages.py:704
 msgid ""
@@ -2732,108 +2822,134 @@ msgid ""
 "you. They must sign in with the Google account made for StreamerBot, "
 "never their own."
 msgstr ""
+"iPhone veya iPad'de bu dosyayı dışa aktarmanın güvenilir bir yolu yok. "
+"Bir Android telefon ya da bilgisayar kullanın veya birinden bunu sizin "
+"için yapmasını isteyin. O kişi kendi hesabıyla değil, StreamerBot için "
+"açılan Google hesabıyla oturum açmalıdır."
 
 #: bot/modules/portal_pages.py:705
 msgid "On a computer"
-msgstr ""
+msgstr "Bilgisayarda"
 
 #: bot/modules/portal_pages.py:707
 msgid ""
 "In your own browser, sign in to YouTube with the Google account made for "
 "StreamerBot."
 msgstr ""
+"Kendi tarayıcınızda, StreamerBot için açılan Google hesabıyla YouTube'da "
+"oturum açın."
 
 #: bot/modules/portal_pages.py:708
 msgid ""
 "While on youtube.com, use a cookie export extension to save the cookies "
 "in Netscape cookies.txt format."
 msgstr ""
+"youtube.com üzerindeyken, çerezleri Netscape cookies.txt biçiminde "
+"kaydetmek için bir çerez dışa aktarma uzantısı kullanın."
 
 #: bot/modules/portal_pages.py:709
 msgid ""
 "Choose that file in the import form below, or open it, copy everything in"
 " it, and paste it into the box below."
 msgstr ""
+"O dosyayı aşağıdaki içe aktarma formunda seçin ya da dosyayı açıp "
+"içindeki her şeyi kopyalayın ve aşağıdaki kutuya yapıştırın."
 
 #: bot/modules/portal_pages.py:711
 msgid ""
 "Afterwards, do not sign out of YouTube in that browser. Signing out ends "
 "the session StreamerBot is using. Closing the browser is fine."
 msgstr ""
+"Sonrasında o tarayıcıda YouTube oturumunu kapatmayın. Oturumu kapatmak, "
+"StreamerBot'un kullandığı oturumu sonlandırır. Tarayıcıyı kapatmak sorun "
+"değil."
 
 #: bot/modules/portal_pages.py:712
 msgid ""
 "Google sometimes ends a session that is used from a different place. If "
 "that happens, StreamerBot tells you in TeamTalk and you can import again."
 msgstr ""
+"Google bazen başka bir yerden kullanılan bir oturumu sonlandırır. Böyle "
+"olursa StreamerBot size TeamTalk'ta haber verir ve yeniden içe "
+"aktarabilirsiniz."
 
 #: bot/modules/portal_pages.py:716
 msgid ""
 "This server cannot run a browser, so nothing can keep an imported session"
 " alive. Expect to import again from time to time."
 msgstr ""
+"Bu sunucu bir tarayıcı çalıştıramaz, bu yüzden içe aktarılan bir oturumu "
+"hiçbir şey canlı tutamaz. Zaman zaman yeniden içe aktarmanız gerekecek."
 
 #: bot/modules/portal_pages.py:718
 msgid "Import your file"
-msgstr ""
+msgstr "Dosyanızı içe aktarın"
 
 #: bot/modules/portal_pages.py:724
 msgid "Your cookies.txt file"
-msgstr ""
+msgstr "cookies.txt dosyanız"
 
 #: bot/modules/portal_pages.py:730
 msgid "Or paste the contents of the file"
-msgstr ""
+msgstr "Ya da dosyanın içeriğini yapıştırın"
 
 #: bot/modules/portal_pages.py:731
 msgid "Paste the whole file. It is several lines of text."
-msgstr ""
+msgstr "Dosyanın tamamını yapıştırın. Birkaç satır metindir."
 
 #: bot/modules/portal_pages.py:738
 msgid "Import the session"
-msgstr ""
+msgstr "Oturumu içe aktar"
 
 #: bot/modules/portal_pages.py:744
 #, python-format
 msgid "Lines pasted: %(count)s"
-msgstr ""
+msgstr "Yapıştırılan satır: %(count)s"
 
 #: bot/modules/portal_pages.py:761
 msgid "Choose your cookies.txt file, or paste its contents"
-msgstr ""
+msgstr "cookies.txt dosyanızı seçin ya da içeriğini yapıştırın"
 
 #: bot/modules/portal_pages.py:762
 msgid ""
 "This is too long to be a cookies file. Check you chose only the "
 "cookies.txt file."
 msgstr ""
+"Bu, bir çerez dosyası olamayacak kadar uzun. Yalnızca cookies.txt "
+"dosyasını seçtiğinizi denetleyin."
 
 #: bot/modules/portal_pages.py:763
 msgid ""
 "This is not a cookies.txt file. Export the cookies again in Netscape "
 "cookies.txt format."
 msgstr ""
+"Bu bir cookies.txt dosyası değil. Çerezleri Netscape cookies.txt "
+"biçiminde yeniden dışa aktarın."
 
 #: bot/modules/portal_pages.py:764
 msgid ""
 "This file has no YouTube sign-in in it. Sign in to YouTube in your "
 "browser, then export the cookies again while on youtube.com."
 msgstr ""
+"Bu dosyada YouTube oturumu yok. Tarayıcınızda YouTube'da oturum açın, "
+"sonra youtube.com üzerindeyken çerezleri yeniden dışa aktarın."
 
 #: bot/modules/portal_pages.py:765
 msgid ""
 "YouTube says this session is already signed out. Sign in to YouTube in "
 "your browser again, then export a fresh file."
 msgstr ""
+"YouTube bu oturumun zaten kapandığını söylüyor. Tarayıcınızda YouTube'da "
+"yeniden oturum açın, sonra yeni bir dosya dışa aktarın."
 
 #: bot/modules/portal_pages.py:766
 msgid "The session could not be imported."
-msgstr ""
+msgstr "Oturum içe aktarılamadı."
 
 #: bot/modules/portal_pages.py:778 bot/modules/portal_pages.py:793
 #, python-format
 msgid "Disconnect %(service)s?"
-msgstr ""
+msgstr "%(service)s bağlantısı kesilsin mi?"
 
 #: bot/modules/portal_pages.py:779
 #, python-format
@@ -2842,47 +2958,50 @@ msgid ""
 "%(service)s account itself is not affected. You can connect again at any "
 "time."
 msgstr ""
+"StreamerBot, %(service)s hesabınızdan yayın yapmayı bırakacak. "
+"%(service)s hesabınızın kendisi etkilenmez. İstediğiniz zaman yeniden "
+"bağlayabilirsiniz."
 
 #: bot/modules/portal_pages.py:790
 #, python-format
 msgid "Cancel, keep %(service)s connected"
-msgstr ""
+msgstr "İptal et, %(service)s bağlı kalsın"
 
 # | msgid "help text not found"
 #: bot/modules/portal_pages.py:809
-#, fuzzy
 msgid "Page not found"
-msgstr "yardım metni bulunamadı"
+msgstr "Sayfa bulunamadı"
 
 # | msgid "This user is not in the admin list"
 #: bot/modules/portal_pages.py:810
-#, fuzzy
 msgid "This address is not quite right."
-msgstr "Bu kullanıcı yönetici listesinde değil"
+msgstr "Bu adres tam olarak doğru değil."
 
 #: bot/modules/portal_pages.py:811 bot/modules/portal_pages.py:818
 msgid "To get a new link, send the li command to StreamerBot in TeamTalk."
 msgstr ""
+"Yeni bir bağlantı almak için TeamTalk'ta StreamerBot'a li komutunu "
+"gönderin."
 
 #: bot/modules/portal_pages.py:816
 msgid "Link expired"
-msgstr ""
+msgstr "Bağlantının süresi doldu"
 
 #: bot/modules/portal_pages.py:817
 msgid "This link has expired."
-msgstr ""
+msgstr "Bu bağlantının süresi doldu."
 
 #: bot/modules/portal_pages.py:823
 msgid "Something went wrong"
-msgstr ""
+msgstr "Bir şeyler ters gitti"
 
 #: bot/modules/portal_pages.py:824
 msgid "StreamerBot could not finish that request."
-msgstr ""
+msgstr "StreamerBot bu isteği tamamlayamadı."
 
 #: bot/modules/portal_pages.py:825
 msgid "Try again in a moment. If it keeps happening, check the bot's log."
-msgstr ""
+msgstr "Birazdan yeniden deneyin. Böyle olmaya devam ederse botun günlüğüne bakın."
 
 #: bot/modules/uploader.py:68
 msgid "Error: Downloaded file not found."
@@ -2904,11 +3023,14 @@ msgid ""
 "YouTube refused to download {name} without a signed-in account, which is "
 "usual on a server. To connect one, send this command: li yt"
 msgstr ""
+"YouTube, {name} öğesini oturum açılmış bir hesap olmadan indirmeyi "
+"reddetti; bu bir sunucuda olağandır. Bir hesap bağlamak için şu komutu "
+"gönderin: li yt"
 
 #: bot/modules/youtube_session_keeper.py:157
 #, python-brace-format
 msgid "The YouTube sign-in could not be renewed, so {name} was not downloaded."
-msgstr ""
+msgstr "YouTube oturumu yenilenemedi, bu yüzden {name} indirilmedi."
 
 #: bot/modules/youtube_session_keeper.py:348
 #: bot/modules/youtube_session_keeper.py:355
@@ -2916,11 +3038,13 @@ msgid ""
 "Google signed in, but YouTube did not recognise the session. Please try "
 "again."
 msgstr ""
+"Google oturum açtı, ancak YouTube oturumu tanımadı. Lütfen yeniden "
+"deneyin."
 
 #: bot/services/browser_service.py:104
 #, python-format
 msgid "%(service)s is not ready yet."
-msgstr ""
+msgstr "%(service)s henüz hazır değil."
 
 #: bot/services/browser_service.py:121
 #, python-format
@@ -2928,22 +3052,24 @@ msgid ""
 "%(service)s needs Google Chrome, which is not available on this machine's"
 " processor architecture."
 msgstr ""
+"%(service)s için Google Chrome gerekir, ancak bu makinenin işlemci "
+"mimarisi için mevcut değil."
 
 #: bot/services/browser_service.py:132
 #, python-format
 msgid "%(service)s is not connected. Send li %(code)s to connect an account."
-msgstr ""
+msgstr "%(service)s bağlı değil. Bir hesap bağlamak için li %(code)s gönderin."
 
 #: bot/services/browser_service.py:166
 #, python-format
 msgid "That is not a %(service)s link."
-msgstr ""
+msgstr "Bu bir %(service)s bağlantısı değil."
 
 # | msgid "Live streams cannot be downloaded"
 #: bot/services/browser_service.py:182
-#, fuzzy, python-format
+#, python-format
 msgid "%(service)s cannot be downloaded."
-msgstr "Canlı akışlar indirilemiyor"
+msgstr "%(service)s içeriği indirilemez."
 
 #: bot/services/browser_service.py:208
 msgid ""
@@ -2952,6 +3078,10 @@ msgid ""
 "watchlists and audio settings; pf lists them and pf with a number picks "
 "one."
 msgstr ""
+"Disney Plus, Disney Plus'ın sunduğu yerlerde sesli betimlemeyle filmler "
+"ve diziler oynatır. Her hesabın kendi izleme listeleri ve ses ayarları "
+"olan kendi profilleri vardır; pf bunları listeler, pf ve bir numara "
+"birini seçer."
 
 #: bot/services/browser_service.py:224
 msgid ""
@@ -2960,6 +3090,10 @@ msgid ""
 "told apart. dl downloads what is playing and dlp downloads the album it "
 "is from."
 msgstr ""
+"Apple Music şarkıları, albümleri, sanatçıları ve çalma listelerini çalar."
+" Bir arama dördünü de döndürür ve her birinin ne olduğu adıyla "
+"belirtilir, böylece bir albüm ile içindeki şarkı ayırt edilir. dl çalanı "
+"indirir, dlp de onun geldiği albümü indirir."
 
 #: bot/services/browser_service.py:247
 msgid ""
@@ -2968,6 +3102,10 @@ msgid ""
 "music subscription; a plain Prime account plays only part of the "
 "catalogue."
 msgstr ""
+"Amazon Music şarkıları, albümleri, sanatçıları ve çalma listelerini "
+"çalar. Bir arama dördünü de döndürür ve her birinin ne olduğu adıyla "
+"belirtilir. Müzik aboneliği olan bir Amazon hesabı gerekir; düz bir Prime"
+" hesabı kataloğun yalnızca bir bölümünü çalar."
 
 #: bot/services/browser_service.py:262
 msgid ""
@@ -3006,71 +3144,73 @@ msgstr ""
 
 #: bot/services/gamdl_downloader.py:158
 msgid "The Apple Music downloader is not installed in this image."
-msgstr ""
+msgstr "Apple Music indiricisi bu imajda kurulu değil."
 
 #: bot/services/gamdl_downloader.py:165
 msgid ""
 "Downloading from Apple Music needs a subscription. Connect the account "
 "first with li am."
 msgstr ""
+"Apple Music'ten indirmek için abonelik gerekir. Önce hesabı li am ile "
+"bağlayın."
 
 #: bot/services/gamdl_downloader.py:199
 msgid "That is not an Apple Music link."
-msgstr ""
+msgstr "Bu bir Apple Music bağlantısı değil."
 
 #: bot/services/gamdl_downloader.py:216
 msgid "The download took too long and was stopped."
-msgstr ""
+msgstr "İndirme çok uzun sürdü ve durduruldu."
 
 #: bot/services/gamdl_downloader.py:230
 msgid "The download produced no audio files."
-msgstr ""
+msgstr "İndirme hiçbir ses dosyası üretmedi."
 
 #: bot/services/gamdl_downloader.py:252
 msgid "That needs an active Apple Music subscription."
-msgstr ""
+msgstr "Bunun için etkin bir Apple Music aboneliği gerekir."
 
 #: bot/services/gamdl_downloader.py:255
 msgid "Apple Music did not have that."
-msgstr ""
+msgstr "Apple Music'te bu yoktu."
 
 #: bot/services/gamdl_downloader.py:258
 msgid "That track needs a decryption device file the bot does not have."
-msgstr ""
+msgstr "Bu parça, botta olmayan bir şifre çözme cihazı dosyası gerektiriyor."
 
 #: bot/services/gamdl_downloader.py:262
 msgid "The Apple Music sign-in has expired. Connect it again with li am."
-msgstr ""
+msgstr "Apple Music oturumunun süresi doldu. li am ile yeniden bağlayın."
 
 # | msgid "Error: Downloaded file not found."
 #: bot/services/gamdl_downloader.py:265
-#, fuzzy
 msgid "The download failed."
-msgstr "Hata: İndirilen dosya bulunamadı."
+msgstr "İndirme başarısız oldu."
 
 #: bot/services/netflix.py:81
 msgid "Netflix is not ready yet."
-msgstr ""
+msgstr "Netflix henüz hazır değil."
 
 #: bot/services/netflix.py:94
 msgid ""
 "Netflix needs Google Chrome, which is not available on this machine's "
 "processor architecture."
 msgstr ""
+"Netflix için Google Chrome gerekir, ancak bu makinenin işlemci mimarisi "
+"için mevcut değil."
 
 #: bot/services/netflix.py:106
 msgid "Netflix is not connected. Send li nf to connect an account."
-msgstr ""
+msgstr "Netflix bağlı değil. Bir hesap bağlamak için li nf gönderin."
 
 #: bot/services/netflix.py:141
 msgid "That is not a Netflix link."
-msgstr ""
+msgstr "Bu bir Netflix bağlantısı değil."
 
 # | msgid "Live streams cannot be downloaded"
 #: bot/services/netflix.py:155
-#, fuzzy
 msgid "Netflix titles cannot be downloaded."
-msgstr "Canlı akışlar indirilemiyor"
+msgstr "Netflix içerikleri indirilemez."
 
 #: bot/services/podcasts.py:461
 msgid ""
@@ -3083,11 +3223,11 @@ msgstr ""
 #: bot/services/results.py:130
 #, python-format
 msgid "%(count)s %(kind)s"
-msgstr ""
+msgstr "%(count)s %(kind)s"
 
 #: bot/services/spotify.py:123
 msgid "Spotify is not connected yet. Send li sp to connect an account."
-msgstr ""
+msgstr "Spotify henüz bağlı değil. Bir hesap bağlamak için li sp gönderin."
 
 #: bot/services/spotify.py:165
 msgid ""
@@ -3095,32 +3235,35 @@ msgid ""
 " the bot's configuration, then try again. Playing a pasted Spotify link "
 "does not need one."
 msgstr ""
+"Spotify araması için bir Spotify uygulaması gerekir. Botun "
+"yapılandırmasına bir istemci kimliği ve gizli anahtar ekleyin, sonra "
+"yeniden deneyin. Yapıştırılan bir Spotify bağlantısını çalmak için "
+"gerekmez."
 
 #: bot/services/spotify.py:227
 msgid "The Spotify session expired. Try again."
-msgstr ""
+msgstr "Spotify oturumunun süresi doldu. Yeniden deneyin."
 
 #: bot/services/spotify.py:232
 msgid "Spotify refused that request. Playback needs a Premium account."
-msgstr ""
+msgstr "Spotify bu isteği reddetti. Oynatma için Premium hesap gerekir."
 
 #: bot/services/spotify.py:237
 msgid "Spotify is rate limiting us. Try again shortly."
-msgstr ""
+msgstr "Spotify istekleri sınırlıyor. Kısa süre sonra yeniden deneyin."
 
 #: bot/services/spotify.py:298
 msgid "That is not a Spotify link."
-msgstr ""
+msgstr "Bu bir Spotify bağlantısı değil."
 
 #: bot/services/spotify.py:326
 msgid "That kind of Spotify link is not supported."
-msgstr ""
+msgstr "Bu tür bir Spotify bağlantısı desteklenmiyor."
 
 # | msgid "Live streams cannot be downloaded"
 #: bot/services/spotify.py:422
-#, fuzzy
 msgid "Spotify tracks cannot be downloaded."
-msgstr "Canlı akışlar indirilemiyor"
+msgstr "Spotify parçaları indirilemez."
 
 #: bot/services/yt.py:196 bot/services/yt.py:468
 msgid "Unknown Title"

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  StreamerBot\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-27 20:23+0000\n"
+"POT-Creation-Date: 2026-10-27 20:41+0000\n"
 "PO-Revision-Date: 2023-05-01 20:58+0500\n"
 "Last-Translator: Гумеров Амир Эдуардович <gumerov.amir.e@gmail.com>\n"
 "Language: ru\n"
@@ -25,14 +25,16 @@ msgid ""
 "This needs Google Chrome, which is not available on this machine's "
 "processor architecture."
 msgstr ""
+"Для этого нужен Google Chrome, а он недоступен для архитектуры процессора"
+" этой машины."
 
 #: bot/__init__.py:268
 msgid "Spotify is unavailable: the player could not start."
-msgstr ""
+msgstr "Spotify недоступен: проигрыватель не удалось запустить."
 
 #: bot/__init__.py:301 bot/__init__.py:304 bot/modules/portal_pages.py:543
 msgid "The sign-in did not complete."
-msgstr ""
+msgstr "Вход не завершился."
 
 #: bot/__init__.py:317
 msgid ""
@@ -43,6 +45,12 @@ msgid ""
 "PORT_CONFLICT.txt in the bot's folder explaining it, and Repair Account "
 "Portal and Spotify Ports in the manager turns it back on."
 msgstr ""
+"Портал аккаунтов выключен в настройках этого бота, поэтому Netflix, "
+"Disney Plus, Apple Music и Amazon Music подключить нельзя. Установите "
+"auth_portal.enabled в true в config.json этого бота и перезапустите его. "
+"Если менеджер выключил портал из-за конфликта портов, в папке бота есть "
+"файл PORT_CONFLICT.txt с объяснением, а пункт Repair Account Portal and "
+"Spotify Ports в менеджере снова его включит."
 
 #: bot/__init__.py:370
 #, python-format
@@ -54,6 +62,12 @@ msgid ""
 "Ports, and restart this bot. YouTube and Spotify are unaffected, because "
 "they sign in with a code in the channel."
 msgstr ""
+"Портал аккаунтов не запустился, потому что порт %(port)s уже занят, "
+"скорее всего другим ботом на этой машине. Netflix, Disney Plus, Apple "
+"Music и Amazon Music нельзя подключить, пока это не исправлено. Запустите"
+" менеджер, выберите Manage Bots, затем Repair Account Portal and Spotify "
+"Ports, и перезапустите этого бота. YouTube и Spotify это не затрагивает: "
+"они входят по коду в канале."
 
 #: bot/__init__.py:380
 #, python-format
@@ -62,12 +76,15 @@ msgid ""
 "and Amazon Music cannot be connected. The reason is in this bot's log "
 "file: %(reason)s"
 msgstr ""
+"Портал аккаунтов не запустился, поэтому Netflix, Disney Plus, Apple Music"
+" и Amazon Music подключить нельзя. Причина записана в журнале этого бота:"
+" %(reason)s"
 
 #: bot/__init__.py:412
 msgid ""
 "Hello! I'm back and ready for you to stream again. Thank you for your "
 "patience!"
-msgstr ""
+msgstr "Привет! Я вернулся и готов снова транслировать. Спасибо за терпение!"
 
 #: bot/__init__.py:452
 msgid ""
@@ -75,6 +92,8 @@ msgid ""
 "know that an update is in progress and I will restart in a few moments to"
 " apply it. Thank you!"
 msgstr ""
+"Привет! Это я, Streamer Bot. Сообщаю, что идёт обновление, и через "
+"несколько мгновений я перезапущусь, чтобы его применить. Спасибо!"
 
 #: bot/__init__.py:497
 msgid "Restarted. The new settings are in use."
@@ -98,6 +117,15 @@ msgid ""
 " and\n"
 "Kirill Belousov, and on the fork by Joao Almeida.\n"
 msgstr ""
+"StreamerBot для TeamTalk 5.\n"
+"Транслирует YouTube, YouTube Music, Spotify, Apple Music, Amazon Music, "
+"Netflix,\n"
+"Disney Plus и прямые ссылки в канал, с поддержкой тифлокомментария.\n"
+"Репозиторий: {repo}\n"
+"TeamTalk SDK {sdk}.\n"
+"Основан на TTMediaBot Амира Гумерова, Владислава Копылова, Беки "
+"Гозалишвили и\n"
+"Кирилла Белоусова, а также на форке Жоао Алмейды.\n"
 
 #: bot/TeamTalk/__init__.py:180
 msgid "Send \"h\" for help"
@@ -105,7 +133,7 @@ msgstr "Отправьте \"h\" для справки"
 
 #: bot/commands/__init__.py:176
 msgid "That question has expired. To ask again, send: dlp"
-msgstr ""
+msgstr "Срок ответа на этот вопрос истёк. Чтобы спросить снова, отправьте: dlp"
 
 #: bot/commands/__init__.py:201
 msgid "That menu has expired. To open it again, send: cf"
@@ -367,68 +395,75 @@ msgid ""
 "[status|out] Shows whether this bot is signed in to YouTube, or signs it "
 "out. To sign in, send li yt"
 msgstr ""
+"[status|out] Показывает, вошёл ли этот бот в YouTube, или выходит из "
+"него. Чтобы войти, отправьте li yt"
 
 # | msgid "This user is not banned"
 #: bot/commands/admin_commands.py:466 bot/modules/auth_portal.py:283
 #: bot/modules/auth_portal.py:318
-#, fuzzy
 msgid "The YouTube service is not enabled."
-msgstr "Этот пользователь не забанен"
+msgstr "Сервис YouTube не включён."
 
 #: bot/commands/admin_commands.py:473
 msgid "This bot is signed in to YouTube."
-msgstr ""
+msgstr "Этот бот вошёл в YouTube."
 
 #: bot/commands/admin_commands.py:476
 msgid ""
 "Google signed this bot out of YouTube. To sign in again, send this "
 "command: li yt"
 msgstr ""
+"Google вывел этого бота из YouTube. Чтобы войти снова, отправьте команду:"
+" li yt"
 
 #: bot/commands/admin_commands.py:479
 msgid "This bot is not signed in to YouTube. To sign in, send this command: li yt"
-msgstr ""
+msgstr "Этот бот не вошёл в YouTube. Чтобы войти, отправьте команду: li yt"
 
 #: bot/commands/admin_commands.py:484
 msgid "This bot has been signed out of YouTube."
-msgstr ""
+msgstr "Этот бот вышел из YouTube."
 
 #: bot/commands/admin_commands.py:488
 msgid ""
 "YouTube is connected through the account portal now. Send this command: "
 "li yt"
 msgstr ""
+"Теперь YouTube подключается через портал аккаунтов. Отправьте команду: li"
+" yt"
 
 #: bot/commands/admin_commands.py:500
 msgid ""
 "[link|rotate|off] Shows the account portal's status, mints a new link, "
 "revokes every existing link, or stops the portal"
 msgstr ""
+"[link|rotate|off] Показывает состояние портала аккаунтов, создаёт новую "
+"ссылку, отзывает все существующие ссылки или останавливает портал"
 
 #: bot/commands/admin_commands.py:507 bot/commands/admin_commands.py:563
 msgid "The account portal is not running."
-msgstr ""
+msgstr "Портал аккаунтов не работает."
 
 #: bot/commands/admin_commands.py:513
 #, python-format
 msgid ""
 "The portal is listening on %(host)s port %(port)s with %(count)s live "
 "links."
-msgstr ""
+msgstr "Портал слушает %(host)s, порт %(port)s, активных ссылок: %(count)s."
 
 #: bot/commands/admin_commands.py:528
 #, python-format
 msgid "That address came from %(source)s."
-msgstr ""
+msgstr "Этот адрес получен из %(source)s."
 
 #: bot/commands/admin_commands.py:540
 #, python-format
 msgid "Revoked %(count)s links. Send ap link for a new one."
-msgstr ""
+msgstr "Отозвано ссылок: %(count)s. Отправьте ap link, чтобы получить новую."
 
 #: bot/commands/admin_commands.py:545
 msgid "The portal has been stopped."
-msgstr ""
+msgstr "Портал остановлен."
 
 # | msgid "" "SERVICE Disconnects a streaming account and deletes its saved
 # | sign-in " "(yt, sp, nf, dp, am, az, pp, tb)"
@@ -443,12 +478,12 @@ msgstr ""
 #: bot/commands/admin_commands.py:571
 #, python-format
 msgid "%(service)s is not connected."
-msgstr ""
+msgstr "%(service)s не подключён."
 
 #: bot/commands/admin_commands.py:577
 #, python-format
 msgid "%(service)s has been disconnected and its saved sign-in deleted."
-msgstr ""
+msgstr "%(service)s отключён, сохранённый вход удалён."
 
 #: bot/commands/command.py:30
 msgid "help text not found"
@@ -457,13 +492,16 @@ msgstr "текст справки не найден"
 #: bot/commands/command.py:82
 #, python-brace-format
 msgid "The YouTube sign-in could not be renewed, so {request} was not played."
-msgstr ""
+msgstr "Не удалось обновить вход в YouTube, поэтому {request} не воспроизведено."
 
 #: bot/commands/command.py:102
 msgid ""
 "YouTube refused to play this without a signed-in account, which is usual "
 "on a server. To connect one, send this command: li yt"
 msgstr ""
+"YouTube отказался воспроизводить это без аккаунта, в который выполнен "
+"вход; на сервере так бывает обычно. Чтобы подключить аккаунт, отправьте "
+"команду: li yt"
 
 #: bot/commands/command.py:128
 #, python-brace-format
@@ -471,12 +509,16 @@ msgid ""
 "Renewing the YouTube sign-in. {request} will start playing when it "
 "finishes, usually within a minute."
 msgstr ""
+"Обновляю вход в YouTube. {request} начнёт играть, когда это закончится, "
+"обычно в течение минуты."
 
 #: bot/commands/command.py:137 bot/modules/youtube_session_keeper.py:154
 msgid ""
 "Google signed StreamerBot out of YouTube. To sign in again, send this "
 "command: li yt"
 msgstr ""
+"Google вывел StreamerBot из YouTube. Чтобы войти снова, отправьте "
+"команду: li yt"
 
 #: bot/commands/config_menu.py:155
 msgid "on"
@@ -951,55 +993,52 @@ msgstr ""
 # | msgid "Loaded {count} tracks"
 # | msgid "Playing {name}, {count} tracks"
 #: bot/commands/playlist_choice.py:80
-#, fuzzy, python-brace-format
+#, python-brace-format
 msgid "The playlist {name} has {count} videos."
-msgstr "Загружено треков: {count}"
+msgstr "В плейлисте {name} видео: {count}."
 
 #: bot/commands/playlist_choice.py:83
 msgid "For the whole playlist as one zip file, send: 1"
-msgstr ""
+msgstr "Чтобы получить весь плейлист одним zip-файлом, отправьте: 1"
 
 #: bot/commands/playlist_choice.py:84
 msgid "To pick one video from a list, send: 2"
-msgstr ""
+msgstr "Чтобы выбрать одно видео из списка, отправьте: 2"
 
 #: bot/commands/playlist_choice.py:85
 msgid "To cancel, send: 0"
-msgstr ""
+msgstr "Чтобы отменить, отправьте: 0"
 
 #: bot/commands/playlist_choice.py:92
 #, python-brace-format
 msgid "Page {page} of {pages} of {name}, {total} videos. Send a number:"
-msgstr ""
+msgstr "Страница {page} из {pages}, {name}, видео: {total}. Отправьте номер:"
 
 #: bot/commands/playlist_choice.py:100
 #, python-brace-format
 msgid "Next videos, {first} to {last}"
-msgstr ""
+msgstr "Следующие видео, с {first} по {last}"
 
 #: bot/commands/playlist_choice.py:104
 #, python-brace-format
 msgid "Back to videos 1 to {last}"
-msgstr ""
+msgstr "Назад к видео с 1 по {last}"
 
 # | msgid "Downloading playlist: {}"
 #: bot/commands/playlist_choice.py:107
-#, fuzzy
 msgid "Download the whole playlist"
-msgstr "Загрузка плейлиста: {}"
+msgstr "Скачать весь плейлист"
 
 # | msgid "Cache cleared"
 # | msgid "Cancelled."
 #: bot/commands/playlist_choice.py:108
-#, fuzzy
 msgid "Cancel"
-msgstr "Кеш очищен"
+msgstr "Отмена"
 
 # | msgid "Cache cleared"
 #: bot/commands/playlist_choice.py:119 bot/modules/auth_portal.py:647
-#, fuzzy
 msgid "Cancelled."
-msgstr "Кеш очищен"
+msgstr "Отменено."
 
 #: bot/commands/playlist_choice.py:141
 #, python-brace-format
@@ -1007,6 +1046,8 @@ msgid ""
 "There is no {number} on this page. Send a number from 1 to {last}, or to "
 "cancel, send: 0"
 msgstr ""
+"На этой странице нет номера {number}. Отправьте число от 1 до {last}, а "
+"чтобы отменить, отправьте: 0"
 
 #: bot/commands/podcast_commands.py:69
 msgid "That podcast could not be read. Try again later."
@@ -1328,7 +1369,7 @@ msgstr "Загрузка URL / плейлиста..."
 
 #: bot/commands/user_commands.py:130
 msgid "Your link"
-msgstr ""
+msgstr "Ваша ссылка"
 
 #: bot/commands/user_commands.py:135
 msgid "Incorrect protocol"
@@ -1344,9 +1385,9 @@ msgstr "Путь не найден"
 
 # | msgid "{nickname} requested playing from a URL"
 #: bot/commands/user_commands.py:162
-#, fuzzy, python-brace-format
+#, python-brace-format
 msgid "{nickname} requested playing from a URL ({count} tracks)"
-msgstr "{nickname} запросил воспроизведение по URL"
+msgstr "{nickname} запросил воспроизведение по URL (треков: {count})"
 
 #: bot/commands/user_commands.py:169
 #, python-brace-format
@@ -1397,6 +1438,8 @@ msgid ""
 "[NUMBER|?] Plays next track, jumps to track number, or shows current "
 "position with ?"
 msgstr ""
+"[NUMBER|?] Включает следующий трек, переходит к треку с номером или "
+"показывает текущую позицию с ?"
 
 #: bot/commands/user_commands.py:279 bot/commands/user_commands.py:535
 msgid "Incorrect number"
@@ -1485,27 +1528,21 @@ msgstr ""
 
 # | msgid "" "Unknown service.\n" "{}"
 #: bot/commands/user_commands.py:374
-#, fuzzy, python-brace-format
+#, python-brace-format
 msgid "Unknown service.{newline}{help}"
-msgstr ""
-"Неизвестный сервис.\n"
-"{}"
+msgstr "Неизвестный сервис.{newline}{help}"
 
 # | msgid "" "Current service: {}\n" "Warning: {}"
 #: bot/commands/user_commands.py:385
-#, fuzzy, python-brace-format
+#, python-brace-format
 msgid "Current service: {service}{newline}{status}"
-msgstr ""
-"Текущий сервис: {}\n"
-"Предупреждение: {}"
+msgstr "Текущий сервис: {service}{newline}{status}"
 
 # | msgid "" "Error: {error}\n" "{service} is disabled"
 #: bot/commands/user_commands.py:394
-#, fuzzy, python-brace-format
+#, python-brace-format
 msgid "Error: {error}{newline}{service} is disabled"
-msgstr ""
-"Ошибка: {error}\n"
-"{service} отключён"
+msgstr "Ошибка: {error}{newline}{service} отключён"
 
 #: bot/commands/user_commands.py:401
 #, python-brace-format
@@ -1515,7 +1552,7 @@ msgstr "{service} отключён"
 #: bot/commands/user_commands.py:453
 #, python-format
 msgid "%(service)s is switched off in this bot's configuration."
-msgstr ""
+msgstr "%(service)s выключен в настройках этого бота."
 
 #: bot/commands/user_commands.py:460
 #, python-format
@@ -1523,51 +1560,50 @@ msgid ""
 "%(service)s is not connected. To connect an account, send this command: "
 "li %(code)s"
 msgstr ""
+"%(service)s не подключён. Чтобы подключить аккаунт, отправьте команду: li"
+" %(code)s"
 
 #: bot/commands/user_commands.py:465
 #, python-format
 msgid "%(service)s is connected and ready."
-msgstr ""
+msgstr "%(service)s подключён и готов."
 
 #: bot/commands/user_commands.py:478
 #, python-format
 msgid "unavailable: %(reason)s"
-msgstr ""
+msgstr "недоступен: %(reason)s"
 
 # | msgid "Saves bot's configuration"
 #: bot/commands/user_commands.py:480
-#, fuzzy
 msgid "switched off in this bot's configuration"
-msgstr "Сохраняет конфигурацию бота"
+msgstr "выключен в настройках этого бота"
 
 #: bot/commands/user_commands.py:483
 #, python-format
 msgid "not connected, send li %(code)s"
-msgstr ""
+msgstr "не подключён, отправьте li %(code)s"
 
 #: bot/commands/user_commands.py:488
 msgid "ready"
-msgstr ""
+msgstr "готов"
 
 # | msgid "" "Current service: {current_service}\n" "Available:\n"
 # | "{available_services}\n" "send sv SERVICE h for additional help"
 #: bot/commands/user_commands.py:499
-#, fuzzy, python-brace-format
+#, python-brace-format
 msgid ""
 "Current service: "
 "{current_service}{newline}Available:{newline}{available_services}{newline}send"
 " sv SERVICE h for additional help"
 msgstr ""
-"Текущий сервис: {current_service}\n"
-"Доступные: {available_services}\n"
-"Отправьте \"sv имя сервиса h\" для дополнительной справки по конкретному "
-"сервису"
+"Текущий сервис: "
+"{current_service}{newline}Доступны:{newline}{available_services}{newline}отправьте"
+" sv SERVICE h для подробной справки"
 
 # | msgid "NUMBER Selects track by number from the list of current results"
 #: bot/commands/user_commands.py:512
-#, fuzzy
 msgid "[NUMBER|?] Selects track by number, or shows current position with ?"
-msgstr "НОМЕР Выбирает трек по номеру из списка текущих результатов"
+msgstr "[NUMBER|?] Выбирает трек по номеру или показывает текущую позицию с ?"
 
 # | msgid "" "SPEED Sets playback speed from bot.25 to 4. If no speed is
 # given,
@@ -1675,7 +1711,6 @@ msgstr "Не удалось зайти в канал: {}"
 # | uploads to" " the channel. Without a link while Apple Music is playing,
 # | downloads the " "album or playlist being played."
 #: bot/commands/user_commands.py:812
-#, fuzzy
 msgid ""
 "Downloads all tracks from a playlist/album URL, zips them, and uploads to"
 " the channel. For a YouTube playlist it asks first whether you want the "
@@ -1683,8 +1718,11 @@ msgid ""
 "Apple Music or a YouTube playlist is playing, it uses the album or "
 "playlist being played."
 msgstr ""
-"Скачивает все треки из URL плейлиста/альбома, архивирует в ZIP и "
-"загружает в канал."
+"Скачивает все треки по ссылке на плейлист или альбом, упаковывает их в "
+"zip и загружает в канал. Для плейлиста YouTube сначала спрашивает, нужен "
+"весь плейлист или одно видео из нумерованного списка. Без ссылки, пока "
+"играет Apple Music или плейлист YouTube, берёт альбом или плейлист, "
+"который сейчас играет."
 
 #: bot/commands/user_commands.py:823
 #, python-brace-format
@@ -1698,11 +1736,12 @@ msgstr "Пожалуйста, отправьте ссылку на плейли�
 # | msgid "This command is for playlists and albums. For single tracks, use
 # | 'dl'."
 #: bot/commands/user_commands.py:858
-#, fuzzy
 msgid ""
 "This command is for playlists, albums, and channels. For single tracks, "
 "use 'dl'."
-msgstr "Эта команда для плейлистов. Для одного трека используйте 'dl'."
+msgstr ""
+"Эта команда для плейлистов, альбомов и каналов. Для отдельных треков "
+"используйте 'dl'."
 
 #: bot/commands/user_commands.py:1002
 msgid ""
@@ -1773,16 +1812,17 @@ msgstr "Следующий из очереди: {}"
 # | numbered " "list. Use 'sr on' or 'sr off' to set explicitly. Save
 # | permanently with " "'sc'"
 #: bot/commands/user_commands.py:1164
-#, fuzzy
 msgid ""
 "Toggles search results mode. When active, 'p QUERY' reads out a numbered "
 "list and plays nothing, so whatever is playing keeps playing until 'sl "
 "NUMBER' picks one. Use 'sr on' or 'sr off' to set explicitly, 'slc' for "
 "how many results. Save permanently with 'sc'"
 msgstr ""
-"Переключает режим результатов поиска. При включении 'p ЗАПРОС' показывает"
-" список. Используйте 'sr on' или 'sr off'. Сохраните постоянно с помощью "
-"'sc'"
+"Включает или выключает режим результатов поиска. Когда он включён, 'p "
+"QUERY' зачитывает нумерованный список и ничего не включает, так что "
+"текущее воспроизведение продолжается, пока 'sl NUMBER' не выберет "
+"вариант. Используйте 'sr on' или 'sr off', чтобы задать явно, и 'slc', "
+"чтобы задать число результатов. Чтобы сохранить навсегда, отправьте 'sc'"
 
 #: bot/commands/user_commands.py:1172 bot/commands/user_commands.py:1182
 msgid "Search results mode: ON"
@@ -1806,29 +1846,28 @@ msgstr "Нет доступных результатов. Сначала вып�
 
 # | msgid "Loaded {count} tracks"
 #: bot/commands/user_commands.py:1248
-#, fuzzy, python-brace-format
+#, python-brace-format
 msgid "Playing {name}, {count} tracks"
-msgstr "Загружено треков: {count}"
+msgstr "Воспроизводится {name}, треков: {count}"
 
 # | msgid "" "NUMBER Sets how many results are shown when search results mode
 # is
 # | " "active. Without a number shows current count. Resets to 5 on restart"
 # | " "active. Without a number shows current count. Resets to 1 on restart"
 #: bot/commands/user_commands.py:1259
-#, fuzzy
 msgid ""
 "NUMBER Sets how many results are shown when search results mode is "
 "active, or 0 for as many as the service returns. Without a number shows "
 "current count. Resets on restart"
 msgstr ""
-"НОМЕР Задаёт количество результатов в режиме поиска. Без числа показывает"
-" текущее значение. Сбрасывается до 5 при перезапуске"
+"NUMBER Задаёт, сколько результатов показывать в режиме результатов "
+"поиска, или 0, чтобы показывать столько, сколько вернёт сервис. Без числа"
+" показывает текущее значение. Сбрасывается при перезапуске"
 
 # | msgid "Search results count: {count}"
 #: bot/commands/user_commands.py:1267
-#, fuzzy
 msgid "Search results count: as many as the service returns"
-msgstr "Количество результатов: {count}"
+msgstr "Число результатов поиска: столько, сколько вернёт сервис"
 
 #: bot/commands/user_commands.py:1269
 #, python-brace-format
@@ -1837,13 +1876,12 @@ msgstr "Количество результатов: {count}"
 
 # | msgid "Invalid count. Please enter a number greater than 0"
 #: bot/commands/user_commands.py:1280
-#, fuzzy
 msgid "Invalid count. Please enter 0 or a number greater than 0"
-msgstr "Неверное значение. Введите число больше 0"
+msgstr "Неверное число. Введите 0 или число больше 0"
 
 #: bot/commands/user_commands.py:1286
 msgid "Search results now show as many results as the service returns"
-msgstr ""
+msgstr "Теперь в результатах поиска столько результатов, сколько вернёт сервис"
 
 #: bot/commands/user_commands.py:1289
 #, python-brace-format
@@ -2028,10 +2066,12 @@ msgid ""
 "and Amazon Music cannot be connected. The reason is in this bot's log "
 "file."
 msgstr ""
+"Портал аккаунтов не работает, поэтому Netflix, Disney Plus, Apple Music и"
+" Amazon Music подключить нельзя. Причина записана в журнале этого бота."
 
 #: bot/commands/user_commands.py:1753
 msgid "Your streaming accounts:"
-msgstr ""
+msgstr "Ваши аккаунты стриминговых сервисов:"
 
 #: bot/commands/user_commands.py:1761
 #, python-format
@@ -2041,17 +2081,17 @@ msgstr "%(service)s: работает без аккаунта"
 #: bot/commands/user_commands.py:1769
 #, python-format
 msgid "%(service)s: connected"
-msgstr ""
+msgstr "%(service)s: подключён"
 
 #: bot/commands/user_commands.py:1774
 #, python-format
 msgid "%(service)s: signed out, connect again"
-msgstr ""
+msgstr "%(service)s: выполнен выход, подключите снова"
 
 #: bot/commands/user_commands.py:1779
 #, python-format
 msgid "%(service)s: not connected"
-msgstr ""
+msgstr "%(service)s: не подключён"
 
 #: bot/commands/user_commands.py:1795
 #, python-format
@@ -2090,7 +2130,7 @@ msgstr ""
 #: bot/commands/user_commands.py:1846
 #, python-format
 msgid "%(service)s sign-in could not start: %(error)s"
-msgstr ""
+msgstr "Не удалось начать вход в %(service)s: %(error)s"
 
 #. translators: "The next message" and "the message after that"
 #. are separate chat messages, holding the link and the code.
@@ -2115,69 +2155,75 @@ msgid ""
 "[on|off|ask] Plays films and shows with audio description when it is "
 "available. With no argument, says what the current setting is"
 msgstr ""
+"[on|off|ask] Воспроизводит фильмы и сериалы с тифлокомментарием, когда он"
+" есть. Без аргумента сообщает текущую настройку"
 
 #: bot/commands/user_commands.py:1892
 msgid "Audio description is not available in this bot."
-msgstr ""
+msgstr "Тифлокомментарий в этом боте недоступен."
 
 #: bot/commands/user_commands.py:1900
 msgid ""
 "Audio description is on. Films play with the description when there is "
 "one."
-msgstr ""
+msgstr "Тифлокомментарий включён. Фильмы воспроизводятся с ним, когда он есть."
 
 #: bot/commands/user_commands.py:1903
 msgid "Audio description is off. Send da on to turn it on."
-msgstr ""
+msgstr "Тифлокомментарий выключен. Отправьте da on, чтобы включить его."
 
 #: bot/commands/user_commands.py:1906
 msgid "The bot asks each time. Send da on or da off to stop being asked."
 msgstr ""
+"Бот спрашивает каждый раз. Отправьте da on или da off, чтобы он больше не"
+" спрашивал."
 
 #: bot/commands/user_commands.py:1920
 msgid "Audio description is on. You will not be asked again."
-msgstr ""
+msgstr "Тифлокомментарий включён. Больше спрашивать не будем."
 
 #: bot/commands/user_commands.py:1923
 msgid "Audio description is off. You will not be asked again."
-msgstr ""
+msgstr "Тифлокомментарий выключен. Больше спрашивать не будем."
 
 #: bot/commands/user_commands.py:1926
 msgid "The bot will ask each time."
-msgstr ""
+msgstr "Бот будет спрашивать каждый раз."
 
 #: bot/commands/user_commands.py:1940
 msgid ""
 "[number] Lists the profiles for the current service, or selects one by "
 "number"
 msgstr ""
+"[number] Показывает профили текущего сервиса или выбирает профиль по "
+"номеру"
 
 #: bot/commands/user_commands.py:1947
 #, python-format
 msgid "%(service)s does not have profiles."
-msgstr ""
+msgstr "У %(service)s нет профилей."
 
 #: bot/commands/user_commands.py:1953
 msgid "No profiles were found. The account may not be connected yet."
-msgstr ""
+msgstr "Профили не найдены. Возможно, аккаунт ещё не подключён."
 
 #: bot/commands/user_commands.py:1959
 #, python-format
 msgid "%(count)s profiles:"
-msgstr ""
+msgstr "Профилей: %(count)s:"
 
 #: bot/commands/user_commands.py:1963
 msgid "Send pf and a number to choose one."
-msgstr ""
+msgstr "Отправьте pf и номер, чтобы выбрать профиль."
 
 #: bot/commands/user_commands.py:1975
 #, python-format
 msgid "Now using the profile %(name)s."
-msgstr ""
+msgstr "Теперь используется профиль %(name)s."
 
 #: bot/commands/user_commands.py:1978
 msgid "That profile could not be selected."
-msgstr ""
+msgstr "Не удалось выбрать этот профиль."
 
 #: bot/connectors/tt_player_connector.py:36
 #, python-brace-format
@@ -2201,15 +2247,17 @@ msgstr "Приостановлено: {stream_url}"
 
 #: bot/modules/apple_music_downloader.py:75
 msgid "Apple Music is not available on this bot."
-msgstr ""
+msgstr "Apple Music в этом боте недоступен."
 
 #: bot/modules/apple_music_downloader.py:90
 msgid "What is playing is not an album or playlist that can be downloaded."
 msgstr ""
+"То, что сейчас играет, не является альбомом или плейлистом, который можно"
+" скачать."
 
 #: bot/modules/apple_music_downloader.py:93
 msgid "the playlist"
-msgstr ""
+msgstr "плейлист"
 
 #: bot/modules/apple_music_downloader.py:95
 #, python-brace-format
@@ -2217,6 +2265,8 @@ msgid ""
 "Downloading the playlist {name}. It will be uploaded to the channel as "
 "one zip file when it is ready, which can take several minutes."
 msgstr ""
+"Скачиваю плейлист {name}. Когда он будет готов, он появится в канале "
+"одним zip-файлом; это может занять несколько минут."
 
 #: bot/modules/apple_music_downloader.py:101
 #, python-brace-format
@@ -2224,92 +2274,98 @@ msgid ""
 "Downloading the album {name}. It will be uploaded to the channel as one "
 "zip file when it is ready, which can take several minutes."
 msgstr ""
+"Скачиваю альбом {name}. Когда он будет готов, он появится в канале одним "
+"zip-файлом; это может занять несколько минут."
 
 #: bot/modules/apple_music_downloader.py:107
 msgid "Apple Music is not playing a song right now."
-msgstr ""
+msgstr "Apple Music сейчас не воспроизводит песню."
 
 #: bot/modules/apple_music_downloader.py:112
 msgid "This song is not in the Apple Music catalog, so it cannot be downloaded."
-msgstr ""
+msgstr "Этой песни нет в каталоге Apple Music, поэтому её нельзя скачать."
 
 #: bot/modules/apple_music_downloader.py:121
 msgid "To download the whole album or playlist instead, send dlp."
-msgstr ""
+msgstr "Чтобы скачать весь альбом или плейлист, отправьте dlp."
 
 #: bot/modules/apple_music_downloader.py:126
 msgid ""
 "An Apple Music download is already running. Please send this again when "
 "it has finished."
 msgstr ""
+"Загрузка из Apple Music уже идёт. Отправьте это снова, когда она "
+"закончится."
 
 #: bot/modules/apple_music_downloader.py:157
 #, python-brace-format
 msgid "{name} is in the channel: one zip file with {count} tracks."
-msgstr ""
+msgstr "{name} в канале: один zip-файл, треков: {count}."
 
 #: bot/modules/apple_music_downloader.py:160
 #, python-brace-format
 msgid "{name} is in the channel."
-msgstr ""
+msgstr "{name} в канале."
 
 #: bot/modules/apple_music_downloader.py:164
 #, python-brace-format
 msgid "Could not download {name}: {reason}"
-msgstr ""
+msgstr "Не удалось скачать {name}: {reason}"
 
 #: bot/modules/apple_music_downloader.py:173
 #: bot/modules/playlist_uploader.py:145 bot/modules/uploader.py:112
 #, python-brace-format
 msgid "Could not download {name}."
-msgstr ""
+msgstr "Не удалось скачать {name}."
 
 #: bot/modules/apple_music_downloader.py:187
 msgid "Apple Music is not signed in on this bot. Send li am to connect it."
 msgstr ""
+"В этом боте не выполнен вход в Apple Music. Отправьте li am, чтобы "
+"подключить его."
 
 #: bot/modules/audio_description.py:129
 #, python-format
 msgid "%(title)s has audio description. Play it with the description?"
-msgstr ""
+msgstr "У %(title)s есть тифлокомментарий. Воспроизвести с ним?"
 
 #: bot/modules/audio_description.py:132
 msgid "This has audio description. Play it with the description?"
-msgstr ""
+msgstr "Здесь есть тифлокомментарий. Воспроизвести с ним?"
 
 #: bot/modules/audio_description.py:136
 msgid "1. Yes. 2. No. 3. Yes, and remember. 4. No, and remember."
-msgstr ""
+msgstr "1. Да. 2. Нет. 3. Да, и запомнить. 4. Нет, и запомнить."
 
 #: bot/modules/auth_portal.py:362
 msgid "Enter the Google account email address"
-msgstr ""
+msgstr "Введите адрес электронной почты аккаунта Google"
 
 #: bot/modules/auth_portal.py:364
 #, python-format
 msgid "Enter your %(service)s email address or username"
-msgstr ""
+msgstr "Введите адрес электронной почты или имя пользователя %(service)s"
 
 #: bot/modules/auth_portal.py:369
 msgid "Enter the Google account password"
-msgstr ""
+msgstr "Введите пароль аккаунта Google"
 
 #: bot/modules/auth_portal.py:371
 #, python-format
 msgid "Enter your %(service)s password"
-msgstr ""
+msgstr "Введите пароль %(service)s"
 
 #: bot/modules/auth_portal.py:413
 msgid "Enter the verification code"
-msgstr ""
+msgstr "Введите код подтверждения"
 
 #: bot/modules/auth_portal.py:630
 msgid "Signing in to this service is not available yet."
-msgstr ""
+msgstr "Вход в этот сервис пока недоступен."
 
 #: bot/modules/playlist_uploader.py:88 bot/modules/uploader.py:92
 msgid "Renewing the YouTube sign-in. The download continues when it finishes."
-msgstr ""
+msgstr "Обновляю вход в YouTube. Загрузка продолжится, когда это закончится."
 
 #: bot/modules/playlist_uploader.py:93
 #, python-brace-format
@@ -2317,34 +2373,36 @@ msgid ""
 "Downloading the playlist {name}. Tracks: {count}. It will be uploaded to "
 "the channel as one zip file when it is ready."
 msgstr ""
+"Скачиваю плейлист {name}. Треков: {count}. Когда он будет готов, он "
+"появится в канале одним zip-файлом."
 
 #: bot/modules/playlist_uploader.py:104
 #, python-brace-format
 msgid "Track {number} of {total}, {percent} percent done: {title}"
-msgstr ""
+msgstr "Трек {number} из {total}, готово {percent} процентов: {title}"
 
 #: bot/modules/playlist_uploader.py:125
 #, python-brace-format
 msgid "No track in {name} could be downloaded. Tracks tried: {count}."
-msgstr ""
+msgstr "Не удалось скачать ни одного трека из {name}. Попыток: {count}."
 
 #: bot/modules/playlist_uploader.py:129
 #, python-brace-format
 msgid "Uploading {name} to the channel."
-msgstr ""
+msgstr "Загружаю {name} в канал."
 
 #: bot/modules/playlist_uploader.py:137
 #, python-brace-format
 msgid "{name} is in the channel as one zip file. Tracks in it: {count}."
-msgstr ""
+msgstr "{name} в канале одним zip-файлом. Треков в нём: {count}."
 
 # | msgid "Live streams cannot be downloaded"
 # | msgid "Spotify tracks cannot be downloaded."
 # | msgid "{count} could not be downloaded."
 #: bot/modules/playlist_uploader.py:140
-#, fuzzy, python-brace-format
+#, python-brace-format
 msgid "Tracks that could not be downloaded: {count}."
-msgstr "Прямые трансляции не могут быть загружены"
+msgstr "Треков, которые не удалось скачать: {count}."
 
 #: bot/modules/podcast_subscriptions.py:196
 #, python-brace-format
@@ -2367,262 +2425,265 @@ msgstr "Чтобы открыть подкаст, отправьте: ps {number
 
 #: bot/modules/portal_pages.py:45
 msgid "dash"
-msgstr ""
+msgstr "дефис"
 
 #: bot/modules/portal_pages.py:46
 msgid "underscore"
-msgstr ""
+msgstr "подчёркивание"
 
 #: bot/modules/portal_pages.py:47
 msgid "dot"
-msgstr ""
+msgstr "точка"
 
 #: bot/modules/portal_pages.py:48
 msgid "space"
-msgstr ""
+msgstr "пробел"
 
 # | msgid "Error: {}"
 #: bot/modules/portal_pages.py:73 bot/modules/portal_pages.py:145
-#, fuzzy
 msgid "Error:"
-msgstr "Ошибка: {}"
+msgstr "Ошибка:"
 
 #: bot/modules/portal_pages.py:118
 msgid "There is a problem"
-msgstr ""
+msgstr "Есть проблема"
 
 #: bot/modules/portal_pages.py:158
 msgid "Back to your accounts"
-msgstr ""
+msgstr "Назад к вашим аккаунтам"
 
 #: bot/modules/portal_pages.py:174 bot/modules/portal_pages.py:535
 #: bot/modules/portal_pages.py:563 bot/modules/portal_pages.py:627
 #: bot/modules/portal_pages.py:683 bot/modules/portal_pages.py:749
 #, python-format
 msgid "Import a %(service)s session"
-msgstr ""
+msgstr "Импортировать сеанс %(service)s"
 
 #: bot/modules/portal_pages.py:181 bot/modules/portal_pages.py:209
 #: bot/modules/portal_pages.py:216 bot/modules/portal_pages.py:257
 #, python-format
 msgid "Connect %(service)s"
-msgstr ""
+msgstr "Подключить %(service)s"
 
 #: bot/modules/portal_pages.py:197
 msgid "Connected"
-msgstr ""
+msgstr "Подключено"
 
 #: bot/modules/portal_pages.py:202 bot/modules/portal_pages.py:787
 #, python-format
 msgid "Disconnect %(service)s"
-msgstr ""
+msgstr "Отключить %(service)s"
 
 #: bot/modules/portal_pages.py:206
 msgid "Expired. Connect again to keep streaming."
-msgstr ""
+msgstr "Срок истёк. Подключите снова, чтобы продолжить трансляцию."
 
 #: bot/modules/portal_pages.py:213
 msgid "Not connected"
-msgstr ""
+msgstr "Не подключено"
 
 #: bot/modules/portal_pages.py:235
 msgid "Your streaming accounts"
-msgstr ""
+msgstr "Ваши аккаунты стриминговых сервисов"
 
 #: bot/modules/portal_pages.py:236
 #, python-format
 msgid "%(connected)s of %(total)s services connected."
-msgstr ""
+msgstr "Подключено сервисов: %(connected)s из %(total)s."
 
 #: bot/modules/portal_pages.py:240
 #, python-format
 msgid "%(connected)s of %(total)s services connected"
-msgstr ""
+msgstr "Подключено сервисов: %(connected)s из %(total)s"
 
 #: bot/modules/portal_pages.py:259
 msgid "Go to"
-msgstr ""
+msgstr "Перейдите на"
 
 #: bot/modules/portal_pages.py:264
 msgid "(opens in a new tab)"
-msgstr ""
+msgstr "(откроется в новой вкладке)"
 
 #: bot/modules/portal_pages.py:265
 msgid "Enter the code below."
-msgstr ""
+msgstr "Введите код, указанный ниже."
 
 #: bot/modules/portal_pages.py:266
 msgid "Come back here and select Check status."
-msgstr ""
+msgstr "Вернитесь сюда и выберите Проверить состояние."
 
 #: bot/modules/portal_pages.py:269
 msgid "Your device code"
-msgstr ""
+msgstr "Код вашего устройства"
 
 #: bot/modules/portal_pages.py:283
 msgid "Check status"
-msgstr ""
+msgstr "Проверить состояние"
 
 #: bot/modules/portal_pages.py:289
 #, python-format
 msgid "Connect %(service)s: enter your code"
-msgstr ""
+msgstr "Подключение %(service)s: введите код"
 
 #: bot/modules/portal_pages.py:308
 msgid "Google account email address"
-msgstr ""
+msgstr "Адрес электронной почты аккаунта Google"
 
 #: bot/modules/portal_pages.py:309
 msgid "The Google account made for StreamerBot, not your personal one."
-msgstr ""
+msgstr "Аккаунт Google, созданный для StreamerBot, а не ваш личный."
 
 #: bot/modules/portal_pages.py:310
 msgid "Google account password"
-msgstr ""
+msgstr "Пароль аккаунта Google"
 
 #: bot/modules/portal_pages.py:312
 #, python-format
 msgid "%(service)s email address or username"
-msgstr ""
+msgstr "Адрес электронной почты или имя пользователя %(service)s"
 
 #: bot/modules/portal_pages.py:313
 #, python-format
 msgid "The address you use to sign in to %(service)s."
-msgstr ""
+msgstr "Адрес, которым вы входите в %(service)s."
 
 #: bot/modules/portal_pages.py:314
 #, python-format
 msgid "%(service)s password"
-msgstr ""
+msgstr "Пароль %(service)s"
 
 #: bot/modules/portal_pages.py:333 bot/modules/portal_pages.py:361
 #: bot/modules/portal_pages.py:366
 #, python-format
 msgid "Sign in to %(service)s"
-msgstr ""
+msgstr "Вход в %(service)s"
 
 #: bot/modules/portal_pages.py:363
 msgid "Cancel and go back"
-msgstr ""
+msgstr "Отменить и вернуться"
 
 #: bot/modules/portal_pages.py:396
 #, python-format
 msgid "Signing in as %(username)s."
-msgstr ""
+msgstr "Вход как %(username)s."
 
 #: bot/modules/portal_pages.py:402 bot/modules/portal_pages.py:427
 #, python-format
 msgid "Enter your %(service)s verification code"
-msgstr ""
+msgstr "Введите код подтверждения %(service)s"
 
 #: bot/modules/portal_pages.py:410
 msgid "Verification code"
-msgstr ""
+msgstr "Код подтверждения"
 
 #: bot/modules/portal_pages.py:414
 msgid "Type or paste the whole code into the box below. Spaces do not matter."
-msgstr ""
+msgstr "Введите или вставьте весь код в поле ниже. Пробелы не важны."
 
 #: bot/modules/portal_pages.py:419
 msgid "Verify code"
-msgstr ""
+msgstr "Проверить код"
 
 #: bot/modules/portal_pages.py:422
 msgid "Send a new code"
-msgstr ""
+msgstr "Отправить новый код"
 
 #: bot/modules/portal_pages.py:424 bot/modules/portal_pages.py:444
 #: bot/modules/portal_pages.py:630
 msgid "Cancel this sign-in"
-msgstr ""
+msgstr "Отменить этот вход"
 
 #: bot/modules/portal_pages.py:435 bot/modules/portal_pages.py:448
 #, python-format
 msgid "Signing in to %(service)s"
-msgstr ""
+msgstr "Вход в %(service)s"
 
 #: bot/modules/portal_pages.py:436
 msgid "Waiting for the service to confirm. This usually takes 10 to 30 seconds."
-msgstr ""
+msgstr "Ждём подтверждения от сервиса. Обычно это занимает от 10 до 30 секунд."
 
 #: bot/modules/portal_pages.py:442
 msgid "Check again"
-msgstr ""
+msgstr "Проверить снова"
 
 #: bot/modules/portal_pages.py:468
 msgid "Google needs a verification code. Opening that page."
-msgstr ""
+msgstr "Google нужен код подтверждения. Открываю эту страницу."
 
 #: bot/modules/portal_pages.py:469
 msgid "Google needs you to approve the sign-in on your phone. Opening that page."
-msgstr ""
+msgstr "Google просит подтвердить вход на телефоне. Открываю эту страницу."
 
 #: bot/modules/portal_pages.py:470
 msgid "Signed in. Opening the confirmation page."
-msgstr ""
+msgstr "Вход выполнен. Открываю страницу подтверждения."
 
 #: bot/modules/portal_pages.py:471
 msgid "The sign-in did not complete. Opening the page that says why."
-msgstr ""
+msgstr "Вход не завершился. Открываю страницу с причиной."
 
 #: bot/modules/portal_pages.py:472
 msgid "This sign-in is no longer running. Going back to your accounts."
-msgstr ""
+msgstr "Этот вход больше не выполняется. Возвращаюсь к вашим аккаунтам."
 
 #: bot/modules/portal_pages.py:473
 #, python-format
 msgid "Still signing in. %(seconds)s seconds so far."
-msgstr ""
+msgstr "Вход ещё идёт. Прошло секунд: %(seconds)s."
 
 #: bot/modules/portal_pages.py:474
 #, python-format
 msgid "Still signing in. %(minutes)s minutes so far."
-msgstr ""
+msgstr "Вход ещё идёт. Прошло минут: %(minutes)s."
 
 #: bot/modules/portal_pages.py:475
 msgid ""
 "This link has expired or the sign-in was cancelled. To get a new link, "
 "send the li command to StreamerBot in TeamTalk."
 msgstr ""
+"Срок действия этой ссылки истёк или вход был отменён. Чтобы получить "
+"новую ссылку, отправьте команду li боту StreamerBot в TeamTalk."
 
 #: bot/modules/portal_pages.py:476
 msgid "Lost contact with StreamerBot. Use Check again in a moment."
-msgstr ""
+msgstr "Связь со StreamerBot потеряна. Через минуту нажмите Проверить снова."
 
 #: bot/modules/portal_pages.py:477
 msgid ""
 "This is taking longer than expected. Use Check again, or Cancel this "
 "sign-in."
 msgstr ""
+"Это занимает больше времени, чем ожидалось. Нажмите Проверить снова или "
+"Отменить этот вход."
 
 #: bot/modules/portal_pages.py:518 bot/modules/portal_pages.py:522
 #, python-format
 msgid "%(service)s connected"
-msgstr ""
+msgstr "%(service)s подключён"
 
 #: bot/modules/portal_pages.py:519
 #, python-format
 msgid "StreamerBot can now stream from your %(service)s account."
-msgstr ""
+msgstr "Теперь StreamerBot может транслировать из вашего аккаунта %(service)s."
 
 #: bot/modules/portal_pages.py:528
 msgid "Try again"
-msgstr ""
+msgstr "Попробовать снова"
 
 #: bot/modules/portal_pages.py:542 bot/modules/portal_pages.py:548
 #, python-format
 msgid "%(service)s could not be connected"
-msgstr ""
+msgstr "Не удалось подключить %(service)s"
 
 #: bot/modules/portal_pages.py:561
 msgid ""
 "If Google refuses to sign in here, import a session from your own browser"
 " instead:"
-msgstr ""
+msgstr "Если Google не даёт войти здесь, импортируйте сеанс из своего браузера:"
 
 #: bot/modules/portal_pages.py:567
 msgid "Use a separate Google account"
-msgstr ""
+msgstr "Используйте отдельный аккаунт Google"
 
 #: bot/modules/portal_pages.py:568
 msgid ""
@@ -2630,42 +2691,49 @@ msgid ""
 "server. Make a Google account just for StreamerBot rather than using your"
 " personal one."
 msgstr ""
+"Google может ограничить аккаунт, который автоматически воспроизводит "
+"видео с сервера. Создайте аккаунт Google только для StreamerBot, а не "
+"используйте личный."
 
 #: bot/modules/portal_pages.py:592 bot/modules/portal_pages.py:615
 msgid "Approve the sign-in on your phone"
-msgstr ""
+msgstr "Подтвердите вход на телефоне"
 
 #: bot/modules/portal_pages.py:596
 msgid "Not approved yet. Approve the sign-in on your phone"
-msgstr ""
+msgstr "Ещё не подтверждено. Подтвердите вход на телефоне"
 
 #: bot/modules/portal_pages.py:602
 msgid "Number to tap on your phone"
-msgstr ""
+msgstr "Число, которое нужно нажать на телефоне"
 
 #: bot/modules/portal_pages.py:610
 msgid "Google says:"
-msgstr ""
+msgstr "Google сообщает:"
 
 #: bot/modules/portal_pages.py:616
 msgid "Google has not confirmed the approval yet."
-msgstr ""
+msgstr "Google ещё не подтвердил одобрение."
 
 #: bot/modules/portal_pages.py:619
 msgid ""
 "Google sent a prompt to a phone or tablet signed in to this account. Tap "
 "Yes on it, then come back here."
 msgstr ""
+"Google отправил запрос на телефон или планшет, где выполнен вход в этот "
+"аккаунт. Нажмите на нём Да, затем вернитесь сюда."
 
 #: bot/modules/portal_pages.py:620
 msgid ""
 "The prompt stops working after a few minutes. If it has gone, cancel and "
 "sign in again."
 msgstr ""
+"Запрос перестаёт действовать через несколько минут. Если он пропал, "
+"отмените и войдите снова."
 
 #: bot/modules/portal_pages.py:624
 msgid "I have approved it on my phone"
-msgstr ""
+msgstr "Я подтвердил на телефоне"
 
 #: bot/modules/portal_pages.py:685
 msgid ""
@@ -2673,40 +2741,49 @@ msgid ""
 "cannot run a browser. You need a cookies.txt file from a browser that is "
 "signed in to YouTube."
 msgstr ""
+"Используйте это, если Google не даёт войти через бота или бот не может "
+"запустить браузер. Нужен файл cookies.txt из браузера, в котором выполнен"
+" вход в YouTube."
 
 #: bot/modules/portal_pages.py:688
 msgid "I already have the file. Go to the import form."
-msgstr ""
+msgstr "Файл у меня уже есть. Перейти к форме импорта."
 
 #: bot/modules/portal_pages.py:693
 msgid "How to get a cookies.txt file"
-msgstr ""
+msgstr "Как получить файл cookies.txt"
 
 #: bot/modules/portal_pages.py:694
 msgid "On an Android phone"
-msgstr ""
+msgstr "На телефоне Android"
 
 #: bot/modules/portal_pages.py:695
 msgid ""
 "No computer is needed. This uses the Firefox browser, which can add a "
 "small cookie exporter on Android."
 msgstr ""
+"Компьютер не нужен. Здесь используется браузер Firefox, в который на "
+"Android можно добавить небольшое средство экспорта cookie."
 
 #: bot/modules/portal_pages.py:697
 msgid "Install Firefox from the Google Play Store, and open this page in Firefox."
-msgstr ""
+msgstr "Установите Firefox из Google Play Store и откройте эту страницу в Firefox."
 
 #: bot/modules/portal_pages.py:698
 msgid ""
 "In Firefox, open the menu, choose Extensions, then find and add the "
 "extension called cookies.txt."
 msgstr ""
+"В Firefox откройте меню, выберите Расширения, затем найдите и добавьте "
+"расширение cookies.txt."
 
 #: bot/modules/portal_pages.py:699
 msgid ""
 "Go to youtube.com in Firefox and sign in with the Google account made for"
 " StreamerBot."
 msgstr ""
+"Откройте youtube.com в Firefox и войдите с аккаунтом Google, созданным "
+"для StreamerBot."
 
 #: bot/modules/portal_pages.py:700
 msgid ""
@@ -2714,16 +2791,21 @@ msgid ""
 "then cookies.txt, and export the cookies for the current site. The file "
 "is saved to your Downloads."
 msgstr ""
+"Оставаясь на youtube.com, откройте меню Firefox, выберите Расширения, "
+"затем cookies.txt и экспортируйте cookie текущего сайта. Файл сохранится "
+"в Загрузки."
 
 #: bot/modules/portal_pages.py:701
 msgid ""
 "Come back to this page in Firefox and choose that file in the import form"
 " below."
 msgstr ""
+"Вернитесь на эту страницу в Firefox и выберите этот файл в форме импорта "
+"ниже."
 
 #: bot/modules/portal_pages.py:703
 msgid "On an iPhone or iPad"
-msgstr ""
+msgstr "На iPhone или iPad"
 
 #: bot/modules/portal_pages.py:704
 msgid ""
@@ -2732,108 +2814,134 @@ msgid ""
 "you. They must sign in with the Google account made for StreamerBot, "
 "never their own."
 msgstr ""
+"Надёжного способа экспортировать этот файл на iPhone или iPad нет. "
+"Используйте телефон Android или компьютер или попросите того, у кого он "
+"есть, сделать это за вас. Входить нужно с аккаунтом Google, созданным для"
+" StreamerBot, и никогда со своим."
 
 #: bot/modules/portal_pages.py:705
 msgid "On a computer"
-msgstr ""
+msgstr "На компьютере"
 
 #: bot/modules/portal_pages.py:707
 msgid ""
 "In your own browser, sign in to YouTube with the Google account made for "
 "StreamerBot."
 msgstr ""
+"В своём браузере войдите в YouTube с аккаунтом Google, созданным для "
+"StreamerBot."
 
 #: bot/modules/portal_pages.py:708
 msgid ""
 "While on youtube.com, use a cookie export extension to save the cookies "
 "in Netscape cookies.txt format."
 msgstr ""
+"На youtube.com с помощью расширения для экспорта cookie сохраните cookie "
+"в формате Netscape cookies.txt."
 
 #: bot/modules/portal_pages.py:709
 msgid ""
 "Choose that file in the import form below, or open it, copy everything in"
 " it, and paste it into the box below."
 msgstr ""
+"Выберите этот файл в форме импорта ниже или откройте его, скопируйте всё "
+"содержимое и вставьте в поле ниже."
 
 #: bot/modules/portal_pages.py:711
 msgid ""
 "Afterwards, do not sign out of YouTube in that browser. Signing out ends "
 "the session StreamerBot is using. Closing the browser is fine."
 msgstr ""
+"После этого не выходите из YouTube в этом браузере. Выход завершает "
+"сеанс, которым пользуется StreamerBot. Закрыть браузер можно."
 
 #: bot/modules/portal_pages.py:712
 msgid ""
 "Google sometimes ends a session that is used from a different place. If "
 "that happens, StreamerBot tells you in TeamTalk and you can import again."
 msgstr ""
+"Иногда Google завершает сеанс, которым пользуются из другого места. Если "
+"так случится, StreamerBot сообщит об этом в TeamTalk, и вы сможете "
+"импортировать снова."
 
 #: bot/modules/portal_pages.py:716
 msgid ""
 "This server cannot run a browser, so nothing can keep an imported session"
 " alive. Expect to import again from time to time."
 msgstr ""
+"Этот сервер не может запускать браузер, поэтому поддерживать "
+"импортированный сеанс нечему. Время от времени придётся импортировать "
+"снова."
 
 #: bot/modules/portal_pages.py:718
 msgid "Import your file"
-msgstr ""
+msgstr "Импортируйте файл"
 
 #: bot/modules/portal_pages.py:724
 msgid "Your cookies.txt file"
-msgstr ""
+msgstr "Ваш файл cookies.txt"
 
 #: bot/modules/portal_pages.py:730
 msgid "Or paste the contents of the file"
-msgstr ""
+msgstr "Или вставьте содержимое файла"
 
 #: bot/modules/portal_pages.py:731
 msgid "Paste the whole file. It is several lines of text."
-msgstr ""
+msgstr "Вставьте файл целиком. Это несколько строк текста."
 
 #: bot/modules/portal_pages.py:738
 msgid "Import the session"
-msgstr ""
+msgstr "Импортировать сеанс"
 
 #: bot/modules/portal_pages.py:744
 #, python-format
 msgid "Lines pasted: %(count)s"
-msgstr ""
+msgstr "Вставлено строк: %(count)s"
 
 #: bot/modules/portal_pages.py:761
 msgid "Choose your cookies.txt file, or paste its contents"
-msgstr ""
+msgstr "Выберите файл cookies.txt или вставьте его содержимое"
 
 #: bot/modules/portal_pages.py:762
 msgid ""
 "This is too long to be a cookies file. Check you chose only the "
 "cookies.txt file."
 msgstr ""
+"Это слишком длинно для файла cookie. Проверьте, что вы выбрали только "
+"файл cookies.txt."
 
 #: bot/modules/portal_pages.py:763
 msgid ""
 "This is not a cookies.txt file. Export the cookies again in Netscape "
 "cookies.txt format."
 msgstr ""
+"Это не файл cookies.txt. Экспортируйте cookie снова в формате Netscape "
+"cookies.txt."
 
 #: bot/modules/portal_pages.py:764
 msgid ""
 "This file has no YouTube sign-in in it. Sign in to YouTube in your "
 "browser, then export the cookies again while on youtube.com."
 msgstr ""
+"В этом файле нет входа в YouTube. Войдите в YouTube в браузере, затем "
+"снова экспортируйте cookie, находясь на youtube.com."
 
 #: bot/modules/portal_pages.py:765
 msgid ""
 "YouTube says this session is already signed out. Sign in to YouTube in "
 "your browser again, then export a fresh file."
 msgstr ""
+"YouTube сообщает, что из этого сеанса уже вышли. Снова войдите в YouTube "
+"в браузере и экспортируйте новый файл."
 
 #: bot/modules/portal_pages.py:766
 msgid "The session could not be imported."
-msgstr ""
+msgstr "Не удалось импортировать сеанс."
 
 #: bot/modules/portal_pages.py:778 bot/modules/portal_pages.py:793
 #, python-format
 msgid "Disconnect %(service)s?"
-msgstr ""
+msgstr "Отключить %(service)s?"
 
 #: bot/modules/portal_pages.py:779
 #, python-format
@@ -2842,47 +2950,52 @@ msgid ""
 "%(service)s account itself is not affected. You can connect again at any "
 "time."
 msgstr ""
+"StreamerBot перестанет транслировать из вашего аккаунта %(service)s. Сам "
+"аккаунт %(service)s это не затронет. Подключить снова можно в любой "
+"момент."
 
 #: bot/modules/portal_pages.py:790
 #, python-format
 msgid "Cancel, keep %(service)s connected"
-msgstr ""
+msgstr "Отмена, оставить %(service)s подключённым"
 
 # | msgid "help text not found"
 #: bot/modules/portal_pages.py:809
-#, fuzzy
 msgid "Page not found"
-msgstr "текст справки не найден"
+msgstr "Страница не найдена"
 
 # | msgid "This user is not in the admin list"
 #: bot/modules/portal_pages.py:810
-#, fuzzy
 msgid "This address is not quite right."
-msgstr "Этого пользователя нет в списке администраторов"
+msgstr "Этот адрес не совсем верен."
 
 #: bot/modules/portal_pages.py:811 bot/modules/portal_pages.py:818
 msgid "To get a new link, send the li command to StreamerBot in TeamTalk."
 msgstr ""
+"Чтобы получить новую ссылку, отправьте команду li боту StreamerBot в "
+"TeamTalk."
 
 #: bot/modules/portal_pages.py:816
 msgid "Link expired"
-msgstr ""
+msgstr "Срок ссылки истёк"
 
 #: bot/modules/portal_pages.py:817
 msgid "This link has expired."
-msgstr ""
+msgstr "Срок действия этой ссылки истёк."
 
 #: bot/modules/portal_pages.py:823
 msgid "Something went wrong"
-msgstr ""
+msgstr "Что-то пошло не так"
 
 #: bot/modules/portal_pages.py:824
 msgid "StreamerBot could not finish that request."
-msgstr ""
+msgstr "StreamerBot не смог выполнить этот запрос."
 
 #: bot/modules/portal_pages.py:825
 msgid "Try again in a moment. If it keeps happening, check the bot's log."
 msgstr ""
+"Попробуйте снова через минуту. Если это повторяется, загляните в журнал "
+"бота."
 
 #: bot/modules/uploader.py:68
 msgid "Error: Downloaded file not found."
@@ -2905,23 +3018,26 @@ msgid ""
 "YouTube refused to download {name} without a signed-in account, which is "
 "usual on a server. To connect one, send this command: li yt"
 msgstr ""
+"YouTube отказался скачивать {name} без аккаунта, в который выполнен вход;"
+" на сервере так бывает обычно. Чтобы подключить аккаунт, отправьте "
+"команду: li yt"
 
 #: bot/modules/youtube_session_keeper.py:157
 #, python-brace-format
 msgid "The YouTube sign-in could not be renewed, so {name} was not downloaded."
-msgstr ""
+msgstr "Не удалось обновить вход в YouTube, поэтому {name} не скачано."
 
 #: bot/modules/youtube_session_keeper.py:348
 #: bot/modules/youtube_session_keeper.py:355
 msgid ""
 "Google signed in, but YouTube did not recognise the session. Please try "
 "again."
-msgstr ""
+msgstr "Google выполнил вход, но YouTube не распознал сеанс. Попробуйте снова."
 
 #: bot/services/browser_service.py:104
 #, python-format
 msgid "%(service)s is not ready yet."
-msgstr ""
+msgstr "%(service)s ещё не готов."
 
 #: bot/services/browser_service.py:121
 #, python-format
@@ -2929,22 +3045,24 @@ msgid ""
 "%(service)s needs Google Chrome, which is not available on this machine's"
 " processor architecture."
 msgstr ""
+"Для %(service)s нужен Google Chrome, а он недоступен для архитектуры "
+"процессора этой машины."
 
 #: bot/services/browser_service.py:132
 #, python-format
 msgid "%(service)s is not connected. Send li %(code)s to connect an account."
-msgstr ""
+msgstr "%(service)s не подключён. Отправьте li %(code)s, чтобы подключить аккаунт."
 
 #: bot/services/browser_service.py:166
 #, python-format
 msgid "That is not a %(service)s link."
-msgstr ""
+msgstr "Это не ссылка %(service)s."
 
 # | msgid "Live streams cannot be downloaded"
 #: bot/services/browser_service.py:182
-#, fuzzy, python-format
+#, python-format
 msgid "%(service)s cannot be downloaded."
-msgstr "Прямые трансляции не могут быть загружены"
+msgstr "Из %(service)s скачивать нельзя."
 
 #: bot/services/browser_service.py:208
 msgid ""
@@ -2953,6 +3071,10 @@ msgid ""
 "watchlists and audio settings; pf lists them and pf with a number picks "
 "one."
 msgstr ""
+"Disney Plus воспроизводит фильмы и сериалы с тифлокомментарием, если "
+"Disney Plus его предлагает. У каждого аккаунта свои профили со своими "
+"списками и настройками звука; pf показывает их, а pf с номером выбирает "
+"профиль."
 
 #: bot/services/browser_service.py:224
 msgid ""
@@ -2961,6 +3083,10 @@ msgid ""
 "told apart. dl downloads what is playing and dlp downloads the album it "
 "is from."
 msgstr ""
+"Apple Music воспроизводит песни, альбомы, исполнителей и плейлисты. Поиск"
+" возвращает все четыре вида, и у каждого результата указано, что это, так"
+" что альбом и песню из него легко различить. dl скачивает то, что играет,"
+" а dlp скачивает альбом, из которого оно."
 
 #: bot/services/browser_service.py:247
 msgid ""
@@ -2969,6 +3095,10 @@ msgid ""
 "music subscription; a plain Prime account plays only part of the "
 "catalogue."
 msgstr ""
+"Amazon Music воспроизводит песни, альбомы, исполнителей и плейлисты. "
+"Поиск возвращает все четыре вида, и у каждого результата указано, что "
+"это. Нужен аккаунт Amazon с музыкальной подпиской; обычный аккаунт Prime "
+"воспроизводит только часть каталога."
 
 #: bot/services/browser_service.py:262
 msgid ""
@@ -3008,71 +3138,75 @@ msgstr ""
 
 #: bot/services/gamdl_downloader.py:158
 msgid "The Apple Music downloader is not installed in this image."
-msgstr ""
+msgstr "Загрузчик Apple Music не установлен в этом образе."
 
 #: bot/services/gamdl_downloader.py:165
 msgid ""
 "Downloading from Apple Music needs a subscription. Connect the account "
 "first with li am."
 msgstr ""
+"Для загрузки из Apple Music нужна подписка. Сначала подключите аккаунт "
+"командой li am."
 
 #: bot/services/gamdl_downloader.py:199
 msgid "That is not an Apple Music link."
-msgstr ""
+msgstr "Это не ссылка Apple Music."
 
 #: bot/services/gamdl_downloader.py:216
 msgid "The download took too long and was stopped."
-msgstr ""
+msgstr "Загрузка шла слишком долго и была остановлена."
 
 #: bot/services/gamdl_downloader.py:230
 msgid "The download produced no audio files."
-msgstr ""
+msgstr "Загрузка не дала ни одного аудиофайла."
 
 #: bot/services/gamdl_downloader.py:252
 msgid "That needs an active Apple Music subscription."
-msgstr ""
+msgstr "Для этого нужна действующая подписка Apple Music."
 
 #: bot/services/gamdl_downloader.py:255
 msgid "Apple Music did not have that."
-msgstr ""
+msgstr "В Apple Music этого нет."
 
 #: bot/services/gamdl_downloader.py:258
 msgid "That track needs a decryption device file the bot does not have."
 msgstr ""
+"Для этого трека нужен файл устройства для расшифровки, которого у бота "
+"нет."
 
 #: bot/services/gamdl_downloader.py:262
 msgid "The Apple Music sign-in has expired. Connect it again with li am."
-msgstr ""
+msgstr "Срок входа в Apple Music истёк. Подключите снова командой li am."
 
 # | msgid "Error: Downloaded file not found."
 #: bot/services/gamdl_downloader.py:265
-#, fuzzy
 msgid "The download failed."
-msgstr "Ошибка: Загруженный файл не найден."
+msgstr "Загрузка не удалась."
 
 #: bot/services/netflix.py:81
 msgid "Netflix is not ready yet."
-msgstr ""
+msgstr "Netflix ещё не готов."
 
 #: bot/services/netflix.py:94
 msgid ""
 "Netflix needs Google Chrome, which is not available on this machine's "
 "processor architecture."
 msgstr ""
+"Для Netflix нужен Google Chrome, а он недоступен для архитектуры "
+"процессора этой машины."
 
 #: bot/services/netflix.py:106
 msgid "Netflix is not connected. Send li nf to connect an account."
-msgstr ""
+msgstr "Netflix не подключён. Отправьте li nf, чтобы подключить аккаунт."
 
 #: bot/services/netflix.py:141
 msgid "That is not a Netflix link."
-msgstr ""
+msgstr "Это не ссылка Netflix."
 
 # | msgid "Live streams cannot be downloaded"
 #: bot/services/netflix.py:155
-#, fuzzy
 msgid "Netflix titles cannot be downloaded."
-msgstr "Прямые трансляции не могут быть загружены"
+msgstr "Фильмы и сериалы Netflix скачивать нельзя."
 
 #: bot/services/podcasts.py:461
 msgid ""
@@ -3085,11 +3219,11 @@ msgstr ""
 #: bot/services/results.py:130
 #, python-format
 msgid "%(count)s %(kind)s"
-msgstr ""
+msgstr "%(count)s %(kind)s"
 
 #: bot/services/spotify.py:123
 msgid "Spotify is not connected yet. Send li sp to connect an account."
-msgstr ""
+msgstr "Spotify ещё не подключён. Отправьте li sp, чтобы подключить аккаунт."
 
 #: bot/services/spotify.py:165
 msgid ""
@@ -3097,32 +3231,34 @@ msgid ""
 " the bot's configuration, then try again. Playing a pasted Spotify link "
 "does not need one."
 msgstr ""
+"Для поиска в Spotify нужно приложение Spotify. Добавьте ID клиента и "
+"секрет в настройки бота и попробуйте снова. Для воспроизведения "
+"вставленной ссылки Spotify оно не нужно."
 
 #: bot/services/spotify.py:227
 msgid "The Spotify session expired. Try again."
-msgstr ""
+msgstr "Сеанс Spotify истёк. Попробуйте снова."
 
 #: bot/services/spotify.py:232
 msgid "Spotify refused that request. Playback needs a Premium account."
-msgstr ""
+msgstr "Spotify отклонил этот запрос. Для воспроизведения нужен аккаунт Premium."
 
 #: bot/services/spotify.py:237
 msgid "Spotify is rate limiting us. Try again shortly."
-msgstr ""
+msgstr "Spotify ограничивает частоту запросов. Попробуйте чуть позже."
 
 #: bot/services/spotify.py:298
 msgid "That is not a Spotify link."
-msgstr ""
+msgstr "Это не ссылка Spotify."
 
 #: bot/services/spotify.py:326
 msgid "That kind of Spotify link is not supported."
-msgstr ""
+msgstr "Такой тип ссылки Spotify не поддерживается."
 
 # | msgid "Live streams cannot be downloaded"
 #: bot/services/spotify.py:422
-#, fuzzy
 msgid "Spotify tracks cannot be downloaded."
-msgstr "Прямые трансляции не могут быть загружены"
+msgstr "Треки Spotify скачивать нельзя."
 
 #: bot/services/yt.py:196 bot/services/yt.py:468
 msgid "Unknown Title"

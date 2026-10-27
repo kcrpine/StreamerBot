@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-27 20:23+0000\n"
+"POT-Creation-Date: 2026-10-27 20:41+0000\n"
 "PO-Revision-Date: 2026-05-10 11:43+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ar\n"
@@ -24,15 +24,15 @@ msgstr ""
 msgid ""
 "This needs Google Chrome, which is not available on this machine's "
 "processor architecture."
-msgstr ""
+msgstr "يحتاج هذا إلى Google Chrome، وهو غير متاح لمعمارية معالج هذا الجهاز."
 
 #: bot/__init__.py:268
 msgid "Spotify is unavailable: the player could not start."
-msgstr ""
+msgstr "Spotify غير متاح: تعذّر تشغيل المشغّل."
 
 #: bot/__init__.py:301 bot/__init__.py:304 bot/modules/portal_pages.py:543
 msgid "The sign-in did not complete."
-msgstr ""
+msgstr "لم يكتمل تسجيل الدخول."
 
 #: bot/__init__.py:317
 msgid ""
@@ -43,6 +43,12 @@ msgid ""
 "PORT_CONFLICT.txt in the bot's folder explaining it, and Repair Account "
 "Portal and Spotify Ports in the manager turns it back on."
 msgstr ""
+"بوابة الحسابات معطّلة في إعدادات هذا البوت، لذا لا يمكن ربط Netflix "
+"وDisney Plus وApple Music وAmazon Music. اضبط auth_portal.enabled على "
+"true في ملف config.json الخاص بهذا البوت ثم أعد تشغيله. إذا عطّلها المدير"
+" بسبب تعارض في المنافذ، فهناك ملف باسم PORT_CONFLICT.txt في مجلد البوت "
+"يشرح ذلك، وخيار Repair Account Portal and Spotify Ports في المدير يعيد "
+"تفعيلها."
 
 #: bot/__init__.py:370
 #, python-format
@@ -54,6 +60,11 @@ msgid ""
 "Ports, and restart this bot. YouTube and Spotify are unaffected, because "
 "they sign in with a code in the channel."
 msgstr ""
+"تعذّر تشغيل بوابة الحسابات لأن المنفذ %(port)s مستخدم بالفعل، على الأرجح "
+"من بوت آخر على هذا الجهاز. لا يمكن ربط Netflix وDisney Plus وApple Music "
+"وAmazon Music حتى يُصلح ذلك. شغّل المدير، واختر Manage Bots، ثم Repair "
+"Account Portal and Spotify Ports، وأعد تشغيل هذا البوت. لا يتأثر YouTube "
+"وSpotify، لأنهما يسجّلان الدخول برمز في القناة."
 
 #: bot/__init__.py:380
 #, python-format
@@ -62,12 +73,14 @@ msgid ""
 "and Amazon Music cannot be connected. The reason is in this bot's log "
 "file: %(reason)s"
 msgstr ""
+"تعذّر تشغيل بوابة الحسابات، لذا لا يمكن ربط Netflix وDisney Plus وApple "
+"Music وAmazon Music. السبب مكتوب في ملف سجل هذا البوت: %(reason)s"
 
 #: bot/__init__.py:412
 msgid ""
 "Hello! I'm back and ready for you to stream again. Thank you for your "
 "patience!"
-msgstr ""
+msgstr "مرحبًا! لقد عدت وأنا جاهز لتبثّوا من جديد. شكرًا على صبركم!"
 
 #: bot/__init__.py:452
 msgid ""
@@ -75,6 +88,8 @@ msgid ""
 "know that an update is in progress and I will restart in a few moments to"
 " apply it. Thank you!"
 msgstr ""
+"مرحبًا! أنا Streamer Bot، أمرّ لأخبركم أن هناك تحديثًا جاريًا وسأعيد "
+"التشغيل خلال لحظات لتطبيقه. شكرًا!"
 
 #: bot/__init__.py:497
 msgid "Restarted. The new settings are in use."
@@ -98,6 +113,14 @@ msgid ""
 " and\n"
 "Kirill Belousov, and on the fork by Joao Almeida.\n"
 msgstr ""
+"StreamerBot لـ TeamTalk 5.\n"
+"يبث YouTube وYouTube Music وSpotify وApple Music وAmazon Music وNetflix\n"
+"وDisney Plus والروابط المباشرة إلى قناة، مع دعم الوصف الصوتي.\n"
+"المستودع: {repo}\n"
+"TeamTalk SDK {sdk}.\n"
+"مبني على TTMediaBot من تأليف Amir Gumerov وVladislav Kopylov وBeqa "
+"Gozalishvili و\n"
+"Kirill Belousov، وعلى النسخة المشتقة من Joao Almeida.\n"
 
 #: bot/TeamTalk/__init__.py:180
 msgid "Send \"h\" for help"
@@ -105,7 +128,7 @@ msgstr "أرسل \"h\" للمساعدة"
 
 #: bot/commands/__init__.py:176
 msgid "That question has expired. To ask again, send: dlp"
-msgstr ""
+msgstr "انتهت صلاحية ذلك السؤال. لطرحه مجددًا، أرسل: dlp"
 
 #: bot/commands/__init__.py:201
 msgid "That menu has expired. To open it again, send: cf"
@@ -362,47 +385,54 @@ msgid ""
 "[status|out] Shows whether this bot is signed in to YouTube, or signs it "
 "out. To sign in, send li yt"
 msgstr ""
+"[status|out] يبيّن ما إذا كان هذا البوت مسجّل الدخول إلى YouTube، أو "
+"يسجّل خروجه. لتسجيل الدخول، أرسل li yt"
 
 # | msgid "This user is not banned"
 #: bot/commands/admin_commands.py:466 bot/modules/auth_portal.py:283
 #: bot/modules/auth_portal.py:318
-#, fuzzy
 msgid "The YouTube service is not enabled."
-msgstr "هذا المستخدم غير محظور"
+msgstr "خدمة YouTube غير مفعّلة."
 
 #: bot/commands/admin_commands.py:473
 msgid "This bot is signed in to YouTube."
-msgstr ""
+msgstr "هذا البوت مسجّل الدخول إلى YouTube."
 
 #: bot/commands/admin_commands.py:476
 msgid ""
 "Google signed this bot out of YouTube. To sign in again, send this "
 "command: li yt"
 msgstr ""
+"سجّلت Google خروج هذا البوت من YouTube. لتسجيل الدخول مجددًا، أرسل هذا "
+"الأمر: li yt"
 
 #: bot/commands/admin_commands.py:479
 msgid "This bot is not signed in to YouTube. To sign in, send this command: li yt"
 msgstr ""
+"هذا البوت غير مسجّل الدخول إلى YouTube. لتسجيل الدخول، أرسل هذا الأمر: li"
+" yt"
 
 #: bot/commands/admin_commands.py:484
 msgid "This bot has been signed out of YouTube."
-msgstr ""
+msgstr "سُجّل خروج هذا البوت من YouTube."
 
 #: bot/commands/admin_commands.py:488
 msgid ""
 "YouTube is connected through the account portal now. Send this command: "
 "li yt"
-msgstr ""
+msgstr "يُربط YouTube الآن عبر بوابة الحسابات. أرسل هذا الأمر: li yt"
 
 #: bot/commands/admin_commands.py:500
 msgid ""
 "[link|rotate|off] Shows the account portal's status, mints a new link, "
 "revokes every existing link, or stops the portal"
 msgstr ""
+"[link|rotate|off] يعرض حالة بوابة الحسابات، أو ينشئ رابطًا جديدًا، أو "
+"يلغي كل الروابط الحالية، أو يوقف البوابة"
 
 #: bot/commands/admin_commands.py:507 bot/commands/admin_commands.py:563
 msgid "The account portal is not running."
-msgstr ""
+msgstr "بوابة الحسابات لا تعمل."
 
 #: bot/commands/admin_commands.py:513
 #, python-format
@@ -410,20 +440,22 @@ msgid ""
 "The portal is listening on %(host)s port %(port)s with %(count)s live "
 "links."
 msgstr ""
+"البوابة تستمع على %(host)s، المنفذ %(port)s، وعدد الروابط النشطة "
+"%(count)s."
 
 #: bot/commands/admin_commands.py:528
 #, python-format
 msgid "That address came from %(source)s."
-msgstr ""
+msgstr "جاء هذا العنوان من %(source)s."
 
 #: bot/commands/admin_commands.py:540
 #, python-format
 msgid "Revoked %(count)s links. Send ap link for a new one."
-msgstr ""
+msgstr "أُلغي %(count)s من الروابط. أرسل ap link للحصول على رابط جديد."
 
 #: bot/commands/admin_commands.py:545
 msgid "The portal has been stopped."
-msgstr ""
+msgstr "أُوقفت البوابة."
 
 # | msgid "" "SERVICE Disconnects a streaming account and deletes its saved
 # | sign-in " "(yt, sp, nf, dp, am, az, pp, tb)"
@@ -438,12 +470,12 @@ msgstr ""
 #: bot/commands/admin_commands.py:571
 #, python-format
 msgid "%(service)s is not connected."
-msgstr ""
+msgstr "%(service)s غير مربوط."
 
 #: bot/commands/admin_commands.py:577
 #, python-format
 msgid "%(service)s has been disconnected and its saved sign-in deleted."
-msgstr ""
+msgstr "فُصل %(service)s وحُذف تسجيل الدخول المحفوظ الخاص به."
 
 #: bot/commands/command.py:30
 msgid "help text not found"
@@ -452,13 +484,15 @@ msgstr "نص المساعدة غير موجود"
 #: bot/commands/command.py:82
 #, python-brace-format
 msgid "The YouTube sign-in could not be renewed, so {request} was not played."
-msgstr ""
+msgstr "تعذّر تجديد تسجيل الدخول إلى YouTube، لذا لم يُشغَّل {request}."
 
 #: bot/commands/command.py:102
 msgid ""
 "YouTube refused to play this without a signed-in account, which is usual "
 "on a server. To connect one, send this command: li yt"
 msgstr ""
+"رفض YouTube تشغيل هذا دون حساب مسجّل الدخول، وهذا معتاد على الخوادم. لربط"
+" حساب، أرسل هذا الأمر: li yt"
 
 #: bot/commands/command.py:128
 #, python-brace-format
@@ -466,12 +500,16 @@ msgid ""
 "Renewing the YouTube sign-in. {request} will start playing when it "
 "finishes, usually within a minute."
 msgstr ""
+"جارٍ تجديد تسجيل الدخول إلى YouTube. سيبدأ تشغيل {request} عند الانتهاء، "
+"عادةً خلال دقيقة."
 
 #: bot/commands/command.py:137 bot/modules/youtube_session_keeper.py:154
 msgid ""
 "Google signed StreamerBot out of YouTube. To sign in again, send this "
 "command: li yt"
 msgstr ""
+"سجّلت Google خروج StreamerBot من YouTube. لتسجيل الدخول مجددًا، أرسل هذا "
+"الأمر: li yt"
 
 #: bot/commands/config_menu.py:155
 msgid "on"
@@ -942,55 +980,52 @@ msgstr ""
 # | msgid "Loaded {count} tracks"
 # | msgid "Playing {name}, {count} tracks"
 #: bot/commands/playlist_choice.py:80
-#, fuzzy, python-brace-format
+#, python-brace-format
 msgid "The playlist {name} has {count} videos."
-msgstr "تم تحميل {count} مسار"
+msgstr "قائمة التشغيل {name} تضم {count} من الفيديوهات."
 
 #: bot/commands/playlist_choice.py:83
 msgid "For the whole playlist as one zip file, send: 1"
-msgstr ""
+msgstr "للحصول على قائمة التشغيل كاملة في ملف zip واحد، أرسل: 1"
 
 #: bot/commands/playlist_choice.py:84
 msgid "To pick one video from a list, send: 2"
-msgstr ""
+msgstr "لاختيار فيديو واحد من قائمة، أرسل: 2"
 
 #: bot/commands/playlist_choice.py:85
 msgid "To cancel, send: 0"
-msgstr ""
+msgstr "للإلغاء، أرسل: 0"
 
 #: bot/commands/playlist_choice.py:92
 #, python-brace-format
 msgid "Page {page} of {pages} of {name}, {total} videos. Send a number:"
-msgstr ""
+msgstr "الصفحة {page} من {pages} من {name}، {total} من الفيديوهات. أرسل رقمًا:"
 
 #: bot/commands/playlist_choice.py:100
 #, python-brace-format
 msgid "Next videos, {first} to {last}"
-msgstr ""
+msgstr "الفيديوهات التالية، من {first} إلى {last}"
 
 #: bot/commands/playlist_choice.py:104
 #, python-brace-format
 msgid "Back to videos 1 to {last}"
-msgstr ""
+msgstr "العودة إلى الفيديوهات من 1 إلى {last}"
 
 # | msgid "Downloading playlist: {}"
 #: bot/commands/playlist_choice.py:107
-#, fuzzy
 msgid "Download the whole playlist"
-msgstr "جاري تنزيل قائمة التشغيل: {}"
+msgstr "تنزيل قائمة التشغيل كاملة"
 
 # | msgid "Cache cleared"
 # | msgid "Cancelled."
 #: bot/commands/playlist_choice.py:108
-#, fuzzy
 msgid "Cancel"
-msgstr "تم مسح ذاكرة التخزين المؤقت"
+msgstr "إلغاء"
 
 # | msgid "Cache cleared"
 #: bot/commands/playlist_choice.py:119 bot/modules/auth_portal.py:647
-#, fuzzy
 msgid "Cancelled."
-msgstr "تم مسح ذاكرة التخزين المؤقت"
+msgstr "أُلغي."
 
 #: bot/commands/playlist_choice.py:141
 #, python-brace-format
@@ -998,6 +1033,8 @@ msgid ""
 "There is no {number} on this page. Send a number from 1 to {last}, or to "
 "cancel, send: 0"
 msgstr ""
+"لا يوجد الرقم {number} في هذه الصفحة. أرسل رقمًا من 1 إلى {last}، أو "
+"للإلغاء، أرسل: 0"
 
 #: bot/commands/podcast_commands.py:69
 msgid "That podcast could not be read. Try again later."
@@ -1306,7 +1343,7 @@ msgstr "جارٍ تحميل الرابط / قائمة التشغيل..."
 
 #: bot/commands/user_commands.py:130
 msgid "Your link"
-msgstr ""
+msgstr "رابطك"
 
 #: bot/commands/user_commands.py:135
 msgid "Incorrect protocol"
@@ -1322,9 +1359,9 @@ msgstr "لا يمكن العثور على المسار"
 
 # | msgid "{nickname} requested playing from a URL"
 #: bot/commands/user_commands.py:162
-#, fuzzy, python-brace-format
+#, python-brace-format
 msgid "{nickname} requested playing from a URL ({count} tracks)"
-msgstr "{nickname} طلب التشغيل من رابط"
+msgstr "طلب {nickname} التشغيل من رابط ({count} من المقاطع)"
 
 #: bot/commands/user_commands.py:169
 #, python-brace-format
@@ -1375,6 +1412,8 @@ msgid ""
 "[NUMBER|?] Plays next track, jumps to track number, or shows current "
 "position with ?"
 msgstr ""
+"[NUMBER|?] يشغّل المقطع التالي، أو ينتقل إلى رقم مقطع، أو يعرض الموضع "
+"الحالي مع ?"
 
 #: bot/commands/user_commands.py:279 bot/commands/user_commands.py:535
 msgid "Incorrect number"
@@ -1460,25 +1499,21 @@ msgstr ""
 
 # | msgid "" "Unknown service.\n" "{}"
 #: bot/commands/user_commands.py:374
-#, fuzzy, python-brace-format
+#, python-brace-format
 msgid "Unknown service.{newline}{help}"
-msgstr ""
-"خدمة غير معروفة.\n"
-"{}"
+msgstr "خدمة غير معروفة.{newline}{help}"
 
 # | msgid "" "Current service: {}\n" "Warning: {}"
 #: bot/commands/user_commands.py:385
-#, fuzzy, python-brace-format
+#, python-brace-format
 msgid "Current service: {service}{newline}{status}"
-msgstr ""
-"الخدمة الحالية: {}\n"
-"تحذير: {}"
+msgstr "الخدمة الحالية: {service}{newline}{status}"
 
 # | msgid "{service} is disabled"
 #: bot/commands/user_commands.py:394
-#, fuzzy, python-brace-format
+#, python-brace-format
 msgid "Error: {error}{newline}{service} is disabled"
-msgstr "{service} معطل"
+msgstr "خطأ: {error}{newline}{service} معطّلة"
 
 #: bot/commands/user_commands.py:401
 #, python-brace-format
@@ -1488,59 +1523,56 @@ msgstr "{service} معطل"
 #: bot/commands/user_commands.py:453
 #, python-format
 msgid "%(service)s is switched off in this bot's configuration."
-msgstr ""
+msgstr "%(service)s معطّل في إعدادات هذا البوت."
 
 #: bot/commands/user_commands.py:460
 #, python-format
 msgid ""
 "%(service)s is not connected. To connect an account, send this command: "
 "li %(code)s"
-msgstr ""
+msgstr "%(service)s غير مربوط. لربط حساب، أرسل هذا الأمر: li %(code)s"
 
 #: bot/commands/user_commands.py:465
 #, python-format
 msgid "%(service)s is connected and ready."
-msgstr ""
+msgstr "%(service)s مربوط وجاهز."
 
 #: bot/commands/user_commands.py:478
 #, python-format
 msgid "unavailable: %(reason)s"
-msgstr ""
+msgstr "غير متاح: %(reason)s"
 
 # | msgid "Saves bot's configuration"
 #: bot/commands/user_commands.py:480
-#, fuzzy
 msgid "switched off in this bot's configuration"
-msgstr "يحفظ إعدادات البوت"
+msgstr "معطّل في إعدادات هذا البوت"
 
 #: bot/commands/user_commands.py:483
 #, python-format
 msgid "not connected, send li %(code)s"
-msgstr ""
+msgstr "غير مربوط، أرسل li %(code)s"
 
 #: bot/commands/user_commands.py:488
 msgid "ready"
-msgstr ""
+msgstr "جاهز"
 
 # | msgid "" "Current service: {current_service}\n" "Available:\n"
 # | "{available_services}\n" "send sv SERVICE h for additional help"
 #: bot/commands/user_commands.py:499
-#, fuzzy, python-brace-format
+#, python-brace-format
 msgid ""
 "Current service: "
 "{current_service}{newline}Available:{newline}{available_services}{newline}send"
 " sv SERVICE h for additional help"
 msgstr ""
-"الخدمة الحالية: {current_service}\n"
-"متاح:\n"
-"{available_services}\n"
-"أرسل sv SERVICE h للمساعدة الإضافية"
+"الخدمة الحالية: "
+"{current_service}{newline}المتاحة:{newline}{available_services}{newline}أرسل"
+" sv SERVICE h لمزيد من المساعدة"
 
 # | msgid "NUMBER Selects track by number from the list of current results"
 #: bot/commands/user_commands.py:512
-#, fuzzy
 msgid "[NUMBER|?] Selects track by number, or shows current position with ?"
-msgstr "NUMBER يختار المسار بالرقم من قائمة النتائج الحالية"
+msgstr "[NUMBER|?] يختار مقطعًا برقمه، أو يعرض الموضع الحالي مع ?"
 
 #: bot/commands/user_commands.py:561
 msgid ""
@@ -1640,14 +1672,17 @@ msgstr "فشل الانضمام للقناة: {}"
 # | uploads to" " the channel. Without a link while Apple Music is playing,
 # | downloads the " "album or playlist being played."
 #: bot/commands/user_commands.py:812
-#, fuzzy
 msgid ""
 "Downloads all tracks from a playlist/album URL, zips them, and uploads to"
 " the channel. For a YouTube playlist it asks first whether you want the "
 "whole playlist or one video from a numbered list. Without a link while "
 "Apple Music or a YouTube playlist is playing, it uses the album or "
 "playlist being played."
-msgstr "ينزل جميع المسارات من URL قائمة تشغيل/ألبوم، يضغطها ويرفعها للقناة."
+msgstr ""
+"ينزّل كل المقاطع من رابط قائمة تشغيل أو ألبوم، ويضغطها في ملف zip، "
+"ويرفعها إلى القناة. مع قائمة تشغيل YouTube يسأل أولًا إن كنت تريد القائمة"
+" كاملة أم فيديو واحدًا من قائمة مرقّمة. ودون رابط، أثناء تشغيل Apple "
+"Music أو قائمة تشغيل YouTube، يستخدم الألبوم أو القائمة قيد التشغيل."
 
 #: bot/commands/user_commands.py:823
 #, python-brace-format
@@ -1661,11 +1696,12 @@ msgstr "يرجى إرسال رابط قائمة التشغيل أو الألبو
 # | msgid "This command is for playlists and albums. For single tracks, use
 # | 'dl'."
 #: bot/commands/user_commands.py:858
-#, fuzzy
 msgid ""
 "This command is for playlists, albums, and channels. For single tracks, "
 "use 'dl'."
-msgstr "هذا الأمر لقوائم التشغيل والألبومات. للمسارات المفردة، استخدم 'dl'."
+msgstr ""
+"هذا الأمر لقوائم التشغيل والألبومات والقنوات. للمقاطع المفردة، استخدم "
+"'dl'."
 
 #: bot/commands/user_commands.py:1002
 msgid ""
@@ -1736,15 +1772,16 @@ msgstr "تشغيل التالي من قائمة الانتظار: {}"
 # | numbered " "list. Use 'sr on' or 'sr off' to set explicitly. Save
 # | permanently with " "'sc'"
 #: bot/commands/user_commands.py:1164
-#, fuzzy
 msgid ""
 "Toggles search results mode. When active, 'p QUERY' reads out a numbered "
 "list and plays nothing, so whatever is playing keeps playing until 'sl "
 "NUMBER' picks one. Use 'sr on' or 'sr off' to set explicitly, 'slc' for "
 "how many results. Save permanently with 'sc'"
 msgstr ""
-"يبدّل وضع نتائج البحث. عند التفعيل، 'p استعلام' يعرض قائمة مرقمة. استخدم "
-"'sr on' أو 'sr off'. احفظ بشكل دائم باستخدام 'sc'"
+"يفعّل وضع نتائج البحث أو يعطّله. عند تفعيله، يقرأ 'p QUERY' قائمة مرقّمة "
+"ولا يشغّل شيئًا، فيستمر ما يُشغَّل حتى يختار 'sl NUMBER' أحدها. استخدم "
+"'sr on' أو 'sr off' للضبط صراحةً، و'slc' لعدد النتائج. احفظه بشكل دائم "
+"باستخدام 'sc'"
 
 #: bot/commands/user_commands.py:1172 bot/commands/user_commands.py:1182
 msgid "Search results mode: ON"
@@ -1768,29 +1805,28 @@ msgstr "لا توجد نتائج بحث. استخدم 'p استعلام' للب�
 
 # | msgid "Loaded {count} tracks"
 #: bot/commands/user_commands.py:1248
-#, fuzzy, python-brace-format
+#, python-brace-format
 msgid "Playing {name}, {count} tracks"
-msgstr "تم تحميل {count} مسار"
+msgstr "جارٍ تشغيل {name}، {count} من المقاطع"
 
 # | msgid "" "NUMBER Sets how many results are shown when search results mode
 # is
 # | " "active. Without a number shows current count. Resets to 5 on restart"
 # | " "active. Without a number shows current count. Resets to 1 on restart"
 #: bot/commands/user_commands.py:1259
-#, fuzzy
 msgid ""
 "NUMBER Sets how many results are shown when search results mode is "
 "active, or 0 for as many as the service returns. Without a number shows "
 "current count. Resets on restart"
 msgstr ""
-"رقم يحدد عدد النتائج في وضع البحث. بدون رقم يعرض العدد الحالي. يُعاد ضبطه"
-" على 5 عند إعادة التشغيل"
+"NUMBER يضبط عدد النتائج المعروضة عند تفعيل وضع نتائج البحث، أو 0 لعرض كل "
+"ما تعيده الخدمة. دون رقم يعرض العدد الحالي. يعود إلى الافتراضي عند إعادة "
+"التشغيل"
 
 # | msgid "Search results count: {count}"
 #: bot/commands/user_commands.py:1267
-#, fuzzy
 msgid "Search results count: as many as the service returns"
-msgstr "عدد نتائج البحث: {count}"
+msgstr "عدد نتائج البحث: كل ما تعيده الخدمة"
 
 #: bot/commands/user_commands.py:1269
 #, python-brace-format
@@ -1799,13 +1835,12 @@ msgstr "عدد نتائج البحث: {count}"
 
 # | msgid "Invalid count. Please enter a number greater than 0"
 #: bot/commands/user_commands.py:1280
-#, fuzzy
 msgid "Invalid count. Please enter 0 or a number greater than 0"
-msgstr "عدد غير صالح. أدخل رقماً أكبر من 0"
+msgstr "عدد غير صالح. أدخل 0 أو رقمًا أكبر من 0"
 
 #: bot/commands/user_commands.py:1286
 msgid "Search results now show as many results as the service returns"
-msgstr ""
+msgstr "تعرض نتائج البحث الآن كل ما تعيده الخدمة من نتائج"
 
 #: bot/commands/user_commands.py:1289
 #, python-brace-format
@@ -1985,10 +2020,12 @@ msgid ""
 "and Amazon Music cannot be connected. The reason is in this bot's log "
 "file."
 msgstr ""
+"بوابة الحسابات لا تعمل، لذا لا يمكن ربط Netflix وDisney Plus وApple Music"
+" وAmazon Music. السبب مكتوب في ملف سجل هذا البوت."
 
 #: bot/commands/user_commands.py:1753
 msgid "Your streaming accounts:"
-msgstr ""
+msgstr "حسابات البث الخاصة بك:"
 
 #: bot/commands/user_commands.py:1761
 #, python-format
@@ -1998,17 +2035,17 @@ msgstr "%(service)s: يعمل دون حساب"
 #: bot/commands/user_commands.py:1769
 #, python-format
 msgid "%(service)s: connected"
-msgstr ""
+msgstr "%(service)s: مربوط"
 
 #: bot/commands/user_commands.py:1774
 #, python-format
 msgid "%(service)s: signed out, connect again"
-msgstr ""
+msgstr "%(service)s: سُجّل الخروج، اربطه مجددًا"
 
 #: bot/commands/user_commands.py:1779
 #, python-format
 msgid "%(service)s: not connected"
-msgstr ""
+msgstr "%(service)s: غير مربوط"
 
 #: bot/commands/user_commands.py:1795
 #, python-format
@@ -2045,7 +2082,7 @@ msgstr ""
 #: bot/commands/user_commands.py:1846
 #, python-format
 msgid "%(service)s sign-in could not start: %(error)s"
-msgstr ""
+msgstr "تعذّر بدء تسجيل الدخول إلى %(service)s: %(error)s"
 
 #. translators: "The next message" and "the message after that"
 #. are separate chat messages, holding the link and the code.
@@ -2070,69 +2107,71 @@ msgid ""
 "[on|off|ask] Plays films and shows with audio description when it is "
 "available. With no argument, says what the current setting is"
 msgstr ""
+"[on|off|ask] يشغّل الأفلام والمسلسلات مع الوصف الصوتي عند توفره. دون "
+"وسيط، يخبرك بالإعداد الحالي"
 
 #: bot/commands/user_commands.py:1892
 msgid "Audio description is not available in this bot."
-msgstr ""
+msgstr "الوصف الصوتي غير متاح في هذا البوت."
 
 #: bot/commands/user_commands.py:1900
 msgid ""
 "Audio description is on. Films play with the description when there is "
 "one."
-msgstr ""
+msgstr "الوصف الصوتي مفعّل. تُشغَّل الأفلام مع الوصف عند توفره."
 
 #: bot/commands/user_commands.py:1903
 msgid "Audio description is off. Send da on to turn it on."
-msgstr ""
+msgstr "الوصف الصوتي معطّل. أرسل da on لتفعيله."
 
 #: bot/commands/user_commands.py:1906
 msgid "The bot asks each time. Send da on or da off to stop being asked."
-msgstr ""
+msgstr "يسأل البوت في كل مرة. أرسل da on أو da off ليتوقف عن السؤال."
 
 #: bot/commands/user_commands.py:1920
 msgid "Audio description is on. You will not be asked again."
-msgstr ""
+msgstr "الوصف الصوتي مفعّل. لن تُسأل مرة أخرى."
 
 #: bot/commands/user_commands.py:1923
 msgid "Audio description is off. You will not be asked again."
-msgstr ""
+msgstr "الوصف الصوتي معطّل. لن تُسأل مرة أخرى."
 
 #: bot/commands/user_commands.py:1926
 msgid "The bot will ask each time."
-msgstr ""
+msgstr "سيسأل البوت في كل مرة."
 
 #: bot/commands/user_commands.py:1940
 msgid ""
 "[number] Lists the profiles for the current service, or selects one by "
 "number"
-msgstr ""
+msgstr "[number] يعرض ملفات التعريف للخدمة الحالية، أو يختار أحدها برقمه"
 
 #: bot/commands/user_commands.py:1947
 #, python-format
 msgid "%(service)s does not have profiles."
-msgstr ""
+msgstr "لا توجد ملفات تعريف في %(service)s."
 
 #: bot/commands/user_commands.py:1953
 msgid "No profiles were found. The account may not be connected yet."
-msgstr ""
+msgstr "لم يُعثر على ملفات تعريف. ربما لم يُربط الحساب بعد."
 
 #: bot/commands/user_commands.py:1959
 #, python-format
 msgid "%(count)s profiles:"
-msgstr ""
+msgstr "ملفات التعريف (%(count)s):"
 
 #: bot/commands/user_commands.py:1963
 msgid "Send pf and a number to choose one."
-msgstr ""
+msgstr "أرسل pf ورقمًا لاختيار أحدها."
 
 #: bot/commands/user_commands.py:1975
 #, python-format
 msgid "Now using the profile %(name)s."
-msgstr ""
+msgstr "يُستخدم الآن ملف التعريف %(name)s."
 
 #: bot/commands/user_commands.py:1978
 msgid "That profile could not be selected."
-msgstr ""
+msgstr "تعذّر اختيار ملف التعريف هذا."
 
 #: bot/connectors/tt_player_connector.py:36
 #, python-brace-format
@@ -2156,15 +2195,15 @@ msgstr "تم الإيقاف المؤقت: {stream_url}"
 
 #: bot/modules/apple_music_downloader.py:75
 msgid "Apple Music is not available on this bot."
-msgstr ""
+msgstr "Apple Music غير متاح في هذا البوت."
 
 #: bot/modules/apple_music_downloader.py:90
 msgid "What is playing is not an album or playlist that can be downloaded."
-msgstr ""
+msgstr "ما يُشغَّل الآن ليس ألبومًا أو قائمة تشغيل يمكن تنزيلها."
 
 #: bot/modules/apple_music_downloader.py:93
 msgid "the playlist"
-msgstr ""
+msgstr "قائمة التشغيل"
 
 #: bot/modules/apple_music_downloader.py:95
 #, python-brace-format
@@ -2172,6 +2211,8 @@ msgid ""
 "Downloading the playlist {name}. It will be uploaded to the channel as "
 "one zip file when it is ready, which can take several minutes."
 msgstr ""
+"جارٍ تنزيل قائمة التشغيل {name}. ستُرفع إلى القناة كملف zip واحد عندما "
+"تجهز، وقد يستغرق ذلك عدة دقائق."
 
 #: bot/modules/apple_music_downloader.py:101
 #, python-brace-format
@@ -2179,92 +2220,94 @@ msgid ""
 "Downloading the album {name}. It will be uploaded to the channel as one "
 "zip file when it is ready, which can take several minutes."
 msgstr ""
+"جارٍ تنزيل الألبوم {name}. سيُرفع إلى القناة كملف zip واحد عندما يجهز، "
+"وقد يستغرق ذلك عدة دقائق."
 
 #: bot/modules/apple_music_downloader.py:107
 msgid "Apple Music is not playing a song right now."
-msgstr ""
+msgstr "لا يشغّل Apple Music أي أغنية الآن."
 
 #: bot/modules/apple_music_downloader.py:112
 msgid "This song is not in the Apple Music catalog, so it cannot be downloaded."
-msgstr ""
+msgstr "هذه الأغنية ليست في كتالوج Apple Music، لذا لا يمكن تنزيلها."
 
 #: bot/modules/apple_music_downloader.py:121
 msgid "To download the whole album or playlist instead, send dlp."
-msgstr ""
+msgstr "لتنزيل الألبوم أو قائمة التشغيل كاملة بدلًا من ذلك، أرسل dlp."
 
 #: bot/modules/apple_music_downloader.py:126
 msgid ""
 "An Apple Music download is already running. Please send this again when "
 "it has finished."
-msgstr ""
+msgstr "يوجد تنزيل من Apple Music قيد التنفيذ بالفعل. أرسل هذا مجددًا عند انتهائه."
 
 #: bot/modules/apple_music_downloader.py:157
 #, python-brace-format
 msgid "{name} is in the channel: one zip file with {count} tracks."
-msgstr ""
+msgstr "{name} في القناة: ملف zip واحد يضم {count} من المقاطع."
 
 #: bot/modules/apple_music_downloader.py:160
 #, python-brace-format
 msgid "{name} is in the channel."
-msgstr ""
+msgstr "{name} في القناة."
 
 #: bot/modules/apple_music_downloader.py:164
 #, python-brace-format
 msgid "Could not download {name}: {reason}"
-msgstr ""
+msgstr "تعذّر تنزيل {name}: {reason}"
 
 #: bot/modules/apple_music_downloader.py:173
 #: bot/modules/playlist_uploader.py:145 bot/modules/uploader.py:112
 #, python-brace-format
 msgid "Could not download {name}."
-msgstr ""
+msgstr "تعذّر تنزيل {name}."
 
 #: bot/modules/apple_music_downloader.py:187
 msgid "Apple Music is not signed in on this bot. Send li am to connect it."
-msgstr ""
+msgstr "Apple Music غير مسجّل الدخول في هذا البوت. أرسل li am لربطه."
 
 #: bot/modules/audio_description.py:129
 #, python-format
 msgid "%(title)s has audio description. Play it with the description?"
-msgstr ""
+msgstr "يتوفر وصف صوتي لـ %(title)s. هل يُشغَّل مع الوصف؟"
 
 #: bot/modules/audio_description.py:132
 msgid "This has audio description. Play it with the description?"
-msgstr ""
+msgstr "يتوفر وصف صوتي لهذا. هل يُشغَّل مع الوصف؟"
 
 #: bot/modules/audio_description.py:136
 msgid "1. Yes. 2. No. 3. Yes, and remember. 4. No, and remember."
-msgstr ""
+msgstr "1. نعم. 2. لا. 3. نعم، وتذكّر ذلك. 4. لا، وتذكّر ذلك."
 
 #: bot/modules/auth_portal.py:362
 msgid "Enter the Google account email address"
-msgstr ""
+msgstr "أدخل عنوان البريد الإلكتروني لحساب Google"
 
 #: bot/modules/auth_portal.py:364
 #, python-format
 msgid "Enter your %(service)s email address or username"
-msgstr ""
+msgstr "أدخل بريدك الإلكتروني أو اسم المستخدم في %(service)s"
 
 #: bot/modules/auth_portal.py:369
 msgid "Enter the Google account password"
-msgstr ""
+msgstr "أدخل كلمة مرور حساب Google"
 
 #: bot/modules/auth_portal.py:371
 #, python-format
 msgid "Enter your %(service)s password"
-msgstr ""
+msgstr "أدخل كلمة مرورك في %(service)s"
 
 #: bot/modules/auth_portal.py:413
 msgid "Enter the verification code"
-msgstr ""
+msgstr "أدخل رمز التحقق"
 
 #: bot/modules/auth_portal.py:630
 msgid "Signing in to this service is not available yet."
-msgstr ""
+msgstr "تسجيل الدخول إلى هذه الخدمة غير متاح بعد."
 
 #: bot/modules/playlist_uploader.py:88 bot/modules/uploader.py:92
 msgid "Renewing the YouTube sign-in. The download continues when it finishes."
-msgstr ""
+msgstr "جارٍ تجديد تسجيل الدخول إلى YouTube. سيستمر التنزيل عند الانتهاء."
 
 #: bot/modules/playlist_uploader.py:93
 #, python-brace-format
@@ -2272,34 +2315,36 @@ msgid ""
 "Downloading the playlist {name}. Tracks: {count}. It will be uploaded to "
 "the channel as one zip file when it is ready."
 msgstr ""
+"جارٍ تنزيل قائمة التشغيل {name}. المقاطع: {count}. ستُرفع إلى القناة كملف"
+" zip واحد عندما تجهز."
 
 #: bot/modules/playlist_uploader.py:104
 #, python-brace-format
 msgid "Track {number} of {total}, {percent} percent done: {title}"
-msgstr ""
+msgstr "المقطع {number} من {total}، اكتمل {percent} بالمئة: {title}"
 
 #: bot/modules/playlist_uploader.py:125
 #, python-brace-format
 msgid "No track in {name} could be downloaded. Tracks tried: {count}."
-msgstr ""
+msgstr "تعذّر تنزيل أي مقطع من {name}. المقاطع التي جُرّبت: {count}."
 
 #: bot/modules/playlist_uploader.py:129
 #, python-brace-format
 msgid "Uploading {name} to the channel."
-msgstr ""
+msgstr "جارٍ رفع {name} إلى القناة."
 
 #: bot/modules/playlist_uploader.py:137
 #, python-brace-format
 msgid "{name} is in the channel as one zip file. Tracks in it: {count}."
-msgstr ""
+msgstr "{name} في القناة كملف zip واحد. عدد المقاطع فيه: {count}."
 
 # | msgid "Live streams cannot be downloaded"
 # | msgid "Spotify tracks cannot be downloaded."
 # | msgid "{count} could not be downloaded."
 #: bot/modules/playlist_uploader.py:140
-#, fuzzy, python-brace-format
+#, python-brace-format
 msgid "Tracks that could not be downloaded: {count}."
-msgstr "لا يمكن تنزيل البث المباشر"
+msgstr "المقاطع التي تعذّر تنزيلها: {count}."
 
 #: bot/modules/podcast_subscriptions.py:196
 #, python-brace-format
@@ -2320,262 +2365,265 @@ msgstr "لفتح البودكاست، أرسل: ps {number}"
 
 #: bot/modules/portal_pages.py:45
 msgid "dash"
-msgstr ""
+msgstr "شرطة"
 
 #: bot/modules/portal_pages.py:46
 msgid "underscore"
-msgstr ""
+msgstr "شرطة سفلية"
 
 #: bot/modules/portal_pages.py:47
 msgid "dot"
-msgstr ""
+msgstr "نقطة"
 
 #: bot/modules/portal_pages.py:48
 msgid "space"
-msgstr ""
+msgstr "مسافة"
 
 # | msgid "Error: {}"
 #: bot/modules/portal_pages.py:73 bot/modules/portal_pages.py:145
-#, fuzzy
 msgid "Error:"
-msgstr "خطأ: {}"
+msgstr "خطأ:"
 
 #: bot/modules/portal_pages.py:118
 msgid "There is a problem"
-msgstr ""
+msgstr "هناك مشكلة"
 
 #: bot/modules/portal_pages.py:158
 msgid "Back to your accounts"
-msgstr ""
+msgstr "العودة إلى حساباتك"
 
 #: bot/modules/portal_pages.py:174 bot/modules/portal_pages.py:535
 #: bot/modules/portal_pages.py:563 bot/modules/portal_pages.py:627
 #: bot/modules/portal_pages.py:683 bot/modules/portal_pages.py:749
 #, python-format
 msgid "Import a %(service)s session"
-msgstr ""
+msgstr "استيراد جلسة %(service)s"
 
 #: bot/modules/portal_pages.py:181 bot/modules/portal_pages.py:209
 #: bot/modules/portal_pages.py:216 bot/modules/portal_pages.py:257
 #, python-format
 msgid "Connect %(service)s"
-msgstr ""
+msgstr "ربط %(service)s"
 
 #: bot/modules/portal_pages.py:197
 msgid "Connected"
-msgstr ""
+msgstr "مربوط"
 
 #: bot/modules/portal_pages.py:202 bot/modules/portal_pages.py:787
 #, python-format
 msgid "Disconnect %(service)s"
-msgstr ""
+msgstr "فصل %(service)s"
 
 #: bot/modules/portal_pages.py:206
 msgid "Expired. Connect again to keep streaming."
-msgstr ""
+msgstr "انتهت الصلاحية. اربطه مجددًا لمواصلة البث."
 
 #: bot/modules/portal_pages.py:213
 msgid "Not connected"
-msgstr ""
+msgstr "غير مربوط"
 
 #: bot/modules/portal_pages.py:235
 msgid "Your streaming accounts"
-msgstr ""
+msgstr "حسابات البث الخاصة بك"
 
 #: bot/modules/portal_pages.py:236
 #, python-format
 msgid "%(connected)s of %(total)s services connected."
-msgstr ""
+msgstr "%(connected)s من %(total)s خدمات مربوطة."
 
 #: bot/modules/portal_pages.py:240
 #, python-format
 msgid "%(connected)s of %(total)s services connected"
-msgstr ""
+msgstr "%(connected)s من %(total)s خدمات مربوطة"
 
 #: bot/modules/portal_pages.py:259
 msgid "Go to"
-msgstr ""
+msgstr "انتقل إلى"
 
 #: bot/modules/portal_pages.py:264
 msgid "(opens in a new tab)"
-msgstr ""
+msgstr "(يُفتح في علامة تبويب جديدة)"
 
 #: bot/modules/portal_pages.py:265
 msgid "Enter the code below."
-msgstr ""
+msgstr "أدخل الرمز أدناه."
 
 #: bot/modules/portal_pages.py:266
 msgid "Come back here and select Check status."
-msgstr ""
+msgstr "عُد إلى هنا واختر التحقق من الحالة."
 
 #: bot/modules/portal_pages.py:269
 msgid "Your device code"
-msgstr ""
+msgstr "رمز جهازك"
 
 #: bot/modules/portal_pages.py:283
 msgid "Check status"
-msgstr ""
+msgstr "التحقق من الحالة"
 
 #: bot/modules/portal_pages.py:289
 #, python-format
 msgid "Connect %(service)s: enter your code"
-msgstr ""
+msgstr "ربط %(service)s: أدخل رمزك"
 
 #: bot/modules/portal_pages.py:308
 msgid "Google account email address"
-msgstr ""
+msgstr "عنوان البريد الإلكتروني لحساب Google"
 
 #: bot/modules/portal_pages.py:309
 msgid "The Google account made for StreamerBot, not your personal one."
-msgstr ""
+msgstr "حساب Google الذي أُنشئ لـ StreamerBot، وليس حسابك الشخصي."
 
 #: bot/modules/portal_pages.py:310
 msgid "Google account password"
-msgstr ""
+msgstr "كلمة مرور حساب Google"
 
 #: bot/modules/portal_pages.py:312
 #, python-format
 msgid "%(service)s email address or username"
-msgstr ""
+msgstr "البريد الإلكتروني أو اسم المستخدم في %(service)s"
 
 #: bot/modules/portal_pages.py:313
 #, python-format
 msgid "The address you use to sign in to %(service)s."
-msgstr ""
+msgstr "العنوان الذي تستخدمه لتسجيل الدخول إلى %(service)s."
 
 #: bot/modules/portal_pages.py:314
 #, python-format
 msgid "%(service)s password"
-msgstr ""
+msgstr "كلمة مرور %(service)s"
 
 #: bot/modules/portal_pages.py:333 bot/modules/portal_pages.py:361
 #: bot/modules/portal_pages.py:366
 #, python-format
 msgid "Sign in to %(service)s"
-msgstr ""
+msgstr "تسجيل الدخول إلى %(service)s"
 
 #: bot/modules/portal_pages.py:363
 msgid "Cancel and go back"
-msgstr ""
+msgstr "إلغاء والعودة"
 
 #: bot/modules/portal_pages.py:396
 #, python-format
 msgid "Signing in as %(username)s."
-msgstr ""
+msgstr "جارٍ تسجيل الدخول باسم %(username)s."
 
 #: bot/modules/portal_pages.py:402 bot/modules/portal_pages.py:427
 #, python-format
 msgid "Enter your %(service)s verification code"
-msgstr ""
+msgstr "أدخل رمز التحقق الخاص بـ %(service)s"
 
 #: bot/modules/portal_pages.py:410
 msgid "Verification code"
-msgstr ""
+msgstr "رمز التحقق"
 
 #: bot/modules/portal_pages.py:414
 msgid "Type or paste the whole code into the box below. Spaces do not matter."
-msgstr ""
+msgstr "اكتب الرمز كاملًا أو الصقه في المربع أدناه. المسافات لا تهم."
 
 #: bot/modules/portal_pages.py:419
 msgid "Verify code"
-msgstr ""
+msgstr "تحقق من الرمز"
 
 #: bot/modules/portal_pages.py:422
 msgid "Send a new code"
-msgstr ""
+msgstr "إرسال رمز جديد"
 
 #: bot/modules/portal_pages.py:424 bot/modules/portal_pages.py:444
 #: bot/modules/portal_pages.py:630
 msgid "Cancel this sign-in"
-msgstr ""
+msgstr "إلغاء تسجيل الدخول هذا"
 
 #: bot/modules/portal_pages.py:435 bot/modules/portal_pages.py:448
 #, python-format
 msgid "Signing in to %(service)s"
-msgstr ""
+msgstr "جارٍ تسجيل الدخول إلى %(service)s"
 
 #: bot/modules/portal_pages.py:436
 msgid "Waiting for the service to confirm. This usually takes 10 to 30 seconds."
-msgstr ""
+msgstr "في انتظار تأكيد الخدمة. يستغرق ذلك عادةً من 10 إلى 30 ثانية."
 
 #: bot/modules/portal_pages.py:442
 msgid "Check again"
-msgstr ""
+msgstr "التحقق مجددًا"
 
 #: bot/modules/portal_pages.py:468
 msgid "Google needs a verification code. Opening that page."
-msgstr ""
+msgstr "تحتاج Google إلى رمز تحقق. جارٍ فتح تلك الصفحة."
 
 #: bot/modules/portal_pages.py:469
 msgid "Google needs you to approve the sign-in on your phone. Opening that page."
-msgstr ""
+msgstr "تحتاج Google إلى أن توافق على تسجيل الدخول من هاتفك. جارٍ فتح تلك الصفحة."
 
 #: bot/modules/portal_pages.py:470
 msgid "Signed in. Opening the confirmation page."
-msgstr ""
+msgstr "تم تسجيل الدخول. جارٍ فتح صفحة التأكيد."
 
 #: bot/modules/portal_pages.py:471
 msgid "The sign-in did not complete. Opening the page that says why."
-msgstr ""
+msgstr "لم يكتمل تسجيل الدخول. جارٍ فتح الصفحة التي توضح السبب."
 
 #: bot/modules/portal_pages.py:472
 msgid "This sign-in is no longer running. Going back to your accounts."
-msgstr ""
+msgstr "تسجيل الدخول هذا لم يعد قيد التنفيذ. جارٍ العودة إلى حساباتك."
 
 #: bot/modules/portal_pages.py:473
 #, python-format
 msgid "Still signing in. %(seconds)s seconds so far."
-msgstr ""
+msgstr "ما زال تسجيل الدخول جاريًا. مضت %(seconds)s ثانية حتى الآن."
 
 #: bot/modules/portal_pages.py:474
 #, python-format
 msgid "Still signing in. %(minutes)s minutes so far."
-msgstr ""
+msgstr "ما زال تسجيل الدخول جاريًا. مضت %(minutes)s دقيقة حتى الآن."
 
 #: bot/modules/portal_pages.py:475
 msgid ""
 "This link has expired or the sign-in was cancelled. To get a new link, "
 "send the li command to StreamerBot in TeamTalk."
 msgstr ""
+"انتهت صلاحية هذا الرابط أو أُلغي تسجيل الدخول. للحصول على رابط جديد، أرسل"
+" الأمر li إلى StreamerBot في TeamTalk."
 
 #: bot/modules/portal_pages.py:476
 msgid "Lost contact with StreamerBot. Use Check again in a moment."
-msgstr ""
+msgstr "انقطع الاتصال بـ StreamerBot. استخدم التحقق مجددًا بعد قليل."
 
 #: bot/modules/portal_pages.py:477
 msgid ""
 "This is taking longer than expected. Use Check again, or Cancel this "
 "sign-in."
 msgstr ""
+"يستغرق هذا وقتًا أطول من المتوقع. استخدم التحقق مجددًا، أو إلغاء تسجيل "
+"الدخول هذا."
 
 #: bot/modules/portal_pages.py:518 bot/modules/portal_pages.py:522
 #, python-format
 msgid "%(service)s connected"
-msgstr ""
+msgstr "رُبط %(service)s"
 
 #: bot/modules/portal_pages.py:519
 #, python-format
 msgid "StreamerBot can now stream from your %(service)s account."
-msgstr ""
+msgstr "يمكن لـ StreamerBot الآن البث من حسابك في %(service)s."
 
 #: bot/modules/portal_pages.py:528
 msgid "Try again"
-msgstr ""
+msgstr "حاول مجددًا"
 
 #: bot/modules/portal_pages.py:542 bot/modules/portal_pages.py:548
 #, python-format
 msgid "%(service)s could not be connected"
-msgstr ""
+msgstr "تعذّر ربط %(service)s"
 
 #: bot/modules/portal_pages.py:561
 msgid ""
 "If Google refuses to sign in here, import a session from your own browser"
 " instead:"
-msgstr ""
+msgstr "إذا رفضت Google تسجيل الدخول هنا، فاستورد جلسة من متصفحك بدلًا من ذلك:"
 
 #: bot/modules/portal_pages.py:567
 msgid "Use a separate Google account"
-msgstr ""
+msgstr "استخدم حساب Google منفصلًا"
 
 #: bot/modules/portal_pages.py:568
 msgid ""
@@ -2583,42 +2631,46 @@ msgid ""
 "server. Make a Google account just for StreamerBot rather than using your"
 " personal one."
 msgstr ""
+"قد تقيّد Google حسابًا يشغّل الفيديوهات تلقائيًا من خادم. أنشئ حساب "
+"Google خاصًا بـ StreamerBot بدلًا من استخدام حسابك الشخصي."
 
 #: bot/modules/portal_pages.py:592 bot/modules/portal_pages.py:615
 msgid "Approve the sign-in on your phone"
-msgstr ""
+msgstr "وافق على تسجيل الدخول من هاتفك"
 
 #: bot/modules/portal_pages.py:596
 msgid "Not approved yet. Approve the sign-in on your phone"
-msgstr ""
+msgstr "لم تتم الموافقة بعد. وافق على تسجيل الدخول من هاتفك"
 
 #: bot/modules/portal_pages.py:602
 msgid "Number to tap on your phone"
-msgstr ""
+msgstr "الرقم الذي تنقر عليه في هاتفك"
 
 #: bot/modules/portal_pages.py:610
 msgid "Google says:"
-msgstr ""
+msgstr "تقول Google:"
 
 #: bot/modules/portal_pages.py:616
 msgid "Google has not confirmed the approval yet."
-msgstr ""
+msgstr "لم تؤكد Google الموافقة بعد."
 
 #: bot/modules/portal_pages.py:619
 msgid ""
 "Google sent a prompt to a phone or tablet signed in to this account. Tap "
 "Yes on it, then come back here."
 msgstr ""
+"أرسلت Google طلبًا إلى هاتف أو جهاز لوحي مسجّل الدخول إلى هذا الحساب. "
+"انقر نعم عليه، ثم عُد إلى هنا."
 
 #: bot/modules/portal_pages.py:620
 msgid ""
 "The prompt stops working after a few minutes. If it has gone, cancel and "
 "sign in again."
-msgstr ""
+msgstr "يتوقف الطلب عن العمل بعد بضع دقائق. إذا اختفى، فألغِ وسجّل الدخول مجددًا."
 
 #: bot/modules/portal_pages.py:624
 msgid "I have approved it on my phone"
-msgstr ""
+msgstr "وافقت عليه من هاتفي"
 
 #: bot/modules/portal_pages.py:685
 msgid ""
@@ -2626,40 +2678,49 @@ msgid ""
 "cannot run a browser. You need a cookies.txt file from a browser that is "
 "signed in to YouTube."
 msgstr ""
+"استخدم هذا عندما لا تسمح Google بتسجيل الدخول من البوت، أو عندما لا "
+"يستطيع البوت تشغيل متصفح. تحتاج إلى ملف cookies.txt من متصفح مسجّل الدخول"
+" إلى YouTube."
 
 #: bot/modules/portal_pages.py:688
 msgid "I already have the file. Go to the import form."
-msgstr ""
+msgstr "لدي الملف بالفعل. الانتقال إلى نموذج الاستيراد."
 
 #: bot/modules/portal_pages.py:693
 msgid "How to get a cookies.txt file"
-msgstr ""
+msgstr "كيف تحصل على ملف cookies.txt"
 
 #: bot/modules/portal_pages.py:694
 msgid "On an Android phone"
-msgstr ""
+msgstr "على هاتف Android"
 
 #: bot/modules/portal_pages.py:695
 msgid ""
 "No computer is needed. This uses the Firefox browser, which can add a "
 "small cookie exporter on Android."
 msgstr ""
+"لا حاجة إلى حاسوب. يستخدم هذا متصفح Firefox، الذي يمكنه على Android إضافة"
+" أداة صغيرة لتصدير ملفات تعريف الارتباط."
 
 #: bot/modules/portal_pages.py:697
 msgid "Install Firefox from the Google Play Store, and open this page in Firefox."
-msgstr ""
+msgstr "ثبّت Firefox من Google Play Store، وافتح هذه الصفحة في Firefox."
 
 #: bot/modules/portal_pages.py:698
 msgid ""
 "In Firefox, open the menu, choose Extensions, then find and add the "
 "extension called cookies.txt."
 msgstr ""
+"في Firefox، افتح القائمة، واختر الإضافات، ثم ابحث عن الإضافة المسماة "
+"cookies.txt وأضفها."
 
 #: bot/modules/portal_pages.py:699
 msgid ""
 "Go to youtube.com in Firefox and sign in with the Google account made for"
 " StreamerBot."
 msgstr ""
+"انتقل إلى youtube.com في Firefox وسجّل الدخول بحساب Google الذي أُنشئ لـ "
+"StreamerBot."
 
 #: bot/modules/portal_pages.py:700
 msgid ""
@@ -2667,16 +2728,19 @@ msgid ""
 "then cookies.txt, and export the cookies for the current site. The file "
 "is saved to your Downloads."
 msgstr ""
+"وأنت ما زلت على youtube.com، افتح قائمة Firefox، واختر الإضافات، ثم "
+"cookies.txt، وصدّر ملفات تعريف الارتباط للموقع الحالي. يُحفظ الملف في "
+"مجلد التنزيلات."
 
 #: bot/modules/portal_pages.py:701
 msgid ""
 "Come back to this page in Firefox and choose that file in the import form"
 " below."
-msgstr ""
+msgstr "عُد إلى هذه الصفحة في Firefox واختر ذلك الملف في نموذج الاستيراد أدناه."
 
 #: bot/modules/portal_pages.py:703
 msgid "On an iPhone or iPad"
-msgstr ""
+msgstr "على iPhone أو iPad"
 
 #: bot/modules/portal_pages.py:704
 msgid ""
@@ -2685,108 +2749,130 @@ msgid ""
 "you. They must sign in with the Google account made for StreamerBot, "
 "never their own."
 msgstr ""
+"لا توجد طريقة موثوقة لتصدير هذا الملف على iPhone أو iPad. استخدم هاتف "
+"Android أو حاسوبًا، أو اطلب من شخص لديه أحدهما أن يفعل ذلك نيابةً عنك. "
+"يجب أن يسجّل الدخول بحساب Google الذي أُنشئ لـ StreamerBot، وليس بحسابه "
+"أبدًا."
 
 #: bot/modules/portal_pages.py:705
 msgid "On a computer"
-msgstr ""
+msgstr "على حاسوب"
 
 #: bot/modules/portal_pages.py:707
 msgid ""
 "In your own browser, sign in to YouTube with the Google account made for "
 "StreamerBot."
-msgstr ""
+msgstr "في متصفحك، سجّل الدخول إلى YouTube بحساب Google الذي أُنشئ لـ StreamerBot."
 
 #: bot/modules/portal_pages.py:708
 msgid ""
 "While on youtube.com, use a cookie export extension to save the cookies "
 "in Netscape cookies.txt format."
 msgstr ""
+"وأنت على youtube.com، استخدم إضافة لتصدير ملفات تعريف الارتباط لحفظها "
+"بصيغة Netscape cookies.txt."
 
 #: bot/modules/portal_pages.py:709
 msgid ""
 "Choose that file in the import form below, or open it, copy everything in"
 " it, and paste it into the box below."
 msgstr ""
+"اختر ذلك الملف في نموذج الاستيراد أدناه، أو افتحه وانسخ كل ما فيه والصقه "
+"في المربع أدناه."
 
 #: bot/modules/portal_pages.py:711
 msgid ""
 "Afterwards, do not sign out of YouTube in that browser. Signing out ends "
 "the session StreamerBot is using. Closing the browser is fine."
 msgstr ""
+"بعد ذلك، لا تسجّل الخروج من YouTube في ذلك المتصفح. تسجيل الخروج ينهي "
+"الجلسة التي يستخدمها StreamerBot. إغلاق المتصفح لا بأس به."
 
 #: bot/modules/portal_pages.py:712
 msgid ""
 "Google sometimes ends a session that is used from a different place. If "
 "that happens, StreamerBot tells you in TeamTalk and you can import again."
 msgstr ""
+"تنهي Google أحيانًا جلسة تُستخدم من مكان مختلف. إذا حدث ذلك، يخبرك "
+"StreamerBot في TeamTalk ويمكنك الاستيراد مجددًا."
 
 #: bot/modules/portal_pages.py:716
 msgid ""
 "This server cannot run a browser, so nothing can keep an imported session"
 " alive. Expect to import again from time to time."
 msgstr ""
+"لا يستطيع هذا الخادم تشغيل متصفح، لذا لا شيء يحافظ على الجلسة المستوردة "
+"حية. توقّع أن تستورد مجددًا من وقت لآخر."
 
 #: bot/modules/portal_pages.py:718
 msgid "Import your file"
-msgstr ""
+msgstr "استورد ملفك"
 
 #: bot/modules/portal_pages.py:724
 msgid "Your cookies.txt file"
-msgstr ""
+msgstr "ملف cookies.txt الخاص بك"
 
 #: bot/modules/portal_pages.py:730
 msgid "Or paste the contents of the file"
-msgstr ""
+msgstr "أو الصق محتوى الملف"
 
 #: bot/modules/portal_pages.py:731
 msgid "Paste the whole file. It is several lines of text."
-msgstr ""
+msgstr "الصق الملف كاملًا. إنه عدة أسطر من النص."
 
 #: bot/modules/portal_pages.py:738
 msgid "Import the session"
-msgstr ""
+msgstr "استيراد الجلسة"
 
 #: bot/modules/portal_pages.py:744
 #, python-format
 msgid "Lines pasted: %(count)s"
-msgstr ""
+msgstr "الأسطر الملصقة: %(count)s"
 
 #: bot/modules/portal_pages.py:761
 msgid "Choose your cookies.txt file, or paste its contents"
-msgstr ""
+msgstr "اختر ملف cookies.txt، أو الصق محتواه"
 
 #: bot/modules/portal_pages.py:762
 msgid ""
 "This is too long to be a cookies file. Check you chose only the "
 "cookies.txt file."
 msgstr ""
+"هذا أطول من أن يكون ملف ملفات تعريف ارتباط. تأكد أنك اخترت ملف "
+"cookies.txt فقط."
 
 #: bot/modules/portal_pages.py:763
 msgid ""
 "This is not a cookies.txt file. Export the cookies again in Netscape "
 "cookies.txt format."
 msgstr ""
+"هذا ليس ملف cookies.txt. صدّر ملفات تعريف الارتباط مجددًا بصيغة Netscape "
+"cookies.txt."
 
 #: bot/modules/portal_pages.py:764
 msgid ""
 "This file has no YouTube sign-in in it. Sign in to YouTube in your "
 "browser, then export the cookies again while on youtube.com."
 msgstr ""
+"لا يحتوي هذا الملف على تسجيل دخول إلى YouTube. سجّل الدخول إلى YouTube في"
+" متصفحك، ثم صدّر ملفات تعريف الارتباط مجددًا وأنت على youtube.com."
 
 #: bot/modules/portal_pages.py:765
 msgid ""
 "YouTube says this session is already signed out. Sign in to YouTube in "
 "your browser again, then export a fresh file."
 msgstr ""
+"يقول YouTube إن هذه الجلسة مسجّلة الخروج بالفعل. سجّل الدخول إلى YouTube "
+"في متصفحك مجددًا، ثم صدّر ملفًا جديدًا."
 
 #: bot/modules/portal_pages.py:766
 msgid "The session could not be imported."
-msgstr ""
+msgstr "تعذّر استيراد الجلسة."
 
 #: bot/modules/portal_pages.py:778 bot/modules/portal_pages.py:793
 #, python-format
 msgid "Disconnect %(service)s?"
-msgstr ""
+msgstr "فصل %(service)s؟"
 
 #: bot/modules/portal_pages.py:779
 #, python-format
@@ -2795,47 +2881,47 @@ msgid ""
 "%(service)s account itself is not affected. You can connect again at any "
 "time."
 msgstr ""
+"سيتوقف StreamerBot عن البث من حسابك في %(service)s. حسابك في %(service)s "
+"نفسه لا يتأثر. يمكنك الربط مجددًا في أي وقت."
 
 #: bot/modules/portal_pages.py:790
 #, python-format
 msgid "Cancel, keep %(service)s connected"
-msgstr ""
+msgstr "إلغاء، وإبقاء %(service)s مربوطًا"
 
 # | msgid "help text not found"
 #: bot/modules/portal_pages.py:809
-#, fuzzy
 msgid "Page not found"
-msgstr "نص المساعدة غير موجود"
+msgstr "الصفحة غير موجودة"
 
 # | msgid "This user is not in the admin list"
 #: bot/modules/portal_pages.py:810
-#, fuzzy
 msgid "This address is not quite right."
-msgstr "هذا المستخدم ليس في قائمة المسؤولين"
+msgstr "هذا العنوان ليس صحيحًا تمامًا."
 
 #: bot/modules/portal_pages.py:811 bot/modules/portal_pages.py:818
 msgid "To get a new link, send the li command to StreamerBot in TeamTalk."
-msgstr ""
+msgstr "للحصول على رابط جديد، أرسل الأمر li إلى StreamerBot في TeamTalk."
 
 #: bot/modules/portal_pages.py:816
 msgid "Link expired"
-msgstr ""
+msgstr "انتهت صلاحية الرابط"
 
 #: bot/modules/portal_pages.py:817
 msgid "This link has expired."
-msgstr ""
+msgstr "انتهت صلاحية هذا الرابط."
 
 #: bot/modules/portal_pages.py:823
 msgid "Something went wrong"
-msgstr ""
+msgstr "حدث خطأ ما"
 
 #: bot/modules/portal_pages.py:824
 msgid "StreamerBot could not finish that request."
-msgstr ""
+msgstr "تعذّر على StreamerBot إكمال ذلك الطلب."
 
 #: bot/modules/portal_pages.py:825
 msgid "Try again in a moment. If it keeps happening, check the bot's log."
-msgstr ""
+msgstr "حاول مجددًا بعد قليل. إذا استمر ذلك، فراجع سجل البوت."
 
 #: bot/modules/uploader.py:68
 msgid "Error: Downloaded file not found."
@@ -2857,23 +2943,25 @@ msgid ""
 "YouTube refused to download {name} without a signed-in account, which is "
 "usual on a server. To connect one, send this command: li yt"
 msgstr ""
+"رفض YouTube تنزيل {name} دون حساب مسجّل الدخول، وهذا معتاد على الخوادم. "
+"لربط حساب، أرسل هذا الأمر: li yt"
 
 #: bot/modules/youtube_session_keeper.py:157
 #, python-brace-format
 msgid "The YouTube sign-in could not be renewed, so {name} was not downloaded."
-msgstr ""
+msgstr "تعذّر تجديد تسجيل الدخول إلى YouTube، لذا لم يُنزَّل {name}."
 
 #: bot/modules/youtube_session_keeper.py:348
 #: bot/modules/youtube_session_keeper.py:355
 msgid ""
 "Google signed in, but YouTube did not recognise the session. Please try "
 "again."
-msgstr ""
+msgstr "سجّلت Google الدخول، لكن YouTube لم يتعرّف على الجلسة. حاول مجددًا."
 
 #: bot/services/browser_service.py:104
 #, python-format
 msgid "%(service)s is not ready yet."
-msgstr ""
+msgstr "%(service)s ليس جاهزًا بعد."
 
 #: bot/services/browser_service.py:121
 #, python-format
@@ -2881,22 +2969,24 @@ msgid ""
 "%(service)s needs Google Chrome, which is not available on this machine's"
 " processor architecture."
 msgstr ""
+"يحتاج %(service)s إلى Google Chrome، وهو غير متاح لمعمارية معالج هذا "
+"الجهاز."
 
 #: bot/services/browser_service.py:132
 #, python-format
 msgid "%(service)s is not connected. Send li %(code)s to connect an account."
-msgstr ""
+msgstr "%(service)s غير مربوط. أرسل li %(code)s لربط حساب."
 
 #: bot/services/browser_service.py:166
 #, python-format
 msgid "That is not a %(service)s link."
-msgstr ""
+msgstr "هذا ليس رابطًا من %(service)s."
 
 # | msgid "Live streams cannot be downloaded"
 #: bot/services/browser_service.py:182
-#, fuzzy, python-format
+#, python-format
 msgid "%(service)s cannot be downloaded."
-msgstr "لا يمكن تنزيل البث المباشر"
+msgstr "لا يمكن التنزيل من %(service)s."
 
 #: bot/services/browser_service.py:208
 msgid ""
@@ -2905,6 +2995,9 @@ msgid ""
 "watchlists and audio settings; pf lists them and pf with a number picks "
 "one."
 msgstr ""
+"يشغّل Disney Plus الأفلام والمسلسلات، مع الوصف الصوتي حيث يوفره Disney "
+"Plus. لكل حساب ملفات تعريف خاصة به، بقوائم مشاهدة وإعدادات صوت خاصة؛ "
+"يعرضها pf، وpf مع رقم يختار أحدها."
 
 #: bot/services/browser_service.py:224
 msgid ""
@@ -2913,6 +3006,9 @@ msgid ""
 "told apart. dl downloads what is playing and dlp downloads the album it "
 "is from."
 msgstr ""
+"يشغّل Apple Music الأغاني والألبومات والفنانين وقوائم التشغيل. يعيد البحث"
+" الأنواع الأربعة، وكل نتيجة مسماة بنوعها، فيُميَّز الألبوم عن الأغنية "
+"التي فيه. ينزّل dl ما يُشغَّل، وينزّل dlp الألبوم الذي ينتمي إليه."
 
 #: bot/services/browser_service.py:247
 msgid ""
@@ -2921,6 +3017,9 @@ msgid ""
 "music subscription; a plain Prime account plays only part of the "
 "catalogue."
 msgstr ""
+"يشغّل Amazon Music الأغاني والألبومات والفنانين وقوائم التشغيل. يعيد "
+"البحث الأنواع الأربعة، وكل نتيجة مسماة بنوعها. يحتاج إلى حساب Amazon "
+"باشتراك موسيقى؛ حساب Prime العادي لا يشغّل إلا جزءًا من الكتالوج."
 
 #: bot/services/browser_service.py:262
 msgid ""
@@ -2958,71 +3057,69 @@ msgstr ""
 
 #: bot/services/gamdl_downloader.py:158
 msgid "The Apple Music downloader is not installed in this image."
-msgstr ""
+msgstr "أداة التنزيل من Apple Music غير مثبتة في هذه الصورة."
 
 #: bot/services/gamdl_downloader.py:165
 msgid ""
 "Downloading from Apple Music needs a subscription. Connect the account "
 "first with li am."
-msgstr ""
+msgstr "التنزيل من Apple Music يحتاج إلى اشتراك. اربط الحساب أولًا باستخدام li am."
 
 #: bot/services/gamdl_downloader.py:199
 msgid "That is not an Apple Music link."
-msgstr ""
+msgstr "هذا ليس رابطًا من Apple Music."
 
 #: bot/services/gamdl_downloader.py:216
 msgid "The download took too long and was stopped."
-msgstr ""
+msgstr "استغرق التنزيل وقتًا طويلًا وأُوقف."
 
 #: bot/services/gamdl_downloader.py:230
 msgid "The download produced no audio files."
-msgstr ""
+msgstr "لم ينتج التنزيل أي ملفات صوتية."
 
 #: bot/services/gamdl_downloader.py:252
 msgid "That needs an active Apple Music subscription."
-msgstr ""
+msgstr "يحتاج ذلك إلى اشتراك نشط في Apple Music."
 
 #: bot/services/gamdl_downloader.py:255
 msgid "Apple Music did not have that."
-msgstr ""
+msgstr "لم يكن ذلك متوفرًا في Apple Music."
 
 #: bot/services/gamdl_downloader.py:258
 msgid "That track needs a decryption device file the bot does not have."
-msgstr ""
+msgstr "يحتاج ذلك المقطع إلى ملف جهاز لفك التشفير لا يملكه البوت."
 
 #: bot/services/gamdl_downloader.py:262
 msgid "The Apple Music sign-in has expired. Connect it again with li am."
-msgstr ""
+msgstr "انتهت صلاحية تسجيل الدخول إلى Apple Music. اربطه مجددًا باستخدام li am."
 
 # | msgid "Error: Downloaded file not found."
 #: bot/services/gamdl_downloader.py:265
-#, fuzzy
 msgid "The download failed."
-msgstr "خطأ: الملف المنزل غير موجود."
+msgstr "فشل التنزيل."
 
 #: bot/services/netflix.py:81
 msgid "Netflix is not ready yet."
-msgstr ""
+msgstr "Netflix ليس جاهزًا بعد."
 
 #: bot/services/netflix.py:94
 msgid ""
 "Netflix needs Google Chrome, which is not available on this machine's "
 "processor architecture."
-msgstr ""
+msgstr "يحتاج Netflix إلى Google Chrome، وهو غير متاح لمعمارية معالج هذا الجهاز."
 
 #: bot/services/netflix.py:106
 msgid "Netflix is not connected. Send li nf to connect an account."
-msgstr ""
+msgstr "Netflix غير مربوط. أرسل li nf لربط حساب."
 
 #: bot/services/netflix.py:141
 msgid "That is not a Netflix link."
-msgstr ""
+msgstr "هذا ليس رابطًا من Netflix."
 
 # | msgid "Live streams cannot be downloaded"
 #: bot/services/netflix.py:155
-#, fuzzy
 msgid "Netflix titles cannot be downloaded."
-msgstr "لا يمكن تنزيل البث المباشر"
+msgstr "لا يمكن تنزيل عناوين Netflix."
 
 #: bot/services/podcasts.py:461
 msgid ""
@@ -3033,11 +3130,11 @@ msgstr "للبودكاست أوامره الخاصة. أرسل h لعرض pc وp
 #: bot/services/results.py:130
 #, python-format
 msgid "%(count)s %(kind)s"
-msgstr ""
+msgstr "%(count)s %(kind)s"
 
 #: bot/services/spotify.py:123
 msgid "Spotify is not connected yet. Send li sp to connect an account."
-msgstr ""
+msgstr "Spotify غير مربوط بعد. أرسل li sp لربط حساب."
 
 #: bot/services/spotify.py:165
 msgid ""
@@ -3045,32 +3142,33 @@ msgid ""
 " the bot's configuration, then try again. Playing a pasted Spotify link "
 "does not need one."
 msgstr ""
+"يحتاج البحث في Spotify إلى تطبيق Spotify. أضف معرّف عميل وسرًّا في "
+"إعدادات البوت، ثم حاول مجددًا. تشغيل رابط Spotify ملصوق لا يحتاج إليه."
 
 #: bot/services/spotify.py:227
 msgid "The Spotify session expired. Try again."
-msgstr ""
+msgstr "انتهت صلاحية جلسة Spotify. حاول مجددًا."
 
 #: bot/services/spotify.py:232
 msgid "Spotify refused that request. Playback needs a Premium account."
-msgstr ""
+msgstr "رفض Spotify ذلك الطلب. التشغيل يحتاج إلى حساب Premium."
 
 #: bot/services/spotify.py:237
 msgid "Spotify is rate limiting us. Try again shortly."
-msgstr ""
+msgstr "يحدّ Spotify من عدد طلباتنا. حاول مجددًا بعد قليل."
 
 #: bot/services/spotify.py:298
 msgid "That is not a Spotify link."
-msgstr ""
+msgstr "هذا ليس رابطًا من Spotify."
 
 #: bot/services/spotify.py:326
 msgid "That kind of Spotify link is not supported."
-msgstr ""
+msgstr "هذا النوع من روابط Spotify غير مدعوم."
 
 # | msgid "Live streams cannot be downloaded"
 #: bot/services/spotify.py:422
-#, fuzzy
 msgid "Spotify tracks cannot be downloaded."
-msgstr "لا يمكن تنزيل البث المباشر"
+msgstr "لا يمكن تنزيل مقاطع Spotify."
 
 #: bot/services/yt.py:196 bot/services/yt.py:468
 msgid "Unknown Title"
