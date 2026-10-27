@@ -213,7 +213,15 @@ while true; do
     fi
 
     if [ "$SHOULD_UPDATE" = true ]; then
-        echo "$(date): Running update.sh..."
+        # Our stdout is a stream to journald, and update.sh inherits it. When
+        # journald restarts, that stream is left with nobody reading it: every
+        # write fails, docker build cancels itself on its first line of output,
+        # and update.sh fails the same way every five minutes for as long as
+        # this process lives, logging nothing. Exiting instead lets systemd
+        # (Restart=always) start us again on a stream that works.
+        if ! echo "$(date): Running update.sh..."; then
+            exit 1
+        fi
         HASH_BEFORE=$(git rev-parse HEAD 2>/dev/null)
         $SUDO env AUTO_UPDATE=true "$SCRIPT_DIR"/update.sh
         UPDATE_EXIT=$?

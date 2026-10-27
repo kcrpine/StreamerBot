@@ -276,18 +276,6 @@ perform_image_rebuild() {
     STATE_FILE="/tmp/streamerbot_last_running.txt"
     RUNNING_NAMES=$(docker ps --format "{{.Names}}" -f "label=role=streamerbot")
     
-    # Signal running bots that an update has started
-    if [ ! -z "$RUNNING_NAMES" ]; then
-        echo -e "${YELLOW}Notifying running bots of the update...${NC}"
-        echo "$RUNNING_NAMES" | while read -r name; do
-            if [ -n "$name" ] && [ -d "$BOTS_ROOT/$name" ]; then
-                touch "$BOTS_ROOT/$name/update_in_progress"
-            fi
-        done
-        # Give the bots a brief moment to detect the file and send the warning message
-        sleep 1.5
-    fi
-    
     # Build the image with a commit hash label for version tracking
     CURRENT_HASH=$(git rev-parse HEAD 2>/dev/null || echo "unknown")
     echo "Building new image with version label: $CURRENT_HASH"
@@ -295,6 +283,21 @@ perform_image_rebuild() {
     
     if [ $? -eq 0 ]; then
          echo -e "${GREEN}Image built successfully!${NC}"
+
+         # Signal running bots that they are about to restart. Only now, with
+         # the image built: the message promises a restart "in a few moments",
+         # and when it went out before the build, a build that failed sent it
+         # into every channel on each retry with no restart ever following.
+         if [ ! -z "$RUNNING_NAMES" ]; then
+             echo -e "${YELLOW}Notifying running bots of the update...${NC}"
+             echo "$RUNNING_NAMES" | while read -r name; do
+                 if [ -n "$name" ] && [ -d "$BOTS_ROOT/$name" ]; then
+                     touch "$BOTS_ROOT/$name/update_in_progress"
+                 fi
+             done
+             # Give the bots a brief moment to detect the file and send the warning message
+             sleep 1.5
+         fi
          
          if [ -z "$RUNNING_NAMES" ] && [ -f "$STATE_FILE" ]; then
              RUNNING_NAMES=$(cat "$STATE_FILE")

@@ -162,6 +162,25 @@ exit 0
         self.assertNotIn("recovery failed", result.stdout.lower())
         self.assertIn("state=0:0", result.stdout)
 
+    def test_an_unwritable_log_stops_the_watcher_instead_of_updating(self) -> None:
+        """journald restarting leaves our stdout with no reader. update.sh
+        inherits it, docker build cancels on its first write, and the update
+        then failed every five minutes for days without a line in the log.
+        /dev/full fails every write the same way a reader-less stream does."""
+        script = self._one_cycle_script()
+        result = self.sandbox.run(
+            ["-c", f"bash ./{script} >/dev/full"],
+            env={
+                "TEST_HEALTH": "ok",
+                "TEST_LOCAL_HASH": "new",
+                "TEST_REMOTE_HASH": "new",
+                "TEST_RUNNING_HASH": "old",
+            },
+        )
+
+        self.assertEqual(1, result.returncode, result.stderr)
+        self.assertFalse(self.sandbox.trace.exists())
+
     def test_a_channel_switch_never_moves_a_server_backwards(self) -> None:
         """Checked out on main, following stable, and stable's tip is an
         ancestor of what runs: that is a switch waiting for a release."""
