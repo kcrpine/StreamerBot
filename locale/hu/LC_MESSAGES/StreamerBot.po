@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  StreamerBot\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-12 04:01+0000\n"
+"POT-Creation-Date: 2026-10-27 20:23+0000\n"
 "PO-Revision-Date: 2024-01-18 16:31+0100\n"
 "Last-Translator: Гумеров Амир Эдуардович <gumerov.amir.e@gmail.com>\n"
 "Language: hu\n"
@@ -19,21 +19,21 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.18.0\n"
 
-#: bot/__init__.py:215 bot/__init__.py:278
+#: bot/__init__.py:223 bot/__init__.py:286
 msgid ""
 "This needs Google Chrome, which is not available on this machine's "
 "processor architecture."
 msgstr ""
 
-#: bot/__init__.py:260
+#: bot/__init__.py:268
 msgid "Spotify is unavailable: the player could not start."
 msgstr ""
 
-#: bot/__init__.py:293 bot/__init__.py:296 bot/modules/portal_pages.py:543
+#: bot/__init__.py:301 bot/__init__.py:304 bot/modules/portal_pages.py:543
 msgid "The sign-in did not complete."
 msgstr ""
 
-#: bot/__init__.py:309
+#: bot/__init__.py:317
 msgid ""
 "The account portal is switched off in this bot's configuration, so "
 "Netflix, Disney Plus, Apple Music and Amazon Music cannot be connected. "
@@ -43,7 +43,7 @@ msgid ""
 "Portal and Spotify Ports in the manager turns it back on."
 msgstr ""
 
-#: bot/__init__.py:362
+#: bot/__init__.py:370
 #, python-format
 msgid ""
 "The account portal could not start because port %(port)s is already in "
@@ -54,7 +54,7 @@ msgid ""
 "they sign in with a code in the channel."
 msgstr ""
 
-#: bot/__init__.py:372
+#: bot/__init__.py:380
 #, python-format
 msgid ""
 "The account portal could not start, so Netflix, Disney Plus, Apple Music "
@@ -62,20 +62,24 @@ msgid ""
 "file: %(reason)s"
 msgstr ""
 
-#: bot/__init__.py:404
+#: bot/__init__.py:412
 msgid ""
 "Hello! I'm back and ready for you to stream again. Thank you for your "
 "patience!"
 msgstr ""
 
-#: bot/__init__.py:442
+#: bot/__init__.py:452
 msgid ""
 "Hello there! It's me, the Streamer Bot, just coming in here to let you "
 "know that an update is in progress and I will restart in a few moments to"
 " apply it. Thank you!"
 msgstr ""
 
-#: bot/__init__.py:499
+#: bot/__init__.py:497
+msgid "Restarted. The new settings are in use."
+msgstr "Újraindítva. Az új beállítások érvényesek."
+
+#: bot/__init__.py:537
 msgid "The bot is restarting now to apply the update. See you in a moment!"
 msgstr "A bot most újraindul a frissítés telepítéséhez. Hamarosan találkozunk!"
 
@@ -98,15 +102,19 @@ msgstr ""
 msgid "Send \"h\" for help"
 msgstr "Küldj egy h-t a parancsok megismeréséhez"
 
-#: bot/commands/__init__.py:172
+#: bot/commands/__init__.py:176
 msgid "That question has expired. To ask again, send: dlp"
 msgstr ""
 
-#: bot/commands/__init__.py:254
+#: bot/commands/__init__.py:201
+msgid "That menu has expired. To open it again, send: cf"
+msgstr "Ez a menü lejárt. Az újbóli megnyitáshoz küldje: cf"
+
+#: bot/commands/__init__.py:283
 msgid "Unknown command. Send \"h\" for help."
 msgstr "Ismeretlen parancs. Küldj egy h-t a parancsok megismeréséhez."
 
-#: bot/commands/__init__.py:260 bot/commands/user_commands.py:918
+#: bot/commands/__init__.py:289 bot/commands/user_commands.py:918
 #: bot/commands/user_commands.py:924 bot/commands/user_commands.py:1419
 #: bot/commands/user_commands.py:1501 bot/commands/user_commands.py:1573
 #: bot/commands/user_commands.py:1647 bot/modules/uploader.py:140
@@ -114,23 +122,23 @@ msgstr "Ismeretlen parancs. Küldj egy h-t a parancsok megismeréséhez."
 msgid "Error: {}"
 msgstr "Hiba: {}"
 
-#: bot/commands/__init__.py:272
+#: bot/commands/__init__.py:301
 msgid "You are banned"
 msgstr "Tiltva vagy"
 
-#: bot/commands/__init__.py:276
+#: bot/commands/__init__.py:305
 msgid "You are not in bot's channel"
 msgstr "Nem tartózkodsz a bottal egy csatornában"
 
-#: bot/commands/__init__.py:280
+#: bot/commands/__init__.py:309
 msgid "Bot is locked"
 msgstr "A bot zárolva van"
 
-#: bot/commands/__init__.py:284
+#: bot/commands/__init__.py:313
 msgid "This command is blocked"
 msgstr "Tiltott parancs"
 
-#: bot/commands/__init__.py:308
+#: bot/commands/__init__.py:337
 msgid "Unknown command"
 msgstr "Ismeretlen parancs"
 
@@ -144,16 +152,16 @@ msgstr ""
 "parancsot a tiltólistához, a -PARANCS pedig eltávolítja azt. Paraméterek "
 "nélkül a tiltólistát mutatja"
 
-#: bot/commands/admin_commands.py:32 bot/commands/admin_commands.py:322
-#: bot/commands/admin_commands.py:352 bot/commands/user_commands.py:642
+#: bot/commands/admin_commands.py:32 bot/commands/admin_commands.py:379
+#: bot/commands/admin_commands.py:409 bot/commands/user_commands.py:642
 #: bot/commands/user_commands.py:654 bot/commands/user_commands.py:710
 #: bot/commands/user_commands.py:1349 bot/commands/user_commands.py:1371
 #: bot/commands/user_commands.py:1434
 msgid "The list is empty"
 msgstr "A lista üres"
 
-#: bot/commands/admin_commands.py:37 bot/commands/admin_commands.py:304
-#: bot/commands/admin_commands.py:336 bot/commands/user_commands.py:605
+#: bot/commands/admin_commands.py:37 bot/commands/admin_commands.py:361
+#: bot/commands/admin_commands.py:393 bot/commands/user_commands.py:605
 msgid "Added"
 msgstr "Hozzáadva"
 
@@ -161,8 +169,8 @@ msgstr "Hozzáadva"
 msgid "This command is already added"
 msgstr "Ez a parancs már hozzá van adva"
 
-#: bot/commands/admin_commands.py:45 bot/commands/admin_commands.py:310
-#: bot/commands/admin_commands.py:342 bot/commands/user_commands.py:617
+#: bot/commands/admin_commands.py:45 bot/commands/admin_commands.py:367
+#: bot/commands/admin_commands.py:399 bot/commands/user_commands.py:617
 msgid "Deleted"
 msgstr "Törölve"
 
@@ -292,15 +300,30 @@ msgstr "Csatornaüzenetek engedélyezve"
 msgid "Channel messages disabled"
 msgstr "Csatornaüzenetek letiltva"
 
-#: bot/commands/admin_commands.py:286
+#: bot/commands/admin_commands.py:289
+msgid ""
+"Opens a menu of the bot's settings, such as the server, nickname, startup"
+" commands and services. Each change is saved at once, and the bot offers "
+"to restart when a change needs it"
+msgstr ""
+"Megnyitja a bot beállításainak menüjét, például a szervert, a becenevet, "
+"az indítási parancsokat és a szolgáltatásokat. Minden változás azonnal "
+"mentésre kerül, és ha egy változáshoz kell, a bot felajánlja az "
+"újraindítást"
+
+#: bot/commands/admin_commands.py:319
+msgid "Restarting now. I will be back in a few seconds."
+msgstr "Most újraindulok. Néhány másodperc múlva visszajövök."
+
+#: bot/commands/admin_commands.py:343
 msgid "Saves bot's configuration"
 msgstr "A bot beállításainak mentése"
 
-#: bot/commands/admin_commands.py:290
+#: bot/commands/admin_commands.py:347
 msgid "Configuration saved"
 msgstr "Beállítások elmentve"
 
-#: bot/commands/admin_commands.py:297
+#: bot/commands/admin_commands.py:354
 msgid ""
 "+/-USERNAME Manages a list of administrators. +USERNAME adds a user. "
 "-USERNAME removes it. Without an option shows the list"
@@ -309,15 +332,15 @@ msgstr ""
 "felhasználó hozzáadása. -FELHASZNÁLÓNÉV felhasználó eltávolítása. "
 "Paraméterek nélkül a listát mutatja"
 
-#: bot/commands/admin_commands.py:313
+#: bot/commands/admin_commands.py:370
 msgid "This user is not in the admin list"
 msgstr "Ez a felhasználó nem szerepel az adminisztrátor listán"
 
-#: bot/commands/admin_commands.py:319 bot/commands/admin_commands.py:349
+#: bot/commands/admin_commands.py:376 bot/commands/admin_commands.py:406
 msgid "<Anonymous>"
 msgstr "<Anonymous>"
 
-#: bot/commands/admin_commands.py:329
+#: bot/commands/admin_commands.py:386
 msgid ""
 "+/-USERNAME Manages a list of banned users. +USERNAME adds a user. "
 "-USERNAME removes it. Without an option shows the list"
@@ -326,93 +349,93 @@ msgstr ""
 " felhasználó hozzáadása. -FELHASZNÁLÓNÉV felhasználó eltávolítása. "
 "Paraméterek nélkül a listát mutatja"
 
-#: bot/commands/admin_commands.py:344
+#: bot/commands/admin_commands.py:401
 msgid "This user is not banned"
 msgstr "Ez a felhasználó nincs tiltva"
 
-#: bot/commands/admin_commands.py:358
+#: bot/commands/admin_commands.py:415
 msgid "Quits the bot"
 msgstr "Kilépteti a botot a szerverről"
 
-#: bot/commands/admin_commands.py:367
+#: bot/commands/admin_commands.py:424
 msgid "Restarts the bot"
 msgstr "Újraindítja a botot"
 
-#: bot/commands/admin_commands.py:382
+#: bot/commands/admin_commands.py:439
 msgid "Returns current channel's ID"
 msgstr "Megadja az aktuális csatorna azonosítóját"
 
-#: bot/commands/admin_commands.py:401
+#: bot/commands/admin_commands.py:458
 msgid ""
 "[status|out] Shows whether this bot is signed in to YouTube, or signs it "
 "out. To sign in, send li yt"
 msgstr ""
 
 # | msgid "This user is not banned"
-#: bot/commands/admin_commands.py:409 bot/modules/auth_portal.py:283
+#: bot/commands/admin_commands.py:466 bot/modules/auth_portal.py:283
 #: bot/modules/auth_portal.py:318
 #, fuzzy
 msgid "The YouTube service is not enabled."
 msgstr "Ez a felhasználó nincs tiltva"
 
-#: bot/commands/admin_commands.py:416
+#: bot/commands/admin_commands.py:473
 msgid "This bot is signed in to YouTube."
 msgstr ""
 
-#: bot/commands/admin_commands.py:419
+#: bot/commands/admin_commands.py:476
 msgid ""
 "Google signed this bot out of YouTube. To sign in again, send this "
 "command: li yt"
 msgstr ""
 
-#: bot/commands/admin_commands.py:422
+#: bot/commands/admin_commands.py:479
 msgid "This bot is not signed in to YouTube. To sign in, send this command: li yt"
 msgstr ""
 
-#: bot/commands/admin_commands.py:427
+#: bot/commands/admin_commands.py:484
 msgid "This bot has been signed out of YouTube."
 msgstr ""
 
-#: bot/commands/admin_commands.py:431
+#: bot/commands/admin_commands.py:488
 msgid ""
 "YouTube is connected through the account portal now. Send this command: "
 "li yt"
 msgstr ""
 
-#: bot/commands/admin_commands.py:443
+#: bot/commands/admin_commands.py:500
 msgid ""
 "[link|rotate|off] Shows the account portal's status, mints a new link, "
 "revokes every existing link, or stops the portal"
 msgstr ""
 
-#: bot/commands/admin_commands.py:450 bot/commands/admin_commands.py:506
+#: bot/commands/admin_commands.py:507 bot/commands/admin_commands.py:563
 msgid "The account portal is not running."
 msgstr ""
 
-#: bot/commands/admin_commands.py:456
+#: bot/commands/admin_commands.py:513
 #, python-format
 msgid ""
 "The portal is listening on %(host)s port %(port)s with %(count)s live "
 "links."
 msgstr ""
 
-#: bot/commands/admin_commands.py:471
+#: bot/commands/admin_commands.py:528
 #, python-format
 msgid "That address came from %(source)s."
 msgstr ""
 
-#: bot/commands/admin_commands.py:483
+#: bot/commands/admin_commands.py:540
 #, python-format
 msgid "Revoked %(count)s links. Send ap link for a new one."
 msgstr ""
 
-#: bot/commands/admin_commands.py:488
+#: bot/commands/admin_commands.py:545
 msgid "The portal has been stopped."
 msgstr ""
 
 # | msgid "" "SERVICE Disconnects a streaming account and deletes its saved
 # | sign-in " "(yt, sp, nf, dp, am, az, pp, tb)"
-#: bot/commands/admin_commands.py:499
+#: bot/commands/admin_commands.py:556
 msgid ""
 "SERVICE Disconnects a streaming account and deletes its saved sign-in "
 "(yt, sp, nf, dp, am, az, pp, hu, tb)"
@@ -420,12 +443,12 @@ msgstr ""
 "SZOLGÁLTATÁS Leválaszt egy streamingfiókot, és törli a mentett "
 "bejelentkezését (yt, sp, nf, dp, am, az, pp, hu, tb)"
 
-#: bot/commands/admin_commands.py:514
+#: bot/commands/admin_commands.py:571
 #, python-format
 msgid "%(service)s is not connected."
 msgstr ""
 
-#: bot/commands/admin_commands.py:520
+#: bot/commands/admin_commands.py:577
 #, python-format
 msgid "%(service)s has been disconnected and its saved sign-in deleted."
 msgstr ""
@@ -457,6 +480,476 @@ msgid ""
 "Google signed StreamerBot out of YouTube. To sign in again, send this "
 "command: li yt"
 msgstr ""
+
+#: bot/commands/config_menu.py:155
+msgid "on"
+msgstr "be"
+
+#: bot/commands/config_menu.py:155
+msgid "off"
+msgstr "ki"
+
+#: bot/commands/config_menu.py:162
+msgid "not set"
+msgstr "nincs megadva"
+
+#: bot/commands/config_menu.py:170
+msgid "Restart now to apply changes"
+msgstr "Újraindítás most a változások alkalmazásához"
+
+#: bot/commands/config_menu.py:175
+msgid "Settings. Each change is saved as soon as you make it. Send a number:"
+msgstr "Beállítások. Minden változás azonnal mentésre kerül. Küldjön egy számot:"
+
+#: bot/commands/config_menu.py:178
+msgid "Close settings"
+msgstr "Beállítások bezárása"
+
+#: bot/commands/config_menu.py:190
+msgid "Changes here take effect after a restart."
+msgstr "Az itteni változások újraindítás után lépnek életbe."
+
+#: bot/commands/config_menu.py:192
+msgid "Some changes here take effect after a restart."
+msgstr "Néhány itteni változás újraindítás után lép életbe."
+
+#: bot/commands/config_menu.py:193 bot/commands/config_menu.py:213
+msgid "Send a number:"
+msgstr "Küldjön egy számot:"
+
+#: bot/commands/config_menu.py:198 bot/commands/config_menu.py:218
+msgid "Back"
+msgstr "Vissza"
+
+#: bot/commands/config_menu.py:206
+msgid "Startup commands, run each time the bot starts:"
+msgstr "Indítási parancsok, a bot minden indulásakor lefutnak:"
+
+#: bot/commands/config_menu.py:208
+#, python-brace-format
+msgid "Command {number}: {command}"
+msgstr "{number}. parancs: {command}"
+
+#: bot/commands/config_menu.py:212
+msgid "Startup commands, run each time the bot starts. No commands yet."
+msgstr "Indítási parancsok, a bot minden indulásakor lefutnak. Még nincs parancs."
+
+#: bot/commands/config_menu.py:214
+msgid "Add a command"
+msgstr "Parancs hozzáadása"
+
+#: bot/commands/config_menu.py:216
+msgid "Remove a command"
+msgstr "Parancs eltávolítása"
+
+#: bot/commands/config_menu.py:217
+msgid "Remove all commands"
+msgstr "Összes parancs eltávolítása"
+
+#: bot/commands/config_menu.py:227 bot/commands/config_menu.py:245
+#, python-brace-format
+msgid "{setting} is {value}."
+msgstr "{setting}: {value}."
+
+#: bot/commands/config_menu.py:228
+msgid "To turn it off, send: 1"
+msgstr "A kikapcsoláshoz küldje: 1"
+
+#: bot/commands/config_menu.py:228
+msgid "To turn it on, send: 1"
+msgstr "A bekapcsoláshoz küldje: 1"
+
+#: bot/commands/config_menu.py:229
+msgid "To keep it on, send: 0"
+msgstr "Hogy bekapcsolva maradjon, küldje: 0"
+
+#: bot/commands/config_menu.py:229
+msgid "To keep it off, send: 0"
+msgstr "Hogy kikapcsolva maradjon, küldje: 0"
+
+#: bot/commands/config_menu.py:234
+#, python-brace-format
+msgid "{setting} is {value}. Send a number:"
+msgstr "{setting}: {value}. Küldjön egy számot:"
+
+#: bot/commands/config_menu.py:240
+#, python-brace-format
+msgid "{choice}, current"
+msgstr "{choice}, jelenlegi"
+
+#: bot/commands/config_menu.py:242
+#, python-brace-format
+msgid "Keep {value}"
+msgstr "Maradjon: {value}"
+
+#: bot/commands/config_menu.py:250
+msgid "To clear it"
+msgstr "A törléshez"
+
+#: bot/commands/config_menu.py:251
+#, python-brace-format
+msgid "send a single dash: {dash}"
+msgstr "küldjön egyetlen kötőjelet: {dash}"
+
+#: bot/commands/config_menu.py:253 bot/commands/config_menu.py:435
+msgid "To keep it, send: 0"
+msgstr "Hogy így maradjon, küldje: 0"
+
+# | msgid "Send a number from 1 to {total}."
+#: bot/commands/config_menu.py:257
+#, python-brace-format
+msgid "Send a number from {minimum} to {maximum}."
+msgstr "Küldjön egy számot {minimum} és {maximum} között."
+
+#: bot/commands/config_menu.py:263
+msgid "Some changes take effect only after a restart."
+msgstr "Néhány változás csak újraindítás után lép életbe."
+
+#: bot/commands/config_menu.py:264
+msgid "To restart now, send: 99"
+msgstr "Az azonnali újraindításhoz küldje: 99"
+
+#: bot/commands/config_menu.py:265
+msgid "To close without restarting, send: 0"
+msgstr "Újraindítás nélküli bezáráshoz küldje: 0"
+
+#: bot/commands/config_menu.py:271
+msgid ""
+"The bot will restart with the new server details. If they are wrong, it "
+"cannot reconnect, and they can then only be fixed on the server with "
+"streamerbot.sh."
+msgstr ""
+"A bot az új szerveradatokkal indul újra. Ha ezek hibásak, nem tud újra "
+"csatlakozni, és akkor csak a szerveren, a streamerbot.sh segítségével "
+"javíthatók."
+
+#: bot/commands/config_menu.py:274
+msgid "To restart, send: 1"
+msgstr "Az újraindításhoz küldje: 1"
+
+#: bot/commands/config_menu.py:275
+msgid "To go back, send: 0"
+msgstr "A visszalépéshez küldje: 0"
+
+#: bot/commands/config_menu.py:281
+msgid "Settings closed. Some changes still need a restart."
+msgstr "Beállítások bezárva. Néhány változáshoz még újraindítás kell."
+
+#: bot/commands/config_menu.py:282
+msgid "To restart later, send: rs"
+msgstr "Későbbi újraindításhoz küldje: rs"
+
+#: bot/commands/config_menu.py:284
+msgid "Settings closed."
+msgstr "Beállítások bezárva."
+
+#: bot/commands/config_menu.py:290
+#, python-brace-format
+msgid "No change. {setting} is still {value}."
+msgstr "Nincs változás. {setting}: továbbra is {value}."
+
+# | msgid "Live streams cannot be downloaded"
+# | msgid "Spotify tracks cannot be downloaded."
+# | msgid "{count} could not be downloaded."
+# | msgid "Tracks that could not be downloaded: {count}."
+#: bot/commands/config_menu.py:296 bot/commands/config_menu.py:463
+#, python-brace-format
+msgid "That could not be saved: {error}"
+msgstr "Nem sikerült menteni: {error}"
+
+#: bot/commands/config_menu.py:297
+#, python-brace-format
+msgid "Saved. {setting} is now {value}."
+msgstr "Mentve. {setting}: {value}."
+
+#: bot/commands/config_menu.py:308
+msgid "It takes effect after a restart."
+msgstr "Újraindítás után lép életbe."
+
+# | msgid "Nothing is found for your query"
+#: bot/commands/config_menu.py:341
+msgid "Nothing is waiting for a restart."
+msgstr "Semmi sem vár újraindításra."
+
+#: bot/commands/config_menu.py:430
+#, python-brace-format
+msgid "{value} is not a number from {minimum} to {maximum}."
+msgstr "A(z) {value} nem {minimum} és {maximum} közötti szám."
+
+#: bot/commands/config_menu.py:476
+msgid ""
+"Send the command to run when the bot starts, for example: u "
+"http://example.org:8000/live.mp3"
+msgstr ""
+"Küldje el a bot indulásakor futtatandó parancsot, például: u "
+"http://example.org:8000/live.mp3"
+
+# | msgid "To start the list again from episode 1, send: pe"
+#: bot/commands/config_menu.py:478 bot/commands/config_menu.py:493
+msgid "To keep the list as it is, send: 0"
+msgstr "Hogy a lista így maradjon, küldje: 0"
+
+#: bot/commands/config_menu.py:482
+msgid "Send the number of the command to remove:"
+msgstr "Küldje el az eltávolítandó parancs számát:"
+
+#: bot/commands/config_menu.py:484
+msgid "Keep the list as it is"
+msgstr "A lista maradjon így"
+
+#: bot/commands/config_menu.py:489
+#, python-brace-format
+msgid "This removes all {count} startup commands."
+msgstr "Ez mind a(z) {count} indítási parancsot eltávolítja."
+
+#: bot/commands/config_menu.py:490
+msgid "This removes the only startup command."
+msgstr "Ez eltávolítja az egyetlen indítási parancsot."
+
+#: bot/commands/config_menu.py:491
+msgid "To remove them, send: 1"
+msgstr "Az eltávolításukhoz küldje: 1"
+
+#: bot/commands/config_menu.py:492
+msgid "To remove it, send: 1"
+msgstr "Az eltávolításához küldje: 1"
+
+#: bot/commands/config_menu.py:499
+msgid "Saved. All startup commands were removed."
+msgstr "Mentve. Minden indítási parancs eltávolítva."
+
+#: bot/commands/config_menu.py:507
+#, python-brace-format
+msgid "Saved. Added the startup command: {command}"
+msgstr "Mentve. Indítási parancs hozzáadva: {command}"
+
+#: bot/commands/config_menu.py:518
+#, python-brace-format
+msgid "Saved. Removed the startup command: {command}"
+msgstr "Mentve. Indítási parancs eltávolítva: {command}"
+
+#: bot/commands/config_menu.py:521 bot/commands/config_menu.py:528
+#, python-brace-format
+msgid ""
+"There is no {number} here. Send a number from 1 to {last}, or to go back,"
+" send: 0"
+msgstr ""
+"Itt nincs {number}. Küldjön egy számot 1 és {last} között, vagy a "
+"visszalépéshez küldje: 0"
+
+#: bot/commands/config_menu.py:558
+msgid "Server connection"
+msgstr "Szerverkapcsolat"
+
+#: bot/commands/config_menu.py:559
+msgid "Server address"
+msgstr "Szerver címe"
+
+#: bot/commands/config_menu.py:560
+msgid "Send the new address."
+msgstr "Küldje el az új címet."
+
+#: bot/commands/config_menu.py:561
+msgid "TCP port"
+msgstr "TCP port"
+
+#: bot/commands/config_menu.py:562
+msgid "UDP port"
+msgstr "UDP port"
+
+#: bot/commands/config_menu.py:563
+msgid "Encrypted connection"
+msgstr "Titkosított kapcsolat"
+
+#: bot/commands/config_menu.py:565
+msgid "Username"
+msgstr "Felhasználónév"
+
+#: bot/commands/config_menu.py:566
+msgid "Send the new username."
+msgstr "Küldje el az új felhasználónevet."
+
+#: bot/commands/config_menu.py:567
+msgid "Password"
+msgstr "Jelszó"
+
+#: bot/commands/config_menu.py:568
+msgid "Send the new password."
+msgstr "Küldje el az új jelszót."
+
+# | msgid "Cache cleared"
+# | msgid "Cancelled."
+# | msgid "Cancel"
+#: bot/commands/config_menu.py:570
+msgid "Channel"
+msgstr "Csatorna"
+
+#: bot/commands/config_menu.py:572
+msgid "Send the channel's path, such as /Music/, or its number."
+msgstr "Küldje el a csatorna útvonalát, például /Music/, vagy a számát."
+
+#: bot/commands/config_menu.py:574
+msgid "To use the root channel"
+msgstr "A gyökércsatorna használatához"
+
+#: bot/commands/config_menu.py:575
+msgid "Channel password"
+msgstr "Csatorna jelszava"
+
+#: bot/commands/config_menu.py:577
+msgid "Send the new channel password."
+msgstr "Küldje el a csatorna új jelszavát."
+
+#: bot/commands/config_menu.py:578
+msgid ""
+"Passwords are shown in this chat, and your TeamTalk client keeps them in "
+"its history."
+msgstr ""
+"A jelszavak megjelennek ebben a csevegésben, és a TeamTalk kliense "
+"megőrzi őket az előzményekben."
+
+#: bot/commands/config_menu.py:579
+msgid "Bot identity"
+msgstr "A bot adatai"
+
+#: bot/commands/config_menu.py:580
+msgid "Nickname"
+msgstr "Becenév"
+
+#: bot/commands/config_menu.py:581
+msgid "Send the new nickname."
+msgstr "Küldje el az új becenevet."
+
+#: bot/commands/config_menu.py:582
+msgid "Status message"
+msgstr "Állapotüzenet"
+
+#: bot/commands/config_menu.py:583
+msgid "Send the new status message."
+msgstr "Küldje el az új állapotüzenetet."
+
+#: bot/commands/config_menu.py:585
+msgid "Gender"
+msgstr "Nem"
+
+#: bot/commands/config_menu.py:586
+msgid "Neutral"
+msgstr "Semleges"
+
+#: bot/commands/config_menu.py:586
+msgid "Male"
+msgstr "Férfi"
+
+#: bot/commands/config_menu.py:586
+msgid "Female"
+msgstr "Nő"
+
+# | msgid "Incorrect language"
+#: bot/commands/config_menu.py:588
+msgid "Language"
+msgstr "Nyelv"
+
+#: bot/commands/config_menu.py:592 bot/commands/config_menu.py:593
+msgid "Startup commands"
+msgstr "Indítási parancsok"
+
+# | msgid "Stops playback"
+#: bot/commands/config_menu.py:595
+msgid "Playback"
+msgstr "Lejátszás"
+
+#: bot/commands/config_menu.py:596
+msgid "Volume when the bot starts"
+msgstr "Hangerő a bot indulásakor"
+
+#: bot/commands/config_menu.py:598
+msgid "Highest volume allowed"
+msgstr "Legnagyobb megengedett hangerő"
+
+#: bot/commands/config_menu.py:600
+msgid "Seconds to skip when seeking"
+msgstr "Tekeréskor átugrott másodpercek"
+
+#: bot/commands/config_menu.py:602
+msgid "Stop when nobody else is in the channel"
+msgstr "Leállás, ha senki más nincs a csatornán"
+
+# | msgid "Search results mode: ON"
+#: bot/commands/config_menu.py:604
+msgid "Search results mode"
+msgstr "Keresési találatok mód"
+
+#: bot/commands/config_menu.py:605
+msgid "Default service"
+msgstr "Alapértelmezett szolgáltatás"
+
+# | msgid "Live streams cannot be downloaded"
+# | msgid "Netflix titles cannot be downloaded."
+#: bot/commands/config_menu.py:609
+msgid "Files and downloads"
+msgstr "Fájlok és letöltések"
+
+#: bot/commands/config_menu.py:611
+msgid "Seconds before uploaded files are deleted, 0 for never"
+msgstr "Másodperc a feltöltött fájlok törléséig, 0 esetén soha"
+
+#: bot/commands/config_menu.py:614
+msgid "Messages"
+msgstr "Üzenetek"
+
+# | msgid "Channel messages enabled"
+#: bot/commands/config_menu.py:615
+msgid "Channel messages"
+msgstr "Csatornaüzenetek"
+
+#: bot/commands/config_menu.py:616
+msgid "Audio description"
+msgstr "Hangalámondás"
+
+#: bot/commands/config_menu.py:618
+msgid "Ask each time"
+msgstr "Kérdezzen minden alkalommal"
+
+#: bot/commands/config_menu.py:618
+msgid "Always"
+msgstr "Mindig"
+
+#: bot/commands/config_menu.py:619
+msgid "Never"
+msgstr "Soha"
+
+#: bot/commands/config_menu.py:621
+msgid "Services"
+msgstr "Szolgáltatások"
+
+# | msgid "your account page"
+#: bot/commands/config_menu.py:625 bot/commands/config_menu.py:626
+msgid "Account portal"
+msgstr "Fiókportál"
+
+#: bot/commands/config_menu.py:627
+msgid "Who can open the portal"
+msgstr "Ki nyithatja meg a portált"
+
+#: bot/commands/config_menu.py:628
+msgid "Only this computer"
+msgstr "Csak ez a számítógép"
+
+#: bot/commands/config_menu.py:629
+msgid "Any computer that can reach this one"
+msgstr "Bármely számítógép, amely eléri ezt"
+
+#: bot/commands/config_menu.py:630
+msgid "Public address"
+msgstr "Nyilvános cím"
+
+#: bot/commands/config_menu.py:631
+msgid ""
+"Send the address people use to reach the portal, such as "
+"http://example.org:4419"
+msgstr ""
+"Küldje el a címet, amelyen a portál elérhető, például "
+"http://example.org:4419"
 
 # | msgid "Loaded {count} tracks"
 # | msgid "Playing {name}, {count} tracks"

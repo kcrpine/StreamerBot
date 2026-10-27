@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: StreamerBot VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-12 04:01+0000\n"
+"POT-Creation-Date: 2026-10-27 20:23+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,21 +18,21 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.18.0\n"
 
-#: bot/__init__.py:215 bot/__init__.py:278
+#: bot/__init__.py:223 bot/__init__.py:286
 msgid ""
 "This needs Google Chrome, which is not available on this machine's "
 "processor architecture."
 msgstr ""
 
-#: bot/__init__.py:260
+#: bot/__init__.py:268
 msgid "Spotify is unavailable: the player could not start."
 msgstr ""
 
-#: bot/__init__.py:293 bot/__init__.py:296 bot/modules/portal_pages.py:543
+#: bot/__init__.py:301 bot/__init__.py:304 bot/modules/portal_pages.py:543
 msgid "The sign-in did not complete."
 msgstr ""
 
-#: bot/__init__.py:309
+#: bot/__init__.py:317
 msgid ""
 "The account portal is switched off in this bot's configuration, so "
 "Netflix, Disney Plus, Apple Music and Amazon Music cannot be connected. "
@@ -42,7 +42,7 @@ msgid ""
 "Portal and Spotify Ports in the manager turns it back on."
 msgstr ""
 
-#: bot/__init__.py:362
+#: bot/__init__.py:370
 #, python-format
 msgid ""
 "The account portal could not start because port %(port)s is already in "
@@ -53,7 +53,7 @@ msgid ""
 "they sign in with a code in the channel."
 msgstr ""
 
-#: bot/__init__.py:372
+#: bot/__init__.py:380
 #, python-format
 msgid ""
 "The account portal could not start, so Netflix, Disney Plus, Apple Music "
@@ -61,20 +61,24 @@ msgid ""
 "file: %(reason)s"
 msgstr ""
 
-#: bot/__init__.py:404
+#: bot/__init__.py:412
 msgid ""
 "Hello! I'm back and ready for you to stream again. Thank you for your "
 "patience!"
 msgstr ""
 
-#: bot/__init__.py:442
+#: bot/__init__.py:452
 msgid ""
 "Hello there! It's me, the Streamer Bot, just coming in here to let you "
 "know that an update is in progress and I will restart in a few moments to"
 " apply it. Thank you!"
 msgstr ""
 
-#: bot/__init__.py:499
+#: bot/__init__.py:497
+msgid "Restarted. The new settings are in use."
+msgstr ""
+
+#: bot/__init__.py:537
 msgid "The bot is restarting now to apply the update. See you in a moment!"
 msgstr ""
 
@@ -97,15 +101,19 @@ msgstr ""
 msgid "Send \"h\" for help"
 msgstr ""
 
-#: bot/commands/__init__.py:172
+#: bot/commands/__init__.py:176
 msgid "That question has expired. To ask again, send: dlp"
 msgstr ""
 
-#: bot/commands/__init__.py:254
+#: bot/commands/__init__.py:201
+msgid "That menu has expired. To open it again, send: cf"
+msgstr ""
+
+#: bot/commands/__init__.py:283
 msgid "Unknown command. Send \"h\" for help."
 msgstr ""
 
-#: bot/commands/__init__.py:260 bot/commands/user_commands.py:918
+#: bot/commands/__init__.py:289 bot/commands/user_commands.py:918
 #: bot/commands/user_commands.py:924 bot/commands/user_commands.py:1419
 #: bot/commands/user_commands.py:1501 bot/commands/user_commands.py:1573
 #: bot/commands/user_commands.py:1647 bot/modules/uploader.py:140
@@ -113,23 +121,23 @@ msgstr ""
 msgid "Error: {}"
 msgstr ""
 
-#: bot/commands/__init__.py:272
+#: bot/commands/__init__.py:301
 msgid "You are banned"
 msgstr ""
 
-#: bot/commands/__init__.py:276
+#: bot/commands/__init__.py:305
 msgid "You are not in bot's channel"
 msgstr ""
 
-#: bot/commands/__init__.py:280
+#: bot/commands/__init__.py:309
 msgid "Bot is locked"
 msgstr ""
 
-#: bot/commands/__init__.py:284
+#: bot/commands/__init__.py:313
 msgid "This command is blocked"
 msgstr ""
 
-#: bot/commands/__init__.py:308
+#: bot/commands/__init__.py:337
 msgid "Unknown command"
 msgstr ""
 
@@ -140,16 +148,16 @@ msgid ""
 "blocklist"
 msgstr ""
 
-#: bot/commands/admin_commands.py:32 bot/commands/admin_commands.py:322
-#: bot/commands/admin_commands.py:352 bot/commands/user_commands.py:642
+#: bot/commands/admin_commands.py:32 bot/commands/admin_commands.py:379
+#: bot/commands/admin_commands.py:409 bot/commands/user_commands.py:642
 #: bot/commands/user_commands.py:654 bot/commands/user_commands.py:710
 #: bot/commands/user_commands.py:1349 bot/commands/user_commands.py:1371
 #: bot/commands/user_commands.py:1434
 msgid "The list is empty"
 msgstr ""
 
-#: bot/commands/admin_commands.py:37 bot/commands/admin_commands.py:304
-#: bot/commands/admin_commands.py:336 bot/commands/user_commands.py:605
+#: bot/commands/admin_commands.py:37 bot/commands/admin_commands.py:361
+#: bot/commands/admin_commands.py:393 bot/commands/user_commands.py:605
 msgid "Added"
 msgstr ""
 
@@ -157,8 +165,8 @@ msgstr ""
 msgid "This command is already added"
 msgstr ""
 
-#: bot/commands/admin_commands.py:45 bot/commands/admin_commands.py:310
-#: bot/commands/admin_commands.py:342 bot/commands/user_commands.py:617
+#: bot/commands/admin_commands.py:45 bot/commands/admin_commands.py:367
+#: bot/commands/admin_commands.py:399 bot/commands/user_commands.py:617
 msgid "Deleted"
 msgstr ""
 
@@ -279,128 +287,139 @@ msgstr ""
 msgid "Channel messages disabled"
 msgstr ""
 
-#: bot/commands/admin_commands.py:286
+#: bot/commands/admin_commands.py:289
+msgid ""
+"Opens a menu of the bot's settings, such as the server, nickname, startup"
+" commands and services. Each change is saved at once, and the bot offers "
+"to restart when a change needs it"
+msgstr ""
+
+#: bot/commands/admin_commands.py:319
+msgid "Restarting now. I will be back in a few seconds."
+msgstr ""
+
+#: bot/commands/admin_commands.py:343
 msgid "Saves bot's configuration"
 msgstr ""
 
-#: bot/commands/admin_commands.py:290
+#: bot/commands/admin_commands.py:347
 msgid "Configuration saved"
 msgstr ""
 
-#: bot/commands/admin_commands.py:297
+#: bot/commands/admin_commands.py:354
 msgid ""
 "+/-USERNAME Manages a list of administrators. +USERNAME adds a user. "
 "-USERNAME removes it. Without an option shows the list"
 msgstr ""
 
-#: bot/commands/admin_commands.py:313
+#: bot/commands/admin_commands.py:370
 msgid "This user is not in the admin list"
 msgstr ""
 
-#: bot/commands/admin_commands.py:319 bot/commands/admin_commands.py:349
+#: bot/commands/admin_commands.py:376 bot/commands/admin_commands.py:406
 msgid "<Anonymous>"
 msgstr ""
 
-#: bot/commands/admin_commands.py:329
+#: bot/commands/admin_commands.py:386
 msgid ""
 "+/-USERNAME Manages a list of banned users. +USERNAME adds a user. "
 "-USERNAME removes it. Without an option shows the list"
 msgstr ""
 
-#: bot/commands/admin_commands.py:344
+#: bot/commands/admin_commands.py:401
 msgid "This user is not banned"
 msgstr ""
 
-#: bot/commands/admin_commands.py:358
+#: bot/commands/admin_commands.py:415
 msgid "Quits the bot"
 msgstr ""
 
-#: bot/commands/admin_commands.py:367
+#: bot/commands/admin_commands.py:424
 msgid "Restarts the bot"
 msgstr ""
 
-#: bot/commands/admin_commands.py:382
+#: bot/commands/admin_commands.py:439
 msgid "Returns current channel's ID"
 msgstr ""
 
-#: bot/commands/admin_commands.py:401
+#: bot/commands/admin_commands.py:458
 msgid ""
 "[status|out] Shows whether this bot is signed in to YouTube, or signs it "
 "out. To sign in, send li yt"
 msgstr ""
 
-#: bot/commands/admin_commands.py:409 bot/modules/auth_portal.py:283
+#: bot/commands/admin_commands.py:466 bot/modules/auth_portal.py:283
 #: bot/modules/auth_portal.py:318
 msgid "The YouTube service is not enabled."
 msgstr ""
 
-#: bot/commands/admin_commands.py:416
+#: bot/commands/admin_commands.py:473
 msgid "This bot is signed in to YouTube."
 msgstr ""
 
-#: bot/commands/admin_commands.py:419
+#: bot/commands/admin_commands.py:476
 msgid ""
 "Google signed this bot out of YouTube. To sign in again, send this "
 "command: li yt"
 msgstr ""
 
-#: bot/commands/admin_commands.py:422
+#: bot/commands/admin_commands.py:479
 msgid "This bot is not signed in to YouTube. To sign in, send this command: li yt"
 msgstr ""
 
-#: bot/commands/admin_commands.py:427
+#: bot/commands/admin_commands.py:484
 msgid "This bot has been signed out of YouTube."
 msgstr ""
 
-#: bot/commands/admin_commands.py:431
+#: bot/commands/admin_commands.py:488
 msgid ""
 "YouTube is connected through the account portal now. Send this command: "
 "li yt"
 msgstr ""
 
-#: bot/commands/admin_commands.py:443
+#: bot/commands/admin_commands.py:500
 msgid ""
 "[link|rotate|off] Shows the account portal's status, mints a new link, "
 "revokes every existing link, or stops the portal"
 msgstr ""
 
-#: bot/commands/admin_commands.py:450 bot/commands/admin_commands.py:506
+#: bot/commands/admin_commands.py:507 bot/commands/admin_commands.py:563
 msgid "The account portal is not running."
 msgstr ""
 
-#: bot/commands/admin_commands.py:456
+#: bot/commands/admin_commands.py:513
 #, python-format
 msgid ""
 "The portal is listening on %(host)s port %(port)s with %(count)s live "
 "links."
 msgstr ""
 
-#: bot/commands/admin_commands.py:471
+#: bot/commands/admin_commands.py:528
 #, python-format
 msgid "That address came from %(source)s."
 msgstr ""
 
-#: bot/commands/admin_commands.py:483
+#: bot/commands/admin_commands.py:540
 #, python-format
 msgid "Revoked %(count)s links. Send ap link for a new one."
 msgstr ""
 
-#: bot/commands/admin_commands.py:488
+#: bot/commands/admin_commands.py:545
 msgid "The portal has been stopped."
 msgstr ""
 
-#: bot/commands/admin_commands.py:499
+#: bot/commands/admin_commands.py:556
 msgid ""
 "SERVICE Disconnects a streaming account and deletes its saved sign-in "
 "(yt, sp, nf, dp, am, az, pp, hu, tb)"
 msgstr ""
 
-#: bot/commands/admin_commands.py:514
+#: bot/commands/admin_commands.py:571
 #, python-format
 msgid "%(service)s is not connected."
 msgstr ""
 
-#: bot/commands/admin_commands.py:520
+#: bot/commands/admin_commands.py:577
 #, python-format
 msgid "%(service)s has been disconnected and its saved sign-in deleted."
 msgstr ""
@@ -431,6 +450,448 @@ msgstr ""
 msgid ""
 "Google signed StreamerBot out of YouTube. To sign in again, send this "
 "command: li yt"
+msgstr ""
+
+#: bot/commands/config_menu.py:155
+msgid "on"
+msgstr ""
+
+#: bot/commands/config_menu.py:155
+msgid "off"
+msgstr ""
+
+#: bot/commands/config_menu.py:162
+msgid "not set"
+msgstr ""
+
+#: bot/commands/config_menu.py:170
+msgid "Restart now to apply changes"
+msgstr ""
+
+#: bot/commands/config_menu.py:175
+msgid "Settings. Each change is saved as soon as you make it. Send a number:"
+msgstr ""
+
+#: bot/commands/config_menu.py:178
+msgid "Close settings"
+msgstr ""
+
+#: bot/commands/config_menu.py:190
+msgid "Changes here take effect after a restart."
+msgstr ""
+
+#: bot/commands/config_menu.py:192
+msgid "Some changes here take effect after a restart."
+msgstr ""
+
+#: bot/commands/config_menu.py:193 bot/commands/config_menu.py:213
+msgid "Send a number:"
+msgstr ""
+
+#: bot/commands/config_menu.py:198 bot/commands/config_menu.py:218
+msgid "Back"
+msgstr ""
+
+#: bot/commands/config_menu.py:206
+msgid "Startup commands, run each time the bot starts:"
+msgstr ""
+
+#: bot/commands/config_menu.py:208
+#, python-brace-format
+msgid "Command {number}: {command}"
+msgstr ""
+
+#: bot/commands/config_menu.py:212
+msgid "Startup commands, run each time the bot starts. No commands yet."
+msgstr ""
+
+#: bot/commands/config_menu.py:214
+msgid "Add a command"
+msgstr ""
+
+#: bot/commands/config_menu.py:216
+msgid "Remove a command"
+msgstr ""
+
+#: bot/commands/config_menu.py:217
+msgid "Remove all commands"
+msgstr ""
+
+#: bot/commands/config_menu.py:227 bot/commands/config_menu.py:245
+#, python-brace-format
+msgid "{setting} is {value}."
+msgstr ""
+
+#: bot/commands/config_menu.py:228
+msgid "To turn it off, send: 1"
+msgstr ""
+
+#: bot/commands/config_menu.py:228
+msgid "To turn it on, send: 1"
+msgstr ""
+
+#: bot/commands/config_menu.py:229
+msgid "To keep it on, send: 0"
+msgstr ""
+
+#: bot/commands/config_menu.py:229
+msgid "To keep it off, send: 0"
+msgstr ""
+
+#: bot/commands/config_menu.py:234
+#, python-brace-format
+msgid "{setting} is {value}. Send a number:"
+msgstr ""
+
+#: bot/commands/config_menu.py:240
+#, python-brace-format
+msgid "{choice}, current"
+msgstr ""
+
+#: bot/commands/config_menu.py:242
+#, python-brace-format
+msgid "Keep {value}"
+msgstr ""
+
+#: bot/commands/config_menu.py:250
+msgid "To clear it"
+msgstr ""
+
+#: bot/commands/config_menu.py:251
+#, python-brace-format
+msgid "send a single dash: {dash}"
+msgstr ""
+
+#: bot/commands/config_menu.py:253 bot/commands/config_menu.py:435
+msgid "To keep it, send: 0"
+msgstr ""
+
+#: bot/commands/config_menu.py:257
+#, python-brace-format
+msgid "Send a number from {minimum} to {maximum}."
+msgstr ""
+
+#: bot/commands/config_menu.py:263
+msgid "Some changes take effect only after a restart."
+msgstr ""
+
+#: bot/commands/config_menu.py:264
+msgid "To restart now, send: 99"
+msgstr ""
+
+#: bot/commands/config_menu.py:265
+msgid "To close without restarting, send: 0"
+msgstr ""
+
+#: bot/commands/config_menu.py:271
+msgid ""
+"The bot will restart with the new server details. If they are wrong, it "
+"cannot reconnect, and they can then only be fixed on the server with "
+"streamerbot.sh."
+msgstr ""
+
+#: bot/commands/config_menu.py:274
+msgid "To restart, send: 1"
+msgstr ""
+
+#: bot/commands/config_menu.py:275
+msgid "To go back, send: 0"
+msgstr ""
+
+#: bot/commands/config_menu.py:281
+msgid "Settings closed. Some changes still need a restart."
+msgstr ""
+
+#: bot/commands/config_menu.py:282
+msgid "To restart later, send: rs"
+msgstr ""
+
+#: bot/commands/config_menu.py:284
+msgid "Settings closed."
+msgstr ""
+
+#: bot/commands/config_menu.py:290
+#, python-brace-format
+msgid "No change. {setting} is still {value}."
+msgstr ""
+
+#: bot/commands/config_menu.py:296 bot/commands/config_menu.py:463
+#, python-brace-format
+msgid "That could not be saved: {error}"
+msgstr ""
+
+#: bot/commands/config_menu.py:297
+#, python-brace-format
+msgid "Saved. {setting} is now {value}."
+msgstr ""
+
+#: bot/commands/config_menu.py:308
+msgid "It takes effect after a restart."
+msgstr ""
+
+#: bot/commands/config_menu.py:341
+msgid "Nothing is waiting for a restart."
+msgstr ""
+
+#: bot/commands/config_menu.py:430
+#, python-brace-format
+msgid "{value} is not a number from {minimum} to {maximum}."
+msgstr ""
+
+#: bot/commands/config_menu.py:476
+msgid ""
+"Send the command to run when the bot starts, for example: u "
+"http://example.org:8000/live.mp3"
+msgstr ""
+
+#: bot/commands/config_menu.py:478 bot/commands/config_menu.py:493
+msgid "To keep the list as it is, send: 0"
+msgstr ""
+
+#: bot/commands/config_menu.py:482
+msgid "Send the number of the command to remove:"
+msgstr ""
+
+#: bot/commands/config_menu.py:484
+msgid "Keep the list as it is"
+msgstr ""
+
+#: bot/commands/config_menu.py:489
+#, python-brace-format
+msgid "This removes all {count} startup commands."
+msgstr ""
+
+#: bot/commands/config_menu.py:490
+msgid "This removes the only startup command."
+msgstr ""
+
+#: bot/commands/config_menu.py:491
+msgid "To remove them, send: 1"
+msgstr ""
+
+#: bot/commands/config_menu.py:492
+msgid "To remove it, send: 1"
+msgstr ""
+
+#: bot/commands/config_menu.py:499
+msgid "Saved. All startup commands were removed."
+msgstr ""
+
+#: bot/commands/config_menu.py:507
+#, python-brace-format
+msgid "Saved. Added the startup command: {command}"
+msgstr ""
+
+#: bot/commands/config_menu.py:518
+#, python-brace-format
+msgid "Saved. Removed the startup command: {command}"
+msgstr ""
+
+#: bot/commands/config_menu.py:521 bot/commands/config_menu.py:528
+#, python-brace-format
+msgid ""
+"There is no {number} here. Send a number from 1 to {last}, or to go back,"
+" send: 0"
+msgstr ""
+
+#: bot/commands/config_menu.py:558
+msgid "Server connection"
+msgstr ""
+
+#: bot/commands/config_menu.py:559
+msgid "Server address"
+msgstr ""
+
+#: bot/commands/config_menu.py:560
+msgid "Send the new address."
+msgstr ""
+
+#: bot/commands/config_menu.py:561
+msgid "TCP port"
+msgstr ""
+
+#: bot/commands/config_menu.py:562
+msgid "UDP port"
+msgstr ""
+
+#: bot/commands/config_menu.py:563
+msgid "Encrypted connection"
+msgstr ""
+
+#: bot/commands/config_menu.py:565
+msgid "Username"
+msgstr ""
+
+#: bot/commands/config_menu.py:566
+msgid "Send the new username."
+msgstr ""
+
+#: bot/commands/config_menu.py:567
+msgid "Password"
+msgstr ""
+
+#: bot/commands/config_menu.py:568
+msgid "Send the new password."
+msgstr ""
+
+#: bot/commands/config_menu.py:570
+msgid "Channel"
+msgstr ""
+
+#: bot/commands/config_menu.py:572
+msgid "Send the channel's path, such as /Music/, or its number."
+msgstr ""
+
+#: bot/commands/config_menu.py:574
+msgid "To use the root channel"
+msgstr ""
+
+#: bot/commands/config_menu.py:575
+msgid "Channel password"
+msgstr ""
+
+#: bot/commands/config_menu.py:577
+msgid "Send the new channel password."
+msgstr ""
+
+#: bot/commands/config_menu.py:578
+msgid ""
+"Passwords are shown in this chat, and your TeamTalk client keeps them in "
+"its history."
+msgstr ""
+
+#: bot/commands/config_menu.py:579
+msgid "Bot identity"
+msgstr ""
+
+#: bot/commands/config_menu.py:580
+msgid "Nickname"
+msgstr ""
+
+#: bot/commands/config_menu.py:581
+msgid "Send the new nickname."
+msgstr ""
+
+#: bot/commands/config_menu.py:582
+msgid "Status message"
+msgstr ""
+
+#: bot/commands/config_menu.py:583
+msgid "Send the new status message."
+msgstr ""
+
+#: bot/commands/config_menu.py:585
+msgid "Gender"
+msgstr ""
+
+#: bot/commands/config_menu.py:586
+msgid "Neutral"
+msgstr ""
+
+#: bot/commands/config_menu.py:586
+msgid "Male"
+msgstr ""
+
+#: bot/commands/config_menu.py:586
+msgid "Female"
+msgstr ""
+
+#: bot/commands/config_menu.py:588
+msgid "Language"
+msgstr ""
+
+#: bot/commands/config_menu.py:592 bot/commands/config_menu.py:593
+msgid "Startup commands"
+msgstr ""
+
+#: bot/commands/config_menu.py:595
+msgid "Playback"
+msgstr ""
+
+#: bot/commands/config_menu.py:596
+msgid "Volume when the bot starts"
+msgstr ""
+
+#: bot/commands/config_menu.py:598
+msgid "Highest volume allowed"
+msgstr ""
+
+#: bot/commands/config_menu.py:600
+msgid "Seconds to skip when seeking"
+msgstr ""
+
+#: bot/commands/config_menu.py:602
+msgid "Stop when nobody else is in the channel"
+msgstr ""
+
+#: bot/commands/config_menu.py:604
+msgid "Search results mode"
+msgstr ""
+
+#: bot/commands/config_menu.py:605
+msgid "Default service"
+msgstr ""
+
+#: bot/commands/config_menu.py:609
+msgid "Files and downloads"
+msgstr ""
+
+#: bot/commands/config_menu.py:611
+msgid "Seconds before uploaded files are deleted, 0 for never"
+msgstr ""
+
+#: bot/commands/config_menu.py:614
+msgid "Messages"
+msgstr ""
+
+#: bot/commands/config_menu.py:615
+msgid "Channel messages"
+msgstr ""
+
+#: bot/commands/config_menu.py:616
+msgid "Audio description"
+msgstr ""
+
+#: bot/commands/config_menu.py:618
+msgid "Ask each time"
+msgstr ""
+
+#: bot/commands/config_menu.py:618
+msgid "Always"
+msgstr ""
+
+#: bot/commands/config_menu.py:619
+msgid "Never"
+msgstr ""
+
+#: bot/commands/config_menu.py:621
+msgid "Services"
+msgstr ""
+
+#: bot/commands/config_menu.py:625 bot/commands/config_menu.py:626
+msgid "Account portal"
+msgstr ""
+
+#: bot/commands/config_menu.py:627
+msgid "Who can open the portal"
+msgstr ""
+
+#: bot/commands/config_menu.py:628
+msgid "Only this computer"
+msgstr ""
+
+#: bot/commands/config_menu.py:629
+msgid "Any computer that can reach this one"
+msgstr ""
+
+#: bot/commands/config_menu.py:630
+msgid "Public address"
+msgstr ""
+
+#: bot/commands/config_menu.py:631
+msgid ""
+"Send the address people use to reach the portal, such as "
+"http://example.org:4419"
 msgstr ""
 
 #: bot/commands/playlist_choice.py:80
