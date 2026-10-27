@@ -174,5 +174,34 @@ class WebServiceAdapter(ABC):
                 continue
         return None
 
+    # What a site shows instead of its sign-in form when it refuses the
+    # server's address. Measured 2026-10-27 from an OVH server: Disney Plus
+    # renders its own error page (its registerDevice call answers "Forbidden
+    # location"), and Paramount Plus answers 406 for every page.
+    REFUSED_ADDRESS_MARKS = (
+        "sorry, an unexpected error has occurred",
+        "406 not acceptable",
+    )
+
+    def refused_address_reason(self, page, site: str) -> Optional[str]:
+        """A plain explanation if the page is the site refusing this server, else None.
+
+        Without this the user was told the sign-in page "did not look as
+        expected", or that the password was rejected, when the password never
+        reached the site at all.
+        """
+        try:
+            text = f"{page.title()}\n{page.inner_text('body')[:2000]}".lower()
+        except Exception:
+            return None
+        if not any(mark in text for mark in self.REFUSED_ADDRESS_MARKS):
+            return None
+        return (
+            f"{site} refused to show its sign-in page to this server's internet address, "
+            "so your email and password were never sent. Streaming services often block "
+            "data-centre addresses. The server's administrator can fix this with a residential "
+            "proxy: option 10 in streamerbot.sh."
+        )
+
 
 __all__ = ["WebServiceAdapter"]

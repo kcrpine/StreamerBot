@@ -91,6 +91,10 @@ class VideoSiteAdapter(WebServiceAdapter):
         user_field = self.first_visible(page, self.USERNAME_SELECTORS, timeout=15000)
         if user_field is None:
             logger.info(f"[{self.name}] no email field on {page.url}")
+            refused = self.refused_address_reason(page, self.SITE)
+            if refused:
+                job.fail(refused)
+                return
             job.fail(f"The {self.SITE} sign-in page did not look as expected.")
             return
         user_field.fill(username)

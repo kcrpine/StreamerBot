@@ -85,6 +85,11 @@ class DisneyAdapter(WebServiceAdapter):
 
         user_field = self.first_visible(page, self.USERNAME_SELECTORS, timeout=15000)
         if user_field is None:
+            logger.info(f"[disney] no email field on {page.url}")
+            refused = self.refused_address_reason(page, "Disney Plus")
+            if refused:
+                job.fail(refused)
+                return
             job.fail("The Disney Plus sign-in page did not look as expected.")
             return
         user_field.fill(username)

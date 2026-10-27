@@ -241,5 +241,74 @@ class PromptTests(TestCase):
             self.assertIn(option, text)
 
 
+class BrowserProxyTests(TestCase):
+    """Disney Plus and Paramount Plus refuse a data-centre address, so they can go out through a proxy."""
+
+    URL = "http://user%40x:p%3Ass@proxy.example:8080"
+
+    def proxy(self, service, **env):
+        from bot.player.engines.browser_engine import browser_proxy_for
+        return browser_proxy_for(service, env)
+
+    def test_no_url_means_a_direct_connection(self):
+        self.assertIsNone(self.proxy("dp"))
+        self.assertIsNone(self.proxy("dp", BROWSER_PROXY_URL="  "))
+
+    def test_disney_and_paramount_use_it_by_default_and_nothing_else_does(self):
+        self.assertIsNotNone(self.proxy("dp", BROWSER_PROXY_URL=self.URL))
+        self.assertIsNotNone(self.proxy("pp", BROWSER_PROXY_URL=self.URL))
+        for service in ("nf", "yt", "hu", "am"):
+            self.assertIsNone(self.proxy(service, BROWSER_PROXY_URL=self.URL), service)
+
+    def test_the_service_list_replaces_the_default(self):
+        env = {"BROWSER_PROXY_URL": self.URL, "BROWSER_PROXY_SERVICES": " hu , dp "}
+        self.assertIsNotNone(self.proxy("hu", **env))
+        self.assertIsNotNone(self.proxy("dp", **env))
+        self.assertIsNone(self.proxy("pp", **env))
+
+    def test_a_star_sends_every_service_through_it(self):
+        env = {"BROWSER_PROXY_URL": self.URL, "BROWSER_PROXY_SERVICES": "*"}
+        self.assertIsNotNone(self.proxy("nf", **env))
+
+    def test_credentials_are_split_out_and_unescaped_for_playwright(self):
+        self.assertEqual(
+            self.proxy("dp", BROWSER_PROXY_URL=self.URL),
+            {"server": "http://proxy.example:8080", "username": "user@x", "password": "p:ss"},
+        )
+
+    def test_a_proxy_without_credentials_has_no_username(self):
+        self.assertEqual(
+            self.proxy("dp", BROWSER_PROXY_URL="http://10.0.0.5:3128"),
+            {"server": "http://10.0.0.5:3128"},
+        )
+
+    def test_an_unusable_url_falls_back_to_direct_rather_than_breaking_the_service(self):
+        for bad in ("proxy.example:8080", "ftp://h:21", "http://nohost", "http://h:notaport",
+                    "socks5://u:p@h:1080"):
+            with self.subTest(url=bad), self.assertLogs("bot.player.engines.browser_engine", "WARNING"):
+                self.assertIsNone(self.proxy("dp", BROWSER_PROXY_URL=bad))
+
+    def test_the_password_is_registered_for_log_redaction(self):
+        from bot.auth import redaction
+        with patch.object(redaction.get_filter(), "register") as register:
+            self.proxy("dp", BROWSER_PROXY_URL=self.URL)
+        register.assert_called_once_with("p:ss")
+
+    def test_every_bot_container_launch_passes_the_proxy_settings(self):
+        # A launch that forgot the flags would silently put that bot back on the
+        # blocked address, and only for bots created or recreated through it.
+        import os
+        import re
+        root = os.path.dirname(os.path.abspath(__file__))
+        for script in ("streamerbot.sh", "update.sh"):
+            with open(os.path.join(root, script), encoding="utf-8") as f:
+                text = f.read()
+            launches = re.findall(r'(?:-e "[^"]*" \\\n\s*)+--label "role=streamerbot"', text)
+            self.assertTrue(launches, script)
+            for launch in launches:
+                self.assertIn('-e "BROWSER_PROXY_URL=${BROWSER_PROXY_URL:-}"', launch, script)
+                self.assertIn('-e "BROWSER_PROXY_SERVICES=${BROWSER_PROXY_SERVICES:-}"', launch, script)
+
+
 if __name__ == "__main__":
     unittest.main()

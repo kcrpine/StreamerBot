@@ -90,7 +90,8 @@ Full detail is in [CHANGELOG.md](CHANGELOG.md).
 | --- | --- | --- |
 | YouTube, YouTube Music | mpv | Nothing where YouTube trusts the address. On most VPS hosts, a Google account made for the bot |
 | Spotify | go-librespot | Premium. A Spotify application if you want to search by name |
-| Netflix, Disney+, Paramount Plus | Chrome | An account. **amd64 only** |
+| Netflix | Chrome | An account. **amd64 only** |
+| Disney+, Paramount Plus | Chrome | An account, and on most VPS hosts a residential proxy (see below). **amd64 only** |
 | Hulu | Chrome | An account, and a bot running in the United States. **amd64 only** |
 | Tubi | Chrome | Nothing. **amd64 only** |
 | Apple Music, Amazon Music | Chrome | An account. **amd64 only** |
@@ -170,7 +171,7 @@ To connect an account:
   connect sp` walks through it, and a pasted Spotify link works without one.
 - **Netflix, Disney+, Paramount Plus, Hulu, Apple Music, Amazon Music:** send `li`
   and follow the link it gives you. The password is typed on that page, never in
-  the channel. Tubi needs no account.
+  the channel. Tubi needs no account. On a VPS, set up a residential proxy for Disney+ and Paramount Plus first, as described in "Disney+ and Paramount Plus on a server".
 
 `li` on its own says what is connected. `da on` turns audio description on for
 good, `da off` turns it off, and `da` alone asks each time. `pf` lists and picks
@@ -195,6 +196,26 @@ Non-interactive flags, for skipping the menus:
 
 `--services`, `--start-all`, `--stop-all`, `--restart-all`, `--check-updates`,
 `--channel`, `--logs NAME` and `--help` all work the same way.
+
+### Disney+ and Paramount Plus on a server
+
+Disney+ and Paramount Plus refuse data-centre addresses, which is where most VPS servers are. Disney+ shows "Sorry, an unexpected error has occurred" instead of its sign-in form, and Paramount Plus answers "406 Not Acceptable". Your password never reaches the site, so it is not the password. Signing in on your own computer and copying the session over does not help either, because the Disney service that refuses the address is the same one that hands out the keys for staying signed in and playing.
+
+The fix is a residential proxy: the bots' browser goes out through a home internet address instead of the server's. Only Disney+ and Paramount Plus use it unless you choose otherwise. Every other service keeps using the server's own address.
+
+In `streamerbot.sh`, choose option 10, "Disney Plus and Paramount Plus Proxy". It explains which proxy to buy, tests the one you enter, and applies it to every bot on the server.
+
+**Which kind to buy.** The bot's browser downloads the whole video, even though only the sound reaches TeamTalk, which is about 1 to 3 GB an hour. Buy a static residential proxy, also called an ISP proxy, sold per address with unlimited or large traffic. Avoid plans sold per gigabyte, where one film can cost 5 to 20 dollars. Pick an address in the same country as the streaming account. One address is enough for all the bots on a server. Choose the HTTP type with a username and password, because Chrome cannot sign in to a SOCKS5 proxy.
+
+Providers with plans that fit, at their listed prices in October 2026 (check before buying; none has been tried with Disney+ yet):
+
+| Provider | Plan | Listed price | Traffic | Notes |
+| --- | --- | --- | --- | --- |
+| [IPRoyal](https://iproyal.com/static-residential-proxies/) | Static residential | About $2.70 an address for 30 days | Unlimited | US and Canada. A 24 hour plan for about $1.80 lets you test first |
+| [Proxy-Seller](https://proxy-seller.com/isp/) | ISP proxy | From about $1 an address a month | About 100 GB an address a month (fair use) | US, no Canada |
+| [Webshare](https://www.webshare.io/static-residential-proxy) | Static residential | About $0.30 an address, smallest plan 20 addresses (about $6 a month) | From 250 GB a month (fair use) | Check at checkout whether the addresses are shared |
+
+The setting lives in `browser_proxy.env` beside `streamerbot.sh`. It is never committed, and the updater leaves it alone.
 
 ### Choosing stable or latest updates
 

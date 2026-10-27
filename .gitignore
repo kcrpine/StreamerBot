@@ -87,3 +87,6 @@ Thumbs.db
 /youtube_proxy.env
 /youtube_vpn.env
 /youtube_egress_ips.log
+
+# Per-host browser egress proxy for Disney Plus and Paramount Plus (holds credentials)
+/browser_proxy.env

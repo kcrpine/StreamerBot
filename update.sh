@@ -46,6 +46,13 @@ YOUTUBE_PROXY_URL=""
 if [ -f "$SCRIPT_DIR/youtube_proxy.env" ]; then
     YOUTUBE_PROXY_URL="$(sed -n 's/^YOUTUBE_PROXY_URL=//p' "$SCRIPT_DIR/youtube_proxy.env" | head -n1)"
 fi
+# Optional egress proxy for the bots' browser; see streamerbot.sh for the format.
+BROWSER_PROXY_URL=""
+BROWSER_PROXY_SERVICES=""
+if [ -f "$SCRIPT_DIR/browser_proxy.env" ]; then
+    BROWSER_PROXY_URL="$(sed -n 's/^BROWSER_PROXY_URL=//p' "$SCRIPT_DIR/browser_proxy.env" | head -n1)"
+    BROWSER_PROXY_SERVICES="$(sed -n 's/^BROWSER_PROXY_SERVICES=//p' "$SCRIPT_DIR/browser_proxy.env" | head -n1)"
+fi
 UPDATE_LOCK_FILE="/tmp/streamerbot_update.lock"
 
 # ---------------------------------------------------------------------------
@@ -252,6 +259,8 @@ recreate_bot_containers() {
                 -e "TTBOT_INSTANCE=${bot_name}" \
                 -e "YOUTUBE_BRIDGE_URL=${YOUTUBE_BRIDGE_URL}" \
                 -e "YOUTUBE_PROXY_URL=${YOUTUBE_PROXY_URL}" \
+                -e "BROWSER_PROXY_URL=${BROWSER_PROXY_URL:-}" \
+                -e "BROWSER_PROXY_SERVICES=${BROWSER_PROXY_SERVICES:-}" \
                 --label "role=streamerbot" \
                 --restart always \
                 -v "${d}:/home/streamer/StreamerBot/data" \

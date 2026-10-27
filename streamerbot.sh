@@ -28,8 +28,21 @@ YOUTUBE_PROXY_URL=""
 if [ -f "$SCRIPT_DIR/youtube_proxy.env" ]; then
     YOUTUBE_PROXY_URL="$(sed -n 's/^YOUTUBE_PROXY_URL=//p' "$SCRIPT_DIR/youtube_proxy.env" | head -n1)"
 fi
+# Optional egress proxy for the bots' browser, for services that refuse a
+# data-centre address (Disney Plus says "Forbidden location", Paramount Plus
+# answers 406). Untracked for the same reason as youtube_proxy.env. Format:
+#   BROWSER_PROXY_URL=http://user:pass@host:port
+#   BROWSER_PROXY_SERVICES=dp,pp      (optional; dp,pp when unset, * for all)
+BROWSER_PROXY_URL=""
+BROWSER_PROXY_SERVICES=""
+if [ -f "$SCRIPT_DIR/browser_proxy.env" ]; then
+    BROWSER_PROXY_URL="$(sed -n 's/^BROWSER_PROXY_URL=//p' "$SCRIPT_DIR/browser_proxy.env" | head -n1)"
+    BROWSER_PROXY_SERVICES="$(sed -n 's/^BROWSER_PROXY_SERVICES=//p' "$SCRIPT_DIR/browser_proxy.env" | head -n1)"
+fi
 # Egress menu and IP rotation. Functions only; they use helpers defined below.
 [ -f "$SCRIPT_DIR/youtube_egress.sh" ] && . "$SCRIPT_DIR/youtube_egress.sh"
+# Disney Plus and Paramount Plus proxy menu. Functions only, like the above.
+[ -f "$SCRIPT_DIR/browser_egress.sh" ] && . "$SCRIPT_DIR/browser_egress.sh"
 
 # Build args every "docker build" must pass: the TeamTalk SDK is downloaded
 # from bearware.dk during the build, and go-librespot is version pinned.
@@ -334,6 +347,8 @@ recreate_bot_containers() {
                 -e "TTBOT_INSTANCE=${bot_name}" \
                 -e "YOUTUBE_BRIDGE_URL=${YOUTUBE_BRIDGE_URL}" \
                 -e "YOUTUBE_PROXY_URL=${YOUTUBE_PROXY_URL}" \
+                -e "BROWSER_PROXY_URL=${BROWSER_PROXY_URL:-}" \
+                -e "BROWSER_PROXY_SERVICES=${BROWSER_PROXY_SERVICES:-}" \
                 --label "role=streamerbot" \
                 --restart always \
                 -v "${d}:/home/streamer/StreamerBot/data" \
@@ -828,6 +843,8 @@ create_bot() {
             -e "TTBOT_INSTANCE=${current_bot_name}" \
             -e "YOUTUBE_BRIDGE_URL=${YOUTUBE_BRIDGE_URL}" \
             -e "YOUTUBE_PROXY_URL=${YOUTUBE_PROXY_URL}" \
+            -e "BROWSER_PROXY_URL=${BROWSER_PROXY_URL:-}" \
+            -e "BROWSER_PROXY_SERVICES=${BROWSER_PROXY_SERVICES:-}" \
             --label "role=streamerbot" \
             --restart always \
             -v "${CURRENT_BOT_DIR}:/home/streamer/StreamerBot/data" \
@@ -1094,6 +1111,8 @@ rename_bot_container() {
             -e "TTBOT_INSTANCE=${new}" \
             -e "YOUTUBE_BRIDGE_URL=${YOUTUBE_BRIDGE_URL}" \
             -e "YOUTUBE_PROXY_URL=${YOUTUBE_PROXY_URL}" \
+            -e "BROWSER_PROXY_URL=${BROWSER_PROXY_URL:-}" \
+            -e "BROWSER_PROXY_SERVICES=${BROWSER_PROXY_SERVICES:-}" \
             --label "role=streamerbot" \
             --restart always \
             -v "${BOTS_ROOT}/${new}:/home/streamer/StreamerBot/data" \
@@ -1986,6 +2005,8 @@ duplicate_bot() {
                 -e "TTBOT_INSTANCE=${current_bot_name}" \
                 -e "YOUTUBE_BRIDGE_URL=${YOUTUBE_BRIDGE_URL}" \
                 -e "YOUTUBE_PROXY_URL=${YOUTUBE_PROXY_URL}" \
+                -e "BROWSER_PROXY_URL=${BROWSER_PROXY_URL:-}" \
+                -e "BROWSER_PROXY_SERVICES=${BROWSER_PROXY_SERVICES:-}" \
                 --label "role=streamerbot" \
                 --restart always \
                 -v "${CURRENT_BOT_DIR}:/home/streamer/StreamerBot/data" \
@@ -3528,6 +3549,8 @@ adopt_copied_bots() {
                 -e "TTBOT_INSTANCE=${name}" \
                 -e "YOUTUBE_BRIDGE_URL=${YOUTUBE_BRIDGE_URL}" \
                 -e "YOUTUBE_PROXY_URL=${YOUTUBE_PROXY_URL}" \
+                -e "BROWSER_PROXY_URL=${BROWSER_PROXY_URL:-}" \
+                -e "BROWSER_PROXY_SERVICES=${BROWSER_PROXY_SERVICES:-}" \
                 --label "role=streamerbot" \
                 --restart always \
                 -v "${dir}:/home/streamer/StreamerBot/data" \
@@ -4190,7 +4213,8 @@ while true; do
     echo "7. Clean Docker Cache (Unused)"
     echo "8. Manage Shared YouTube Servers"
     echo "9. YouTube Egress (WARP, VPN or proxy; switch a blocked address)"
-    echo "10. Exit"
+    echo "10. Disney Plus and Paramount Plus Proxy (needed on most servers)"
+    echo "11. Exit"
     echo ""
     read -p "Choose an option: " option
     
@@ -4252,6 +4276,10 @@ while true; do
             header
             ;;
         10)
+            browser_egress_menu
+            header
+            ;;
+        11)
             echo "Exiting..."
             exit 0
             ;;

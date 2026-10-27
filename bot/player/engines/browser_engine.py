@@ -32,7 +32,8 @@ import os
 import queue
 import threading
 import time
-from typing import Any, Callable, Dict, List, Optional, Tuple, TYPE_CHECKING
+from typing import Any, Callable, Dict, List, Mapping, Optional, Tuple, TYPE_CHECKING
+from urllib.parse import unquote, urlsplit
 
 from bot import errors
 from bot.player.engines import PlaybackEngine
@@ -54,6 +55,65 @@ STARTUP_TIMEOUT = 90
 # They share the service's persistent context, so they share its cookies.
 PLAYER = "player"
 AUX = "aux"
+
+# Disney Plus answers a data-centre address with "Forbidden location" when the
+# page first registers the browser, and Paramount Plus returns 406 for the whole
+# site, so neither can be signed in to from a VPS at all. BROWSER_PROXY_URL sends
+# the chosen services' browser profiles out through another address, normally a
+# residential proxy. It comes from the untracked browser_proxy.env on the host,
+# like YOUTUBE_PROXY_URL, because the URL carries credentials. Only the listed
+# services use it: a proxy is usually billed by the gigabyte, and the other
+# services work from the host's own address.
+DEFAULT_PROXY_SERVICES = ("dp", "pp")
+
+
+def browser_proxy_for(service: str, environ: Mapping[str, str] = os.environ) -> Optional[Dict[str, str]]:
+    """Playwright's proxy setting for one service's profile, or None for a direct connection.
+
+    BROWSER_PROXY_URL is scheme://user:password@host:port. BROWSER_PROXY_SERVICES
+    is a comma-separated list of service names, "*" for every browser service,
+    and dp,pp when unset. A URL that cannot be used is logged and ignored: the
+    service then behaves as it did before, rather than failing to start.
+    """
+    url = (environ.get("BROWSER_PROXY_URL") or "").strip()
+    if not url:
+        return None
+    listed = (environ.get("BROWSER_PROXY_SERVICES") or "").strip()
+    wanted = {s.strip() for s in listed.split(",") if s.strip()} if listed else set(DEFAULT_PROXY_SERVICES)
+    if "*" not in wanted and service not in wanted:
+        return None
+
+    try:
+        parts = urlsplit(url)
+        port = parts.port
+    except ValueError:
+        parts, port = None, None
+    if parts is None or parts.scheme not in ("http", "https", "socks5") or not parts.hostname or not port:
+        logger.warning(
+            "BROWSER_PROXY_URL is not in the form scheme://user:password@host:port, so "
+            f"{service} connects directly."
+        )
+        return None
+    if parts.scheme == "socks5" and parts.username:
+        # Chrome has no way to send a username to a SOCKS proxy.
+        logger.warning(
+            "Chrome cannot sign in to a SOCKS5 proxy with a username and password. Use the "
+            f"provider's http:// address instead. {service} connects directly."
+        )
+        return None
+
+    proxy = {"server": f"{parts.scheme}://{parts.hostname}:{port}"}
+    if parts.username:
+        password = unquote(parts.password or "")
+        try:
+            from bot.auth import redaction
+
+            redaction.get_filter().register(password)
+        except Exception:
+            pass
+        proxy["username"] = unquote(parts.username)
+        proxy["password"] = password
+    return proxy
 
 
 class _Job:
@@ -220,6 +280,11 @@ class BrowserEngine(PlaybackEngine):
 
         profile_dir = os.path.join(self._dir, service)
         os.makedirs(profile_dir, mode=0o700, exist_ok=True)
+        extra: Dict[str, Any] = {}
+        proxy = browser_proxy_for(service)
+        if proxy is not None:
+            extra["proxy"] = proxy
+            logger.info(f"The {service} browser goes out through the proxy at {proxy['server']}")
         context = self._playwright.chromium.launch_persistent_context(
             profile_dir,
             channel="chrome",
@@ -246,6 +311,7 @@ class BrowserEngine(PlaybackEngine):
             env={**os.environ, "DISPLAY": self._display},
             viewport={"width": 1280, "height": 720},
             ignore_default_args=["--mute-audio"],
+            **extra,
         )
         self._contexts[service] = context
         return context
