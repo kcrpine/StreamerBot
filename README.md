@@ -320,6 +320,8 @@ form](https://github.com/kcrpine/StreamerBot/issues/new?template=collab_request.
 or say so in a pull request. Access is granted by invitation from the repository
 owner; it is not something a fork or a pull request can give itself.
 
+**You can work in your own language.** The bot speaks English and seven other languages (see "Languages" above), and every message it sends has to exist in all of them, because a blind user who chose Russian or Arabic cannot read a message that arrived in English. You do not have to do the translating. Before anything ships, Claude translates every message you added or changed into English and into each of the other languages, whichever language you wrote it in. If you wrote your messages in Spanish, for example, the English becomes the original in the code and Spanish is filled in from your own wording, so nothing you wrote is lost. If you write in a language the bot does not speak yet, that language is added to the bot as a new choice, and everything the bot says is translated into it. Code comments, commit messages and the CHANGELOG are kept in English, so everyone working on the project can read them.
+
 Issues are public, including anything written in them. Do not paste passwords, the
 contents of a bot's `secrets` folder, or an account portal link — a portal link is
 itself a credential. A normal `StreamerBot.log` is safe to share: the bot strips
