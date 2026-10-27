@@ -7,6 +7,8 @@ issue or a commit message. Numbering continues across releases. A major version
 
 ## Unreleased
 
+## StreamerBot 2.1.1 (2026-10-27)
+
 - **[086]** Two tests added with [085] no longer fail CI's in-image run. They read `streamerbot.sh` and `update.sh` directly, but `.dockerignore` keeps those scripts out of the image, so the Docker job crashed on a missing file and the 2.1 release went out red on `main`, the tag and `stable`. They now skip when the scripts are absent, as every other host-only test does, and still run on the host and in the unit-test job. The bot itself is unchanged.
 
 ## StreamerBot 2.1 (2026-10-27)
