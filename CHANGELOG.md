@@ -7,6 +7,8 @@ issue or a commit message. Numbering continues across releases. A major version
 
 ## Unreleased
 
+## StreamerBot 2.0.2 (2026-10-26)
+
 - **[084]** The auto-updater no longer gets stuck failing the same update every five minutes after journald restarts, and a failed update no longer tells every channel that the bot is about to restart. The updater's output is a stream to journald, and `update.sh` inherits it. When journald restarted on 2026-10-22 that stream was left with nobody reading it, so every write failed: the updater went silent, and `docker build` cancelled itself on its first line of output. From the push of 2.0.1 onward the image was out of date, so `update.sh` ran every five minutes, touched `update_in_progress` for each running bot, and failed to build. Each bot then said "an update is in progress and I will restart in a few moments", and no restart came. Nothing reached the log. Two changes fix it. The updater now exits when it cannot write its own log line before running `update.sh`, and systemd's `Restart=always` starts it again on a working stream. `update.sh` now tells the bots only after the image has built, so a build that fails for any reason says nothing in the channels.
 
 ## StreamerBot 2.0.1 (2026-10-26)
