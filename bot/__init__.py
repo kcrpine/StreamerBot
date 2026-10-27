@@ -121,6 +121,14 @@ class Bot:
         # touches a credential, so there is no window in which a password could
         # reach a log file.
         redaction.install()
+        # The TeamTalk passwords live in config.json rather than the secret
+        # store, and every incoming message is logged, so a password typed into
+        # the config menu would otherwise be written out in full.
+        redaction.get_filter().register(
+            self.config.teamtalk.password,
+            self.config.teamtalk.channel_password,
+            self.config.teamtalk.license_key,
+        )
         logging.debug("Initializing")
         self.sound_device_manager.initialize()
         self.ttclient.initialize()
@@ -410,6 +418,8 @@ class Bot:
             except Exception:
                 pass
 
+        self._report_config_restart()
+
         # Periodic Pre-warming tracking
         self.last_pre_warm_time = time.time()
         self.pre_warm_interval = 50 # 50 seconds (User request: 'oi' every 50s)
@@ -461,6 +471,34 @@ class Bot:
         """
         thread = self.ttclient.thread
         return not thread.is_alive() and not getattr(thread, "_close", False)
+
+    def _report_config_restart(self) -> None:
+        """Tell the admin who restarted from the config menu that the bot is back."""
+        from bot.commands.admin_commands import RESTART_MARKER
+
+        marker = os.path.join(self.config_manager.config_dir, RESTART_MARKER)
+        if not os.path.exists(marker):
+            return
+        try:
+            with open(marker, "r", encoding="UTF-8") as f:
+                username = f.read().strip()
+            os.remove(marker)
+        except OSError as e:
+            logging.warning(f"Could not read the config menu's restart marker: {e}")
+            return
+        if not username:
+            return
+        try:
+            time.sleep(2)
+            user_id = self.ttclient.online_usernames().get(username)
+            if user_id is None:
+                return
+            self.ttclient.send_message(
+                self.translator.translate("Restarted. The new settings are in use."),
+                self.ttclient.get_user(user_id),
+            )
+        except Exception as e:
+            logging.error(f"Error sending the restart message: {e}")
 
     def _exit_for_restart(self) -> None:
         logging.critical(

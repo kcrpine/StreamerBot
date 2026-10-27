@@ -280,6 +280,63 @@ class ChannelMessagesCommand(Command):
         )
 
 
+class ConfigCommand(Command):
+    """config / cf: the settings menu. See bot/commands/config_menu.py."""
+
+    @property
+    def help(self) -> str:
+        return self.translator.translate(
+            "Opens a menu of the bot's settings, such as the server, nickname, startup commands and services. Each change is saved at once, and the bot offers to restart when a change needs it"
+        )
+
+    def __call__(self, arg: str, user: User) -> Optional[str]:
+        from bot.commands import config_menu
+
+        menu = config_menu.ConfigMenu(
+            build_groups=lambda: config_menu.build_groups(self),
+            translate=self.translator.translate,
+            read=lambda path: config_menu.read_setting(self.config, path),
+            write=self._write,
+            restart=lambda: self._restart(user),
+        )
+        self.command_processor.pending_config_menu[user.id] = menu
+        return menu.top_text()
+
+    def _write(self, setting, value) -> None:
+        from bot.auth import redaction
+        from bot.commands import config_menu
+
+        if setting.secret and isinstance(value, str):
+            # Before anything else, so the value cannot reach a log line first.
+            redaction.get_filter().register(value)
+        self.config_manager.save_setting(setting.path, value)
+        config_menu.write_in_memory(self.config, setting.path, value)
+        if setting.apply is not None:
+            setting.apply(value)
+
+    def _restart(self, user: User) -> None:
+        self.ttclient.send_message(
+            self.translator.translate("Restarting now. I will be back in a few seconds."),
+            user,
+        )
+        # Who to tell once the bot is back: the one message at the finish that
+        # goes with the one at the start. If it never comes, that silence is
+        # the only sign the new settings kept the bot off the server.
+        try:
+            marker = os.path.join(self.config_manager.config_dir, RESTART_MARKER)
+            with open(marker, "w", encoding="UTF-8") as f:
+                f.write(user.username or "")
+        except OSError:
+            pass
+        time.sleep(0.5)
+        RestartCommand(self.command_processor)("", user)
+
+
+# Written by the config menu before it restarts the bot, holding the account
+# name of the admin who asked; read and removed by Bot.run once it is back.
+RESTART_MARKER = "config_restart"
+
+
 class SaveConfigCommand(Command):
     @property
     def help(self) -> str:

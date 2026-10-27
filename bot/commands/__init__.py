@@ -60,6 +60,8 @@ class CommandProcessor:
         # dlp on a YouTube playlist: whole playlist or one video. Per user, for the
         # same reason as the audio description prompt above.
         self.pending_playlist_choice: Dict[int, Any] = {}
+        # config / cf: each admin's open settings menu, per user like the above.
+        self.pending_config_menu: Dict[int, Any] = {}
         # Podcasts: the last search's shows, the show each user has open, and the
         # "how many episodes" question pd asks. Per user, like the two above.
         self.pending_podcast_results: Dict[int, Any] = {}
@@ -134,6 +136,8 @@ class CommandProcessor:
             "ua": admin_commands.AdminUsersCommand,
             "ub": admin_commands.BannedUsersCommand,
             "eh": admin_commands.EventHandlingCommand,
+            "config": admin_commands.ConfigCommand,
+            "cf": admin_commands.ConfigCommand,
             "sc": admin_commands.SaveConfigCommand,
             "va": admin_commands.VoiceTransmissionCommand,
             "rs": admin_commands.RestartCommand,
@@ -185,6 +189,31 @@ class CommandProcessor:
                         self.ttclient.send_message(reply, message.user)
                     return
                 # Not an answer: the question is dropped and this runs as a command.
+
+            # getattr: CommandRoutingTests build a processor without this dict.
+            config_menus = getattr(self, "pending_config_menu", {})
+            if message.user.id in config_menus:
+                menu = config_menus.pop(message.user.id)
+                if menu.expired():
+                    if message.text.strip().isdigit():
+                        self.ttclient.send_message(
+                            self.translator.translate(
+                                "That menu has expired. To open it again, send: cf"
+                            ),
+                            message.user,
+                        )
+                        return
+                    outcome = None
+                else:
+                    outcome = menu.answer(message.text)
+                if outcome is not None:
+                    reply, still_open = outcome
+                    if still_open:
+                        config_menus[message.user.id] = menu
+                    if reply:
+                        self.ttclient.send_message(reply, message.user)
+                    return
+                # Not an answer: the menu closes and this runs as a command.
 
             if message.user.id in self.pending_podcast_count:
                 answer = self.pending_podcast_count.pop(message.user.id)

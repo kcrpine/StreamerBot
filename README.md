@@ -188,6 +188,27 @@ Each bot has its own `bots/<name>/config.json` with its TeamTalk details, its
 services and its startup commands. `start_commands` is how a bot plays a stream
 the moment it connects, and the manager asks for one when you create a bot.
 
+### Changing settings from TeamTalk
+
+A bot admin can change most settings without logging in to the server. Send `cf` (or `config`) to the bot in a private message, and it answers with a numbered menu: server connection, bot identity, startup commands, playback, files and downloads, messages, services, and the account portal. Send a number to open a group, then a number to pick a setting, then the new value. Each change is saved as soon as you make it, so there is no need to send `sc`. Send 0 to go back, and to keep a value as it is.
+
+Some settings, such as the server address or a startup command, take effect only after a restart. After changing one, every menu ends with "99. Restart now to apply changes". Send 99, and the bot restarts and tells you when it is back. If you changed the server details, it asks once more first, because a wrong address means the bot cannot reconnect, and then only `streamerbot.sh` on the server can fix it. Passwords are shown in the menu, and your TeamTalk client keeps them in its history.
+
+### Languages
+
+The bot speaks these languages in its messages and on its web pages:
+
+- English (`en`), the default
+- Arabic (`ar`)
+- Brazilian Portuguese (`pt_BR`)
+- Hungarian (`hu`)
+- Indonesian (`id`)
+- Russian (`ru`)
+- Spanish (`es`)
+- Turkish (`tr`)
+
+To change the language, send `cf`, choose "Bot identity" and then "Language". The change applies at once and is saved. An admin can also send `cl` with the code, for example `cl es`, but that change lasts only until the bot restarts unless it is followed by `sc`.
+
 Non-interactive flags, for skipping the menus:
 
 ```bash
