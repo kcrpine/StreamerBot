@@ -50,50 +50,64 @@ class TeamTalkThread(Thread):
                 time.sleep(0.1)
 
     def may_retry(self) -> bool:
-        return (
-            self.ttclient.reconnect
-            and self.ttclient.reconnect_attempt < self.config.reconnection_attempts
-            or self.config.reconnection_attempts < 0
-        )
+        # The old check also required ttclient.reconnect, which is only set once
+        # the bot has joined a channel, so a bot with a limit gave up on the very
+        # first failure if the server was down when it started.
+        limit = self.config.reconnect_max_attempts
+        return limit < 0 or self.ttclient.reconnect_attempt < limit
+
+    @property
+    def retry_delay(self) -> float:
+        return max(0.0, self.config.reconnect_delay_seconds)
+
+    def attempt_label(self) -> str:
+        limit = self.config.reconnect_max_attempts
+        limit_text = "unlimited" if limit < 0 else str(limit)
+        return f"Attempt {self.ttclient.reconnect_attempt + 1} of {limit_text}."
 
     def give_up(self) -> None:
         logging.error(
             f"Giving up on {self.config.hostname}:{self.config.tcp_port} "
             f"after {self.ttclient.reconnect_attempt} attempts. "
-            "The bot is stopping. Set teamtalk.reconnection_attempts to -1 "
+            "The bot is stopping. Set teamtalk.reconnect_max_attempts to -1 "
             "in this bot's config.json to keep retrying forever."
         )
         sys.exit(1)
 
     def schedule_connect(self) -> None:
-        self._connect_at = time.monotonic() + self.config.reconnection_timeout
+        self._connect_at = time.monotonic() + self.retry_delay
+
+    def retry_or_give_up(self, reason: str) -> None:
+        """Log why the bot is not connected, and retry or stop."""
+        if not self.may_retry():
+            logging.warning(reason)
+            self.give_up()
+        logging.warning(f"{reason} Trying again in {self.retry_delay:g} seconds.")
+        self.ttclient.reconnect_attempt += 1
+        self.schedule_connect()
 
     def start_connecting(self) -> None:
         """Start a connection attempt, scheduling another if the SDK refuses it."""
         self._connect_at = None
         if self.ttclient.connect():
             return
-        limit = (
-            "unlimited"
-            if self.config.reconnection_attempts < 0
-            else str(self.config.reconnection_attempts)
-        )
-        logging.warning(
+        self.retry_or_give_up(
             f"Could not start connecting to {self.config.hostname}:{self.config.tcp_port}. "
-            f"Attempt {self.ttclient.reconnect_attempt + 1} of {limit}. "
-            "The hostname may not have resolved; check it and the server's DNS. "
-            f"Trying again in {self.config.reconnection_timeout} seconds."
+            f"{self.attempt_label()} "
+            "The hostname may not have resolved; check it and the server's DNS."
         )
-        if self.may_retry():
-            self.ttclient.reconnect_attempt += 1
-            self.schedule_connect()
-        else:
-            self.give_up()
+
+    def event_wait_ms(self) -> int:
+        """Wait for an event no longer than the next connection attempt is due."""
+        if self._connect_at is None:
+            return EVENT_WAIT_MS
+        remaining = int((self._connect_at - time.monotonic()) * 1000)
+        return max(0, min(EVENT_WAIT_MS, remaining))
 
     def process_next_event(self) -> None:
         if self._connect_at is not None and time.monotonic() >= self._connect_at:
             self.start_connecting()
-        message = self.ttclient.tt.getMessage(EVENT_WAIT_MS)
+        message = self.ttclient.tt.getMessage(self.event_wait_ms())
         if message.nClientEvent == EventType.NONE.value:
             return
         event = self.ttclient.get_event(message)
@@ -126,36 +140,21 @@ class TeamTalkThread(Thread):
             or event.event_type == EventType.MYSELF_KICKED
         ):
             server = f"{self.config.hostname}:{self.config.tcp_port}"
-            attempt = self.ttclient.reconnect_attempt + 1
-            limit = (
-                "unlimited"
-                if self.config.reconnection_attempts < 0
-                else str(self.config.reconnection_attempts)
-            )
+            attempt = self.attempt_label()
             if event.event_type == EventType.CON_FAILED:
-                logging.warning(
-                    f"Could not connect to {server}. "
-                    f"Attempt {attempt} of {limit}. "
+                reason = (
+                    f"Could not connect to {server}. {attempt} "
                     "Check the hostname, the TCP port, and whether the server "
                     "requires an encrypted connection."
                 )
             elif event.event_type == EventType.CON_LOST:
-                logging.warning(
-                    f"Lost the connection to {server}. Attempt {attempt} of {limit}."
-                )
+                reason = f"Lost the connection to {server}. {attempt}"
             else:
-                logging.warning(
-                    f"Kicked from {server} as {self.config.username!r}. "
-                    f"Attempt {attempt} of {limit}."
-                )
+                reason = f"Kicked from {server} as {self.config.username!r}. {attempt}"
             self.ttclient.disconnect()
-            if self.may_retry():
-                # Scheduled rather than slept and called here, so the attempt
-                # goes through start_connecting, which notices a refusal.
-                self.ttclient.reconnect_attempt += 1
-                self.schedule_connect()
-            else:
-                self.give_up()
+            # Scheduled rather than slept and called here, so the attempt
+            # goes through start_connecting, which notices a refusal.
+            self.retry_or_give_up(reason)
         elif event.event_type == EventType.CON_SUCCESS:
             self.ttclient.reconnect_attempt = 0
             self.ttclient.login()
@@ -167,26 +166,16 @@ class TeamTalkThread(Thread):
                     "Check the username and password, and that the account exists "
                     "on that server."
                 )
-                if (
-                    self.ttclient.reconnect
-                    and self.ttclient.reconnect_attempt
-                    < self.config.reconnection_attempts
-                    or self.config.reconnection_attempts < 0
-                ):
-                    time.sleep(self.config.reconnection_timeout)
+                if self.may_retry():
+                    time.sleep(self.retry_delay)
                     self.ttclient.login()
                 else:
                     logging.error("Login error")
                     sys.exit(1)
             else:
                 logging.warning("Failed to join channel")
-                if (
-                    self.ttclient.reconnect
-                    and self.ttclient.reconnect_attempt
-                    < self.config.reconnection_attempts
-                    or self.config.reconnection_attempts < 0
-                ):
-                    time.sleep(self.config.reconnection_timeout)
+                if self.may_retry():
+                    time.sleep(self.retry_delay)
                     self.ttclient.join()
                 else:
                     logging.error("Error joining channel")

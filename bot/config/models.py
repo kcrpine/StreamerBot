@@ -64,8 +64,13 @@ class TeamTalkModel(BaseModel):
     channel_password: str = ""
     license_name: str = ""
     license_key: str = ""
-    reconnection_attempts: int = -1
-    reconnection_timeout: int = 10
+    # Seconds between connection attempts, fractions allowed. Fixed, with no
+    # back-off: a server restart is the usual cause, and the bot should be back
+    # the moment the server is.
+    reconnect_delay_seconds: float = 1.0
+    # Failed attempts in a row before the bot stops (Docker then restarts it).
+    # -1 keeps trying forever.
+    reconnect_max_attempts: int = -1
     users: TeamTalkUserModel = TeamTalkUserModel()
     event_handling: EventHandlingModel = EventHandlingModel()
 

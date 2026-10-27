@@ -1871,3 +1871,10 @@ on the same OVH host (AS16276) showed the identical failure, 700-990 lines each 
   `return`. Tests built the service by hand, so only a real-constructor test catches that class of bug.
 - **Unverified:** no video site's selectors have been run against the live site. Podcast search and feed
   reading were checked live: a search returned shows, a real feed parsed 235 episodes newest first.
+
+### A restarted server left a bot waiting an hour to reconnect (2026-10-27, changelog [083])
+
+- **Symptom:** `tt restart ana` dropped ana-bot, which logged "Lost the connection ... Attempt 1 of unlimited" and then nothing until the container was restarted by hand about a minute later.
+- **Cause:** `teamtalk.reconnection_timeout` was the wait before *every* reconnect attempt, the first included, and ana-bot's config carried 3600 over from TTMediaBot (`config.json.pre-migration` holds it too). private-bot had 3600 and ash-chris 600. The name reads like "how long to keep trying", which is how such values get set.
+- **Fix:** config version 3 replaces the pair with `reconnect_delay_seconds` (float, default 1, no back-off, the user asked for the fastest possible reconnect) and `reconnect_max_attempts` (-1 forever). The old timeout is dropped, not migrated. `getMessage` now waits no longer than the next attempt is due, otherwise a sub-second delay was stretched to `EVENT_WAIT_MS`. `may_retry` no longer requires `ttclient.reconnect`, which had made any finite limit give up on the first failure at startup.
+- **Not verified:** a live server restart with the new code. The rejected-login and failed-join paths still `time.sleep` on the event thread, now for the reconnect delay rather than up to an hour.

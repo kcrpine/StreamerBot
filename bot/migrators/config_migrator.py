@@ -92,11 +92,31 @@ def to_v2(config_data: config_data_type) -> config_data_type:
     return update_version(config_data, 2)
 
 
+def to_v3(config_data: config_data_type) -> config_data_type:
+    """Replace teamtalk.reconnection_timeout and reconnection_attempts.
+
+    The timeout was the wait before every reconnect, the first included, and
+    the name read like a limit on how long to keep trying. Configs carried over
+    from TTMediaBot held 3600, so a bot whose server restarted waited an hour
+    before trying once. The old value is dropped rather than carried across:
+    it was set under that misreading, and the new default reconnects within a
+    second. The attempt limit meant what it said and moves across unchanged.
+    """
+    teamtalk = config_data.get("teamtalk")
+    if isinstance(teamtalk, dict):
+        teamtalk.pop("reconnection_timeout", None)
+        if "reconnection_attempts" in teamtalk:
+            teamtalk.setdefault(
+                "reconnect_max_attempts", teamtalk.pop("reconnection_attempts")
+            )
+    return update_version(config_data, 3)
+
+
 # Ascending order, and every version the bot has ever written needs an entry.
 # ConfigManager.version must equal the highest key here: a config_version above
 # it is rejected outright, so bumping one without the other stops every bot that
 # reads such a file before it reaches TeamTalk.
-migrate_functs = {1: to_v1, 2: to_v2}
+migrate_functs = {1: to_v1, 2: to_v2, 3: to_v3}
 
 
 def migrate(

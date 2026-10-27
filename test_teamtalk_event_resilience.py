@@ -98,14 +98,14 @@ class WatchdogTests(TestCase):
         exit_.assert_called_once_with(1)
 
 
-def make_connecting_thread(connect_results, reconnection_attempts=-1):
+def make_connecting_thread(connect_results, reconnect_max_attempts=-1, reconnect_delay_seconds=10):
     """A thread whose client refuses or accepts connect() in the order given."""
     thread = TeamTalkThread.__new__(TeamTalkThread)
     thread.config = SimpleNamespace(
         hostname="chrisduffley.com",
         tcp_port=1982,
-        reconnection_attempts=reconnection_attempts,
-        reconnection_timeout=10,
+        reconnect_max_attempts=reconnect_max_attempts,
+        reconnect_delay_seconds=reconnect_delay_seconds,
         event_handling=SimpleNamespace(load_event_handlers=False),
     )
     thread.ttclient = Mock(reconnect=False, reconnect_attempt=0)
@@ -183,9 +183,59 @@ class RefusedConnectTests(TestCase):
         self.assertEqual(thread.ttclient.connect.call_count, 2)
 
     def test_a_limited_bot_still_gives_up(self):
-        thread = make_connecting_thread([False], reconnection_attempts=0)
+        thread = make_connecting_thread([False], reconnect_max_attempts=0)
         with self.assertRaises(SystemExit), self.assertLogs(level="WARNING"):
             thread.start_connecting()
+
+    def test_a_lost_connection_retries_after_the_delay_and_says_when(self):
+        # ana-bot, 2026-10-27: its reconnection_timeout of 3600, carried over
+        # from TTMediaBot, was the wait before the first attempt too. The server
+        # restarted and the bot was due to try again an hour later.
+        thread = make_connecting_thread([], reconnect_delay_seconds=0.25)
+        thread.ttclient.get_event.return_value = SimpleNamespace(
+            event_type=EventType.CON_LOST
+        )
+        thread.ttclient.tt.getMessage.return_value = SimpleNamespace(
+            nClientEvent=EventType.CON_LOST.value
+        )
+        with patch("bot.TeamTalk.thread.time.monotonic", return_value=100.0), \
+                self.assertLogs(level="WARNING") as logs:
+            thread.process_next_event()
+        self.assertEqual(thread._connect_at, 100.25)
+        self.assertIn("Trying again in 0.25 seconds", logs.output[0])
+
+    def test_the_delay_does_not_grow_with_each_failure(self):
+        thread = make_connecting_thread([False] * 6, reconnect_delay_seconds=1)
+        clock = [0.0]
+        waits = []
+        with patch("bot.TeamTalk.thread.time.monotonic", side_effect=lambda: clock[0]), \
+                self.assertLogs(level="WARNING"):
+            thread.start_connecting()
+            for _ in range(5):
+                waits.append(thread._connect_at - clock[0])
+                clock[0] = thread._connect_at
+                thread.process_next_event()
+        self.assertEqual(waits, [1, 1, 1, 1, 1])
+
+    def test_a_delay_under_a_second_is_not_stretched_by_the_event_wait(self):
+        # getMessage blocks for up to EVENT_WAIT_MS, so a quarter-second delay
+        # would otherwise come round only once a second.
+        thread = make_connecting_thread([False, True], reconnect_delay_seconds=0.25)
+        with patch("bot.TeamTalk.thread.time.monotonic", return_value=0.0), \
+                self.assertLogs(level="WARNING"):
+            thread.start_connecting()
+            thread.process_next_event()
+        (wait,), _ = thread.ttclient.tt.getMessage.call_args
+        self.assertEqual(wait, 250)
+
+    def test_a_limited_bot_retries_before_it_has_ever_connected(self):
+        # The old check also wanted ttclient.reconnect, set only after joining
+        # a channel, so a limit of 3 gave up on the first failure at startup.
+        thread = make_connecting_thread([False, True], reconnect_max_attempts=3)
+        with patch("bot.TeamTalk.thread.time.monotonic", return_value=0.0), \
+                self.assertLogs(level="WARNING"):
+            thread.start_connecting()
+        self.assertIsNotNone(thread._connect_at)
 
     def test_the_wait_for_an_event_is_finite(self):
         thread = make_connecting_thread([])

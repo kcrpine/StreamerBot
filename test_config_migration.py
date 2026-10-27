@@ -84,7 +84,7 @@ class MigrationTests(unittest.TestCase):
             },
         )
         manager = self.load(path)
-        self.assertEqual(manager.config.config_version, 2)
+        self.assertEqual(manager.config.config_version, ConfigManager.version)
         # The inherited names are still valid strings, so only a migration
         # replaces them; a merge against the defaults would keep them.
         self.assertEqual(manager.config.general.cache_file_name, "StreamerBotCache.dat")
@@ -93,7 +93,39 @@ class MigrationTests(unittest.TestCase):
         # them brings the bot back as somebody else.
         self.assertEqual(manager.config.teamtalk.hostname, "ttt")
         self.assertEqual(manager.config.teamtalk.nickname, "kept")
-        self.assertEqual(read_config(path)["config_version"], 2)
+        self.assertEqual(read_config(path)["config_version"], ConfigManager.version)
+
+    def test_v3_replaces_the_reconnection_settings(self):
+        # ana-bot carried reconnection_timeout 3600 over from TTMediaBot and
+        # waited an hour to reconnect after its server restarted.
+        path = write_config(
+            self.tmp.name,
+            {
+                "config_version": 2,
+                "teamtalk": {
+                    "hostname": "ttt",
+                    "reconnection_attempts": 5,
+                    "reconnection_timeout": 3600,
+                },
+            },
+        )
+        manager = self.load(path)
+        self.assertEqual(manager.config.teamtalk.reconnect_max_attempts, 5)
+        self.assertEqual(manager.config.teamtalk.reconnect_delay_seconds, 1.0)
+        written = read_config(path)["teamtalk"]
+        self.assertNotIn("reconnection_timeout", written)
+        self.assertNotIn("reconnection_attempts", written)
+        self.assertEqual(written["hostname"], "ttt")
+
+    def test_the_reconnect_delay_takes_fractions(self):
+        path = write_config(
+            self.tmp.name,
+            {
+                "config_version": ConfigManager.version,
+                "teamtalk": {"reconnect_delay_seconds": 0.22},
+            },
+        )
+        self.assertEqual(self.load(path).config.teamtalk.reconnect_delay_seconds, 0.22)
 
     def test_a_config_written_before_versioning_is_migrated_all_the_way(self):
         path = write_config(

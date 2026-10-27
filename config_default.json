@@ -1,5 +1,5 @@
 {
-    "config_version": 2,
+    "config_version": 3,
     "general": {
         "language": "en",
         "send_channel_messages": true,
@@ -39,8 +39,8 @@
         "channel_password": "",
         "license_name": "",
         "license_key": "",
-        "reconnection_attempts": -1,
-        "reconnection_timeout": 10,
+        "reconnect_delay_seconds": 1.0,
+        "reconnect_max_attempts": -1,
         "users": {
             "admins": [
                 "admin"
