@@ -465,6 +465,24 @@ class AppleMusicDownloaderTests(TestCase):
 
         downloader._run.assert_not_called()
         self.assertIn("already running", message)
+        # The command to send again comes last, after a colon, never "this".
+        self.assertTrue(message.endswith("send: dlp"), message)
+
+    def test_a_refused_dl_names_dl_not_dlp(self):
+        downloader = self.make(self.PLAYING)
+        downloader._busy.acquire()
+
+        message = downloader.start(SimpleNamespace(url=self.ALBUM, name=""), SimpleNamespace(), whole=False)
+
+        self.assertTrue(message.endswith("send: dl"), message)
+
+    def test_not_signed_in_ends_with_the_command_to_send(self):
+        downloader = self.make(self.PLAYING)
+
+        with self.assertRaises(errors.NotSignedInError) as caught:
+            downloader._write_cookies(tempfile.mkdtemp())
+
+        self.assertTrue(str(caught.exception).endswith("To connect it, send: li am"))
 
     def test_nothing_playing_in_musickit_is_said_plainly(self):
         downloader = self.make(None)

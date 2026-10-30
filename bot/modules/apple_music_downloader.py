@@ -125,14 +125,20 @@ class AppleMusicDownloader:
                     "To download the whole album or playlist instead, send dlp."
                 )
 
-        return self._launch(self._run, (url, name, user), started)
+        return self._launch(self._run, (url, name, user), started, "dlp" if whole else "dl")
 
-    def _launch(self, target, args, started: str) -> str:
+    def _already_running(self, command: str) -> str:
+        # Names the command to send again. "Send this again" pointed at nothing
+        # once dla's question had closed, and a command mid-sentence is harder
+        # to find with the review cursor than one last after a colon.
+        return self.translator.translate(
+            "An Apple Music download is already running. To try again when it "
+            "has finished, send: {command}"
+        ).format(command=command)
+
+    def _launch(self, target, args, started: str, command: str) -> str:
         if not self._busy.acquire(blocking=False):
-            return self.translator.translate(
-                "An Apple Music download is already running. Please send this again "
-                "when it has finished."
-            )
+            return self._already_running(command)
         try:
             threading.Thread(
                 target=target, args=args,
@@ -193,10 +199,7 @@ class AppleMusicDownloader:
     def busy_message(self) -> Optional[str]:
         """Said before dla asks its question, so nobody answers only to be refused."""
         if self._busy.locked():
-            return self.translator.translate(
-                "An Apple Music download is already running. To try again when it "
-                "has finished, send: dla"
-            )
+            return self._already_running("dla")
         return None
 
     def start_artist(self, url: str, name: str, selection: str, user: User) -> str:
@@ -217,7 +220,7 @@ class AppleMusicDownloader:
             "They will be uploaded to the channel as one zip file, with a folder "
             "for each album. This can take a long time."
         )
-        return self._launch(self._run_artist, (url, name, selection, user), started)
+        return self._launch(self._run_artist, (url, name, selection, user), started, "dla")
 
     # -- doing it ---------------------------------------------------------
 
@@ -299,7 +302,7 @@ class AppleMusicDownloader:
             raise errors.NotSignedInError(
                 "am",
                 self.translator.translate(
-                    "Apple Music is not signed in on this bot. Send li am to connect it."
+                    "Apple Music is not signed in on this bot. To connect it, send: li am"
                 ),
             )
         path = os.path.join(job_dir, "cookies.txt")
