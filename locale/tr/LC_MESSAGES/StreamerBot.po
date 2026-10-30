@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  StreamerBot\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-30 04:35+0000\n"
+"POT-Creation-Date: 2026-10-30 04:49+0000\n"
 "PO-Revision-Date: 2021-07-17 13:41+0400\n"
 "Last-Translator: \n"
 "Language: tr\n"
@@ -2361,9 +2361,12 @@ msgstr "Apple Music şu anda bir şarkı çalmıyor."
 msgid "This song is not in the Apple Music catalog, so it cannot be downloaded."
 msgstr "Bu şarkı Apple Music kataloğunda yok, bu yüzden indirilemez."
 
+# | msgid "To download the whole album or playlist instead, send dlp."
 #: bot/modules/apple_music_downloader.py:125
-msgid "To download the whole album or playlist instead, send dlp."
-msgstr "Bunun yerine tüm albümü ya da çalma listesini indirmek için dlp gönderin."
+msgid "To download the whole album or playlist instead, send: dlp"
+msgstr ""
+"Bunun yerine albümün veya çalma listesinin tamamını indirmek için şunu "
+"gönderin: dlp"
 
 # | msgid "" "An Apple Music download is already running. Please send this
 # again
@@ -3202,10 +3205,14 @@ msgstr ""
 "%(service)s için Google Chrome gerekir, ancak bu makinenin işlemci "
 "mimarisi için mevcut değil."
 
+# | msgid "" "%(service)s is not connected. To connect an account, send this
+# | command: " "li %(code)s"
 #: bot/services/browser_service.py:132
 #, python-format
-msgid "%(service)s is not connected. Send li %(code)s to connect an account."
-msgstr "%(service)s bağlı değil. Bir hesap bağlamak için li %(code)s gönderin."
+msgid "%(service)s is not connected. To connect an account, send: li %(code)s"
+msgstr ""
+"%(service)s bağlı değil. Bir hesap bağlamak için şunu gönderin: li "
+"%(code)s"
 
 #: bot/services/browser_service.py:166
 #, python-format
@@ -3299,13 +3306,15 @@ msgstr ""
 msgid "The Apple Music downloader is not installed in this image."
 msgstr "Apple Music indiricisi bu imajda kurulu değil."
 
+# | msgid "" "Downloading from Apple Music needs a subscription. Connect the
+# | account " "first with li am."
 #: bot/services/gamdl_downloader.py:191
 msgid ""
-"Downloading from Apple Music needs a subscription. Connect the account "
-"first with li am."
+"Downloading from Apple Music needs a subscription. To connect the account"
+" first, send: li am"
 msgstr ""
-"Apple Music'ten indirmek için abonelik gerekir. Önce hesabı li am ile "
-"bağlayın."
+"Apple Music'ten indirmek için abonelik gerekir. Önce hesabı bağlamak için"
+" şunu gönderin: li am"
 
 #: bot/services/gamdl_downloader.py:225
 msgid "That is not an Apple Music link."
@@ -3341,9 +3350,12 @@ msgstr "Apple Music'te bu yoktu."
 msgid "That track needs a decryption device file the bot does not have."
 msgstr "Bu parça, botta olmayan bir şifre çözme cihazı dosyası gerektiriyor."
 
+# | msgid "The Apple Music sign-in has expired. Connect it again with li am."
 #: bot/services/gamdl_downloader.py:375
-msgid "The Apple Music sign-in has expired. Connect it again with li am."
-msgstr "Apple Music oturumunun süresi doldu. li am ile yeniden bağlayın."
+msgid "The Apple Music sign-in has expired. To connect it again, send: li am"
+msgstr ""
+"Apple Music oturumunun süresi doldu. Yeniden bağlamak için şunu gönderin:"
+" li am"
 
 # | msgid "Error: Downloaded file not found."
 #: bot/services/gamdl_downloader.py:378
@@ -3804,4 +3816,7 @@ msgstr "Bilinmiyor"
 #~ msgstr ""
 #~ "Zaten bir Apple Music indirmesi sürüyor."
 #~ " Lütfen bittiğinde bunu yeniden gönderin."
+
+#~ msgid "%(service)s is not connected. Send li %(code)s to connect an account."
+#~ msgstr "%(service)s bağlı değil. Bir hesap bağlamak için li %(code)s gönderin."
 

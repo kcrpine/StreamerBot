@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: StreamerBot VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-30 04:35+0000\n"
+"POT-Creation-Date: 2026-10-30 04:49+0000\n"
 "PO-Revision-Date: 2022-04-15 20:17+0700\n"
 "Last-Translator: \n"
 "Language: id_ID\n"
@@ -2370,9 +2370,10 @@ msgstr "Apple Music sedang tidak memutar lagu."
 msgid "This song is not in the Apple Music catalog, so it cannot be downloaded."
 msgstr "Lagu ini tidak ada di katalog Apple Music, jadi tidak bisa diunduh."
 
+# | msgid "To download the whole album or playlist instead, send dlp."
 #: bot/modules/apple_music_downloader.py:125
-msgid "To download the whole album or playlist instead, send dlp."
-msgstr "Untuk mengunduh seluruh album atau daftar putar, kirim dlp."
+msgid "To download the whole album or playlist instead, send: dlp"
+msgstr "Untuk mengunduh seluruh album atau playlist sebagai gantinya, kirim: dlp"
 
 # | msgid "" "An Apple Music download is already running. Please send this
 # again
@@ -3210,10 +3211,12 @@ msgstr ""
 "%(service)s memerlukan Google Chrome, yang tidak tersedia untuk "
 "arsitektur prosesor mesin ini."
 
+# | msgid "" "%(service)s is not connected. To connect an account, send this
+# | command: " "li %(code)s"
 #: bot/services/browser_service.py:132
 #, python-format
-msgid "%(service)s is not connected. Send li %(code)s to connect an account."
-msgstr "%(service)s tidak terhubung. Kirim li %(code)s untuk menghubungkan akun."
+msgid "%(service)s is not connected. To connect an account, send: li %(code)s"
+msgstr "%(service)s belum terhubung. Untuk menghubungkan akun, kirim: li %(code)s"
 
 #: bot/services/browser_service.py:166
 #, python-format
@@ -3307,13 +3310,15 @@ msgstr ""
 msgid "The Apple Music downloader is not installed in this image."
 msgstr "Pengunduh Apple Music tidak terpasang di image ini."
 
+# | msgid "" "Downloading from Apple Music needs a subscription. Connect the
+# | account " "first with li am."
 #: bot/services/gamdl_downloader.py:191
 msgid ""
-"Downloading from Apple Music needs a subscription. Connect the account "
-"first with li am."
+"Downloading from Apple Music needs a subscription. To connect the account"
+" first, send: li am"
 msgstr ""
-"Mengunduh dari Apple Music memerlukan langganan. Hubungkan akunnya dulu "
-"dengan li am."
+"Mengunduh dari Apple Music memerlukan langganan. Untuk menghubungkan akun"
+" terlebih dahulu, kirim: li am"
 
 #: bot/services/gamdl_downloader.py:225
 msgid "That is not an Apple Music link."
@@ -3349,9 +3354,12 @@ msgstr "Apple Music tidak memilikinya."
 msgid "That track needs a decryption device file the bot does not have."
 msgstr "Lagu itu memerlukan berkas perangkat dekripsi yang tidak dimiliki bot."
 
+# | msgid "The Apple Music sign-in has expired. Connect it again with li am."
 #: bot/services/gamdl_downloader.py:375
-msgid "The Apple Music sign-in has expired. Connect it again with li am."
-msgstr "Data masuk Apple Music sudah kedaluwarsa. Hubungkan lagi dengan li am."
+msgid "The Apple Music sign-in has expired. To connect it again, send: li am"
+msgstr ""
+"Sesi masuk Apple Music sudah kedaluwarsa. Untuk menghubungkannya lagi, "
+"kirim: li am"
 
 # | msgid "Error: Downloaded file not found."
 #: bot/services/gamdl_downloader.py:378
@@ -3639,4 +3647,9 @@ msgstr "Tidak Diketahui"
 #~ msgstr ""
 #~ "Unduhan Apple Music sedang berjalan. "
 #~ "Silakan kirim ini lagi setelah selesai."
+
+#~ msgid "%(service)s is not connected. Send li %(code)s to connect an account."
+#~ msgstr ""
+#~ "%(service)s tidak terhubung. Kirim li "
+#~ "%(code)s untuk menghubungkan akun."
 

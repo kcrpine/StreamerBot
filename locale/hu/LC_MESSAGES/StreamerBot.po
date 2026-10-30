@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  StreamerBot\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-30 04:35+0000\n"
+"POT-Creation-Date: 2026-10-30 04:49+0000\n"
 "PO-Revision-Date: 2024-01-18 16:31+0100\n"
 "Last-Translator: Гумеров Амир Эдуардович <gumerov.amir.e@gmail.com>\n"
 "Language: hu\n"
@@ -2390,9 +2390,10 @@ msgstr "Az Apple Music most nem játszik dalt."
 msgid "This song is not in the Apple Music catalog, so it cannot be downloaded."
 msgstr "Ez a dal nincs az Apple Music katalógusában, ezért nem tölthető le."
 
+# | msgid "To download the whole album or playlist instead, send dlp."
 #: bot/modules/apple_music_downloader.py:125
-msgid "To download the whole album or playlist instead, send dlp."
-msgstr "Ha inkább a teljes albumot vagy lejátszási listát töltené le, küldje: dlp."
+msgid "To download the whole album or playlist instead, send: dlp"
+msgstr "Ha inkább a teljes albumot vagy lejátszási listát töltenéd le, küldd: dlp"
 
 # | msgid "" "An Apple Music download is already running. Please send this
 # again
@@ -3245,12 +3246,14 @@ msgstr ""
 "%(service)s Google Chrome-ot igényel, de ez nem érhető el a gép "
 "processzorarchitektúrájára."
 
+# | msgid "" "%(service)s is not connected. To connect an account, send this
+# | command: " "li %(code)s"
 #: bot/services/browser_service.py:132
 #, python-format
-msgid "%(service)s is not connected. Send li %(code)s to connect an account."
+msgid "%(service)s is not connected. To connect an account, send: li %(code)s"
 msgstr ""
-"%(service)s nincs csatlakoztatva. Fiók csatlakoztatásához küldje: li "
-"%(code)s."
+"A(z) %(service)s nincs csatlakoztatva. Fiók csatlakoztatásához küldd: li "
+"%(code)s"
 
 #: bot/services/browser_service.py:166
 #, python-format
@@ -3346,13 +3349,15 @@ msgstr ""
 msgid "The Apple Music downloader is not installed in this image."
 msgstr "Az Apple Music letöltője nincs telepítve ebbe a képbe."
 
+# | msgid "" "Downloading from Apple Music needs a subscription. Connect the
+# | account " "first with li am."
 #: bot/services/gamdl_downloader.py:191
 msgid ""
-"Downloading from Apple Music needs a subscription. Connect the account "
-"first with li am."
+"Downloading from Apple Music needs a subscription. To connect the account"
+" first, send: li am"
 msgstr ""
-"Az Apple Music letöltéséhez előfizetés kell. Előbb csatlakoztassa a "
-"fiókot: li am."
+"Az Apple Music-letöltéshez előfizetés kell. A fiók csatlakoztatásához "
+"előbb küldd: li am"
 
 #: bot/services/gamdl_downloader.py:225
 msgid "That is not an Apple Music link."
@@ -3388,9 +3393,12 @@ msgstr "Az Apple Musicban ez nem volt meg."
 msgid "That track needs a decryption device file the bot does not have."
 msgstr "Ehhez a számhoz egy visszafejtő eszközfájl kell, amely a botnak nincs meg."
 
+# | msgid "The Apple Music sign-in has expired. Connect it again with li am."
 #: bot/services/gamdl_downloader.py:375
-msgid "The Apple Music sign-in has expired. Connect it again with li am."
-msgstr "Az Apple Music-bejelentkezés lejárt. Csatlakoztassa újra: li am."
+msgid "The Apple Music sign-in has expired. To connect it again, send: li am"
+msgstr ""
+"Az Apple Music-bejelentkezés lejárt. Az újbóli csatlakoztatáshoz küldd: "
+"li am"
 
 # | msgid "Error: Downloaded file not found."
 #: bot/services/gamdl_downloader.py:378
@@ -3698,4 +3706,9 @@ msgstr "Ismeretlen"
 #~ msgstr ""
 #~ "Már fut egy Apple Music-letöltés. "
 #~ "Kérjük, küldje el újra, ha befejeződött."
+
+#~ msgid "%(service)s is not connected. Send li %(code)s to connect an account."
+#~ msgstr ""
+#~ "%(service)s nincs csatlakoztatva. Fiók "
+#~ "csatlakoztatásához küldje: li %(code)s."
 

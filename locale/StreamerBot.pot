@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: StreamerBot VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-30 04:35+0000\n"
+"POT-Creation-Date: 2026-10-30 04:49+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -2081,7 +2081,7 @@ msgid "This song is not in the Apple Music catalog, so it cannot be downloaded."
 msgstr ""
 
 #: bot/modules/apple_music_downloader.py:125
-msgid "To download the whole album or playlist instead, send dlp."
+msgid "To download the whole album or playlist instead, send: dlp"
 msgstr ""
 
 #: bot/modules/apple_music_downloader.py:135
@@ -2818,7 +2818,7 @@ msgstr ""
 
 #: bot/services/browser_service.py:132
 #, python-format
-msgid "%(service)s is not connected. Send li %(code)s to connect an account."
+msgid "%(service)s is not connected. To connect an account, send: li %(code)s"
 msgstr ""
 
 #: bot/services/browser_service.py:166
@@ -2883,8 +2883,8 @@ msgstr ""
 
 #: bot/services/gamdl_downloader.py:191
 msgid ""
-"Downloading from Apple Music needs a subscription. Connect the account "
-"first with li am."
+"Downloading from Apple Music needs a subscription. To connect the account"
+" first, send: li am"
 msgstr ""
 
 #: bot/services/gamdl_downloader.py:225
@@ -2920,7 +2920,7 @@ msgid "That track needs a decryption device file the bot does not have."
 msgstr ""
 
 #: bot/services/gamdl_downloader.py:375
-msgid "The Apple Music sign-in has expired. Connect it again with li am."
+msgid "The Apple Music sign-in has expired. To connect it again, send: li am"
 msgstr ""
 
 #: bot/services/gamdl_downloader.py:378

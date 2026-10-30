@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: StreamerBot 2.3.0\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-30 04:35+0000\n"
+"POT-Creation-Date: 2026-10-30 04:49+0000\n"
 "PO-Revision-Date: 2022-05-12 15:06+0200\n"
 "Last-Translator: Iván Novegil Cancelas <ivan.novegil.cancelas@gmail.com>\n"
 "Language: es\n"
@@ -2382,9 +2382,12 @@ msgstr ""
 "Esta canción no está en el catálogo de Apple Music, así que no se puede "
 "descargar."
 
+# | msgid "To download the whole album or playlist instead, send dlp."
 #: bot/modules/apple_music_downloader.py:125
-msgid "To download the whole album or playlist instead, send dlp."
-msgstr "Para descargar el álbum o la lista completa, envía dlp."
+msgid "To download the whole album or playlist instead, send: dlp"
+msgstr ""
+"Para descargar en su lugar todo el álbum o la lista de reproducción, "
+"envía: dlp"
 
 # | msgid "" "An Apple Music download is already running. Please send this
 # again
@@ -3238,10 +3241,14 @@ msgstr ""
 "%(service)s necesita Google Chrome, que no está disponible para la "
 "arquitectura de procesador de este equipo."
 
+# | msgid "" "%(service)s is not connected. To connect an account, send this
+# | command: " "li %(code)s"
 #: bot/services/browser_service.py:132
 #, python-format
-msgid "%(service)s is not connected. Send li %(code)s to connect an account."
-msgstr "%(service)s no está conectado. Envía li %(code)s para conectar una cuenta."
+msgid "%(service)s is not connected. To connect an account, send: li %(code)s"
+msgstr ""
+"%(service)s no está conectado. Para conectar una cuenta, envía: li "
+"%(code)s"
 
 #: bot/services/browser_service.py:166
 #, python-format
@@ -3335,13 +3342,15 @@ msgstr ""
 msgid "The Apple Music downloader is not installed in this image."
 msgstr "El descargador de Apple Music no está instalado en esta imagen."
 
+# | msgid "" "Downloading from Apple Music needs a subscription. Connect the
+# | account " "first with li am."
 #: bot/services/gamdl_downloader.py:191
 msgid ""
-"Downloading from Apple Music needs a subscription. Connect the account "
-"first with li am."
+"Downloading from Apple Music needs a subscription. To connect the account"
+" first, send: li am"
 msgstr ""
-"Descargar de Apple Music necesita una suscripción. Conecta primero la "
-"cuenta con li am."
+"Descargar de Apple Music requiere una suscripción. Para conectar primero "
+"la cuenta, envía: li am"
 
 #: bot/services/gamdl_downloader.py:225
 msgid "That is not an Apple Music link."
@@ -3379,11 +3388,12 @@ msgstr ""
 "Esa pista necesita un archivo de dispositivo de descifrado que el bot no "
 "tiene."
 
+# | msgid "The Apple Music sign-in has expired. Connect it again with li am."
 #: bot/services/gamdl_downloader.py:375
-msgid "The Apple Music sign-in has expired. Connect it again with li am."
+msgid "The Apple Music sign-in has expired. To connect it again, send: li am"
 msgstr ""
-"El inicio de sesión de Apple Music ha caducado. Vuelve a conectarlo con "
-"li am."
+"La sesión de Apple Music ha caducado. Para conectarla de nuevo, envía: li"
+" am"
 
 # | msgid "Error: Downloaded file not found."
 #: bot/services/gamdl_downloader.py:378
@@ -3678,4 +3688,9 @@ msgstr "Desconocido"
 #~ "Ya hay una descarga de Apple Music"
 #~ " en curso. Vuelve a enviarlo cuando"
 #~ " termine."
+
+#~ msgid "%(service)s is not connected. Send li %(code)s to connect an account."
+#~ msgstr ""
+#~ "%(service)s no está conectado. Envía li"
+#~ " %(code)s para conectar una cuenta."
 
