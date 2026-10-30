@@ -189,7 +189,7 @@ class GamdlDownloader:
                 "am",
                 self.translator.translate(
                     "Downloading from Apple Music needs a subscription. "
-                    "Connect the account first with li am."
+                    "To connect the account first, send: li am"
                 ),
             )
 
@@ -372,7 +372,7 @@ class GamdlDownloader:
             )
         if "cookie" in text:
             return self.translator.translate(
-                "The Apple Music sign-in has expired. Connect it again with li am."
+                "The Apple Music sign-in has expired. To connect it again, send: li am"
             )
         logger.error(f"[gamdl] failed: {(result.stderr or '')[:800]}")
         return self.translator.translate("The download failed.")

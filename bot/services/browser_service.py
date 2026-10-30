@@ -129,7 +129,7 @@ class BrowserService(Service):
             raise errors.NotSignedInError(
                 self.name,
                 self.translator.translate(
-                    "%(service)s is not connected. Send li %(code)s to connect an account."
+                    "%(service)s is not connected. To connect an account, send: li %(code)s"
                 ) % {"service": self.display_name, "code": self.name},
             )
 

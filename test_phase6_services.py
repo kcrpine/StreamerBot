@@ -48,6 +48,20 @@ def make_service(cls, engine=None):
     return service
 
 
+class NotConnectedMessageTests(TestCase):
+    def test_the_command_to_connect_comes_last_after_a_colon(self):
+        engine = SimpleNamespace(is_logged_in=lambda name: False)
+        service = make_service(AppleMusicService, engine)
+
+        with self.assertRaises(errors.NotSignedInError) as caught:
+            service._require_login()
+
+        self.assertEqual(
+            str(caught.exception),
+            "Apple Music is not connected. To connect an account, send: li am",
+        )
+
+
 class DisneyAudioDescriptionTests(TestCase):
     """Disney abbreviates to AD in some regions, which is a trap."""
 
@@ -263,6 +277,13 @@ class GamdlTests(TestCase):
                 self.downloader.check_ready()
 
         self.assertIn("li am", str(caught.exception))
+        # The command comes last, after a colon, where the review cursor finds it.
+        self.assertTrue(str(caught.exception).endswith("send: li am"))
+
+    def test_an_expired_sign_in_ends_with_the_command_to_send(self):
+        result = SimpleNamespace(returncode=1, stderr="cookie rejected", stdout="")
+
+        self.assertTrue(self.downloader._explain_failure(result).endswith("send: li am"))
 
     def test_a_missing_binary_is_reported_clearly(self):
         with patch.object(GamdlDownloader, "is_available", staticmethod(lambda: False)):

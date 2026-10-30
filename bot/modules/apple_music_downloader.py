@@ -122,7 +122,7 @@ class AppleMusicDownloader:
             queued_kind = collection_url(track.url)[1]
             if queued_kind:
                 started += " " + self.translator.translate(
-                    "To download the whole album or playlist instead, send dlp."
+                    "To download the whole album or playlist instead, send: dlp"
                 )
 
         return self._launch(self._run, (url, name, user), started, "dlp" if whole else "dl")

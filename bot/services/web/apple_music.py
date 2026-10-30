@@ -724,7 +724,7 @@ class AppleMusicAdapter(WebServiceAdapter):
             if state and not state.get("authorized"):
                 raise RuntimeError(
                     "Apple Music is not signed in on this bot, so it cannot play "
-                    "full songs. Send li am to connect it again."
+                    "full songs. To connect it again, send: li am"
                 ) from error
             raise RuntimeError(
                 "Apple Music did not start playing. Check that the account has an "

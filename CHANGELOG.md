@@ -7,6 +7,8 @@ issue or a commit message. Numbering continues across releases. A major version
 
 ## Unreleased
 
+- **[091]** The remaining Apple Music messages now end with the command to send, after a colon, the same as [090]. Starting a `dl` during an album now says "To download the whole album or playlist instead, send: dlp". The download errors say "To connect the account first, send: li am" and "To connect it again, send: li am", and so does Apple Music's "cannot play full songs" message. The message every browser service gives when it is not connected, such as "Apple Music is not connected", now ends "To connect an account, send: li am", with each service's own code. Translated into all seven languages. The "cannot play full songs" message is English in every language because it has never been translatable; that is unchanged.
+
 ## StreamerBot 2.3.1 (2026-10-30)
 
 - **[090]** Two Apple Music download messages that `dl`, `dlp` and `dla` share now end with the command to send, after a colon, so the review cursor finds it at the end of the line. When a download is already running, the bot used to say "Please send this again when it has finished". Once `dla`'s question had closed, "this" pointed at nothing, and it never named a command. It now ends "To try again when it has finished, send: dl" (or `dlp`, or `dla`, whichever was refused). The sign-in message "Send li am to connect it." is now "To connect it, send: li am". Both were found by the screen reader review of [089] and are translated into all seven languages.
