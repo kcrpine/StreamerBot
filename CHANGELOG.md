@@ -7,6 +7,8 @@ issue or a commit message. Numbering continues across releases. A major version
 
 ## Unreleased
 
+## StreamerBot 2.3.1 (2026-10-30)
+
 - **[090]** Two Apple Music download messages that `dl`, `dlp` and `dla` share now end with the command to send, after a colon, so the review cursor finds it at the end of the line. When a download is already running, the bot used to say "Please send this again when it has finished". Once `dla`'s question had closed, "this" pointed at nothing, and it never named a command. It now ends "To try again when it has finished, send: dl" (or `dlp`, or `dla`, whichever was refused). The sign-in message "Send li am to connect it." is now "To connect it, send: li am". Both were found by the screen reader review of [089] and are translated into all seven languages.
 
 ## StreamerBot 2.3 (2026-10-30)
