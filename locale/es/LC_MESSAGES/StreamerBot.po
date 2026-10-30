@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: StreamerBot 2.3.0\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-30 04:22+0000\n"
+"POT-Creation-Date: 2026-10-30 04:35+0000\n"
 "PO-Revision-Date: 2022-05-12 15:06+0200\n"
 "Last-Translator: Iván Novegil Cancelas <ivan.novegil.cancelas@gmail.com>\n"
 "Language: es\n"
@@ -1776,7 +1776,7 @@ msgid "Searching Apple Music for the artist {name}."
 msgstr "Buscando en Apple Music el artista {name}."
 
 # | msgid "Apple Music did not have that."
-#: bot/commands/user_commands.py:800 bot/modules/apple_music_downloader.py:188
+#: bot/commands/user_commands.py:800 bot/modules/apple_music_downloader.py:194
 #, python-brace-format
 msgid "Apple Music found no artist called {name}."
 msgstr "Apple Music no encontró ningún artista llamado {name}."
@@ -2342,7 +2342,7 @@ msgid "Paused: {stream_url}"
 msgstr "En pausa: {stream_url}"
 
 #: bot/modules/apple_music_downloader.py:79
-#: bot/modules/apple_music_downloader.py:176
+#: bot/modules/apple_music_downloader.py:182
 msgid "Apple Music is not available on this bot."
 msgstr "Apple Music no está disponible en este bot."
 
@@ -2386,23 +2386,29 @@ msgstr ""
 msgid "To download the whole album or playlist instead, send dlp."
 msgstr "Para descargar el álbum o la lista completa, envía dlp."
 
-#: bot/modules/apple_music_downloader.py:133
+# | msgid "" "An Apple Music download is already running. Please send this
+# again
+# | when " "it has finished."
+# | msgid "" "An Apple Music download is already running. To try again when it
+# | has " "finished, send: dla"
+#: bot/modules/apple_music_downloader.py:135
+#, python-brace-format
 msgid ""
-"An Apple Music download is already running. Please send this again when "
-"it has finished."
+"An Apple Music download is already running. To try again when it has "
+"finished, send: {command}"
 msgstr ""
-"Ya hay una descarga de Apple Music en curso. Vuelve a enviarlo cuando "
-"termine."
+"Ya hay una descarga de Apple Music en curso. Para intentarlo de nuevo "
+"cuando termine, envía: {command}"
 
 # | msgid "the playlist"
-#: bot/modules/apple_music_downloader.py:164
+#: bot/modules/apple_music_downloader.py:170
 msgid "this artist"
 msgstr "este artista"
 
 # | msgid "" "That is an Apple Music link, but not to an artist. For an album
 # or
 # | " "playlist, send dlp."
-#: bot/modules/apple_music_downloader.py:168
+#: bot/modules/apple_music_downloader.py:174
 msgid ""
 "That is an Apple Music link, but not to an artist. For an album or "
 "playlist, send: dlp"
@@ -2410,23 +2416,12 @@ msgstr ""
 "Es un enlace de Apple Music, pero no de un artista. Para un álbum o una "
 "lista de reproducción, envía: dlp"
 
-# | msgid "" "An Apple Music download is already running. Please send this
-# again
-# | when " "it has finished."
-#: bot/modules/apple_music_downloader.py:197
-msgid ""
-"An Apple Music download is already running. To try again when it has "
-"finished, send: dla"
-msgstr ""
-"Ya hay una descarga de Apple Music en curso. Para intentarlo de nuevo "
-"cuando termine, envía: dla"
-
-#: bot/modules/apple_music_downloader.py:206
+#: bot/modules/apple_music_downloader.py:209
 #, python-brace-format
 msgid "Downloading the main albums by {name}."
 msgstr "Descargando los álbumes principales de {name}."
 
-#: bot/modules/apple_music_downloader.py:209
+#: bot/modules/apple_music_downloader.py:212
 #, python-brace-format
 msgid ""
 "Downloading every album by {name}, including singles, EPs, live albums "
@@ -2435,12 +2430,12 @@ msgstr ""
 "Descargando todos los álbumes de {name}, incluidos sencillos, EP, álbumes"
 " en directo y recopilatorios."
 
-#: bot/modules/apple_music_downloader.py:213
+#: bot/modules/apple_music_downloader.py:216
 #, python-brace-format
 msgid "Downloading the singles and EPs by {name}."
 msgstr "Descargando los sencillos y EP de {name}."
 
-#: bot/modules/apple_music_downloader.py:217
+#: bot/modules/apple_music_downloader.py:220
 msgid ""
 "They will be uploaded to the channel as one zip file, with a folder for "
 "each album. This can take a long time."
@@ -2448,56 +2443,58 @@ msgstr ""
 "Se subirán al canal en un solo archivo zip, con una carpeta para cada "
 "álbum. Esto puede tardar mucho."
 
-#: bot/modules/apple_music_downloader.py:231
+#: bot/modules/apple_music_downloader.py:234
 #, python-brace-format
 msgid "{name} is in the channel: one zip file with {count} tracks."
 msgstr "{name} está en el canal: un archivo zip con {count} pistas."
 
-#: bot/modules/apple_music_downloader.py:233
+#: bot/modules/apple_music_downloader.py:236
 #, python-brace-format
 msgid "{name} is in the channel."
 msgstr "{name} está en el canal."
 
 # | msgid "{name} is in the channel as one zip file. Tracks in it: {count}."
-#: bot/modules/apple_music_downloader.py:246
+#: bot/modules/apple_music_downloader.py:249
 #, python-brace-format
 msgid "The {name} download is in the channel's files, as one zip file."
 msgstr ""
 "La descarga de {name} está en los archivos del canal, en un solo archivo "
 "zip."
 
-#: bot/modules/apple_music_downloader.py:248
+#: bot/modules/apple_music_downloader.py:251
 #, python-brace-format
 msgid "Albums: {albums}"
 msgstr "Álbumes: {albums}"
 
-#: bot/modules/apple_music_downloader.py:249
+#: bot/modules/apple_music_downloader.py:252
 #, python-brace-format
 msgid "Tracks: {count}"
 msgstr "Pistas: {count}"
 
 # | msgid "Live streams cannot be downloaded"
 # | msgid "Spotify tracks cannot be downloaded."
-#: bot/modules/apple_music_downloader.py:253
+#: bot/modules/apple_music_downloader.py:256
 msgid "Some tracks could not be downloaded."
 msgstr "Algunas pistas no se pudieron descargar."
 
-#: bot/modules/apple_music_downloader.py:279
+#: bot/modules/apple_music_downloader.py:282
 #, python-brace-format
 msgid "Could not download {name}: {reason}"
 msgstr "No se pudo descargar {name}: {reason}"
 
-#: bot/modules/apple_music_downloader.py:288
+#: bot/modules/apple_music_downloader.py:291
 #: bot/modules/playlist_uploader.py:145 bot/modules/uploader.py:112
 #, python-brace-format
 msgid "Could not download {name}."
 msgstr "No se pudo descargar {name}."
 
-#: bot/modules/apple_music_downloader.py:302
-msgid "Apple Music is not signed in on this bot. Send li am to connect it."
+# | msgid "Apple Music is not signed in on this bot. Send li am to connect
+# it."
+#: bot/modules/apple_music_downloader.py:305
+msgid "Apple Music is not signed in on this bot. To connect it, send: li am"
 msgstr ""
-"Apple Music no tiene sesión iniciada en este bot. Envía li am para "
-"conectarlo."
+"Apple Music no tiene la sesión iniciada en este bot. Para conectarlo, "
+"envía: li am"
 
 #: bot/modules/audio_description.py:129
 #, python-format
@@ -3672,4 +3669,13 @@ msgstr "Desconocido"
 #~ "{name} está en el canal: un "
 #~ "archivo zip con {albums} álbumes y "
 #~ "{count} pistas."
+
+#~ msgid ""
+#~ "An Apple Music download is already "
+#~ "running. Please send this again when "
+#~ "it has finished."
+#~ msgstr ""
+#~ "Ya hay una descarga de Apple Music"
+#~ " en curso. Vuelve a enviarlo cuando"
+#~ " termine."
 
