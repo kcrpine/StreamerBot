@@ -1895,6 +1895,14 @@ on the same OVH host (AS16276) showed the identical failure, 700-990 lines each 
 - **Found on the way:** `teamtalk.password`, `channel_password` and `license_key` were never registered with the log redaction filter, while every incoming message is logged in full. They now are, at startup and on change. Babel extracts only `translate(...)` calls, so an alias such as `t = translate` leaves its strings out of the catalogs without any error.
 - **Not verified:** a live TeamTalk round trip, including the restart and the "Restarted" message.
 
+### Downloading a whole Apple Music artist (2026-10-30, changelog [089])
+
+- **Asked for:** `dla` to download all of an artist's albums, the way `dlp` does an album, without anything playing first. It should ask each time which releases to take, and deliver one zip holding an artist folder with a folder for each album.
+- **Built:** `DownloadArtistCommand` (`dla`), `bot/commands/artist_choice.py` (1 main albums, 2 everything, 3 singles and EPs, 0 cancel, the same conversation rules as `PlaylistChoice`), `AppleMusicDownloader.find_artist`/`start_artist`, and `GamdlDownloader.download_artist`. A name is searched on Apple Music and the first `artist` result is taken. The question names the artist, so a wrong match is heard before anything downloads.
+- **gamdl, checked in the image (3.8.5):** `--artist-auto-select` takes `main-albums`, `compilation-albums`, `live-albums`, `singles-eps`, `all-albums`, `top-songs` and `music-videos`, and skips the interactive prompt. `all-albums` is the artist's full album relationship. An artist with nothing of the chosen kind logs "Artist has no media of type" and writes no files. The default album folder is `{album_artist}/{album}` and compilations go to `Compilations/{album}`, so both templates are set to `{album}` and the bot adds the artist folder itself when it zips.
+- **Partial results upload.** gamdl skips a track it cannot get and carries on. If it exits non-zero but some audio exists, that audio is zipped and uploaded and the message says some tracks are missing. Artist runs get a six-hour timeout, separate from the thirty minutes for an album.
+- **Not verified:** a live artist download, picking an artist from a real search with nothing playing, gamdl's real exit code when some albums fail, and whether a multi-gigabyte zip fits the TeamTalk server's file limit.
+
 ### Every contributor's work ships in every language (user's rule, 2026-10-27)
 
 The user set these rules on 2026-10-27, after every catalog was brought to complete (changelog [088]). They apply to anyone who works on this repository, whatever language they write in, and to Claude working on their behalf.

@@ -40,6 +40,18 @@ logger = logging.getLogger(__name__)
 # cannot occupy the worker forever.
 DOWNLOAD_TIMEOUT_SECONDS = 1800
 
+# A whole discography is many albums in one gamdl run.
+ARTIST_TIMEOUT_SECONDS = 6 * 3600
+
+# The numbers dla's question offers, as gamdl's --artist-auto-select values
+# (checked against gamdl 3.8.5's ArtistMediaType). "all-albums" is Apple's full
+# album list for the artist: singles, EPs, live albums and compilations too.
+ARTIST_SELECTIONS = {
+    1: "main-albums",
+    2: "all-albums",
+    3: "singles-eps",
+}
+
 AUDIO_SUFFIXES = (".m4a", ".mp3", ".aac", ".flac", ".opus", ".wav")
 
 APPLE_URL = re.compile(
@@ -65,6 +77,20 @@ def url_kind(url: str) -> Optional[str]:
     if kind == "album" and "?i=" in url:
         return "song"
     return kind
+
+
+def artist_url(url: str) -> Optional[str]:
+    """An Apple Music artist link without its query string, or None."""
+    url = (url or "").strip()
+    if url_kind(url) != "artist":
+        return None
+    return url.split("?", 1)[0]
+
+
+def safe_name(name: str, fallback: str = "apple-music") -> str:
+    """A file or folder name every filesystem and TeamTalk client accepts."""
+    cleaned = re.sub(r'[<>:"/\\|?*\x00-\x1f]', "_", name or "").strip(". ")
+    return cleaned[:120] or fallback
 
 
 # -- what is playing, as something gamdl can fetch --------------------------
@@ -240,6 +266,89 @@ class GamdlDownloader:
         shutil.rmtree(work_dir, ignore_errors=True)
         return archive, True, len(files)
 
+    def _artist_command(self, url: str, work_dir: str, selection: str) -> List[str]:
+        """The album command, told what to take from the artist and where to put it.
+
+        --artist-auto-select stops gamdl asking which releases to download, a
+        prompt nobody can answer from a subprocess. The folder templates put each
+        album directly under the work directory instead of gamdl's default
+        "{album_artist}/{album}", which would put compilations under "Various
+        Artists" rather than in the artist's folder.
+        """
+        command = self._command(url, work_dir)
+        return command[:-1] + [
+            "--artist-auto-select", selection,
+            "--album-folder-template", "{album}",
+            "--compilation-folder-template", "{album}",
+            command[-1],
+        ]
+
+    def download_artist(
+        self, url: str, selection: str, artist_name: str
+    ) -> Tuple[str, int, int, bool]:
+        """Every album of one kind by an artist, as one zip.
+
+        Returns (zip path, album count, track count, partial). Inside the zip is
+        one folder named after the artist with a folder for each album, as the
+        user asked. partial means gamdl reported an error but some tracks did
+        download: those are uploaded rather than thrown away, and the user is
+        told some are missing.
+        """
+        self.check_ready()
+        url = artist_url(url)
+        if not url:
+            raise errors.ServiceError(
+                self.translator.translate("That is not an Apple Music artist link.")
+            )
+        if selection not in ARTIST_SELECTIONS.values():
+            raise ValueError(f"unknown artist selection: {selection}")
+
+        work_dir = tempfile.mkdtemp(prefix="gamdl-", dir=self.output_dir)
+        try:
+            result = subprocess.run(
+                self._artist_command(url, work_dir, selection),
+                capture_output=True,
+                text=True,
+                timeout=ARTIST_TIMEOUT_SECONDS,
+                shell=False,
+            )
+        except subprocess.TimeoutExpired:
+            shutil.rmtree(work_dir, ignore_errors=True)
+            raise errors.ServiceError(
+                self.translator.translate("The download took too long and was stopped.")
+            )
+        except OSError as error:
+            shutil.rmtree(work_dir, ignore_errors=True)
+            raise errors.ServiceError(f"The downloader could not run: {error}") from error
+
+        files = self._collect_audio(work_dir)
+        if not files:
+            shutil.rmtree(work_dir, ignore_errors=True)
+            if result.returncode != 0 or self._has_no_media(result):
+                raise errors.ServiceError(self._explain_failure(result))
+            raise errors.ServiceError(
+                self.translator.translate("The download produced no audio files.")
+            )
+        if result.returncode != 0:
+            logger.warning(
+                f"[gamdl] artist download finished with errors: {(result.stderr or '')[:800]}"
+            )
+
+        folder = safe_name(artist_name, "artist")
+        albums = {
+            os.path.relpath(path, work_dir).split(os.sep)[0]
+            for path in files
+            if os.sep in os.path.relpath(path, work_dir)
+        }
+        archive = self._zip_under(files, work_dir, folder)
+        shutil.rmtree(work_dir, ignore_errors=True)
+        return archive, max(len(albums), 1), len(files), result.returncode != 0
+
+    @staticmethod
+    def _has_no_media(result) -> bool:
+        text = ((result.stderr or "") + (result.stdout or "")).lower()
+        return "has no media of type" in text
+
     def _explain_failure(self, result) -> str:
         """Turn gamdl's output into one sentence a user can act on.
 
@@ -247,6 +356,10 @@ class GamdlDownloader:
         details that do not belong in a channel.
         """
         text = ((result.stderr or "") + (result.stdout or "")).lower()
+        if self._has_no_media(result):
+            return self.translator.translate(
+                "Apple Music lists none of those for this artist."
+            )
         if "subscription" in text or "not active" in text:
             return self.translator.translate(
                 "That needs an active Apple Music subscription."
@@ -280,15 +393,27 @@ class GamdlDownloader:
         across the filesystem or leak the server's directory layout.
         """
         name = self._archive_name(files, work_dir, url)
+        archive = self._free_archive_path(name)
+        with zipfile.ZipFile(archive, "w", zipfile.ZIP_DEFLATED) as zf:
+            for path in files:
+                zf.write(path, arcname=os.path.relpath(path, work_dir))
+        return archive
+
+    def _zip_under(self, files: List[str], work_dir: str, folder: str) -> str:
+        """One archive named after folder, with everything inside folder/."""
+        archive = self._free_archive_path(folder)
+        with zipfile.ZipFile(archive, "w", zipfile.ZIP_DEFLATED) as zf:
+            for path in files:
+                relative = os.path.relpath(path, work_dir).replace(os.sep, "/")
+                zf.write(path, arcname=f"{folder}/{relative}")
+        return archive
+
+    def _free_archive_path(self, name: str) -> str:
         archive = os.path.join(self.output_dir, f"{name}.zip")
         counter = 1
         while os.path.exists(archive):
             archive = os.path.join(self.output_dir, f"{name} ({counter}).zip")
             counter += 1
-
-        with zipfile.ZipFile(archive, "w", zipfile.ZIP_DEFLATED) as zf:
-            for path in files:
-                zf.write(path, arcname=os.path.relpath(path, work_dir))
         return archive
 
     @staticmethod
@@ -298,13 +423,13 @@ class GamdlDownloader:
         name = parts[0] if len(parts) > 1 else (url_kind(url) or "apple-music")
         if name.lower().endswith(AUDIO_SUFFIXES):
             name = os.path.splitext(name)[0]
-        # Keep it to something every filesystem and TeamTalk client accepts.
-        cleaned = re.sub(r'[<>:"/\\|?*\x00-\x1f]', "_", name).strip(". ")
-        return cleaned[:120] or "apple-music"
+        return safe_name(name)
 
 
 __all__ = [
+    "ARTIST_SELECTIONS",
     "GamdlDownloader",
+    "artist_url",
     "collection_url",
     "has_media_user_token",
     "is_apple_music_url",

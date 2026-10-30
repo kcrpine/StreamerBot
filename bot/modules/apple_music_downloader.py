@@ -1,4 +1,5 @@
-"""Downloading what Apple Music is playing: `dl` for the song, `dlp` for the album or playlist.
+"""Downloading from Apple Music: `dl` for the song playing, `dlp` for the album or
+playlist playing, `dla` for every album by an artist (nothing need be playing).
 
 Apple Music plays in the browser, so the bot's queued Track is not a file and
 the ordinary uploader cannot fetch it. gamdl can, as the same account, using the
@@ -21,13 +22,16 @@ import os
 import shutil
 import tempfile
 import threading
-from typing import TYPE_CHECKING, Any, Dict, Optional
+from urllib.parse import unquote
+from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple
 
 from bot import errors
 from bot.services.gamdl_downloader import (
     GamdlDownloader,
+    artist_url,
     collection_url,
     has_media_user_token,
+    is_apple_music_url,
     netscape_cookies,
     song_url,
 )
@@ -121,6 +125,9 @@ class AppleMusicDownloader:
                     "To download the whole album or playlist instead, send dlp."
                 )
 
+        return self._launch(self._run, (url, name, user), started)
+
+    def _launch(self, target, args, started: str) -> str:
         if not self._busy.acquire(blocking=False):
             return self.translator.translate(
                 "An Apple Music download is already running. Please send this again "
@@ -128,7 +135,7 @@ class AppleMusicDownloader:
             )
         try:
             threading.Thread(
-                target=self._run, args=(url, name, user),
+                target=target, args=args,
                 daemon=True, name="AppleMusicDownload",
             ).start()
         except Exception:
@@ -136,9 +143,125 @@ class AppleMusicDownloader:
             raise
         return started
 
+    # -- a whole artist (dla) ---------------------------------------------
+
+    def find_artist(self, query: str) -> Tuple[str, str]:
+        """(artist link, artist name) for a link or a name. Nothing need be playing.
+
+        A name is searched on Apple Music and the first artist result is taken:
+        Apple ranks its own results, and the name goes into dla's question, so a
+        wrong match is heard and cancelled before anything downloads.
+        """
+        query = (query or "").strip()
+        link = artist_url(query)
+        if link:
+            # The link's own slug is a readable name until Apple's is known.
+            slug = link.rstrip("/").split("/")[-2] if link.count("/") >= 6 else ""
+            # A name outside Latin letters arrives percent-encoded, which a
+            # screen reader would read out as "percent E5".
+            slug = unquote(slug)
+            name = slug.replace("-", " ").strip().title()
+            return link, name or self.translator.translate("this artist")
+        if is_apple_music_url(query):
+            raise errors.ServiceError(
+                self.translator.translate(
+                    "That is an Apple Music link, but not to an artist. For an album "
+                    "or playlist, send: dlp"
+                )
+            )
+
+        service = self._service()
+        if service is None or not hasattr(service, "now_playing"):
+            raise errors.ServiceError(
+                self.translator.translate("Apple Music is not available on this bot.")
+            )
+        try:
+            tracks = service.search(query)
+        except errors.NothingFoundError:
+            tracks = []
+        for track in tracks:
+            kind = (getattr(track, "extra_info", None) or {}).get("kind")
+            url = artist_url(getattr(track, "url", "") or "")
+            if kind == "artist" and url:
+                return url, (track.name or "").strip() or query
+        raise errors.ServiceError(
+            self.translator.translate("Apple Music found no artist called {name}.").format(
+                name=query
+            )
+        )
+
+    def busy_message(self) -> Optional[str]:
+        """Said before dla asks its question, so nobody answers only to be refused."""
+        if self._busy.locked():
+            return self.translator.translate(
+                "An Apple Music download is already running. To try again when it "
+                "has finished, send: dla"
+            )
+        return None
+
+    def start_artist(self, url: str, name: str, selection: str, user: User) -> str:
+        """Begin downloading an artist's albums, and return the one message to send now."""
+        what = {
+            "main-albums": self.translator.translate(
+                "Downloading the main albums by {name}."
+            ),
+            "all-albums": self.translator.translate(
+                "Downloading every album by {name}, including singles, EPs, live "
+                "albums and compilations."
+            ),
+            "singles-eps": self.translator.translate(
+                "Downloading the singles and EPs by {name}."
+            ),
+        }[selection].format(name=name)
+        started = what + " " + self.translator.translate(
+            "They will be uploaded to the channel as one zip file, with a folder "
+            "for each album. This can take a long time."
+        )
+        return self._launch(self._run_artist, (url, name, selection, user), started)
+
     # -- doing it ---------------------------------------------------------
 
     def _run(self, url: str, name: str, user: User) -> None:
+        def fetch(downloader: GamdlDownloader) -> Optional[str]:
+            path, is_archive, count = downloader.download(url)
+            if not self.uploader.upload_file(path, user):
+                return None
+            if is_archive:
+                return self.translator.translate(
+                    "{name} is in the channel: one zip file with {count} tracks."
+                ).format(name=name, count=count)
+            return self.translator.translate("{name} is in the channel.").format(name=name)
+
+        self._job(url, name, user, fetch)
+
+    def _run_artist(self, url: str, name: str, selection: str, user: User) -> None:
+        def fetch(downloader: GamdlDownloader) -> Optional[str]:
+            path, albums, tracks, partial = downloader.download_artist(url, selection, name)
+            if not self.uploader.upload_file(path, user):
+                return None
+            # "Coldplay is in the channel" would mean a user called Coldplay.
+            # One number per line, each last after a colon.
+            message = "\n".join([
+                self.translator.translate(
+                    "The {name} download is in the channel's files, as one zip file."
+                ).format(name=name),
+                self.translator.translate("Albums: {albums}").format(albums=albums),
+                self.translator.translate("Tracks: {count}").format(count=tracks),
+            ])
+            if partial:
+                message += "\n" + self.translator.translate(
+                    "Some tracks could not be downloaded."
+                )
+            return message
+
+        self._job(url, name, user, fetch)
+
+    def _job(self, url: str, name: str, user: User, fetch) -> None:
+        """Set up a job directory and cookies, run fetch, and always clean up.
+
+        fetch downloads and uploads, and returns the finish message, or None when
+        the upload failed and the user has already been told why.
+        """
         job_dir = None
         try:
             os.makedirs(self._root, mode=0o700, exist_ok=True)
@@ -148,17 +271,9 @@ class AppleMusicDownloader:
             cookies_path = self._write_cookies(job_dir)
 
             downloader = GamdlDownloader(cookies_path, output_dir, self.translator)
-            path, is_archive, count = downloader.download(url)
-
-            if not self.uploader.upload_file(path, user):
-                return
-            if is_archive:
-                message = self.translator.translate(
-                    "{name} is in the channel: one zip file with {count} tracks."
-                ).format(name=name, count=count)
-            else:
-                message = self.translator.translate("{name} is in the channel.").format(name=name)
-            self.ttclient.send_message(message, user)
+            message = fetch(downloader)
+            if message:
+                self.ttclient.send_message(message, user)
         except (errors.ServiceError, errors.NotSignedInError) as error:
             self.ttclient.send_message(
                 self.translator.translate("Could not download {name}: {reason}").format(

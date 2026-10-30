@@ -22,6 +22,33 @@ if TYPE_CHECKING:
     from bot import Bot
 
 
+def answer_open_question(ttclient, store: Dict[int, Any], message: Message, expired_message) -> bool:
+    """Offer a message to the user's open numbered question, if they have one.
+
+    Returns True when the message was the answer (or a number sent to a
+    question that has expired). Anything else drops the question, and the
+    message then runs as an ordinary command, so nobody is stuck inside one.
+    """
+    user_id = message.user.id
+    if user_id not in store:
+        return False
+    question = store.pop(user_id)
+    if question.expired():
+        if message.text.strip().isdigit():
+            ttclient.send_message(expired_message(), message.user)
+            return True
+        return False
+    outcome = question.answer(message.text)
+    if outcome is None:
+        return False
+    reply, still_open = outcome
+    if still_open:
+        store[user_id] = question
+    if reply:
+        ttclient.send_message(reply, message.user)
+    return True
+
+
 class CommandProcessor:
     def __init__(self, bot: Bot):
         self.task_processor = TaskProcessor(self)
@@ -38,6 +65,8 @@ class CommandProcessor:
         self.locked = False
         self.current_command_id = 0
         self.pending_playlist_download = {}
+        # dla with no argument waits for the artist's name or link, like dlp above.
+        self.pending_artist_download = {}
         self.pending_ads_option = {}
         self.download_links = {}
         self.adsc_enabled = False
@@ -60,6 +89,8 @@ class CommandProcessor:
         # dlp on a YouTube playlist: whole playlist or one video. Per user, for the
         # same reason as the audio description prompt above.
         self.pending_playlist_choice: Dict[int, Any] = {}
+        # dla: which of an artist's releases to download. Per user, like the above.
+        self.pending_artist_choice: Dict[int, Any] = {}
         # config / cf: each admin's open settings menu, per user like the above.
         self.pending_config_menu: Dict[int, Any] = {}
         # Podcasts: the last search's shows, the show each user has open, and the
@@ -90,6 +121,7 @@ class CommandProcessor:
             "dl": user_commands.DownloadCommand,
             "dlv": user_commands.DownloadVideoCommand,
             "dlp": user_commands.DownloadPlaylistCommand,
+            "dla": user_commands.DownloadArtistCommand,
             "r": user_commands.RecentsCommand,
             "jc": user_commands.JoinChannelCommand,
             # --- Fila de reprodução ---
@@ -167,53 +199,22 @@ class CommandProcessor:
                 # user who changes their mind is not stuck.
                 prompt.cancel()
 
-            if message.user.id in self.pending_playlist_choice:
-                choice = self.pending_playlist_choice.pop(message.user.id)
-                if choice.expired():
-                    if message.text.strip().isdigit():
-                        self.ttclient.send_message(
-                            self.translator.translate(
-                                "That question has expired. To ask again, send: dlp"
-                            ),
-                            message.user,
-                        )
-                        return
-                    outcome = None
-                else:
-                    outcome = choice.answer(message.text)
-                if outcome is not None:
-                    reply, still_open = outcome
-                    if still_open:
-                        self.pending_playlist_choice[message.user.id] = choice
-                    if reply:
-                        self.ttclient.send_message(reply, message.user)
+            # getattr: CommandRoutingTests build a processor without some of these dicts.
+            # translate() is called right here so Babel's extractor sees each string.
+            open_questions = (
+                ("pending_playlist_choice", lambda: self.translator.translate(
+                    "That question has expired. To ask again, send: dlp")),
+                ("pending_artist_choice", lambda: self.translator.translate(
+                    "That question has expired. To ask again, send: dla")),
+                ("pending_config_menu", lambda: self.translator.translate(
+                    "That menu has expired. To open it again, send: cf")),
+            )
+            for attribute, expired_message in open_questions:
+                store = getattr(self, attribute, None)
+                if store is not None and answer_open_question(
+                    self.ttclient, store, message, expired_message
+                ):
                     return
-                # Not an answer: the question is dropped and this runs as a command.
-
-            # getattr: CommandRoutingTests build a processor without this dict.
-            config_menus = getattr(self, "pending_config_menu", {})
-            if message.user.id in config_menus:
-                menu = config_menus.pop(message.user.id)
-                if menu.expired():
-                    if message.text.strip().isdigit():
-                        self.ttclient.send_message(
-                            self.translator.translate(
-                                "That menu has expired. To open it again, send: cf"
-                            ),
-                            message.user,
-                        )
-                        return
-                    outcome = None
-                else:
-                    outcome = menu.answer(message.text)
-                if outcome is not None:
-                    reply, still_open = outcome
-                    if still_open:
-                        config_menus[message.user.id] = menu
-                    if reply:
-                        self.ttclient.send_message(reply, message.user)
-                    return
-                # Not an answer: the menu closes and this runs as a command.
 
             if message.user.id in self.pending_podcast_count:
                 answer = self.pending_podcast_count.pop(message.user.id)
@@ -228,6 +229,15 @@ class CommandProcessor:
                 command_name = "dlp"
                 arg = message.text
                 del self.pending_playlist_download[message.user.id]
+            elif message.user.id in getattr(self, "pending_artist_download", {}):
+                del self.pending_artist_download[message.user.id]
+                if message.text.strip() == "0":
+                    self.ttclient.send_message(
+                        self.translator.translate("Cancelled."), message.user
+                    )
+                    return
+                command_name = "dla"
+                arg = message.text
             elif message.user.id in self.pending_ads_option:
                 command_name = "ads"
                 arg = message.text

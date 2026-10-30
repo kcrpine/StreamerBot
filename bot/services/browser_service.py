@@ -224,7 +224,8 @@ class AppleMusicService(BrowserService):
             "Apple Music plays songs, albums, artists and playlists. A search "
             "returns all four, each named by what it is, so an album and the "
             "song on it are told apart. dl downloads what is playing and dlp "
-            "downloads the album it is from."
+            "downloads the album it is from. dla with an artist's name downloads "
+            "all of that artist's albums, with nothing playing."
         )
 
     def now_playing(self) -> Optional[Dict[str, Any]]:

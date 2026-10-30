@@ -78,6 +78,8 @@ a code prompt no longer dead-ends a sign-in.
 **Apple Music downloads.** `dl` on an Apple Music link uploads the audio to the
 channel: a single track as one file, an album or playlist as one zip.
 
+`dla` with an artist's name or Apple Music link downloads all of that artist's albums as one zip, with a folder for each album, and nothing has to be playing. It asks first whether you want the main albums, everything, or the singles and EPs.
+
 **A manager built for screen readers.** No screen clearing, no self-rewriting
 progress lines, destructive actions confirmed by typing a word rather than `y/N`,
 and flags for skipping the menus entirely.

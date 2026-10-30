@@ -6,6 +6,7 @@ import zipfile
 from typing import List, Optional, TYPE_CHECKING, Union
 
 from bot.commands.command import Command
+from bot.commands.artist_choice import ArtistChoice
 from bot.commands.playlist_choice import PlaylistChoice
 from bot.modules.playlist_uploader import YOUTUBE_SERVICES
 from bot.player.enums import Mode, State, TrackType
@@ -756,6 +757,59 @@ class DownloadVideoCommand(Command):
                 return self.translator.translate("Live streams cannot be downloaded")
         else:
             return self.translator.translate("Nothing is playing")
+
+
+class DownloadArtistCommand(Command):
+    @property
+    def help(self) -> str:
+        return self.translator.translate(
+            "Downloads every album by an Apple Music artist as one zip file, with a "
+            "folder for each album. Send dla with the artist's name or Apple Music "
+            "link; nothing needs to be playing. It asks first whether you want the "
+            "main albums, everything, or singles and EPs."
+        )
+
+    def __call__(self, arg: str, user: User) -> Optional[str]:
+        if not arg.strip():
+            self.command_processor.pending_artist_download[user.id] = True
+            return "\n".join([
+                self.translator.translate("Please send the artist's name or Apple Music link."),
+                self.translator.translate("To cancel, send: 0"),
+            ])
+        busy = self.module_manager.apple_music_downloader.busy_message()
+        if busy:
+            return busy
+        self.run_async(self._find, arg.strip(), user)
+        if arg.strip().startswith("http"):
+            # A link read back aloud is noise; the question names the artist.
+            return self.translator.translate("Looking up that Apple Music link.")
+        return self.translator.translate("Searching Apple Music for the artist {name}.").format(
+            name=arg.strip()
+        )
+
+    def _find(self, query: str, user: User) -> None:
+        downloader = self.module_manager.apple_music_downloader
+        try:
+            url, name = downloader.find_artist(query)
+        except (errors.ServiceError, errors.NotSignedInError) as error:
+            self.ttclient.send_message(str(error), user)
+            return
+        except Exception as error:
+            logging.error(f"dla: could not find the artist {query!r}: {error}", exc_info=True)
+            self.ttclient.send_message(
+                self.translator.translate("Apple Music found no artist called {name}.").format(
+                    name=query
+                ),
+                user,
+            )
+            return
+
+        def start(selection: str) -> str:
+            return downloader.start_artist(url, name, selection, user)
+
+        choice = ArtistChoice(name, self.translator.translate, start)
+        self.command_processor.pending_artist_choice[user.id] = choice
+        self.ttclient.send_message(choice.question(), user)
 
 
 class JoinChannelCommand(Command):
