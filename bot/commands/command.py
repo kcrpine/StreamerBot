@@ -29,6 +29,12 @@ class Command:
     def help(self) -> str:
         return self.translator.translate("help text not found")
 
+    def _register_format(self, user) -> Callable[[Any], None]:
+        """Where dl, dlp and dla leave their file format question for this user."""
+        def register(choice: Any) -> None:
+            self.command_processor.pending_format_choice[user.id] = choice
+        return register
+
     def run_async(self, func: Callable[..., None], *args: Any, **kwargs: Any) -> None:
         task = Task(id(self), func, args, kwargs)
         self._task_processor.task_queue.put(task)

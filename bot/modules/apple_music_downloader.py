@@ -26,8 +26,10 @@ from urllib.parse import unquote
 from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple
 
 from bot import errors
+from bot.commands.format_choice import FormatChoice
 from bot.services.gamdl_downloader import (
     GamdlDownloader,
+    format_name,
     artist_url,
     collection_url,
     has_media_user_token,
@@ -68,20 +70,21 @@ class AppleMusicDownloader:
         artist = ((now_playing or {}).get("artist") or "").strip()
         return f"{title}, by {artist}" if title and artist else title
 
-    def start(self, track: Track, user: User, whole: bool) -> str:
-        """Begin downloading, and return the one message to send now.
+    def _resolve(self, track: Track, whole: bool) -> Tuple[Optional[str], str, str, str]:
+        """What to download, settled while it is still playing.
 
-        whole=False is the song playing; whole=True is the album or playlist that
-        was played, or the album a single song is on.
+        Returns (url, name, kind, hint). url None means "say name and stop":
+        name is then the refusal. kind is "song", "album" or "playlist"; hint is
+        extra advice appended to the start message.
         """
         service = self._service()
         if service is None or not hasattr(service, "now_playing"):
-            return self.translator.translate("Apple Music is not available on this bot.")
+            return None, self.translator.translate("Apple Music is not available on this bot."), "", ""
 
         try:
             now_playing = service.now_playing()
         except errors.ServiceError as error:
-            return str(error)
+            return None, str(error), "", ""
         except Exception as error:
             logger.warning(f"[am download] could not ask Apple Music what is playing: {error}")
             now_playing = None
@@ -90,42 +93,86 @@ class AppleMusicDownloader:
         if whole:
             url, kind = collection_url(track.url, now_playing)
             if not url:
-                return self.translator.translate(
+                return None, self.translator.translate(
                     "What is playing is not an album or playlist that can be downloaded."
-                )
+                ), "", ""
             if kind == "playlist":
                 name = (track.name or "").strip() or self.translator.translate("the playlist")
-                started = self.translator.translate(
-                    "Downloading the playlist {name}. It will be uploaded to the channel "
-                    "as one zip file when it is ready, which can take several minutes."
-                ).format(name=name)
             else:
                 name = album or (track.name or "").strip()
-                started = self.translator.translate(
-                    "Downloading the album {name}. It will be uploaded to the channel "
-                    "as one zip file when it is ready, which can take several minutes."
-                ).format(name=name)
-        else:
-            if not now_playing:
-                return self.translator.translate(
-                    "Apple Music is not playing a song right now."
-                )
-            url = song_url(now_playing)
-            if not url:
-                return self.translator.translate(
-                    "This song is not in the Apple Music catalog, so it cannot be downloaded."
-                )
-            name = self.describe(now_playing)
-            started = self.translator.translate(
-                "Downloading {name}. It will be uploaded to the channel when it is ready."
-            ).format(name=name)
-            queued_kind = collection_url(track.url)[1]
-            if queued_kind:
-                started += " " + self.translator.translate(
-                    "To download the whole album or playlist instead, send: dlp"
-                )
+            return url, name, kind, ""
 
-        return self._launch(self._run, (url, name, user), started, "dlp" if whole else "dl")
+        if not now_playing:
+            return None, self.translator.translate(
+                "Apple Music is not playing a song right now."
+            ), "", ""
+        url = song_url(now_playing)
+        if not url:
+            return None, self.translator.translate(
+                "This song is not in the Apple Music catalog, so it cannot be downloaded."
+            ), "", ""
+        hint = ""
+        if collection_url(track.url)[1]:
+            hint = self.translator.translate(
+                "To download the whole album or playlist instead, send: dlp"
+            )
+        return url, self.describe(now_playing), "song", hint
+
+    def _started(self, name: str, kind: str, fmt: str, hint: str) -> str:
+        label = format_name(fmt)
+        if kind == "playlist":
+            started = self.translator.translate(
+                "Downloading the playlist {name} as {format}. It will be uploaded to the "
+                "channel's files as one zip file. This can take several minutes."
+            ).format(name=name, format=label)
+        elif kind == "album":
+            started = self.translator.translate(
+                "Downloading the album {name} as {format}. It will be uploaded to the "
+                "channel's files as one zip file. This can take several minutes."
+            ).format(name=name, format=label)
+        else:
+            started = self.translator.translate(
+                "Downloading {name} as {format}. It will be uploaded to the channel's "
+                "files when it is ready."
+            ).format(name=name, format=label)
+        return f"{started} {hint}" if hint else started
+
+    def start(self, track: Track, user: User, whole: bool, fmt: str = "m4a") -> str:
+        """Begin downloading, and return the one message to send now.
+
+        whole=False is the song playing; whole=True is the album or playlist that
+        was played, or the album a single song is on.
+        """
+        url, name, kind, hint = self._resolve(track, whole)
+        if not url:
+            return name
+        return self._launch(
+            self._run, (url, name, user, fmt),
+            self._started(name, kind, fmt, hint), "dlp" if whole else "dl",
+        )
+
+    def ask_format(self, track: Track, user: User, whole: bool, register) -> str:
+        """Settle what to download now, then ask which file format.
+
+        register stores the question for the user's next message. A refusal, or
+        a download already running, is said instead of asking, so nobody answers
+        a question only to be refused.
+        """
+        command = "dlp" if whole else "dl"
+        url, name, kind, hint = self._resolve(track, whole)
+        if not url:
+            return name
+        if self._busy.locked():
+            return self._already_running(command)
+
+        def start(fmt: str) -> str:
+            return self._launch(
+                self._run, (url, name, user, fmt), self._started(name, kind, fmt, hint), command
+            )
+
+        choice = FormatChoice(command, self.translator.translate, start)
+        register(choice)
+        return choice.question()
 
     def _already_running(self, command: str) -> str:
         # Names the command to send again. "Send this again" pointed at nothing
@@ -202,7 +249,18 @@ class AppleMusicDownloader:
             return self._already_running("dla")
         return None
 
-    def start_artist(self, url: str, name: str, selection: str, user: User) -> str:
+    def ask_artist_format(self, url: str, name: str, selection: str, user: User, register) -> str:
+        """dla's second question: the file format, once the releases are chosen."""
+        def start(fmt: str) -> str:
+            return self.start_artist(url, name, selection, user, fmt)
+
+        choice = FormatChoice("dla", self.translator.translate, start)
+        register(choice)
+        return choice.question()
+
+    def start_artist(
+        self, url: str, name: str, selection: str, user: User, fmt: str = "m4a"
+    ) -> str:
         """Begin downloading an artist's albums, and return the one message to send now."""
         what = {
             "main-albums": self.translator.translate(
@@ -217,29 +275,40 @@ class AppleMusicDownloader:
             ),
         }[selection].format(name=name)
         started = what + " " + self.translator.translate(
-            "They will be uploaded to the channel as one zip file, with a folder "
-            "for each album. This can take a long time."
-        )
-        return self._launch(self._run_artist, (url, name, selection, user), started, "dla")
+            "They will be uploaded to the channel's files as {format} files in one zip "
+            "file, with a folder for each album. This can take a long time."
+        ).format(format=format_name(fmt))
+        return self._launch(self._run_artist, (url, name, selection, user, fmt), started, "dla")
 
     # -- doing it ---------------------------------------------------------
 
-    def _run(self, url: str, name: str, user: User) -> None:
+    def _unconverted(self, downloader: GamdlDownloader, fmt: str) -> str:
+        if not getattr(downloader, "unconverted", 0):
+            return ""
+        return "\n" + self.translator.translate(
+            "Some tracks could not be converted to {format}, so they are M4A files instead."
+        ).format(format=format_name(fmt))
+
+    def _run(self, url: str, name: str, user: User, fmt: str = "m4a") -> None:
         def fetch(downloader: GamdlDownloader) -> Optional[str]:
-            path, is_archive, count = downloader.download(url)
+            path, is_archive, count = downloader.download(url, fmt)
             if not self.uploader.upload_file(path, user):
                 return None
             if is_archive:
-                return self.translator.translate(
+                message = self.translator.translate(
                     "{name} is in the channel: one zip file with {count} tracks."
                 ).format(name=name, count=count)
-            return self.translator.translate("{name} is in the channel.").format(name=name)
+            else:
+                message = self.translator.translate("{name} is in the channel.").format(name=name)
+            return message + self._unconverted(downloader, fmt)
 
         self._job(url, name, user, fetch)
 
-    def _run_artist(self, url: str, name: str, selection: str, user: User) -> None:
+    def _run_artist(
+        self, url: str, name: str, selection: str, user: User, fmt: str = "m4a"
+    ) -> None:
         def fetch(downloader: GamdlDownloader) -> Optional[str]:
-            path, albums, tracks, partial = downloader.download_artist(url, selection, name)
+            path, albums, tracks, partial = downloader.download_artist(url, selection, name, fmt)
             if not self.uploader.upload_file(path, user):
                 return None
             # "Coldplay is in the channel" would mean a user called Coldplay.
@@ -255,7 +324,7 @@ class AppleMusicDownloader:
                 message += "\n" + self.translator.translate(
                     "Some tracks could not be downloaded."
                 )
-            return message
+            return message + self._unconverted(downloader, fmt)
 
         self._job(url, name, user, fetch)
 

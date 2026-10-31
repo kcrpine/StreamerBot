@@ -724,8 +724,9 @@ class DownloadCommand(Command):
             track = self.player.track
             if track.service == "am":
                 # The song playing, which inside an album is not the queued track.
-                return self.module_manager.apple_music_downloader.start(
-                    track, user, whole=False
+                # Settled now, then the file format is asked.
+                return self.module_manager.apple_music_downloader.ask_format(
+                    track, user, False, self._register_format(user)
                 )
             if track.url and (
                 track.type == TrackType.Default or track.type == TrackType.Local
@@ -766,7 +767,7 @@ class DownloadArtistCommand(Command):
             "Downloads every album by an Apple Music artist as one zip file, with a "
             "folder for each album. Send dla with the artist's name or Apple Music "
             "link; nothing needs to be playing. It asks first whether you want the "
-            "main albums, everything, or singles and EPs."
+            "main albums, everything, or singles and EPs, and then which file format."
         )
 
     def __call__(self, arg: str, user: User) -> Optional[str]:
@@ -805,7 +806,10 @@ class DownloadArtistCommand(Command):
             return
 
         def start(selection: str) -> str:
-            return downloader.start_artist(url, name, selection, user)
+            # The releases are chosen; the file format is the second question.
+            return downloader.ask_artist_format(
+                url, name, selection, user, self._register_format(user)
+            )
 
         choice = ArtistChoice(name, self.translator.translate, start)
         self.command_processor.pending_artist_choice[user.id] = choice
@@ -878,8 +882,8 @@ class DownloadPlaylistCommand(Command):
             
             # With Apple Music playing, the album or playlist it is playing.
             if self.player.state != State.Stopped and self.player.track.service == "am":
-                return self.module_manager.apple_music_downloader.start(
-                    self.player.track, user, whole=True
+                return self.module_manager.apple_music_downloader.ask_format(
+                    self.player.track, user, True, self._register_format(user)
                 )
 
             # With a YouTube playlist playing, that playlist.

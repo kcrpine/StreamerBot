@@ -52,7 +52,107 @@ ARTIST_SELECTIONS = {
     3: "singles-eps",
 }
 
-AUDIO_SUFFIXES = (".m4a", ".mp3", ".aac", ".flac", ".opus", ".wav")
+AUDIO_SUFFIXES = (".m4a", ".mp3", ".aac", ".flac", ".opus", ".ogg", ".wav")
+
+# The numbers the file format question offers. gamdl itself only writes M4A: its
+# other codecs need a Widevine device file this image does not ship. Everything
+# else is an ffmpeg conversion of that M4A after gamdl has finished.
+FORMATS = {
+    1: "m4a",
+    2: "mp3",
+    3: "opus",
+    4: "ogg",
+    5: "flac",
+    6: "wav",
+    7: "aac",
+}
+
+# How each format is spoken and written. Capitals, because a synth reads "aac",
+# "ogg" or "flac" as a word.
+FORMAT_NAMES = {
+    "m4a": "M4A",
+    "mp3": "MP3",
+    "opus": "Opus",
+    "ogg": "Ogg",
+    "flac": "FLAC",
+    "wav": "WAV",
+    "aac": "AAC",
+}
+
+# (file extension, ffmpeg audio arguments, keeps the cover). The cover is copied
+# only into containers that hold one as a tag; Ogg, Opus, WAV and raw AAC drop it.
+_CONVERSIONS = {
+    "mp3": (".mp3", ["-c:a", "libmp3lame", "-q:a", "0", "-id3v2_version", "3"], True),
+    "opus": (".opus", ["-c:a", "libopus", "-b:a", "160k"], False),
+    "ogg": (".ogg", ["-c:a", "libvorbis", "-q:a", "6"], False),
+    "flac": (".flac", ["-c:a", "flac"], True),
+    "wav": (".wav", ["-c:a", "pcm_s16le"], False),
+    # The same AAC audio, out of its M4A container: nothing is re-encoded.
+    "aac": (".aac", ["-c:a", "copy", "-f", "adts"], False),
+}
+
+# One track, converted on a small VPS. Generous: a long live recording to FLAC.
+CONVERT_TIMEOUT_SECONDS = 600
+
+
+def format_name(fmt: str) -> str:
+    return FORMAT_NAMES.get(fmt, fmt.upper())
+
+
+def _ffmpeg_command(source: str, target: str, fmt: str, with_cover: bool) -> List[str]:
+    _suffix, audio, keeps_cover = _CONVERSIONS[fmt]
+    command = ["ffmpeg", "-nostdin", "-hide_banner", "-loglevel", "error", "-y", "-i", source,
+               "-map", "0:a:0", "-map_metadata", "0"]
+    if keeps_cover and with_cover:
+        command += ["-map", "0:v:0?", "-c:v", "copy", "-disposition:v:0", "attached_pic"]
+    else:
+        command += ["-vn"]
+    return command + audio + [target]
+
+
+def convert_files(files: List[str], fmt: str) -> Tuple[List[str], int]:
+    """Convert gamdl's M4A files to fmt, in place. Returns (files, failed count).
+
+    A track that will not convert stays as M4A and is counted, rather than
+    throwing away a download that may have taken an hour. Each original is
+    removed only once its conversion has succeeded. ffmpeg gets an argument
+    list, never a shell: file names come from Apple's track titles.
+    """
+    if fmt == "m4a" or fmt not in _CONVERSIONS:
+        return list(files), 0
+    suffix = _CONVERSIONS[fmt][0]
+    result: List[str] = []
+    failed = 0
+    for source in files:
+        if not source.lower().endswith(".m4a"):
+            result.append(source)
+            continue
+        target = os.path.splitext(source)[0] + suffix
+        converted = False
+        # With the cover first; some covers will not copy, so once more without.
+        for with_cover in ((True, False) if _CONVERSIONS[fmt][2] else (False,)):
+            try:
+                done = subprocess.run(
+                    _ffmpeg_command(source, target, fmt, with_cover),
+                    capture_output=True, text=True,
+                    timeout=CONVERT_TIMEOUT_SECONDS, shell=False,
+                )
+            except (subprocess.TimeoutExpired, OSError) as error:
+                logger.warning(f"[gamdl] converting to {fmt} failed: {error}")
+                break
+            if done.returncode == 0 and os.path.isfile(target) and os.path.getsize(target) > 0:
+                converted = True
+                break
+            logger.warning(f"[gamdl] ffmpeg could not convert to {fmt}: {(done.stderr or '')[:300]}")
+        if converted:
+            os.remove(source)
+            result.append(target)
+        else:
+            if os.path.exists(target):
+                os.remove(target)
+            failed += 1
+            result.append(source)
+    return result, failed
 
 APPLE_URL = re.compile(
     r"^https?://(?:music|beta\.music)\.apple\.com/[a-z]{2}/"
@@ -166,6 +266,8 @@ class GamdlDownloader:
         self.cookies_path = cookies_path
         self.output_dir = output_dir
         self.translator = translator
+        # Tracks the last download left as M4A because they would not convert.
+        self.unconverted = 0
 
     # -- availability ------------------------------------------------------
 
@@ -212,8 +314,11 @@ class GamdlDownloader:
             url,
         ]
 
-    def download(self, url: str) -> Tuple[str, bool, int]:
+    def download(self, url: str, fmt: str = "m4a") -> Tuple[str, bool, int]:
         """Fetch a URL. Returns (path, is_archive, track count).
+
+        fmt is one of FORMATS. Tracks that could not be converted stay M4A and
+        are counted in self.unconverted.
 
         A single track comes back as one MP3. Anything larger comes back as one
         zip, because uploading each file separately is unusable with a screen
@@ -255,6 +360,7 @@ class GamdlDownloader:
             raise errors.ServiceError(
                 self.translator.translate("The download produced no audio files.")
             )
+        files, self.unconverted = convert_files(files, fmt)
 
         if len(files) == 1:
             path = os.path.join(self.output_dir, os.path.basename(files[0]))
@@ -284,7 +390,7 @@ class GamdlDownloader:
         ]
 
     def download_artist(
-        self, url: str, selection: str, artist_name: str
+        self, url: str, selection: str, artist_name: str, fmt: str = "m4a"
     ) -> Tuple[str, int, int, bool]:
         """Every album of one kind by an artist, as one zip.
 
@@ -333,6 +439,7 @@ class GamdlDownloader:
             logger.warning(
                 f"[gamdl] artist download finished with errors: {(result.stderr or '')[:800]}"
             )
+        files, self.unconverted = convert_files(files, fmt)
 
         folder = safe_name(artist_name, "artist")
         albums = {
@@ -428,6 +535,10 @@ class GamdlDownloader:
 
 __all__ = [
     "ARTIST_SELECTIONS",
+    "FORMATS",
+    "FORMAT_NAMES",
+    "convert_files",
+    "format_name",
     "GamdlDownloader",
     "artist_url",
     "collection_url",

@@ -217,7 +217,7 @@ class FindArtistTests(TestCase):
         for thread in threading.enumerate():
             if thread.name == "AppleMusicDownload":
                 thread.join(timeout=5)
-        downloader._run_artist.assert_called_once_with(ARTIST, "Coldplay", "main-albums", USER)
+        downloader._run_artist.assert_called_once_with(ARTIST, "Coldplay", "main-albums", USER, "m4a")
         self.assertIn("main albums by Coldplay", message)
         self.assertIn("one zip file", message)
 

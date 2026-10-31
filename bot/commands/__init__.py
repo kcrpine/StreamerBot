@@ -35,7 +35,9 @@ def answer_open_question(ttclient, store: Dict[int, Any], message: Message, expi
     question = store.pop(user_id)
     if question.expired():
         if message.text.strip().isdigit():
-            ttclient.send_message(expired_message(), message.user)
+            # None: the question words its own, naming the command that asked.
+            text = expired_message() if expired_message else question.expired_message()
+            ttclient.send_message(text, message.user)
             return True
         return False
     outcome = question.answer(message.text)
@@ -91,6 +93,8 @@ class CommandProcessor:
         self.pending_playlist_choice: Dict[int, Any] = {}
         # dla: which of an artist's releases to download. Per user, like the above.
         self.pending_artist_choice: Dict[int, Any] = {}
+        # dl, dlp, dla: which file format, asked last. Per user, like the above.
+        self.pending_format_choice: Dict[int, Any] = {}
         # config / cf: each admin's open settings menu, per user like the above.
         self.pending_config_menu: Dict[int, Any] = {}
         # Podcasts: the last search's shows, the show each user has open, and the
@@ -206,6 +210,7 @@ class CommandProcessor:
                     "That question has expired. To ask again, send: dlp")),
                 ("pending_artist_choice", lambda: self.translator.translate(
                     "That question has expired. To ask again, send: dla")),
+                ("pending_format_choice", None),
                 ("pending_config_menu", lambda: self.translator.translate(
                     "That menu has expired. To open it again, send: cf")),
             )
