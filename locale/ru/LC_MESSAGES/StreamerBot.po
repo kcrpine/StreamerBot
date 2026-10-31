@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  StreamerBot\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-31 22:47+0000\n"
+"POT-Creation-Date: 2026-10-31 23:07+0000\n"
 "PO-Revision-Date: 2023-05-01 20:58+0500\n"
 "Last-Translator: Гумеров Амир Эдуардович <gumerov.amir.e@gmail.com>\n"
 "Language: ru\n"
@@ -20,7 +20,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.18.0\n"
 
-#: bot/__init__.py:223 bot/__init__.py:286
+#: bot/__init__.py:223 bot/__init__.py:289
 msgid ""
 "This needs Google Chrome, which is not available on this machine's "
 "processor architecture."
@@ -32,11 +32,18 @@ msgstr ""
 msgid "Spotify is unavailable: the player could not start."
 msgstr "Spotify недоступен: проигрыватель не удалось запустить."
 
-#: bot/__init__.py:301 bot/__init__.py:304 bot/modules/portal_pages.py:543
+#: bot/__init__.py:304 bot/__init__.py:307 bot/__init__.py:327
+#: bot/__init__.py:330 bot/modules/portal_pages.py:548
 msgid "The sign-in did not complete."
 msgstr "Вход не завершился."
 
-#: bot/__init__.py:317
+# | msgid "Audio description is not available in this bot."
+#: bot/__init__.py:315 bot/commands/audiovault_commands.py:206
+#: bot/modules/audiovault_jobs.py:63
+msgid "AudioVault is not available on this bot."
+msgstr "AudioVault недоступен в этом боте."
+
+#: bot/__init__.py:343
 msgid ""
 "The account portal is switched off in this bot's configuration, so "
 "Netflix, Disney Plus, Apple Music and Amazon Music cannot be connected. "
@@ -52,7 +59,7 @@ msgstr ""
 "файл PORT_CONFLICT.txt с объяснением, а пункт Repair Account Portal and "
 "Spotify Ports в менеджере снова его включит."
 
-#: bot/__init__.py:370
+#: bot/__init__.py:401
 #, python-format
 msgid ""
 "The account portal could not start because port %(port)s is already in "
@@ -69,7 +76,7 @@ msgstr ""
 "Ports, и перезапустите этого бота. YouTube и Spotify это не затрагивает: "
 "они входят по коду в канале."
 
-#: bot/__init__.py:380
+#: bot/__init__.py:411
 #, python-format
 msgid ""
 "The account portal could not start, so Netflix, Disney Plus, Apple Music "
@@ -80,13 +87,13 @@ msgstr ""
 " и Amazon Music подключить нельзя. Причина записана в журнале этого бота:"
 " %(reason)s"
 
-#: bot/__init__.py:412
+#: bot/__init__.py:443
 msgid ""
 "Hello! I'm back and ready for you to stream again. Thank you for your "
 "patience!"
 msgstr "Привет! Я вернулся и готов снова транслировать. Спасибо за терпение!"
 
-#: bot/__init__.py:452
+#: bot/__init__.py:483
 msgid ""
 "Hello there! It's me, the Streamer Bot, just coming in here to let you "
 "know that an update is in progress and I will restart in a few moments to"
@@ -95,11 +102,11 @@ msgstr ""
 "Привет! Это я, Streamer Bot. Сообщаю, что идёт обновление, и через "
 "несколько мгновений я перезапущусь, чтобы его применить. Спасибо!"
 
-#: bot/__init__.py:497
+#: bot/__init__.py:528
 msgid "Restarted. The new settings are in use."
 msgstr "Перезапуск выполнен. Новые настройки действуют."
 
-#: bot/__init__.py:537
+#: bot/__init__.py:568
 msgid "The bot is restarting now to apply the update. See you in a moment!"
 msgstr "Бот сейчас перезагружается для установки обновления. До скорой встречи!"
 
@@ -131,31 +138,33 @@ msgstr ""
 msgid "Send \"h\" for help"
 msgstr "Отправьте \"h\" для справки"
 
-#: bot/commands/__init__.py:210
+#: bot/commands/__init__.py:214
 msgid "That question has expired. To ask again, send: dlp"
 msgstr "Срок ответа на этот вопрос истёк. Чтобы спросить снова, отправьте: dlp"
 
 # | msgid "That question has expired. To ask again, send: dlp"
-#: bot/commands/__init__.py:212
+#: bot/commands/__init__.py:216
 msgid "That question has expired. To ask again, send: dla"
 msgstr "Срок этого вопроса истёк. Чтобы спросить снова, отправьте: dla"
 
-#: bot/commands/__init__.py:215
+#: bot/commands/__init__.py:220
 msgid "That menu has expired. To open it again, send: cf"
 msgstr "Срок действия меню истёк. Чтобы открыть его снова, отправьте: cf"
 
 # | msgid "Cache cleared"
-#: bot/commands/__init__.py:241 bot/commands/artist_choice.py:68
-#: bot/commands/format_choice.py:75 bot/commands/playlist_choice.py:119
-#: bot/modules/auth_portal.py:647
+#: bot/commands/__init__.py:246 bot/commands/artist_choice.py:68
+#: bot/commands/audiovault_commands.py:95
+#: bot/commands/audiovault_commands.py:122
+#: bot/commands/audiovault_commands.py:178 bot/commands/format_choice.py:75
+#: bot/commands/playlist_choice.py:119 bot/modules/auth_portal.py:651
 msgid "Cancelled."
 msgstr "Отменено."
 
-#: bot/commands/__init__.py:298
+#: bot/commands/__init__.py:303
 msgid "Unknown command. Send \"h\" for help."
 msgstr "Неизвестная команда. Отправьте \"h\" для справки."
 
-#: bot/commands/__init__.py:304 bot/commands/user_commands.py:976
+#: bot/commands/__init__.py:309 bot/commands/user_commands.py:976
 #: bot/commands/user_commands.py:982 bot/commands/user_commands.py:1477
 #: bot/commands/user_commands.py:1559 bot/commands/user_commands.py:1631
 #: bot/commands/user_commands.py:1705 bot/modules/uploader.py:140
@@ -163,23 +172,23 @@ msgstr "Неизвестная команда. Отправьте \"h\" для �
 msgid "Error: {}"
 msgstr "Ошибка: {}"
 
-#: bot/commands/__init__.py:316
+#: bot/commands/__init__.py:321
 msgid "You are banned"
 msgstr "Вы заблокированы"
 
-#: bot/commands/__init__.py:320
+#: bot/commands/__init__.py:325
 msgid "You are not in bot's channel"
 msgstr "Вы не в канале бота"
 
-#: bot/commands/__init__.py:324
+#: bot/commands/__init__.py:329
 msgid "Bot is locked"
 msgstr "Бот заблокирован"
 
-#: bot/commands/__init__.py:328
+#: bot/commands/__init__.py:333
 msgid "This command is blocked"
 msgstr "Эта команда заблокирована"
 
-#: bot/commands/__init__.py:352
+#: bot/commands/__init__.py:357
 msgid "Unknown command"
 msgstr "Неизвестная команда"
 
@@ -518,15 +527,109 @@ msgstr "Всё, включая синглы, EP, концертные альбо
 msgid "For singles and EPs only, send: 3"
 msgstr "Только синглы и EP — отправьте: 3"
 
-#: bot/commands/artist_choice.py:57 bot/commands/format_choice.py:64
+#: bot/commands/artist_choice.py:57 bot/commands/audiovault_commands.py:85
+#: bot/commands/audiovault_commands.py:113
+#: bot/commands/audiovault_commands.py:156 bot/commands/format_choice.py:64
 #: bot/commands/playlist_choice.py:85 bot/commands/user_commands.py:778
 msgid "To cancel, send: 0"
 msgstr "Чтобы отменить, отправьте: 0"
 
 # | msgid "That is not a %(service)s link."
-#: bot/commands/artist_choice.py:72 bot/commands/format_choice.py:79
+#: bot/commands/artist_choice.py:72 bot/commands/audiovault_commands.py:57
+#: bot/commands/format_choice.py:79
 msgid "That is not one of the choices."
 msgstr "Такого варианта нет."
+
+#: bot/commands/audiovault_commands.py:50
+msgid ""
+"That list has expired. To search again, send av and a title, for example:"
+" av spaceballs"
+msgstr ""
+"Срок этого списка истёк. Чтобы искать снова, отправьте av и название, "
+"например: av spaceballs"
+
+# | msgid "Search results count: {count}"
+#: bot/commands/audiovault_commands.py:72
+#, python-brace-format
+msgid "AudioVault results for {query}: {count}"
+msgstr "Результаты AudioVault по запросу {query}: {count}"
+
+#: bot/commands/audiovault_commands.py:78
+#, python-brace-format
+msgid "{name}, TV show, seasons: {count}"
+msgstr "{name}, сериал, сезонов: {count}"
+
+#: bot/commands/audiovault_commands.py:82
+#, python-brace-format
+msgid "{name}, movie"
+msgstr "{name}, фильм"
+
+# | msgid "To open the podcast, send: ps {number}"
+#: bot/commands/audiovault_commands.py:84
+msgid "To choose one, send its number."
+msgstr "Чтобы выбрать, отправьте номер."
+
+# | msgid "To turn it on, send: 1"
+#: bot/commands/audiovault_commands.py:111
+msgid "To stream it in the channel, send: 1"
+msgstr "Чтобы воспроизвести в канале, отправьте: 1"
+
+# | msgid "{name} is in the channel as one zip file. Tracks in it: {count}."
+# | msgid "The {name} download is in the channel's files, as one zip file."
+#: bot/commands/audiovault_commands.py:112
+msgid "To download it to the channel's files as a zip file, send: 2"
+msgstr "Чтобы скачать в файлы канала zip-файлом, отправьте: 2"
+
+#: bot/commands/audiovault_commands.py:144
+#, python-brace-format
+msgid "{name}. Seasons: {count}"
+msgstr "{name}. Сезонов: {count}"
+
+# | msgid "To open the podcast, send: ps {number}"
+#: bot/commands/audiovault_commands.py:151
+msgid "To stream a season, send its number."
+msgstr "Чтобы воспроизвести сезон, отправьте его номер."
+
+# | msgid "To open one, send pc and its number, for example: pc 1"
+#. translators: "d" is a command letter. Keep it exactly as it is.
+#: bot/commands/audiovault_commands.py:153
+msgid "To download one season, send d and its number, for example: d 1"
+msgstr "Чтобы скачать один сезон, отправьте d и номер сезона, например: d 1"
+
+#. translators: "all" is a command word. Keep it in English, exactly as it is.
+#: bot/commands/audiovault_commands.py:155
+msgid "To download every season, one zip file each, send: all"
+msgstr "Чтобы скачать все сезоны, каждый отдельным zip-файлом, отправьте: all"
+
+#: bot/commands/audiovault_commands.py:188
+msgid ""
+"TITLE Searches AudioVault for audio-described films and TV shows. Choose "
+"one by its number, then stream it in the channel or download it to the "
+"channel's files"
+msgstr ""
+"НАЗВАНИЕ Ищет на AudioVault фильмы и сериалы с тифлокомментарием. "
+"Выберите по номеру, затем воспроизведите в канале или скачайте в файлы "
+"канала"
+
+#: bot/commands/audiovault_commands.py:208
+#, python-brace-format
+msgid "Searching AudioVault for {query}."
+msgstr "Поиск на AudioVault: {query}."
+
+# | msgid "That podcast could not be read. Try again later."
+#: bot/commands/audiovault_commands.py:220 bot/services/audiovault.py:389
+#: bot/services/audiovault.py:427 bot/services/audiovault.py:494
+msgid "AudioVault could not be reached. Try again later."
+msgstr "Не удалось связаться с AudioVault. Попробуйте позже."
+
+#: bot/commands/audiovault_commands.py:226
+#, python-brace-format
+msgid ""
+"AudioVault found nothing for {query}. To search again, send av and a "
+"title, for example: av spaceballs"
+msgstr ""
+"AudioVault ничего не нашёл по запросу {query}. Чтобы искать снова, "
+"отправьте av и название, например: av spaceballs"
 
 #: bot/commands/command.py:30
 msgid "help text not found"
@@ -2151,13 +2254,15 @@ msgstr "Режим локальной загрузки (adsc) выключен."
 
 # | msgid "" "[service] Shows which streaming accounts are connected. With a
 # | service " "(yt, sp, nf, dp, am, az, pp, tb) it starts connecting that one"
+# | service " "(yt, sp, nf, dp, am, az, pp, hu, tb) it starts connecting that
+# | one"
 #: bot/commands/user_commands.py:1755
 msgid ""
 "[service] Shows which streaming accounts are connected. With a service "
-"(yt, sp, nf, dp, am, az, pp, hu, tb) it starts connecting that one"
+"(yt, sp, nf, dp, am, az, pp, hu, tb, av) it starts connecting that one"
 msgstr ""
 "[сервис] Показывает, какие аккаунты стриминговых сервисов подключены. С "
-"названием сервиса (yt, sp, nf, dp, am, az, pp, hu, tb) начинает его "
+"названием сервиса (yt, sp, nf, dp, am, az, pp, hu, tb, av) начинает его "
 "подключение"
 
 #: bot/commands/user_commands.py:1782
@@ -2531,7 +2636,7 @@ msgstr "Некоторые треки скачать не удалось."
 msgid "Could not download {name}: {reason}"
 msgstr "Не удалось скачать {name}: {reason}"
 
-#: bot/modules/apple_music_downloader.py:360
+#: bot/modules/apple_music_downloader.py:360 bot/modules/audiovault_jobs.py:234
 #: bot/modules/playlist_uploader.py:145 bot/modules/uploader.py:112
 #, python-brace-format
 msgid "Could not download {name}."
@@ -2558,29 +2663,127 @@ msgstr "Здесь есть тифлокомментарий. Воспроизв
 msgid "1. Yes. 2. No. 3. Yes, and remember. 4. No, and remember."
 msgstr "1. Да. 2. Нет. 3. Да, и запомнить. 4. Нет, и запомнить."
 
+#: bot/modules/audiovault_jobs.py:66 bot/services/audiovault.py:402
+msgid "To use AudioVault, connect an account. To connect one, send: li av"
+msgstr ""
+"Чтобы пользоваться AudioVault, подключите учётную запись. Чтобы "
+"подключить, отправьте: li av"
+
+#: bot/modules/audiovault_jobs.py:70
+msgid ""
+"An AudioVault download is already running. When it has finished, search "
+"again with av and a title, for example: av spaceballs"
+msgstr ""
+"Загрузка с AudioVault уже идёт. Когда она закончится, ищите снова: "
+"отправьте av и название, например: av spaceballs"
+
+#: bot/modules/audiovault_jobs.py:93
+#, python-brace-format
+msgid ""
+"Getting {name} ready to stream. It has to be downloaded and unpacked "
+"first, which can take a few minutes."
+msgstr ""
+"{name} готовится к воспроизведению. Сначала его нужно скачать и "
+"распаковать, это может занять несколько минут."
+
+# | msgid "Nothing is playing"
+#: bot/modules/audiovault_jobs.py:123 bot/modules/audiovault_jobs.py:127
+#, python-brace-format
+msgid "{name} is playing."
+msgstr "{name} воспроизводится."
+
+# | msgid "Search results count: {count}"
+# | msgid "Podcasts found: {count}"
+#: bot/modules/audiovault_jobs.py:124
+#, python-brace-format
+msgid "Episodes: {count}"
+msgstr "Эпизодов: {count}"
+
+# | msgid "" "Downloading the album {name}. It will be uploaded to the channel
+# | as one " "zip file when it is ready, which can take several minutes."
+# | msgid "" "Downloading the album {name} as {format}. It will be uploaded to
+# | the " "channel's files as one zip file. This can take several minutes."
+#: bot/modules/audiovault_jobs.py:144
+#, python-brace-format
+msgid ""
+"Downloading {name}. It will be uploaded to the channel's files as a zip "
+"file. This can take several minutes."
+msgstr ""
+"Скачивается {name}. Файл будет загружен в файлы канала zip-файлом. Это "
+"может занять несколько минут."
+
+# | msgid "{name} is in the channel as one zip file. Tracks in it: {count}."
+# | msgid "The {name} download is in the channel's files, as one zip file."
+#: bot/modules/audiovault_jobs.py:153
+#, python-brace-format
+msgid "{name} is in the channel's files as a zip file."
+msgstr "{name} лежит в файлах канала zip-файлом."
+
+#: bot/modules/audiovault_jobs.py:168
+#, python-brace-format
+msgid ""
+"Downloading every season of {name}, one zip file per season. This can "
+"take a long time."
+msgstr ""
+"Скачиваются все сезоны {name}, по одному zip-файлу на сезон. Это может "
+"занять много времени."
+
+# | msgid "{name} is in the channel as one zip file. Tracks in it: {count}."
+# | msgid "The {name} download is in the channel's files, as one zip file."
+#: bot/modules/audiovault_jobs.py:199
+#, python-brace-format
+msgid "The seasons of {name} are in the channel's files."
+msgstr "Сезоны {name} лежат в файлах канала."
+
+# | msgid "Tracks: {count}"
+#: bot/modules/audiovault_jobs.py:201
+#, python-brace-format
+msgid "Zip files: {count}"
+msgstr "Zip-файлов: {count}"
+
+# | msgid "Live streams cannot be downloaded"
+# | msgid "Spotify tracks cannot be downloaded."
+# | msgid "{count} could not be downloaded."
+# | msgid "Tracks that could not be downloaded: {count}."
+#: bot/modules/audiovault_jobs.py:205
+#, python-brace-format
+msgid "Seasons that could not be downloaded: {list}"
+msgstr "Не удалось скачать сезоны: {list}"
+
+# | msgid "Could not download {name}."
+#: bot/modules/audiovault_jobs.py:240
+#, python-brace-format
+msgid "Could not download any season of {name}."
+msgstr "Не удалось скачать ни одного сезона {name}."
+
 #: bot/modules/auth_portal.py:362
 msgid "Enter the Google account email address"
 msgstr "Введите адрес электронной почты аккаунта Google"
 
+# | msgid "Enter the Google account email address"
 #: bot/modules/auth_portal.py:364
+msgid "Enter your AudioVault email address"
+msgstr "Введите адрес электронной почты AudioVault"
+
+#: bot/modules/auth_portal.py:366
 #, python-format
 msgid "Enter your %(service)s email address or username"
 msgstr "Введите адрес электронной почты или имя пользователя %(service)s"
 
-#: bot/modules/auth_portal.py:369
+#: bot/modules/auth_portal.py:371
 msgid "Enter the Google account password"
 msgstr "Введите пароль аккаунта Google"
 
-#: bot/modules/auth_portal.py:371
+#: bot/modules/auth_portal.py:373
 #, python-format
 msgid "Enter your %(service)s password"
 msgstr "Введите пароль %(service)s"
 
-#: bot/modules/auth_portal.py:413
+#: bot/modules/auth_portal.py:415
 msgid "Enter the verification code"
 msgstr "Введите код подтверждения"
 
-#: bot/modules/auth_portal.py:630
+#: bot/modules/auth_portal.py:634
 msgid "Signing in to this service is not available yet."
 msgstr "Вход в этот сервис пока недоступен."
 
@@ -2673,9 +2876,9 @@ msgstr "Есть проблема"
 msgid "Back to your accounts"
 msgstr "Назад к вашим аккаунтам"
 
-#: bot/modules/portal_pages.py:174 bot/modules/portal_pages.py:535
-#: bot/modules/portal_pages.py:563 bot/modules/portal_pages.py:627
-#: bot/modules/portal_pages.py:683 bot/modules/portal_pages.py:749
+#: bot/modules/portal_pages.py:174 bot/modules/portal_pages.py:540
+#: bot/modules/portal_pages.py:568 bot/modules/portal_pages.py:632
+#: bot/modules/portal_pages.py:688 bot/modules/portal_pages.py:754
 #, python-format
 msgid "Import a %(service)s session"
 msgstr "Импортировать сеанс %(service)s"
@@ -2690,7 +2893,7 @@ msgstr "Подключить %(service)s"
 msgid "Connected"
 msgstr "Подключено"
 
-#: bot/modules/portal_pages.py:202 bot/modules/portal_pages.py:787
+#: bot/modules/portal_pages.py:202 bot/modules/portal_pages.py:792
 #, python-format
 msgid "Disconnect %(service)s"
 msgstr "Отключить %(service)s"
@@ -2758,106 +2961,111 @@ msgstr "Аккаунт Google, созданный для StreamerBot, а не в
 msgid "Google account password"
 msgstr "Пароль аккаунта Google"
 
-#: bot/modules/portal_pages.py:312
-#, python-format
-msgid "%(service)s email address or username"
-msgstr "Адрес электронной почты или имя пользователя %(service)s"
-
+# | msgid "Google account email address"
 #: bot/modules/portal_pages.py:313
+msgid "AudioVault email address"
+msgstr "Адрес электронной почты AudioVault"
+
+#: bot/modules/portal_pages.py:314 bot/modules/portal_pages.py:318
 #, python-format
 msgid "The address you use to sign in to %(service)s."
 msgstr "Адрес, которым вы входите в %(service)s."
 
-#: bot/modules/portal_pages.py:314
+#: bot/modules/portal_pages.py:315 bot/modules/portal_pages.py:319
 #, python-format
 msgid "%(service)s password"
 msgstr "Пароль %(service)s"
 
-#: bot/modules/portal_pages.py:333 bot/modules/portal_pages.py:361
-#: bot/modules/portal_pages.py:366
+#: bot/modules/portal_pages.py:317
+#, python-format
+msgid "%(service)s email address or username"
+msgstr "Адрес электронной почты или имя пользователя %(service)s"
+
+#: bot/modules/portal_pages.py:338 bot/modules/portal_pages.py:366
+#: bot/modules/portal_pages.py:371
 #, python-format
 msgid "Sign in to %(service)s"
 msgstr "Вход в %(service)s"
 
-#: bot/modules/portal_pages.py:363
+#: bot/modules/portal_pages.py:368
 msgid "Cancel and go back"
 msgstr "Отменить и вернуться"
 
-#: bot/modules/portal_pages.py:396
+#: bot/modules/portal_pages.py:401
 #, python-format
 msgid "Signing in as %(username)s."
 msgstr "Вход как %(username)s."
 
-#: bot/modules/portal_pages.py:402 bot/modules/portal_pages.py:427
+#: bot/modules/portal_pages.py:407 bot/modules/portal_pages.py:432
 #, python-format
 msgid "Enter your %(service)s verification code"
 msgstr "Введите код подтверждения %(service)s"
 
-#: bot/modules/portal_pages.py:410
+#: bot/modules/portal_pages.py:415
 msgid "Verification code"
 msgstr "Код подтверждения"
 
-#: bot/modules/portal_pages.py:414
+#: bot/modules/portal_pages.py:419
 msgid "Type or paste the whole code into the box below. Spaces do not matter."
 msgstr "Введите или вставьте весь код в поле ниже. Пробелы не важны."
 
-#: bot/modules/portal_pages.py:419
+#: bot/modules/portal_pages.py:424
 msgid "Verify code"
 msgstr "Проверить код"
 
-#: bot/modules/portal_pages.py:422
+#: bot/modules/portal_pages.py:427
 msgid "Send a new code"
 msgstr "Отправить новый код"
 
-#: bot/modules/portal_pages.py:424 bot/modules/portal_pages.py:444
-#: bot/modules/portal_pages.py:630
+#: bot/modules/portal_pages.py:429 bot/modules/portal_pages.py:449
+#: bot/modules/portal_pages.py:635
 msgid "Cancel this sign-in"
 msgstr "Отменить этот вход"
 
-#: bot/modules/portal_pages.py:435 bot/modules/portal_pages.py:448
+#: bot/modules/portal_pages.py:440 bot/modules/portal_pages.py:453
 #, python-format
 msgid "Signing in to %(service)s"
 msgstr "Вход в %(service)s"
 
-#: bot/modules/portal_pages.py:436
+#: bot/modules/portal_pages.py:441
 msgid "Waiting for the service to confirm. This usually takes 10 to 30 seconds."
 msgstr "Ждём подтверждения от сервиса. Обычно это занимает от 10 до 30 секунд."
 
-#: bot/modules/portal_pages.py:442
+#: bot/modules/portal_pages.py:447
 msgid "Check again"
 msgstr "Проверить снова"
 
-#: bot/modules/portal_pages.py:468
+#: bot/modules/portal_pages.py:473
 msgid "Google needs a verification code. Opening that page."
 msgstr "Google нужен код подтверждения. Открываю эту страницу."
 
-#: bot/modules/portal_pages.py:469
+#: bot/modules/portal_pages.py:474
 msgid "Google needs you to approve the sign-in on your phone. Opening that page."
 msgstr "Google просит подтвердить вход на телефоне. Открываю эту страницу."
 
-#: bot/modules/portal_pages.py:470
+#: bot/modules/portal_pages.py:475
 msgid "Signed in. Opening the confirmation page."
 msgstr "Вход выполнен. Открываю страницу подтверждения."
 
-#: bot/modules/portal_pages.py:471
+#: bot/modules/portal_pages.py:476
 msgid "The sign-in did not complete. Opening the page that says why."
 msgstr "Вход не завершился. Открываю страницу с причиной."
 
-#: bot/modules/portal_pages.py:472
+#: bot/modules/portal_pages.py:477
 msgid "This sign-in is no longer running. Going back to your accounts."
 msgstr "Этот вход больше не выполняется. Возвращаюсь к вашим аккаунтам."
 
-#: bot/modules/portal_pages.py:473
+#: bot/modules/portal_pages.py:478
 #, python-format
 msgid "Still signing in. %(seconds)s seconds so far."
 msgstr "Вход ещё идёт. Прошло секунд: %(seconds)s."
 
-#: bot/modules/portal_pages.py:474
+#: bot/modules/portal_pages.py:479
 #, python-format
 msgid "Still signing in. %(minutes)s minutes so far."
 msgstr "Вход ещё идёт. Прошло минут: %(minutes)s."
 
-#: bot/modules/portal_pages.py:475
+#: bot/modules/portal_pages.py:480
 msgid ""
 "This link has expired or the sign-in was cancelled. To get a new link, "
 "send the li command to StreamerBot in TeamTalk."
@@ -2865,11 +3073,11 @@ msgstr ""
 "Срок действия этой ссылки истёк или вход был отменён. Чтобы получить "
 "новую ссылку, отправьте команду li боту StreamerBot в TeamTalk."
 
-#: bot/modules/portal_pages.py:476
+#: bot/modules/portal_pages.py:481
 msgid "Lost contact with StreamerBot. Use Check again in a moment."
 msgstr "Связь со StreamerBot потеряна. Через минуту нажмите Проверить снова."
 
-#: bot/modules/portal_pages.py:477
+#: bot/modules/portal_pages.py:482
 msgid ""
 "This is taking longer than expected. Use Check again, or Cancel this "
 "sign-in."
@@ -2877,36 +3085,36 @@ msgstr ""
 "Это занимает больше времени, чем ожидалось. Нажмите Проверить снова или "
 "Отменить этот вход."
 
-#: bot/modules/portal_pages.py:518 bot/modules/portal_pages.py:522
+#: bot/modules/portal_pages.py:523 bot/modules/portal_pages.py:527
 #, python-format
 msgid "%(service)s connected"
 msgstr "%(service)s подключён"
 
-#: bot/modules/portal_pages.py:519
+#: bot/modules/portal_pages.py:524
 #, python-format
 msgid "StreamerBot can now stream from your %(service)s account."
 msgstr "Теперь StreamerBot может транслировать из вашего аккаунта %(service)s."
 
-#: bot/modules/portal_pages.py:528
+#: bot/modules/portal_pages.py:533
 msgid "Try again"
 msgstr "Попробовать снова"
 
-#: bot/modules/portal_pages.py:542 bot/modules/portal_pages.py:548
+#: bot/modules/portal_pages.py:547 bot/modules/portal_pages.py:553
 #, python-format
 msgid "%(service)s could not be connected"
 msgstr "Не удалось подключить %(service)s"
 
-#: bot/modules/portal_pages.py:561
+#: bot/modules/portal_pages.py:566
 msgid ""
 "If Google refuses to sign in here, import a session from your own browser"
 " instead:"
 msgstr "Если Google не даёт войти здесь, импортируйте сеанс из своего браузера:"
 
-#: bot/modules/portal_pages.py:567
+#: bot/modules/portal_pages.py:572
 msgid "Use a separate Google account"
 msgstr "Используйте отдельный аккаунт Google"
 
-#: bot/modules/portal_pages.py:568
+#: bot/modules/portal_pages.py:573
 msgid ""
 "Google may restrict an account that plays videos automatically from a "
 "server. Make a Google account just for StreamerBot rather than using your"
@@ -2916,27 +3124,27 @@ msgstr ""
 "видео с сервера. Создайте аккаунт Google только для StreamerBot, а не "
 "используйте личный."
 
-#: bot/modules/portal_pages.py:592 bot/modules/portal_pages.py:615
+#: bot/modules/portal_pages.py:597 bot/modules/portal_pages.py:620
 msgid "Approve the sign-in on your phone"
 msgstr "Подтвердите вход на телефоне"
 
-#: bot/modules/portal_pages.py:596
+#: bot/modules/portal_pages.py:601
 msgid "Not approved yet. Approve the sign-in on your phone"
 msgstr "Ещё не подтверждено. Подтвердите вход на телефоне"
 
-#: bot/modules/portal_pages.py:602
+#: bot/modules/portal_pages.py:607
 msgid "Number to tap on your phone"
 msgstr "Число, которое нужно нажать на телефоне"
 
-#: bot/modules/portal_pages.py:610
+#: bot/modules/portal_pages.py:615
 msgid "Google says:"
 msgstr "Google сообщает:"
 
-#: bot/modules/portal_pages.py:616
+#: bot/modules/portal_pages.py:621
 msgid "Google has not confirmed the approval yet."
 msgstr "Google ещё не подтвердил одобрение."
 
-#: bot/modules/portal_pages.py:619
+#: bot/modules/portal_pages.py:624
 msgid ""
 "Google sent a prompt to a phone or tablet signed in to this account. Tap "
 "Yes on it, then come back here."
@@ -2944,7 +3152,7 @@ msgstr ""
 "Google отправил запрос на телефон или планшет, где выполнен вход в этот "
 "аккаунт. Нажмите на нём Да, затем вернитесь сюда."
 
-#: bot/modules/portal_pages.py:620
+#: bot/modules/portal_pages.py:625
 msgid ""
 "The prompt stops working after a few minutes. If it has gone, cancel and "
 "sign in again."
@@ -2952,11 +3160,11 @@ msgstr ""
 "Запрос перестаёт действовать через несколько минут. Если он пропал, "
 "отмените и войдите снова."
 
-#: bot/modules/portal_pages.py:624
+#: bot/modules/portal_pages.py:629
 msgid "I have approved it on my phone"
 msgstr "Я подтвердил на телефоне"
 
-#: bot/modules/portal_pages.py:685
+#: bot/modules/portal_pages.py:690
 msgid ""
 "Use this when Google will not sign in from the bot, or when the bot "
 "cannot run a browser. You need a cookies.txt file from a browser that is "
@@ -2966,19 +3174,19 @@ msgstr ""
 "запустить браузер. Нужен файл cookies.txt из браузера, в котором выполнен"
 " вход в YouTube."
 
-#: bot/modules/portal_pages.py:688
+#: bot/modules/portal_pages.py:693
 msgid "I already have the file. Go to the import form."
 msgstr "Файл у меня уже есть. Перейти к форме импорта."
 
-#: bot/modules/portal_pages.py:693
+#: bot/modules/portal_pages.py:698
 msgid "How to get a cookies.txt file"
 msgstr "Как получить файл cookies.txt"
 
-#: bot/modules/portal_pages.py:694
+#: bot/modules/portal_pages.py:699
 msgid "On an Android phone"
 msgstr "На телефоне Android"
 
-#: bot/modules/portal_pages.py:695
+#: bot/modules/portal_pages.py:700
 msgid ""
 "No computer is needed. This uses the Firefox browser, which can add a "
 "small cookie exporter on Android."
@@ -2986,11 +3194,11 @@ msgstr ""
 "Компьютер не нужен. Здесь используется браузер Firefox, в который на "
 "Android можно добавить небольшое средство экспорта cookie."
 
-#: bot/modules/portal_pages.py:697
+#: bot/modules/portal_pages.py:702
 msgid "Install Firefox from the Google Play Store, and open this page in Firefox."
 msgstr "Установите Firefox из Google Play Store и откройте эту страницу в Firefox."
 
-#: bot/modules/portal_pages.py:698
+#: bot/modules/portal_pages.py:703
 msgid ""
 "In Firefox, open the menu, choose Extensions, then find and add the "
 "extension called cookies.txt."
@@ -2998,7 +3206,7 @@ msgstr ""
 "В Firefox откройте меню, выберите Расширения, затем найдите и добавьте "
 "расширение cookies.txt."
 
-#: bot/modules/portal_pages.py:699
+#: bot/modules/portal_pages.py:704
 msgid ""
 "Go to youtube.com in Firefox and sign in with the Google account made for"
 " StreamerBot."
@@ -3006,7 +3214,7 @@ msgstr ""
 "Откройте youtube.com в Firefox и войдите с аккаунтом Google, созданным "
 "для StreamerBot."
 
-#: bot/modules/portal_pages.py:700
+#: bot/modules/portal_pages.py:705
 msgid ""
 "While still on youtube.com, open the Firefox menu, choose Extensions, "
 "then cookies.txt, and export the cookies for the current site. The file "
@@ -3016,7 +3224,7 @@ msgstr ""
 "затем cookies.txt и экспортируйте cookie текущего сайта. Файл сохранится "
 "в Загрузки."
 
-#: bot/modules/portal_pages.py:701
+#: bot/modules/portal_pages.py:706
 msgid ""
 "Come back to this page in Firefox and choose that file in the import form"
 " below."
@@ -3024,11 +3232,11 @@ msgstr ""
 "Вернитесь на эту страницу в Firefox и выберите этот файл в форме импорта "
 "ниже."
 
-#: bot/modules/portal_pages.py:703
+#: bot/modules/portal_pages.py:708
 msgid "On an iPhone or iPad"
 msgstr "На iPhone или iPad"
 
-#: bot/modules/portal_pages.py:704
+#: bot/modules/portal_pages.py:709
 msgid ""
 "There is no reliable way to export this file on an iPhone or iPad. Use an"
 " Android phone or a computer, or ask someone who has one to do it for "
@@ -3040,11 +3248,11 @@ msgstr ""
 "есть, сделать это за вас. Входить нужно с аккаунтом Google, созданным для"
 " StreamerBot, и никогда со своим."
 
-#: bot/modules/portal_pages.py:705
+#: bot/modules/portal_pages.py:710
 msgid "On a computer"
 msgstr "На компьютере"
 
-#: bot/modules/portal_pages.py:707
+#: bot/modules/portal_pages.py:712
 msgid ""
 "In your own browser, sign in to YouTube with the Google account made for "
 "StreamerBot."
@@ -3052,7 +3260,7 @@ msgstr ""
 "В своём браузере войдите в YouTube с аккаунтом Google, созданным для "
 "StreamerBot."
 
-#: bot/modules/portal_pages.py:708
+#: bot/modules/portal_pages.py:713
 msgid ""
 "While on youtube.com, use a cookie export extension to save the cookies "
 "in Netscape cookies.txt format."
@@ -3060,7 +3268,7 @@ msgstr ""
 "На youtube.com с помощью расширения для экспорта cookie сохраните cookie "
 "в формате Netscape cookies.txt."
 
-#: bot/modules/portal_pages.py:709
+#: bot/modules/portal_pages.py:714
 msgid ""
 "Choose that file in the import form below, or open it, copy everything in"
 " it, and paste it into the box below."
@@ -3068,7 +3276,7 @@ msgstr ""
 "Выберите этот файл в форме импорта ниже или откройте его, скопируйте всё "
 "содержимое и вставьте в поле ниже."
 
-#: bot/modules/portal_pages.py:711
+#: bot/modules/portal_pages.py:716
 msgid ""
 "Afterwards, do not sign out of YouTube in that browser. Signing out ends "
 "the session StreamerBot is using. Closing the browser is fine."
@@ -3076,7 +3284,7 @@ msgstr ""
 "После этого не выходите из YouTube в этом браузере. Выход завершает "
 "сеанс, которым пользуется StreamerBot. Закрыть браузер можно."
 
-#: bot/modules/portal_pages.py:712
+#: bot/modules/portal_pages.py:717
 msgid ""
 "Google sometimes ends a session that is used from a different place. If "
 "that happens, StreamerBot tells you in TeamTalk and you can import again."
@@ -3085,7 +3293,7 @@ msgstr ""
 "так случится, StreamerBot сообщит об этом в TeamTalk, и вы сможете "
 "импортировать снова."
 
-#: bot/modules/portal_pages.py:716
+#: bot/modules/portal_pages.py:721
 msgid ""
 "This server cannot run a browser, so nothing can keep an imported session"
 " alive. Expect to import again from time to time."
@@ -3094,36 +3302,36 @@ msgstr ""
 "импортированный сеанс нечему. Время от времени придётся импортировать "
 "снова."
 
-#: bot/modules/portal_pages.py:718
+#: bot/modules/portal_pages.py:723
 msgid "Import your file"
 msgstr "Импортируйте файл"
 
-#: bot/modules/portal_pages.py:724
+#: bot/modules/portal_pages.py:729
 msgid "Your cookies.txt file"
 msgstr "Ваш файл cookies.txt"
 
-#: bot/modules/portal_pages.py:730
+#: bot/modules/portal_pages.py:735
 msgid "Or paste the contents of the file"
 msgstr "Или вставьте содержимое файла"
 
-#: bot/modules/portal_pages.py:731
+#: bot/modules/portal_pages.py:736
 msgid "Paste the whole file. It is several lines of text."
 msgstr "Вставьте файл целиком. Это несколько строк текста."
 
-#: bot/modules/portal_pages.py:738
+#: bot/modules/portal_pages.py:743
 msgid "Import the session"
 msgstr "Импортировать сеанс"
 
-#: bot/modules/portal_pages.py:744
+#: bot/modules/portal_pages.py:749
 #, python-format
 msgid "Lines pasted: %(count)s"
 msgstr "Вставлено строк: %(count)s"
 
-#: bot/modules/portal_pages.py:761
+#: bot/modules/portal_pages.py:766
 msgid "Choose your cookies.txt file, or paste its contents"
 msgstr "Выберите файл cookies.txt или вставьте его содержимое"
 
-#: bot/modules/portal_pages.py:762
+#: bot/modules/portal_pages.py:767
 msgid ""
 "This is too long to be a cookies file. Check you chose only the "
 "cookies.txt file."
@@ -3131,7 +3339,7 @@ msgstr ""
 "Это слишком длинно для файла cookie. Проверьте, что вы выбрали только "
 "файл cookies.txt."
 
-#: bot/modules/portal_pages.py:763
+#: bot/modules/portal_pages.py:768
 msgid ""
 "This is not a cookies.txt file. Export the cookies again in Netscape "
 "cookies.txt format."
@@ -3139,7 +3347,7 @@ msgstr ""
 "Это не файл cookies.txt. Экспортируйте cookie снова в формате Netscape "
 "cookies.txt."
 
-#: bot/modules/portal_pages.py:764
+#: bot/modules/portal_pages.py:769
 msgid ""
 "This file has no YouTube sign-in in it. Sign in to YouTube in your "
 "browser, then export the cookies again while on youtube.com."
@@ -3147,7 +3355,7 @@ msgstr ""
 "В этом файле нет входа в YouTube. Войдите в YouTube в браузере, затем "
 "снова экспортируйте cookie, находясь на youtube.com."
 
-#: bot/modules/portal_pages.py:765
+#: bot/modules/portal_pages.py:770
 msgid ""
 "YouTube says this session is already signed out. Sign in to YouTube in "
 "your browser again, then export a fresh file."
@@ -3155,16 +3363,16 @@ msgstr ""
 "YouTube сообщает, что из этого сеанса уже вышли. Снова войдите в YouTube "
 "в браузере и экспортируйте новый файл."
 
-#: bot/modules/portal_pages.py:766
+#: bot/modules/portal_pages.py:771
 msgid "The session could not be imported."
 msgstr "Не удалось импортировать сеанс."
 
-#: bot/modules/portal_pages.py:778 bot/modules/portal_pages.py:793
+#: bot/modules/portal_pages.py:783 bot/modules/portal_pages.py:798
 #, python-format
 msgid "Disconnect %(service)s?"
 msgstr "Отключить %(service)s?"
 
-#: bot/modules/portal_pages.py:779
+#: bot/modules/portal_pages.py:784
 #, python-format
 msgid ""
 "StreamerBot will stop streaming from your %(service)s account. Your "
@@ -3175,44 +3383,44 @@ msgstr ""
 "аккаунт %(service)s это не затронет. Подключить снова можно в любой "
 "момент."
 
-#: bot/modules/portal_pages.py:790
+#: bot/modules/portal_pages.py:795
 #, python-format
 msgid "Cancel, keep %(service)s connected"
 msgstr "Отмена, оставить %(service)s подключённым"
 
 # | msgid "help text not found"
-#: bot/modules/portal_pages.py:809
+#: bot/modules/portal_pages.py:814
 msgid "Page not found"
 msgstr "Страница не найдена"
 
 # | msgid "This user is not in the admin list"
-#: bot/modules/portal_pages.py:810
+#: bot/modules/portal_pages.py:815
 msgid "This address is not quite right."
 msgstr "Этот адрес не совсем верен."
 
-#: bot/modules/portal_pages.py:811 bot/modules/portal_pages.py:818
+#: bot/modules/portal_pages.py:816 bot/modules/portal_pages.py:823
 msgid "To get a new link, send the li command to StreamerBot in TeamTalk."
 msgstr ""
 "Чтобы получить новую ссылку, отправьте команду li боту StreamerBot в "
 "TeamTalk."
 
-#: bot/modules/portal_pages.py:816
+#: bot/modules/portal_pages.py:821
 msgid "Link expired"
 msgstr "Срок ссылки истёк"
 
-#: bot/modules/portal_pages.py:817
+#: bot/modules/portal_pages.py:822
 msgid "This link has expired."
 msgstr "Срок действия этой ссылки истёк."
 
-#: bot/modules/portal_pages.py:823
+#: bot/modules/portal_pages.py:828
 msgid "Something went wrong"
 msgstr "Что-то пошло не так"
 
-#: bot/modules/portal_pages.py:824
+#: bot/modules/portal_pages.py:829
 msgid "StreamerBot could not finish that request."
 msgstr "StreamerBot не смог выполнить этот запрос."
 
-#: bot/modules/portal_pages.py:825
+#: bot/modules/portal_pages.py:830
 msgid "Try again in a moment. If it keeps happening, check the bot's log."
 msgstr ""
 "Попробуйте снова через минуту. Если это повторяется, загляните в журнал "
@@ -3254,6 +3462,67 @@ msgid ""
 "Google signed in, but YouTube did not recognise the session. Please try "
 "again."
 msgstr "Google выполнил вход, но YouTube не распознал сеанс. Попробуйте снова."
+
+#: bot/services/audiovault.py:159
+msgid "text-to-speech narration"
+msgstr "озвучено синтезатором речи"
+
+# | msgid "Send a number:"
+#: bot/services/audiovault.py:179
+#, python-brace-format
+msgid "Season {number}"
+msgstr "Сезон {number}"
+
+#: bot/services/audiovault.py:187
+#, python-brace-format
+msgid "Season {season}, episode {episode}"
+msgstr "Сезон {season}, эпизод {episode}"
+
+#: bot/services/audiovault.py:229 bot/services/audiovault.py:258
+msgid "AudioVault sent a zip file that is not safe to open."
+msgstr "AudioVault прислал zip-файл, который небезопасно открывать."
+
+#: bot/services/audiovault.py:237 bot/services/audiovault.py:462
+#: bot/services/audiovault.py:475
+msgid "The download is larger than this bot allows."
+msgstr "Загрузка больше, чем позволяет этот бот."
+
+#: bot/services/audiovault.py:241
+msgid "AudioVault sent a zip file with no audio in it."
+msgstr "AudioVault прислал zip-файл без звука."
+
+#: bot/services/audiovault.py:266 bot/services/audiovault.py:457
+msgid "AudioVault sent something that is not audio or a zip file."
+msgstr "AudioVault прислал что-то, что не является ни звуком, ни zip-файлом."
+
+#: bot/services/audiovault.py:378
+msgid "AudioVault's sign-in page did not load. Try again later."
+msgstr "Страница входа AudioVault не загрузилась. Попробуйте позже."
+
+#: bot/services/audiovault.py:393
+msgid "AudioVault did not accept that email address and password."
+msgstr "AudioVault не принял этот адрес электронной почты и пароль."
+
+# | msgid "Apple Music is not signed in on this bot. Send li am to connect
+# it."
+# | msgid "Apple Music is not signed in on this bot. To connect it, send: li
+# am"
+#: bot/services/audiovault.py:410 bot/services/audiovault.py:446
+msgid "AudioVault did not accept the sign-in. To connect again, send: li av"
+msgstr "AudioVault не принял вход. Чтобы подключить снова, отправьте: li av"
+
+# | msgid "Apple Music did not have that."
+#: bot/services/audiovault.py:452
+msgid "AudioVault did not have that download."
+msgstr "На AudioVault нет такой загрузки."
+
+#: bot/services/audiovault.py:541 bot/services/audiovault.py:582
+msgid ""
+"AudioVault has its own command. To search it, send av and a title, for "
+"example: av spaceballs"
+msgstr ""
+"У AudioVault своя команда. Чтобы искать на нём, отправьте av и название, "
+"например: av spaceballs"
 
 #: bot/services/browser_service.py:104
 #, python-format

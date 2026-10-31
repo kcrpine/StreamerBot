@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: StreamerBot VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-31 22:47+0000\n"
+"POT-Creation-Date: 2026-10-31 23:07+0000\n"
 "PO-Revision-Date: 2022-04-15 20:17+0700\n"
 "Last-Translator: \n"
 "Language: id_ID\n"
@@ -19,7 +19,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.18.0\n"
 
-#: bot/__init__.py:223 bot/__init__.py:286
+#: bot/__init__.py:223 bot/__init__.py:289
 msgid ""
 "This needs Google Chrome, which is not available on this machine's "
 "processor architecture."
@@ -31,11 +31,18 @@ msgstr ""
 msgid "Spotify is unavailable: the player could not start."
 msgstr "Spotify tidak tersedia: pemutar tidak bisa dimulai."
 
-#: bot/__init__.py:301 bot/__init__.py:304 bot/modules/portal_pages.py:543
+#: bot/__init__.py:304 bot/__init__.py:307 bot/__init__.py:327
+#: bot/__init__.py:330 bot/modules/portal_pages.py:548
 msgid "The sign-in did not complete."
 msgstr "Proses masuk tidak selesai."
 
-#: bot/__init__.py:317
+# | msgid "Audio description is not available in this bot."
+#: bot/__init__.py:315 bot/commands/audiovault_commands.py:206
+#: bot/modules/audiovault_jobs.py:63
+msgid "AudioVault is not available on this bot."
+msgstr "AudioVault tidak tersedia di bot ini."
+
+#: bot/__init__.py:343
 msgid ""
 "The account portal is switched off in this bot's configuration, so "
 "Netflix, Disney Plus, Apple Music and Amazon Music cannot be connected. "
@@ -51,7 +58,7 @@ msgstr ""
 "PORT_CONFLICT.txt di folder bot yang menjelaskannya, dan opsi Repair "
 "Account Portal and Spotify Ports di pengelola akan mengaktifkannya lagi."
 
-#: bot/__init__.py:370
+#: bot/__init__.py:401
 #, python-format
 msgid ""
 "The account portal could not start because port %(port)s is already in "
@@ -68,7 +75,7 @@ msgstr ""
 "Spotify Ports, dan mulai ulang bot ini. YouTube dan Spotify tidak "
 "terpengaruh, karena keduanya masuk dengan kode di saluran."
 
-#: bot/__init__.py:380
+#: bot/__init__.py:411
 #, python-format
 msgid ""
 "The account portal could not start, so Netflix, Disney Plus, Apple Music "
@@ -79,7 +86,7 @@ msgstr ""
 "dan Amazon Music tidak bisa dihubungkan. Alasannya ada di berkas log bot "
 "ini: %(reason)s"
 
-#: bot/__init__.py:412
+#: bot/__init__.py:443
 msgid ""
 "Hello! I'm back and ready for you to stream again. Thank you for your "
 "patience!"
@@ -87,7 +94,7 @@ msgstr ""
 "Halo! Saya sudah kembali dan siap untuk siaran lagi. Terima kasih atas "
 "kesabarannya!"
 
-#: bot/__init__.py:452
+#: bot/__init__.py:483
 msgid ""
 "Hello there! It's me, the Streamer Bot, just coming in here to let you "
 "know that an update is in progress and I will restart in a few moments to"
@@ -97,11 +104,11 @@ msgstr ""
 "sedang berjalan dan saya akan mulai ulang sebentar lagi untuk "
 "menerapkannya. Terima kasih!"
 
-#: bot/__init__.py:497
+#: bot/__init__.py:528
 msgid "Restarted. The new settings are in use."
 msgstr "Sudah dimulai ulang. Pengaturan baru sudah dipakai."
 
-#: bot/__init__.py:537
+#: bot/__init__.py:568
 msgid "The bot is restarting now to apply the update. See you in a moment!"
 msgstr ""
 "Bot sedang memulai ulang sekarang untuk menerapkan pembaruan. Sampai "
@@ -136,31 +143,33 @@ msgstr ""
 msgid "Send \"h\" for help"
 msgstr "Kirim \"h\" untuk bantuan."
 
-#: bot/commands/__init__.py:210
+#: bot/commands/__init__.py:214
 msgid "That question has expired. To ask again, send: dlp"
 msgstr "Pertanyaan itu sudah kedaluwarsa. Untuk bertanya lagi, kirim: dlp"
 
 # | msgid "That question has expired. To ask again, send: dlp"
-#: bot/commands/__init__.py:212
+#: bot/commands/__init__.py:216
 msgid "That question has expired. To ask again, send: dla"
 msgstr "Pertanyaan itu sudah kedaluwarsa. Untuk bertanya lagi, kirim: dla"
 
-#: bot/commands/__init__.py:215
+#: bot/commands/__init__.py:220
 msgid "That menu has expired. To open it again, send: cf"
 msgstr "Menu itu sudah kedaluwarsa. Untuk membukanya lagi, kirim: cf"
 
 # | msgid "Cache cleared"
-#: bot/commands/__init__.py:241 bot/commands/artist_choice.py:68
-#: bot/commands/format_choice.py:75 bot/commands/playlist_choice.py:119
-#: bot/modules/auth_portal.py:647
+#: bot/commands/__init__.py:246 bot/commands/artist_choice.py:68
+#: bot/commands/audiovault_commands.py:95
+#: bot/commands/audiovault_commands.py:122
+#: bot/commands/audiovault_commands.py:178 bot/commands/format_choice.py:75
+#: bot/commands/playlist_choice.py:119 bot/modules/auth_portal.py:651
 msgid "Cancelled."
 msgstr "Dibatalkan."
 
-#: bot/commands/__init__.py:298
+#: bot/commands/__init__.py:303
 msgid "Unknown command. Send \"h\" for help."
 msgstr "Perintah tidak dikenal. Kirim \"h\" untuk bantuan."
 
-#: bot/commands/__init__.py:304 bot/commands/user_commands.py:976
+#: bot/commands/__init__.py:309 bot/commands/user_commands.py:976
 #: bot/commands/user_commands.py:982 bot/commands/user_commands.py:1477
 #: bot/commands/user_commands.py:1559 bot/commands/user_commands.py:1631
 #: bot/commands/user_commands.py:1705 bot/modules/uploader.py:140
@@ -168,23 +177,23 @@ msgstr "Perintah tidak dikenal. Kirim \"h\" untuk bantuan."
 msgid "Error: {}"
 msgstr "Kesalahan: {}."
 
-#: bot/commands/__init__.py:316
+#: bot/commands/__init__.py:321
 msgid "You are banned"
 msgstr "Anda dilarang."
 
-#: bot/commands/__init__.py:320
+#: bot/commands/__init__.py:325
 msgid "You are not in bot's channel"
 msgstr "Anda tidak berada di saluran bot."
 
-#: bot/commands/__init__.py:324
+#: bot/commands/__init__.py:329
 msgid "Bot is locked"
 msgstr "Bot dikunci."
 
-#: bot/commands/__init__.py:328
+#: bot/commands/__init__.py:333
 msgid "This command is blocked"
 msgstr "Perintah ini diblokir."
 
-#: bot/commands/__init__.py:352
+#: bot/commands/__init__.py:357
 msgid "Unknown command"
 msgstr "Perintah tidak diketahui."
 
@@ -530,15 +539,109 @@ msgstr "Untuk semuanya, termasuk single, EP, album live, dan kompilasi, kirim: 2
 msgid "For singles and EPs only, send: 3"
 msgstr "Untuk single dan EP saja, kirim: 3"
 
-#: bot/commands/artist_choice.py:57 bot/commands/format_choice.py:64
+#: bot/commands/artist_choice.py:57 bot/commands/audiovault_commands.py:85
+#: bot/commands/audiovault_commands.py:113
+#: bot/commands/audiovault_commands.py:156 bot/commands/format_choice.py:64
 #: bot/commands/playlist_choice.py:85 bot/commands/user_commands.py:778
 msgid "To cancel, send: 0"
 msgstr "Untuk membatalkan, kirim: 0"
 
 # | msgid "That is not a %(service)s link."
-#: bot/commands/artist_choice.py:72 bot/commands/format_choice.py:79
+#: bot/commands/artist_choice.py:72 bot/commands/audiovault_commands.py:57
+#: bot/commands/format_choice.py:79
 msgid "That is not one of the choices."
 msgstr "Itu bukan salah satu pilihan."
+
+#: bot/commands/audiovault_commands.py:50
+msgid ""
+"That list has expired. To search again, send av and a title, for example:"
+" av spaceballs"
+msgstr ""
+"Daftar itu sudah kedaluwarsa. Untuk mencari lagi, kirim av dan sebuah "
+"judul, misalnya: av spaceballs"
+
+# | msgid "Search results count: {count}"
+#: bot/commands/audiovault_commands.py:72
+#, python-brace-format
+msgid "AudioVault results for {query}: {count}"
+msgstr "Hasil AudioVault untuk {query}: {count}"
+
+#: bot/commands/audiovault_commands.py:78
+#, python-brace-format
+msgid "{name}, TV show, seasons: {count}"
+msgstr "{name}, acara TV, musim: {count}"
+
+#: bot/commands/audiovault_commands.py:82
+#, python-brace-format
+msgid "{name}, movie"
+msgstr "{name}, film"
+
+# | msgid "To open the podcast, send: ps {number}"
+#: bot/commands/audiovault_commands.py:84
+msgid "To choose one, send its number."
+msgstr "Untuk memilih salah satu, kirim nomornya."
+
+# | msgid "To turn it on, send: 1"
+#: bot/commands/audiovault_commands.py:111
+msgid "To stream it in the channel, send: 1"
+msgstr "Untuk memutarnya di kanal, kirim: 1"
+
+# | msgid "{name} is in the channel as one zip file. Tracks in it: {count}."
+# | msgid "The {name} download is in the channel's files, as one zip file."
+#: bot/commands/audiovault_commands.py:112
+msgid "To download it to the channel's files as a zip file, send: 2"
+msgstr "Untuk mengunduhnya ke file kanal sebagai file zip, kirim: 2"
+
+#: bot/commands/audiovault_commands.py:144
+#, python-brace-format
+msgid "{name}. Seasons: {count}"
+msgstr "{name}. Musim: {count}"
+
+# | msgid "To open the podcast, send: ps {number}"
+#: bot/commands/audiovault_commands.py:151
+msgid "To stream a season, send its number."
+msgstr "Untuk memutar satu musim, kirim nomornya."
+
+# | msgid "To open one, send pc and its number, for example: pc 1"
+#. translators: "d" is a command letter. Keep it exactly as it is.
+#: bot/commands/audiovault_commands.py:153
+msgid "To download one season, send d and its number, for example: d 1"
+msgstr "Untuk mengunduh satu musim, kirim d dan nomornya, misalnya: d 1"
+
+#. translators: "all" is a command word. Keep it in English, exactly as it is.
+#: bot/commands/audiovault_commands.py:155
+msgid "To download every season, one zip file each, send: all"
+msgstr "Untuk mengunduh semua musim, masing-masing satu file zip, kirim: all"
+
+#: bot/commands/audiovault_commands.py:188
+msgid ""
+"TITLE Searches AudioVault for audio-described films and TV shows. Choose "
+"one by its number, then stream it in the channel or download it to the "
+"channel's files"
+msgstr ""
+"JUDUL Mencari film dan acara TV dengan audiodeskripsi di AudioVault. "
+"Pilih salah satu dengan nomornya, lalu putar di kanal atau unduh ke file "
+"kanal"
+
+#: bot/commands/audiovault_commands.py:208
+#, python-brace-format
+msgid "Searching AudioVault for {query}."
+msgstr "Mencari {query} di AudioVault."
+
+# | msgid "That podcast could not be read. Try again later."
+#: bot/commands/audiovault_commands.py:220 bot/services/audiovault.py:389
+#: bot/services/audiovault.py:427 bot/services/audiovault.py:494
+msgid "AudioVault could not be reached. Try again later."
+msgstr "AudioVault tidak dapat dihubungi. Coba lagi nanti."
+
+#: bot/commands/audiovault_commands.py:226
+#, python-brace-format
+msgid ""
+"AudioVault found nothing for {query}. To search again, send av and a "
+"title, for example: av spaceballs"
+msgstr ""
+"AudioVault tidak menemukan apa pun untuk {query}. Untuk mencari lagi, "
+"kirim av dan sebuah judul, misalnya: av spaceballs"
 
 #: bot/commands/command.py:30
 msgid "help text not found"
@@ -2170,13 +2273,15 @@ msgstr "Mode unduh lokal (adsc) dinonaktifkan."
 
 # | msgid "" "[service] Shows which streaming accounts are connected. With a
 # | service " "(yt, sp, nf, dp, am, az, pp, tb) it starts connecting that one"
+# | service " "(yt, sp, nf, dp, am, az, pp, hu, tb) it starts connecting that
+# | one"
 #: bot/commands/user_commands.py:1755
 msgid ""
 "[service] Shows which streaming accounts are connected. With a service "
-"(yt, sp, nf, dp, am, az, pp, hu, tb) it starts connecting that one"
+"(yt, sp, nf, dp, am, az, pp, hu, tb, av) it starts connecting that one"
 msgstr ""
 "[layanan] Menampilkan akun streaming yang terhubung. Dengan sebuah "
-"layanan (yt, sp, nf, dp, am, az, pp, hu, tb), mulai menghubungkannya"
+"layanan (yt, sp, nf, dp, am, az, pp, hu, tb, av), mulai menghubungkannya"
 
 #: bot/commands/user_commands.py:1782
 msgid ""
@@ -2547,7 +2652,7 @@ msgstr "Beberapa lagu tidak dapat diunduh."
 msgid "Could not download {name}: {reason}"
 msgstr "Tidak bisa mengunduh {name}: {reason}"
 
-#: bot/modules/apple_music_downloader.py:360
+#: bot/modules/apple_music_downloader.py:360 bot/modules/audiovault_jobs.py:234
 #: bot/modules/playlist_uploader.py:145 bot/modules/uploader.py:112
 #, python-brace-format
 msgid "Could not download {name}."
@@ -2572,29 +2677,127 @@ msgstr "Ini memiliki deskripsi audio. Putar dengan deskripsi?"
 msgid "1. Yes. 2. No. 3. Yes, and remember. 4. No, and remember."
 msgstr "1. Ya. 2. Tidak. 3. Ya, dan ingat. 4. Tidak, dan ingat."
 
+#: bot/modules/audiovault_jobs.py:66 bot/services/audiovault.py:402
+msgid "To use AudioVault, connect an account. To connect one, send: li av"
+msgstr ""
+"Untuk memakai AudioVault, hubungkan akun. Untuk menghubungkannya, kirim: "
+"li av"
+
+#: bot/modules/audiovault_jobs.py:70
+msgid ""
+"An AudioVault download is already running. When it has finished, search "
+"again with av and a title, for example: av spaceballs"
+msgstr ""
+"Unduhan AudioVault sedang berjalan. Setelah selesai, cari lagi dengan av "
+"dan sebuah judul, misalnya: av spaceballs"
+
+#: bot/modules/audiovault_jobs.py:93
+#, python-brace-format
+msgid ""
+"Getting {name} ready to stream. It has to be downloaded and unpacked "
+"first, which can take a few minutes."
+msgstr ""
+"Menyiapkan {name} untuk diputar. File harus diunduh dan diekstrak dulu, "
+"yang bisa memakan waktu beberapa menit."
+
+# | msgid "Nothing is playing"
+#: bot/modules/audiovault_jobs.py:123 bot/modules/audiovault_jobs.py:127
+#, python-brace-format
+msgid "{name} is playing."
+msgstr "{name} sedang diputar."
+
+# | msgid "Search results count: {count}"
+# | msgid "Podcasts found: {count}"
+#: bot/modules/audiovault_jobs.py:124
+#, python-brace-format
+msgid "Episodes: {count}"
+msgstr "Episode: {count}"
+
+# | msgid "" "Downloading the album {name}. It will be uploaded to the channel
+# | as one " "zip file when it is ready, which can take several minutes."
+# | msgid "" "Downloading the album {name} as {format}. It will be uploaded to
+# | the " "channel's files as one zip file. This can take several minutes."
+#: bot/modules/audiovault_jobs.py:144
+#, python-brace-format
+msgid ""
+"Downloading {name}. It will be uploaded to the channel's files as a zip "
+"file. This can take several minutes."
+msgstr ""
+"Mengunduh {name}. Akan diunggah ke file kanal sebagai file zip. Ini bisa "
+"memakan waktu beberapa menit."
+
+# | msgid "{name} is in the channel as one zip file. Tracks in it: {count}."
+# | msgid "The {name} download is in the channel's files, as one zip file."
+#: bot/modules/audiovault_jobs.py:153
+#, python-brace-format
+msgid "{name} is in the channel's files as a zip file."
+msgstr "{name} ada di file kanal sebagai file zip."
+
+#: bot/modules/audiovault_jobs.py:168
+#, python-brace-format
+msgid ""
+"Downloading every season of {name}, one zip file per season. This can "
+"take a long time."
+msgstr ""
+"Mengunduh semua musim {name}, satu file zip per musim. Ini bisa memakan "
+"waktu lama."
+
+# | msgid "{name} is in the channel as one zip file. Tracks in it: {count}."
+# | msgid "The {name} download is in the channel's files, as one zip file."
+#: bot/modules/audiovault_jobs.py:199
+#, python-brace-format
+msgid "The seasons of {name} are in the channel's files."
+msgstr "Musim-musim {name} ada di file kanal."
+
+# | msgid "Tracks: {count}"
+#: bot/modules/audiovault_jobs.py:201
+#, python-brace-format
+msgid "Zip files: {count}"
+msgstr "File zip: {count}"
+
+# | msgid "Live streams cannot be downloaded"
+# | msgid "Spotify tracks cannot be downloaded."
+# | msgid "{count} could not be downloaded."
+# | msgid "Tracks that could not be downloaded: {count}."
+#: bot/modules/audiovault_jobs.py:205
+#, python-brace-format
+msgid "Seasons that could not be downloaded: {list}"
+msgstr "Musim yang tidak dapat diunduh: {list}"
+
+# | msgid "Could not download {name}."
+#: bot/modules/audiovault_jobs.py:240
+#, python-brace-format
+msgid "Could not download any season of {name}."
+msgstr "Tidak ada musim {name} yang dapat diunduh."
+
 #: bot/modules/auth_portal.py:362
 msgid "Enter the Google account email address"
 msgstr "Masukkan alamat email akun Google"
 
+# | msgid "Enter the Google account email address"
 #: bot/modules/auth_portal.py:364
+msgid "Enter your AudioVault email address"
+msgstr "Masukkan alamat email AudioVault Anda"
+
+#: bot/modules/auth_portal.py:366
 #, python-format
 msgid "Enter your %(service)s email address or username"
 msgstr "Masukkan alamat email atau nama pengguna %(service)s Anda"
 
-#: bot/modules/auth_portal.py:369
+#: bot/modules/auth_portal.py:371
 msgid "Enter the Google account password"
 msgstr "Masukkan kata sandi akun Google"
 
-#: bot/modules/auth_portal.py:371
+#: bot/modules/auth_portal.py:373
 #, python-format
 msgid "Enter your %(service)s password"
 msgstr "Masukkan kata sandi %(service)s Anda"
 
-#: bot/modules/auth_portal.py:413
+#: bot/modules/auth_portal.py:415
 msgid "Enter the verification code"
 msgstr "Masukkan kode verifikasi"
 
-#: bot/modules/auth_portal.py:630
+#: bot/modules/auth_portal.py:634
 msgid "Signing in to this service is not available yet."
 msgstr "Masuk ke layanan ini belum tersedia."
 
@@ -2687,9 +2890,9 @@ msgstr "Ada masalah"
 msgid "Back to your accounts"
 msgstr "Kembali ke akun Anda"
 
-#: bot/modules/portal_pages.py:174 bot/modules/portal_pages.py:535
-#: bot/modules/portal_pages.py:563 bot/modules/portal_pages.py:627
-#: bot/modules/portal_pages.py:683 bot/modules/portal_pages.py:749
+#: bot/modules/portal_pages.py:174 bot/modules/portal_pages.py:540
+#: bot/modules/portal_pages.py:568 bot/modules/portal_pages.py:632
+#: bot/modules/portal_pages.py:688 bot/modules/portal_pages.py:754
 #, python-format
 msgid "Import a %(service)s session"
 msgstr "Impor sesi %(service)s"
@@ -2704,7 +2907,7 @@ msgstr "Hubungkan %(service)s"
 msgid "Connected"
 msgstr "Terhubung"
 
-#: bot/modules/portal_pages.py:202 bot/modules/portal_pages.py:787
+#: bot/modules/portal_pages.py:202 bot/modules/portal_pages.py:792
 #, python-format
 msgid "Disconnect %(service)s"
 msgstr "Putuskan %(service)s"
@@ -2772,110 +2975,115 @@ msgstr "Akun Google yang dibuat untuk StreamerBot, bukan akun pribadi Anda."
 msgid "Google account password"
 msgstr "Kata sandi akun Google"
 
-#: bot/modules/portal_pages.py:312
-#, python-format
-msgid "%(service)s email address or username"
-msgstr "Alamat email atau nama pengguna %(service)s"
-
+# | msgid "Google account email address"
 #: bot/modules/portal_pages.py:313
+msgid "AudioVault email address"
+msgstr "Alamat email AudioVault"
+
+#: bot/modules/portal_pages.py:314 bot/modules/portal_pages.py:318
 #, python-format
 msgid "The address you use to sign in to %(service)s."
 msgstr "Alamat yang Anda pakai untuk masuk ke %(service)s."
 
-#: bot/modules/portal_pages.py:314
+#: bot/modules/portal_pages.py:315 bot/modules/portal_pages.py:319
 #, python-format
 msgid "%(service)s password"
 msgstr "Kata sandi %(service)s"
 
-#: bot/modules/portal_pages.py:333 bot/modules/portal_pages.py:361
-#: bot/modules/portal_pages.py:366
+#: bot/modules/portal_pages.py:317
+#, python-format
+msgid "%(service)s email address or username"
+msgstr "Alamat email atau nama pengguna %(service)s"
+
+#: bot/modules/portal_pages.py:338 bot/modules/portal_pages.py:366
+#: bot/modules/portal_pages.py:371
 #, python-format
 msgid "Sign in to %(service)s"
 msgstr "Masuk ke %(service)s"
 
-#: bot/modules/portal_pages.py:363
+#: bot/modules/portal_pages.py:368
 msgid "Cancel and go back"
 msgstr "Batal dan kembali"
 
-#: bot/modules/portal_pages.py:396
+#: bot/modules/portal_pages.py:401
 #, python-format
 msgid "Signing in as %(username)s."
 msgstr "Masuk sebagai %(username)s."
 
-#: bot/modules/portal_pages.py:402 bot/modules/portal_pages.py:427
+#: bot/modules/portal_pages.py:407 bot/modules/portal_pages.py:432
 #, python-format
 msgid "Enter your %(service)s verification code"
 msgstr "Masukkan kode verifikasi %(service)s Anda"
 
-#: bot/modules/portal_pages.py:410
+#: bot/modules/portal_pages.py:415
 msgid "Verification code"
 msgstr "Kode verifikasi"
 
-#: bot/modules/portal_pages.py:414
+#: bot/modules/portal_pages.py:419
 msgid "Type or paste the whole code into the box below. Spaces do not matter."
 msgstr "Ketik atau tempel seluruh kode ke kotak di bawah. Spasi tidak berpengaruh."
 
-#: bot/modules/portal_pages.py:419
+#: bot/modules/portal_pages.py:424
 msgid "Verify code"
 msgstr "Verifikasi kode"
 
-#: bot/modules/portal_pages.py:422
+#: bot/modules/portal_pages.py:427
 msgid "Send a new code"
 msgstr "Kirim kode baru"
 
-#: bot/modules/portal_pages.py:424 bot/modules/portal_pages.py:444
-#: bot/modules/portal_pages.py:630
+#: bot/modules/portal_pages.py:429 bot/modules/portal_pages.py:449
+#: bot/modules/portal_pages.py:635
 msgid "Cancel this sign-in"
 msgstr "Batalkan proses masuk ini"
 
-#: bot/modules/portal_pages.py:435 bot/modules/portal_pages.py:448
+#: bot/modules/portal_pages.py:440 bot/modules/portal_pages.py:453
 #, python-format
 msgid "Signing in to %(service)s"
 msgstr "Masuk ke %(service)s"
 
-#: bot/modules/portal_pages.py:436
+#: bot/modules/portal_pages.py:441
 msgid "Waiting for the service to confirm. This usually takes 10 to 30 seconds."
 msgstr ""
 "Menunggu konfirmasi dari layanan. Biasanya memakan waktu 10 sampai 30 "
 "detik."
 
-#: bot/modules/portal_pages.py:442
+#: bot/modules/portal_pages.py:447
 msgid "Check again"
 msgstr "Periksa lagi"
 
-#: bot/modules/portal_pages.py:468
+#: bot/modules/portal_pages.py:473
 msgid "Google needs a verification code. Opening that page."
 msgstr "Google memerlukan kode verifikasi. Membuka halaman itu."
 
-#: bot/modules/portal_pages.py:469
+#: bot/modules/portal_pages.py:474
 msgid "Google needs you to approve the sign-in on your phone. Opening that page."
 msgstr ""
 "Google meminta Anda menyetujui proses masuk di ponsel. Membuka halaman "
 "itu."
 
-#: bot/modules/portal_pages.py:470
+#: bot/modules/portal_pages.py:475
 msgid "Signed in. Opening the confirmation page."
 msgstr "Sudah masuk. Membuka halaman konfirmasi."
 
-#: bot/modules/portal_pages.py:471
+#: bot/modules/portal_pages.py:476
 msgid "The sign-in did not complete. Opening the page that says why."
 msgstr "Proses masuk tidak selesai. Membuka halaman yang menjelaskan alasannya."
 
-#: bot/modules/portal_pages.py:472
+#: bot/modules/portal_pages.py:477
 msgid "This sign-in is no longer running. Going back to your accounts."
 msgstr "Proses masuk ini tidak lagi berjalan. Kembali ke akun Anda."
 
-#: bot/modules/portal_pages.py:473
+#: bot/modules/portal_pages.py:478
 #, python-format
 msgid "Still signing in. %(seconds)s seconds so far."
 msgstr "Masih masuk. Sudah %(seconds)s detik."
 
-#: bot/modules/portal_pages.py:474
+#: bot/modules/portal_pages.py:479
 #, python-format
 msgid "Still signing in. %(minutes)s minutes so far."
 msgstr "Masih masuk. Sudah %(minutes)s menit."
 
-#: bot/modules/portal_pages.py:475
+#: bot/modules/portal_pages.py:480
 msgid ""
 "This link has expired or the sign-in was cancelled. To get a new link, "
 "send the li command to StreamerBot in TeamTalk."
@@ -2883,11 +3091,11 @@ msgstr ""
 "Tautan ini sudah kedaluwarsa atau proses masuk dibatalkan. Untuk "
 "mendapatkan tautan baru, kirim perintah li ke StreamerBot di TeamTalk."
 
-#: bot/modules/portal_pages.py:476
+#: bot/modules/portal_pages.py:481
 msgid "Lost contact with StreamerBot. Use Check again in a moment."
 msgstr "Kontak dengan StreamerBot terputus. Gunakan Periksa lagi sebentar lagi."
 
-#: bot/modules/portal_pages.py:477
+#: bot/modules/portal_pages.py:482
 msgid ""
 "This is taking longer than expected. Use Check again, or Cancel this "
 "sign-in."
@@ -2895,26 +3103,26 @@ msgstr ""
 "Ini memakan waktu lebih lama dari perkiraan. Gunakan Periksa lagi, atau "
 "Batalkan proses masuk ini."
 
-#: bot/modules/portal_pages.py:518 bot/modules/portal_pages.py:522
+#: bot/modules/portal_pages.py:523 bot/modules/portal_pages.py:527
 #, python-format
 msgid "%(service)s connected"
 msgstr "%(service)s terhubung"
 
-#: bot/modules/portal_pages.py:519
+#: bot/modules/portal_pages.py:524
 #, python-format
 msgid "StreamerBot can now stream from your %(service)s account."
 msgstr "StreamerBot sekarang bisa menyiarkan dari akun %(service)s Anda."
 
-#: bot/modules/portal_pages.py:528
+#: bot/modules/portal_pages.py:533
 msgid "Try again"
 msgstr "Coba lagi"
 
-#: bot/modules/portal_pages.py:542 bot/modules/portal_pages.py:548
+#: bot/modules/portal_pages.py:547 bot/modules/portal_pages.py:553
 #, python-format
 msgid "%(service)s could not be connected"
 msgstr "%(service)s tidak bisa dihubungkan"
 
-#: bot/modules/portal_pages.py:561
+#: bot/modules/portal_pages.py:566
 msgid ""
 "If Google refuses to sign in here, import a session from your own browser"
 " instead:"
@@ -2922,11 +3130,11 @@ msgstr ""
 "Jika Google menolak proses masuk di sini, impor sesi dari peramban Anda "
 "sendiri:"
 
-#: bot/modules/portal_pages.py:567
+#: bot/modules/portal_pages.py:572
 msgid "Use a separate Google account"
 msgstr "Gunakan akun Google terpisah"
 
-#: bot/modules/portal_pages.py:568
+#: bot/modules/portal_pages.py:573
 msgid ""
 "Google may restrict an account that plays videos automatically from a "
 "server. Make a Google account just for StreamerBot rather than using your"
@@ -2936,27 +3144,27 @@ msgstr ""
 "server. Buat akun Google khusus untuk StreamerBot, jangan memakai akun "
 "pribadi Anda."
 
-#: bot/modules/portal_pages.py:592 bot/modules/portal_pages.py:615
+#: bot/modules/portal_pages.py:597 bot/modules/portal_pages.py:620
 msgid "Approve the sign-in on your phone"
 msgstr "Setujui proses masuk di ponsel Anda"
 
-#: bot/modules/portal_pages.py:596
+#: bot/modules/portal_pages.py:601
 msgid "Not approved yet. Approve the sign-in on your phone"
 msgstr "Belum disetujui. Setujui proses masuk di ponsel Anda"
 
-#: bot/modules/portal_pages.py:602
+#: bot/modules/portal_pages.py:607
 msgid "Number to tap on your phone"
 msgstr "Angka yang harus diketuk di ponsel Anda"
 
-#: bot/modules/portal_pages.py:610
+#: bot/modules/portal_pages.py:615
 msgid "Google says:"
 msgstr "Google menyatakan:"
 
-#: bot/modules/portal_pages.py:616
+#: bot/modules/portal_pages.py:621
 msgid "Google has not confirmed the approval yet."
 msgstr "Google belum mengonfirmasi persetujuannya."
 
-#: bot/modules/portal_pages.py:619
+#: bot/modules/portal_pages.py:624
 msgid ""
 "Google sent a prompt to a phone or tablet signed in to this account. Tap "
 "Yes on it, then come back here."
@@ -2964,7 +3172,7 @@ msgstr ""
 "Google mengirim permintaan ke ponsel atau tablet yang masuk ke akun ini. "
 "Ketuk Ya di sana, lalu kembali ke sini."
 
-#: bot/modules/portal_pages.py:620
+#: bot/modules/portal_pages.py:625
 msgid ""
 "The prompt stops working after a few minutes. If it has gone, cancel and "
 "sign in again."
@@ -2972,11 +3180,11 @@ msgstr ""
 "Permintaan itu tidak berlaku lagi setelah beberapa menit. Jika sudah "
 "hilang, batalkan lalu masuk lagi."
 
-#: bot/modules/portal_pages.py:624
+#: bot/modules/portal_pages.py:629
 msgid "I have approved it on my phone"
 msgstr "Saya sudah menyetujuinya di ponsel"
 
-#: bot/modules/portal_pages.py:685
+#: bot/modules/portal_pages.py:690
 msgid ""
 "Use this when Google will not sign in from the bot, or when the bot "
 "cannot run a browser. You need a cookies.txt file from a browser that is "
@@ -2986,19 +3194,19 @@ msgstr ""
 "tidak bisa menjalankan peramban. Anda memerlukan berkas cookies.txt dari "
 "peramban yang sudah masuk ke YouTube."
 
-#: bot/modules/portal_pages.py:688
+#: bot/modules/portal_pages.py:693
 msgid "I already have the file. Go to the import form."
 msgstr "Saya sudah punya berkasnya. Buka formulir impor."
 
-#: bot/modules/portal_pages.py:693
+#: bot/modules/portal_pages.py:698
 msgid "How to get a cookies.txt file"
 msgstr "Cara mendapatkan berkas cookies.txt"
 
-#: bot/modules/portal_pages.py:694
+#: bot/modules/portal_pages.py:699
 msgid "On an Android phone"
 msgstr "Di ponsel Android"
 
-#: bot/modules/portal_pages.py:695
+#: bot/modules/portal_pages.py:700
 msgid ""
 "No computer is needed. This uses the Firefox browser, which can add a "
 "small cookie exporter on Android."
@@ -3006,11 +3214,11 @@ msgstr ""
 "Tidak perlu komputer. Ini memakai peramban Firefox, yang bisa menambahkan"
 " pengekspor cookie kecil di Android."
 
-#: bot/modules/portal_pages.py:697
+#: bot/modules/portal_pages.py:702
 msgid "Install Firefox from the Google Play Store, and open this page in Firefox."
 msgstr "Pasang Firefox dari Google Play Store, lalu buka halaman ini di Firefox."
 
-#: bot/modules/portal_pages.py:698
+#: bot/modules/portal_pages.py:703
 msgid ""
 "In Firefox, open the menu, choose Extensions, then find and add the "
 "extension called cookies.txt."
@@ -3018,7 +3226,7 @@ msgstr ""
 "Di Firefox, buka menu, pilih Ekstensi, lalu cari dan tambahkan ekstensi "
 "bernama cookies.txt."
 
-#: bot/modules/portal_pages.py:699
+#: bot/modules/portal_pages.py:704
 msgid ""
 "Go to youtube.com in Firefox and sign in with the Google account made for"
 " StreamerBot."
@@ -3026,7 +3234,7 @@ msgstr ""
 "Buka youtube.com di Firefox dan masuk dengan akun Google yang dibuat "
 "untuk StreamerBot."
 
-#: bot/modules/portal_pages.py:700
+#: bot/modules/portal_pages.py:705
 msgid ""
 "While still on youtube.com, open the Firefox menu, choose Extensions, "
 "then cookies.txt, and export the cookies for the current site. The file "
@@ -3036,7 +3244,7 @@ msgstr ""
 "cookies.txt, dan ekspor cookie untuk situs saat ini. Berkas disimpan di "
 "folder Unduhan Anda."
 
-#: bot/modules/portal_pages.py:701
+#: bot/modules/portal_pages.py:706
 msgid ""
 "Come back to this page in Firefox and choose that file in the import form"
 " below."
@@ -3044,11 +3252,11 @@ msgstr ""
 "Kembali ke halaman ini di Firefox dan pilih berkas itu di formulir impor "
 "di bawah."
 
-#: bot/modules/portal_pages.py:703
+#: bot/modules/portal_pages.py:708
 msgid "On an iPhone or iPad"
 msgstr "Di iPhone atau iPad"
 
-#: bot/modules/portal_pages.py:704
+#: bot/modules/portal_pages.py:709
 msgid ""
 "There is no reliable way to export this file on an iPhone or iPad. Use an"
 " Android phone or a computer, or ask someone who has one to do it for "
@@ -3060,11 +3268,11 @@ msgstr ""
 "untuk melakukannya. Mereka harus masuk dengan akun Google yang dibuat "
 "untuk StreamerBot, bukan akun mereka sendiri."
 
-#: bot/modules/portal_pages.py:705
+#: bot/modules/portal_pages.py:710
 msgid "On a computer"
 msgstr "Di komputer"
 
-#: bot/modules/portal_pages.py:707
+#: bot/modules/portal_pages.py:712
 msgid ""
 "In your own browser, sign in to YouTube with the Google account made for "
 "StreamerBot."
@@ -3072,7 +3280,7 @@ msgstr ""
 "Di peramban Anda sendiri, masuk ke YouTube dengan akun Google yang dibuat"
 " untuk StreamerBot."
 
-#: bot/modules/portal_pages.py:708
+#: bot/modules/portal_pages.py:713
 msgid ""
 "While on youtube.com, use a cookie export extension to save the cookies "
 "in Netscape cookies.txt format."
@@ -3080,7 +3288,7 @@ msgstr ""
 "Saat di youtube.com, gunakan ekstensi pengekspor cookie untuk menyimpan "
 "cookie dalam format Netscape cookies.txt."
 
-#: bot/modules/portal_pages.py:709
+#: bot/modules/portal_pages.py:714
 msgid ""
 "Choose that file in the import form below, or open it, copy everything in"
 " it, and paste it into the box below."
@@ -3088,7 +3296,7 @@ msgstr ""
 "Pilih berkas itu di formulir impor di bawah, atau buka berkasnya, salin "
 "seluruh isinya, dan tempel ke kotak di bawah."
 
-#: bot/modules/portal_pages.py:711
+#: bot/modules/portal_pages.py:716
 msgid ""
 "Afterwards, do not sign out of YouTube in that browser. Signing out ends "
 "the session StreamerBot is using. Closing the browser is fine."
@@ -3097,7 +3305,7 @@ msgstr ""
 " mengakhiri sesi yang dipakai StreamerBot. Menutup peramban tidak "
 "masalah."
 
-#: bot/modules/portal_pages.py:712
+#: bot/modules/portal_pages.py:717
 msgid ""
 "Google sometimes ends a session that is used from a different place. If "
 "that happens, StreamerBot tells you in TeamTalk and you can import again."
@@ -3106,7 +3314,7 @@ msgstr ""
 "terjadi, StreamerBot akan memberi tahu Anda di TeamTalk dan Anda bisa "
 "mengimpor lagi."
 
-#: bot/modules/portal_pages.py:716
+#: bot/modules/portal_pages.py:721
 msgid ""
 "This server cannot run a browser, so nothing can keep an imported session"
 " alive. Expect to import again from time to time."
@@ -3115,36 +3323,36 @@ msgstr ""
 "menjaga sesi yang diimpor tetap hidup. Bersiaplah untuk mengimpor lagi "
 "sesekali."
 
-#: bot/modules/portal_pages.py:718
+#: bot/modules/portal_pages.py:723
 msgid "Import your file"
 msgstr "Impor berkas Anda"
 
-#: bot/modules/portal_pages.py:724
+#: bot/modules/portal_pages.py:729
 msgid "Your cookies.txt file"
 msgstr "Berkas cookies.txt Anda"
 
-#: bot/modules/portal_pages.py:730
+#: bot/modules/portal_pages.py:735
 msgid "Or paste the contents of the file"
 msgstr "Atau tempel isi berkasnya"
 
-#: bot/modules/portal_pages.py:731
+#: bot/modules/portal_pages.py:736
 msgid "Paste the whole file. It is several lines of text."
 msgstr "Tempel seluruh berkas. Isinya beberapa baris teks."
 
-#: bot/modules/portal_pages.py:738
+#: bot/modules/portal_pages.py:743
 msgid "Import the session"
 msgstr "Impor sesi"
 
-#: bot/modules/portal_pages.py:744
+#: bot/modules/portal_pages.py:749
 #, python-format
 msgid "Lines pasted: %(count)s"
 msgstr "Baris yang ditempel: %(count)s"
 
-#: bot/modules/portal_pages.py:761
+#: bot/modules/portal_pages.py:766
 msgid "Choose your cookies.txt file, or paste its contents"
 msgstr "Pilih berkas cookies.txt Anda, atau tempel isinya"
 
-#: bot/modules/portal_pages.py:762
+#: bot/modules/portal_pages.py:767
 msgid ""
 "This is too long to be a cookies file. Check you chose only the "
 "cookies.txt file."
@@ -3152,7 +3360,7 @@ msgstr ""
 "Ini terlalu panjang untuk berkas cookie. Pastikan Anda hanya memilih "
 "berkas cookies.txt."
 
-#: bot/modules/portal_pages.py:763
+#: bot/modules/portal_pages.py:768
 msgid ""
 "This is not a cookies.txt file. Export the cookies again in Netscape "
 "cookies.txt format."
@@ -3160,7 +3368,7 @@ msgstr ""
 "Ini bukan berkas cookies.txt. Ekspor cookie lagi dalam format Netscape "
 "cookies.txt."
 
-#: bot/modules/portal_pages.py:764
+#: bot/modules/portal_pages.py:769
 msgid ""
 "This file has no YouTube sign-in in it. Sign in to YouTube in your "
 "browser, then export the cookies again while on youtube.com."
@@ -3168,7 +3376,7 @@ msgstr ""
 "Berkas ini tidak berisi data masuk YouTube. Masuk ke YouTube di peramban "
 "Anda, lalu ekspor cookie lagi saat berada di youtube.com."
 
-#: bot/modules/portal_pages.py:765
+#: bot/modules/portal_pages.py:770
 msgid ""
 "YouTube says this session is already signed out. Sign in to YouTube in "
 "your browser again, then export a fresh file."
@@ -3176,16 +3384,16 @@ msgstr ""
 "YouTube menyatakan sesi ini sudah keluar. Masuk ke YouTube lagi di "
 "peramban Anda, lalu ekspor berkas yang baru."
 
-#: bot/modules/portal_pages.py:766
+#: bot/modules/portal_pages.py:771
 msgid "The session could not be imported."
 msgstr "Sesi tidak bisa diimpor."
 
-#: bot/modules/portal_pages.py:778 bot/modules/portal_pages.py:793
+#: bot/modules/portal_pages.py:783 bot/modules/portal_pages.py:798
 #, python-format
 msgid "Disconnect %(service)s?"
 msgstr "Putuskan %(service)s?"
 
-#: bot/modules/portal_pages.py:779
+#: bot/modules/portal_pages.py:784
 #, python-format
 msgid ""
 "StreamerBot will stop streaming from your %(service)s account. Your "
@@ -3196,44 +3404,44 @@ msgstr ""
 "%(service)s Anda sendiri tidak terpengaruh. Anda bisa menghubungkannya "
 "lagi kapan saja."
 
-#: bot/modules/portal_pages.py:790
+#: bot/modules/portal_pages.py:795
 #, python-format
 msgid "Cancel, keep %(service)s connected"
 msgstr "Batal, biarkan %(service)s tetap terhubung"
 
 # | msgid "help text not found"
-#: bot/modules/portal_pages.py:809
+#: bot/modules/portal_pages.py:814
 msgid "Page not found"
 msgstr "Halaman tidak ditemukan"
 
 # | msgid "This user is not in the admin list"
-#: bot/modules/portal_pages.py:810
+#: bot/modules/portal_pages.py:815
 msgid "This address is not quite right."
 msgstr "Alamat ini kurang tepat."
 
-#: bot/modules/portal_pages.py:811 bot/modules/portal_pages.py:818
+#: bot/modules/portal_pages.py:816 bot/modules/portal_pages.py:823
 msgid "To get a new link, send the li command to StreamerBot in TeamTalk."
 msgstr ""
 "Untuk mendapatkan tautan baru, kirim perintah li ke StreamerBot di "
 "TeamTalk."
 
-#: bot/modules/portal_pages.py:816
+#: bot/modules/portal_pages.py:821
 msgid "Link expired"
 msgstr "Tautan kedaluwarsa"
 
-#: bot/modules/portal_pages.py:817
+#: bot/modules/portal_pages.py:822
 msgid "This link has expired."
 msgstr "Tautan ini sudah kedaluwarsa."
 
-#: bot/modules/portal_pages.py:823
+#: bot/modules/portal_pages.py:828
 msgid "Something went wrong"
 msgstr "Terjadi kesalahan"
 
-#: bot/modules/portal_pages.py:824
+#: bot/modules/portal_pages.py:829
 msgid "StreamerBot could not finish that request."
 msgstr "StreamerBot tidak bisa menyelesaikan permintaan itu."
 
-#: bot/modules/portal_pages.py:825
+#: bot/modules/portal_pages.py:830
 msgid "Try again in a moment. If it keeps happening, check the bot's log."
 msgstr "Coba lagi sebentar lagi. Jika terus terjadi, periksa log bot."
 
@@ -3274,6 +3482,69 @@ msgid ""
 msgstr ""
 "Google sudah masuk, tetapi YouTube tidak mengenali sesinya. Silakan coba "
 "lagi."
+
+#: bot/services/audiovault.py:159
+msgid "text-to-speech narration"
+msgstr "narasi suara sintetis"
+
+# | msgid "Send a number:"
+#: bot/services/audiovault.py:179
+#, python-brace-format
+msgid "Season {number}"
+msgstr "Musim {number}"
+
+#: bot/services/audiovault.py:187
+#, python-brace-format
+msgid "Season {season}, episode {episode}"
+msgstr "Musim {season}, episode {episode}"
+
+#: bot/services/audiovault.py:229 bot/services/audiovault.py:258
+msgid "AudioVault sent a zip file that is not safe to open."
+msgstr "AudioVault mengirim file zip yang tidak aman untuk dibuka."
+
+#: bot/services/audiovault.py:237 bot/services/audiovault.py:462
+#: bot/services/audiovault.py:475
+msgid "The download is larger than this bot allows."
+msgstr "Unduhan lebih besar dari yang diizinkan bot ini."
+
+#: bot/services/audiovault.py:241
+msgid "AudioVault sent a zip file with no audio in it."
+msgstr "AudioVault mengirim file zip tanpa audio di dalamnya."
+
+#: bot/services/audiovault.py:266 bot/services/audiovault.py:457
+msgid "AudioVault sent something that is not audio or a zip file."
+msgstr "AudioVault mengirim sesuatu yang bukan audio atau file zip."
+
+#: bot/services/audiovault.py:378
+msgid "AudioVault's sign-in page did not load. Try again later."
+msgstr "Halaman masuk AudioVault tidak termuat. Coba lagi nanti."
+
+#: bot/services/audiovault.py:393
+msgid "AudioVault did not accept that email address and password."
+msgstr "AudioVault tidak menerima alamat email dan kata sandi itu."
+
+# | msgid "Apple Music is not signed in on this bot. Send li am to connect
+# it."
+# | msgid "Apple Music is not signed in on this bot. To connect it, send: li
+# am"
+#: bot/services/audiovault.py:410 bot/services/audiovault.py:446
+msgid "AudioVault did not accept the sign-in. To connect again, send: li av"
+msgstr ""
+"AudioVault tidak menerima proses masuk. Untuk menghubungkan lagi, kirim: "
+"li av"
+
+# | msgid "Apple Music did not have that."
+#: bot/services/audiovault.py:452
+msgid "AudioVault did not have that download."
+msgstr "AudioVault tidak memiliki unduhan itu."
+
+#: bot/services/audiovault.py:541 bot/services/audiovault.py:582
+msgid ""
+"AudioVault has its own command. To search it, send av and a title, for "
+"example: av spaceballs"
+msgstr ""
+"AudioVault punya perintah sendiri. Untuk mencarinya, kirim av dan sebuah "
+"judul, misalnya: av spaceballs"
 
 #: bot/services/browser_service.py:104
 #, python-format
