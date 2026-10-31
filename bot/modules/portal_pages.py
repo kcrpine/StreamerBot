@@ -308,13 +308,18 @@ class PageBuilder:
             username_label = self._("Google account email address")
             username_hint = self._("The Google account made for StreamerBot, not your personal one.")
             password_label = self._("Google account password")
+        elif service == "av":
+            # AudioVault signs in by email address only.
+            username_label = self._("AudioVault email address")
+            username_hint = self._("The address you use to sign in to %(service)s.") % {"service": name}
+            password_label = self._("%(service)s password") % {"service": name}
         else:
             username_label = self._("%(service)s email address or username") % {"service": name}
             username_hint = self._("The address you use to sign in to %(service)s.") % {"service": name}
             password_label = self._("%(service)s password") % {"service": name}
 
         username_input = (
-            f'<input id="username" name="username" type="text" '
+            f'<input id="username" name="username" type="{"email" if service == "av" else "text"}" '
             f'value="{esc(username)}" autocomplete="username" autocapitalize="none" '
             f'autocorrect="off" spellcheck="false" required'
             + (' aria-invalid="true"' if "username" in error_for else "")

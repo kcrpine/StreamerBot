@@ -361,6 +361,8 @@ class PortalHandler(BaseHTTPRequestHandler):
             errors.append(
                 ("username", pages._("Enter the Google account email address"))
                 if service == "yt" else
+                ("username", pages._("Enter your AudioVault email address"))
+                if service == "av" else
                 ("username", pages._("Enter your %(service)s email address or username")
                  % {"service": service_name(service)})
             )
@@ -491,6 +493,7 @@ class AuthPortal:
         librespot_engine: Optional[Any] = None,
         sign_in_worker: Optional[Callable[[str, str, str, Any], None]] = None,
         youtube_session: Optional[Any] = None,
+        audiovault: Optional[Any] = None,
     ) -> None:
         self.translator = translator
         self.store = store
@@ -502,6 +505,7 @@ class AuthPortal:
         self.librespot_engine = librespot_engine
         self.sign_in_worker = sign_in_worker
         self.youtube_session = youtube_session
+        self.audiovault = audiovault
         self._server: Optional[ThreadingHTTPServer] = None
         self._thread: Optional[threading.Thread] = None
 
@@ -658,6 +662,11 @@ class AuthPortal:
                 self.librespot_engine.sign_out()
             except Exception as error:
                 logger.warning(f"[portal] Spotify sign-out failed: {error}")
+        if service == "av" and self.audiovault is not None:
+            try:
+                self.audiovault.sign_out()
+            except Exception as error:
+                logger.warning(f"[portal] AudioVault sign-out failed: {error}")
         self.store.delete(service)
         self.jobs.clear(service)
 

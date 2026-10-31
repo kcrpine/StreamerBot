@@ -133,6 +133,13 @@ class PodcastModel(BaseModel):
     spotify_market: str = "US"
 
 
+class AudioVaultModel(BaseModel):
+    enabled: bool = True
+    # The largest download the bot will fetch, in megabytes: one film or one
+    # season. A season of a long show can be several gigabytes.
+    max_download_mb: int = 8192
+
+
 class ServicesModel(BaseModel):
     default_service: str = "yt"
     yt: YtModel = YtModel()
@@ -146,6 +153,7 @@ class ServicesModel(BaseModel):
     hu: BrowserServiceModel = BrowserServiceModel()
     tb: BrowserServiceModel = BrowserServiceModel()
     pc: PodcastModel = PodcastModel()
+    av: AudioVaultModel = AudioVaultModel()
 
 
 class LoggerModel(BaseModel):

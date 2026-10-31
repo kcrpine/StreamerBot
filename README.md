@@ -98,6 +98,7 @@ Full detail is in [CHANGELOG.md](CHANGELOG.md).
 | Tubi | Chrome | Nothing. **amd64 only** |
 | Apple Music, Amazon Music | Chrome | An account. **amd64 only** |
 | Podcasts | mpv, or go-librespot for Spotify shows | Nothing. Spotify shows need what Spotify needs |
+| AudioVault (`av`) | mpv, after downloading and unpacking | An AudioVault account, connected with `li av`. Works on ARM too |
 
 **The browser services do not work on ARM,** including Raspberry Pi. Google
 publishes no Chrome for linux/arm64, and only Chrome carries the Widevine module

@@ -277,6 +277,9 @@ class Bot:
         adapter while job.request_otp() waits for a code the user types on a web
         page, which is why the job state machine exists at all.
         """
+        if service == "av":
+            self._audiovault_sign_in(username, password, job)
+            return
         engine = self.player.engines.get("browser")
         if service == "yt" and self.youtube_session is not None:
             engine = self.youtube_session.engine
@@ -298,6 +301,29 @@ class Bot:
             logging.error(f"[{service}] sign-in failed: {error}", exc_info=True)
             # The message reaches a user, so it must not be a traceback, and it
             # must never echo the password back.
+            job.fail(self.translator.translate("The sign-in did not complete."))
+        finally:
+            if not job.is_finished:
+                job.fail(self.translator.translate("The sign-in did not complete."))
+
+    def _audiovault_sign_in(self, username: str, password: str, job) -> None:
+        """AudioVault is a plain web form, so it signs in without a browser,
+        which also means it works on arm64, where there is no Chrome."""
+        service = self.service_manager.services.get("av")
+        try:
+            if service is None:
+                job.fail(self.translator.translate("AudioVault is not available on this bot."))
+                return
+            service.sign_in(username, password)
+            job.succeed()
+        except errors.ServiceError as error:
+            # The portal stored the details before trying them; details AudioVault
+            # refused must not leave li saying "connected".
+            if getattr(service, "store", None) is not None:
+                service.store.delete("av")
+            job.fail(str(error))
+        except Exception as error:
+            logging.error(f"[av] sign-in failed: {error}", exc_info=True)
             job.fail(self.translator.translate("The sign-in did not complete."))
         finally:
             if not job.is_finished:
@@ -334,6 +360,10 @@ class Bot:
             spotify = self.service_manager.services.get("sp")
             if spotify is not None and hasattr(spotify, "attach_store"):
                 spotify.attach_store(store)
+            # AudioVault signs in again with the stored details when its session ends.
+            audiovault = self.service_manager.services.get("av")
+            if audiovault is not None and hasattr(audiovault, "attach_store"):
+                audiovault.attach_store(store)
 
             youtube_bridge = None
             for name in ("yt", "ytm"):
@@ -353,6 +383,7 @@ class Bot:
                 librespot_engine=self.player.engines.get("librespot"),
                 sign_in_worker=self._browser_sign_in,
                 youtube_session=self.youtube_session,
+                audiovault=audiovault,
             )
             self.auth_portal.start()
             self.command_processor.auth_portal = self.auth_portal

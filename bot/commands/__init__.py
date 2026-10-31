@@ -8,7 +8,7 @@ from typing import Any, Dict, List, TYPE_CHECKING, Tuple
 
 from bot import app_vars, errors
 from bot.TeamTalk.structs import Message, User, UserType
-from bot.commands import admin_commands, podcast_commands, user_commands
+from bot.commands import admin_commands, audiovault_commands, podcast_commands, user_commands
 from bot.commands.task_processor import TaskProcessor
 from bot.modules.audio_description import (
     AudioDescriptionPreference,
@@ -95,6 +95,8 @@ class CommandProcessor:
         self.pending_artist_choice: Dict[int, Any] = {}
         # dl, dlp, dla: which file format, asked last. Per user, like the above.
         self.pending_format_choice: Dict[int, Any] = {}
+        # av: the results, film or show question each user has open.
+        self.pending_audiovault: Dict[int, Any] = {}
         # config / cf: each admin's open settings menu, per user like the above.
         self.pending_config_menu: Dict[int, Any] = {}
         # Podcasts: the last search's shows, the show each user has open, and the
@@ -157,6 +159,8 @@ class CommandProcessor:
             "pa": podcast_commands.PodcastSubscribeCommand,
             "ps": podcast_commands.PodcastSubscriptionsCommand,
             "pu": podcast_commands.PodcastUnsubscribeCommand,
+            # --- AudioVault ---
+            "av": audiovault_commands.AudioVaultCommand,
         }
         self.admin_commands_dict = {
             "cg": admin_commands.ChangeGenderCommand,
@@ -211,6 +215,7 @@ class CommandProcessor:
                 ("pending_artist_choice", lambda: self.translator.translate(
                     "That question has expired. To ask again, send: dla")),
                 ("pending_format_choice", None),
+                ("pending_audiovault", None),
                 ("pending_config_menu", lambda: self.translator.translate(
                     "That menu has expired. To open it again, send: cf")),
             )

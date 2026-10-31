@@ -1753,7 +1753,7 @@ class LoginCommand(Command):
     def help(self) -> str:
         return self.translator.translate(
             "[service] Shows which streaming accounts are connected. "
-            "With a service (yt, sp, nf, dp, am, az, pp, hu, tb) it starts connecting that one"
+            "With a service (yt, sp, nf, dp, am, az, pp, hu, tb, av) it starts connecting that one"
         )
 
     @staticmethod

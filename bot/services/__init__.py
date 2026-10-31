@@ -84,6 +84,7 @@ from bot.services.browser_service import (
 )
 from bot.services.netflix import NetflixService
 from bot.services.podcasts import PodcastService
+from bot.services.audiovault import AudioVaultService
 from bot.services.spotify import SpotifyService
 from bot.services.ytm import YtmService
 
@@ -103,6 +104,7 @@ class ServiceManager:
             "hu": HuluService(bot, self.config.hu),
             "tb": TubiService(bot, self.config.tb),
             "pc": PodcastService(bot, self.config.pc),
+            "av": AudioVaultService(bot, self.config.av),
         }
         self.service: Service = self.services[self.config.default_service]
         self.fallback_service = app_vars.fallback_service

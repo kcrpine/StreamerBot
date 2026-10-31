@@ -2800,7 +2800,8 @@ streamerbot_config_defaults() {
       "pp": { "enabled": true, "profile": "" },
       "hu": { "enabled": true, "profile": "" },
       "tb": { "enabled": true, "profile": "" },
-      "pc": { "enabled": true, "check_hours": 6 }
+      "pc": { "enabled": true, "check_hours": 6 },
+      "av": { "enabled": true, "max_download_mb": 8192 }
     },
     "auth_portal": {
       "enabled": true,

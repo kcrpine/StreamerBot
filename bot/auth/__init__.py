@@ -8,7 +8,7 @@ one bot cannot sign another out.
 # The services the portal can connect, in the order the status page lists them.
 # Kept here rather than in the portal so the commands, the store and the portal
 # all agree on the identifiers.
-SERVICES = ("yt", "sp", "nf", "dp", "am", "az", "pp", "hu", "tb")
+SERVICES = ("yt", "sp", "nf", "dp", "am", "az", "pp", "hu", "tb", "av")
 
 # Services that play without an account. They can still be connected, but
 # nothing tells a user they need to be, and `li` sends no link for them.
@@ -27,6 +27,7 @@ SERVICE_NAMES = {
     "pp": "Paramount Plus",
     "hu": "Hulu",
     "tb": "Tubi",
+    "av": "AudioVault",
     # Not in SERVICES either: podcasts have no account.
     "pc": "Podcasts",
 }
