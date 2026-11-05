@@ -244,5 +244,51 @@ class PlayTests(TestCase):
         self.assertIn("li am", str(caught.exception))
 
 
+class PlaybackLogTests(TestCase):
+    """MusicKit moves through an album by itself, so its events are the only
+    record of a song cut off part-way (danielBot, November 2026)."""
+
+    def drain(self, events):
+        page = MagicMock()
+        page.evaluate.return_value = events
+        with self.assertLogs("bot.services.web.apple_music", level="INFO") as logs:
+            AppleMusicAdapter().drain_playback_log(page)
+        return logs
+
+    def test_a_song_left_well_before_its_end_is_a_warning_with_both_numbers(self):
+        logs = self.drain([{"ev": "item-changed", "state": "playing", "pos": 0, "dur": 0,
+                            "item": "Next (2)", "preview": False,
+                            "prev": "Silent Night (1)", "prev_pos": 61.2, "prev_dur": 213.0}])
+
+        self.assertEqual(logs.records[0].levelname, "WARNING")
+        self.assertIn("prev_pos=61.2s prev_dur=213.0s", logs.output[0])
+        self.assertIn("stopped before its end", logs.output[0])
+
+    def test_a_finished_song_is_ordinary(self):
+        logs = self.drain([{"ev": "item-changed", "state": "playing", "item": "Next (2)",
+                            "prev": "Done (1)", "prev_pos": 211.0, "prev_dur": 213.0}])
+
+        self.assertEqual(logs.records[0].levelname, "INFO")
+        self.assertNotIn("stopped before", logs.output[0])
+
+    def test_an_error_names_itself(self):
+        logs = self.drain([{"ev": "error", "state": "stopped", "pos": 60.1, "dur": 200,
+                            "item": "X (1)", "error": "MEDIA_KEY", "detail": "license refused"}])
+
+        self.assertEqual(logs.records[0].levelname, "WARNING")
+        self.assertIn("error='MEDIA_KEY'", logs.output[0])
+
+    def test_a_page_that_cannot_answer_is_not_an_error(self):
+        page = MagicMock()
+        page.evaluate.side_effect = RuntimeError("Target closed")
+        AppleMusicAdapter().drain_playback_log(page)  # no exception
+
+    def test_the_recorder_is_installed_once_per_page(self):
+        js = AppleMusicAdapter.PLAYBACK_LOG_INSTALL_JS
+        self.assertIn("window.__sbAm) return", js)
+        for event in ("nowPlayingItemDidChange", "mediaPlaybackError", "playbackStateDidChange"):
+            self.assertIn(event, js)
+
+
 if __name__ == "__main__":
     unittest.main()

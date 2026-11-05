@@ -47,6 +47,8 @@ BROWSER_MARKER = "/etc/streamerbot-browser-available"
 
 # Generous: a cold Chrome start on a small VPS plus a Netflix page load.
 DEFAULT_JOB_TIMEOUT = 120
+# How often an idle browser thread asks the playing page for its playback log.
+IDLE_POLL_SECONDS = 5
 STARTUP_TIMEOUT = 90
 
 # The two tabs each service gets. PLAYER is where the audio is, and only
@@ -209,7 +211,11 @@ class BrowserEngine(PlaybackEngine):
             return
 
         while not self._closing:
-            job = self._queue.get()
+            try:
+                job = self._queue.get(timeout=IDLE_POLL_SECONDS)
+            except queue.Empty:
+                self._idle()
+                continue
             if job is None:
                 break
             try:
@@ -221,6 +227,27 @@ class BrowserEngine(PlaybackEngine):
                 job.done.set()
 
         self._teardown()
+
+    def _idle(self) -> None:
+        """Between jobs: let the playing service's adapter read what its page recorded.
+
+        Playwright's sync API only delivers page events while this thread is
+        inside a call, and the thread sits in queue.get() for a whole album,
+        so whatever a page wants logged has to be fetched from here.
+        """
+        service = self._active_service
+        if not self._playing or service is None:
+            return
+        adapter = self._adapters.get(service)
+        drain = getattr(adapter, "drain_playback_log", None)
+        page = self._pages.get((service, PLAYER))
+        if drain is None or page is None:
+            return
+        try:
+            if not page.is_closed():
+                drain(page)
+        except Exception as error:
+            logger.debug(f"[browser] reading {service}'s playback log failed: {error}")
 
     def _teardown(self) -> None:
         for service, context in list(self._contexts.items()):

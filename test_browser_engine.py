@@ -313,5 +313,43 @@ class BrowserProxyTests(TestCase):
                 self.assertIn('-e "BROWSER_PROXY_SERVICES=${BROWSER_PROXY_SERVICES:-}"', launch, script)
 
 
+class IdlePlaybackLogTests(TestCase):
+    """The browser thread sits in queue.get() for a whole album; between jobs it
+    asks the playing page for what it recorded."""
+
+    def engine_playing(self, adapter):
+        from bot.player.engines.browser_engine import PLAYER
+        engine = make_engine()
+        page = Mock(is_closed=lambda: False)
+        engine._adapters = {"am": adapter}
+        engine._pages = {("am", PLAYER): page}
+        engine._active_service = "am"
+        engine._playing = True
+        return engine, page
+
+    def test_idle_reads_the_playing_pages_log(self):
+        adapter = Mock()
+        engine, page = self.engine_playing(adapter)
+        engine._idle()
+        adapter.drain_playback_log.assert_called_once_with(page)
+
+    def test_nothing_is_read_while_stopped(self):
+        adapter = Mock()
+        engine, _ = self.engine_playing(adapter)
+        engine._playing = False
+        engine._idle()
+        adapter.drain_playback_log.assert_not_called()
+
+    def test_an_adapter_without_a_log_is_left_alone(self):
+        engine, _ = self.engine_playing(SimpleNamespace())
+        engine._idle()  # no exception
+
+    def test_a_failing_read_never_stops_the_thread(self):
+        adapter = Mock()
+        adapter.drain_playback_log.side_effect = RuntimeError("Target closed")
+        engine, _ = self.engine_playing(adapter)
+        engine._idle()  # no exception
+
+
 if __name__ == "__main__":
     unittest.main()

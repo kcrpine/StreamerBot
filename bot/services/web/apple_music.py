@@ -451,6 +451,31 @@ class AppleMusicAdapter(WebServiceAdapter):
             if (href.includes('/album/')) return 'album';
             return null;
         };
+        // The artist link inside the same card or row, for dla. Apple only sometimes
+        // shows an Artist card, but songs and albums nearly always link their artist.
+        // Walks up from the link, stopping before an ancestor that holds a second
+        // result, so a link from the next card over is never taken.
+        const PRIMARY = 'a[data-testid="click-action"], a[data-testid="product-lockup-link"]';
+        const artistNear = (a) => {
+            let el = a.parentElement;
+            for (let depth = 0; el && el !== main && depth < 6; depth++, el = el.parentElement) {
+                if (el.querySelectorAll(PRIMARY).length > 1) break;
+                for (const link of el.querySelectorAll('a[href*="/artist/"]')) {
+                    const href = link.getAttribute('href') || '';
+                    if (link === a || excluded(link, href)) continue;
+                    return {url: absolute(href), name: (link.textContent || '').trim()};
+                }
+            }
+            return null;
+        };
+        const withArtist = (item, a, found) => {
+            const near = found || artistNear(a);
+            if (near) {
+                item.artist_url = near.url;
+                if (!item.artist && near.name) item.artist = near.name;
+            }
+            return item;
+        };
         const add = (item) => {
             if (seen.has(item.url)) return;
             seen.add(item.url);
@@ -465,10 +490,10 @@ class AppleMusicAdapter(WebServiceAdapter):
             if (parts.length < 2) return;
             const kind = KINDS[parts[1].toLowerCase()];
             if (!kind) return;  // music videos, stations and anything else not playable here
-            add({
+            add(withArtist({
                 id: absolute(href), url: absolute(href), kind: 'top', top_kind: kind,
                 title: parts[0], artist: parts[2] || '',
-            });
+            }, a));
         });
 
         // 2. Albums, singles and playlists on the result shelves.
@@ -479,11 +504,11 @@ class AppleMusicAdapter(WebServiceAdapter):
             if (!kind) return;
             const label = (a.getAttribute('aria-label') || '').trim();
             const comma = label.lastIndexOf(', ');
-            add({
+            add(withArtist({
                 id: absolute(href), url: absolute(href), kind,
                 title: comma > 0 ? label.slice(0, comma) : label,
                 artist: comma > 0 ? label.slice(comma + 2) : '',
-            });
+            }, a));
         });
 
         // 3. Song rows, with the artist read from the same row where there is one.
@@ -493,12 +518,16 @@ class AppleMusicAdapter(WebServiceAdapter):
             const title = (a.getAttribute('aria-label') || a.textContent || '').trim();
             if (!title || title.includes('\\u00b7')) return;
             let artist = '';
+            let found = null;
             const row = a.closest('li, [role="row"], [data-testid*="track"]');
             if (row) {
                 const artistLink = row.querySelector('a[href*="/artist/"]');
-                if (artistLink) artist = (artistLink.textContent || '').trim();
+                if (artistLink) {
+                    artist = (artistLink.textContent || '').trim();
+                    found = {url: absolute(artistLink.getAttribute('href') || ''), name: artist};
+                }
             }
-            add({id: absolute(href), url: absolute(href), kind: 'track', title, artist});
+            add(withArtist({id: absolute(href), url: absolute(href), kind: 'track', title, artist}, a, found));
         });
 
         return out.slice(0, 25);
@@ -739,6 +768,102 @@ class AppleMusicAdapter(WebServiceAdapter):
                 )
         except Exception:
             pass
+
+        try:
+            page.evaluate(self.PLAYBACK_LOG_INSTALL_JS)
+        except Exception as error:
+            logger.debug(f"[apple music] could not watch playback events: {error}")
+
+    # Why MusicKit moved on. In an album or playlist MusicKit advances by itself,
+    # so a song cut off a minute in left no trace in the bot's log at all
+    # (danielBot, November 2026). These listeners keep a short record inside the
+    # page; drain_playback_log reads it from the browser thread while it is idle.
+    # Each song change carries how far the previous song got and how long it was,
+    # which is the one number that tells a finished song from a cut-off one.
+    PLAYBACK_LOG_INSTALL_JS = """() => {
+        const k = window.MusicKit && MusicKit.getInstance && MusicKit.getInstance();
+        if (!k || window.__sbAm) return !!window.__sbAm;
+        const S = window.__sbAm = {log: [], pos: 0, dur: 0, item: ''};
+        const E = (MusicKit.Events || {});
+        const states = MusicKit.PlaybackStates || {};
+        const stateName = (v) => Object.keys(states).find(n => states[n] === v) || String(v);
+        const itemName = () => {
+            const it = k.nowPlayingItem;
+            if (!it) return '';
+            const a = it.attributes || {};
+            return (a.name || it.title || '') + ' (' + String(it.id || '') + ')';
+        };
+        const push = (ev, extra) => {
+            S.log.push(Object.assign({
+                t: Date.now(), ev, state: stateName(k.playbackState),
+                pos: Math.round((k.currentPlaybackTime || 0) * 10) / 10,
+                dur: Math.round((k.currentPlaybackDuration || 0) * 10) / 10,
+                item: itemName(), preview: !!k.previewOnly,
+            }, extra || {}));
+            if (S.log.length > 200) S.log.splice(0, S.log.length - 200);
+        };
+        const on = (name, fallback, fn) => {
+            try { k.addEventListener(E[name] || fallback, fn); } catch (e) {}
+        };
+        on('playbackTimeDidChange', 'playbackTimeDidChange', () => {
+            S.pos = k.currentPlaybackTime || S.pos;
+            S.dur = k.currentPlaybackDuration || S.dur;
+        });
+        on('nowPlayingItemDidChange', 'nowPlayingItemDidChange', () => {
+            push('item-changed', {prev: S.item, prev_pos: Math.round(S.pos * 10) / 10,
+                                  prev_dur: Math.round(S.dur * 10) / 10});
+            S.item = itemName(); S.pos = 0; S.dur = 0;
+        });
+        on('playbackStateDidChange', 'playbackStateDidChange', () => push('state'));
+        on('mediaPlaybackError', 'mediaPlaybackError', (e) => push('error', {
+            error: String((e && (e.errorCode || e.name || e.message)) || e || ''),
+            detail: String((e && e.description) || (e && e.message) || '').slice(0, 300),
+        }));
+        on('playbackStalled', 'playbackStalled', () => push('stalled'));
+        S.item = itemName();
+        push('watching');
+        return true;
+    }"""
+
+    PLAYBACK_LOG_DRAIN_JS = """() => {
+        const S = window.__sbAm;
+        if (!S || !S.log.length) return [];
+        return S.log.splice(0, S.log.length);
+    }"""
+
+    def drain_playback_log(self, page) -> None:
+        """Write MusicKit's recorded playback events to the bot's log.
+
+        Browser thread only. A song that changed well before its end is a
+        warning, so the cut-off songs stand out from the ones that finished.
+        """
+        try:
+            events = page.evaluate(self.PLAYBACK_LOG_DRAIN_JS) or []
+        except Exception:
+            return
+        for e in events:
+            if not isinstance(e, dict):
+                continue
+            ev = e.get("ev")
+            if ev == "state" and e.get("state") in ("playing", "paused") and not e.get("pos"):
+                continue  # the routine start of every song; item-changed covers it
+            line = (
+                f"[apple music] event={ev} state={e.get('state')} pos={e.get('pos')}s "
+                f"dur={e.get('dur')}s preview={e.get('preview')} item={e.get('item')!r}"
+            )
+            cut = False
+            if ev == "item-changed":
+                prev_pos, prev_dur = e.get("prev_pos") or 0, e.get("prev_dur") or 0
+                line += f" prev={e.get('prev')!r} prev_pos={prev_pos}s prev_dur={prev_dur}s"
+                cut = bool(prev_dur) and prev_pos < prev_dur - 5
+                if cut:
+                    line += " -- the previous song stopped before its end"
+            if ev == "error":
+                line += f" error={e.get('error')!r} detail={e.get('detail')!r}"
+            if ev in ("error", "stalled") or cut:
+                logger.warning(line)
+            else:
+                logger.info(line)
 
     # The song inside the queue, not the queue. `p <album>` queues one Track in
     # the bot but eleven songs in MusicKit, so only MusicKit can say which one is
