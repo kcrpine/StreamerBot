@@ -6,7 +6,10 @@ import { URL } from 'node:url';
 import { ClientType, Innertube, UniversalCache, Platform } from 'youtubei.js';
 import { ExpiringLruCache } from './cache.mjs';
 import {
+  capProbeOffset,
   clientTakesPoToken,
+  gvsBindingCandidates,
+  probeVerdict,
   contentBindingFor,
   withGvsPoToken,
   cookieHeaderFromNetscape,
@@ -369,7 +372,7 @@ async function createAttestedSession(options, browserSession = null) {
         : '[youtube-bridge] No visitorData was available, so this session carries no ' +
           'proof-of-origin token and playback may be refused as bot traffic.'
     );
-    return { session: await Innertube.create(options), poToken: undefined };
+    return { session: await Innertube.create(options), poToken: undefined, binding, visitorData };
   }
 
   const poToken = await getPoToken(binding);
@@ -386,7 +389,9 @@ async function createAttestedSession(options, browserSession = null) {
     po_token: poToken
   });
 
-  return { session, poToken };
+  // binding and visitorData go along so the stream URL's token can be tried
+  // against either identity; see gvsBindingCandidates.
+  return { session, poToken, binding, visitorData };
 }
 
 async function extractPlaylistId(input, session) {
@@ -491,6 +496,9 @@ async function resolveFormat(context, videoId, requestedClient, formatOptions) {
   const signedIn = Boolean(context?.session?.session?.logged_in);
   const attempts = planPlaybackAttempts({ signedIn });
   const failures = [];
+  // A resolution whose every token was capped at ~1 MB, kept in case no later
+  // client does better: a minute of the track still beats skipping it outright.
+  let cappedFallback = null;
 
   for (const attempt of attempts) {
     const client = attempt.client;
@@ -540,18 +548,22 @@ async function resolveFormat(context, videoId, requestedClient, formatOptions) {
         throw new Error('decipher returned an empty stream URL');
       }
 
-      // The token Google's CDN checks, which is bound to the video, not to the
-      // session. Without it the URL resolves and plays its first ~1,024,000
-      // bytes — about a minute of Opus — and then 403s for ever after, which
-      // reads downstream as a track that simply ended. See withGvsPoToken.
+      // The token Google's CDN checks. With the wrong one the URL resolves and
+      // plays its first ~1,024,000 bytes — about a minute of Opus — and then
+      // 403s for ever after, which reads downstream as a track that simply
+      // ended. Which binding is right has changed under us once already, so
+      // each candidate is checked against the cap itself. See
+      // gvsBindingCandidates.
       if (clientTakesPoToken(client)) {
         const gvsStartedAt = performance.now();
-        const gvsToken = await getPoToken(videoId);
-        console.log(`[youtube-bridge-timing] video=${videoId} client=${label} stage=gvs-po-token elapsed_ms=${Math.round(performance.now() - gvsStartedAt)} available=${Boolean(gvsToken)}`);
-        if (gvsToken) {
-          format.url = withGvsPoToken(format.url, gvsToken);
-        } else {
-          console.warn(`[youtube-bridge] ${videoId} has no video-bound proof-of-origin token, so playback will stop after about a minute.`);
+        const chosen = await chooseGvsUrl(attemptContext, videoId, format.url, label);
+        console.log(`[youtube-bridge-timing] video=${videoId} client=${label} stage=gvs-po-token elapsed_ms=${Math.round(performance.now() - gvsStartedAt)} binding=${chosen.name} served=${chosen.served}`);
+        format.url = chosen.url;
+        if (chosen.served === false) {
+          // Every binding was capped. Keep it as a last resort (a minute of the
+          // track beats none) and let the next client try for the whole thing.
+          if (!cappedFallback) cappedFallback = { info, format, client };
+          throw new Error('every proof-of-origin binding was cut off at about 1 MB');
         }
       }
 
@@ -564,7 +576,71 @@ async function resolveFormat(context, videoId, requestedClient, formatOptions) {
     }
   }
 
+  if (cappedFallback) {
+    console.warn(
+      `[youtube-bridge] ${videoId}: no client was served past ~1 MB, so it will ` +
+      `stop after about a minute. Tried: ${failures.join(' | ')}`
+    );
+    return cappedFallback;
+  }
   throw new Error(`Unable to resolve stream for ${videoId}; ${failures.join(' | ')}`);
+}
+
+// Which stream-URL binding last worked, per session, so the usual case costs
+// one probe rather than one per candidate.
+const gvsPreferred = new WeakMap();
+
+// One tiny ranged request just past the cap: 206 served, 403 capped, anything
+// else (a timeout, a 5xx) inconclusive and treated as served, so a network
+// blip never costs a track that would have played.
+async function servesPastCap(streamUrl) {
+  const offset = capProbeOffset(streamUrl);
+  if (offset === null) return null;
+  try {
+    const response = await fetch(streamUrl, {
+      headers: { 'User-Agent': USER_AGENT, Range: `bytes=${offset}-${offset + 1023}` },
+      signal: AbortSignal.timeout(6000)
+    });
+    await response.arrayBuffer().catch(() => {});
+    return probeVerdict(response.status);
+  } catch {
+    return null;
+  }
+}
+
+// The stream URL with the first token Google serves past the cap.
+// Returns {url, name, served}: served is false only when every candidate was
+// refused, and null when the URL could not or need not be probed.
+async function chooseGvsUrl(context, videoId, baseUrl, label) {
+  const candidates = gvsBindingCandidates({
+    videoId,
+    sessionBinding: context?.binding,
+    visitorData: context?.visitorData,
+    preferred: gvsPreferred.get(context)
+  });
+  let first = null;
+  for (const candidate of candidates) {
+    let url = baseUrl;
+    if (candidate.binding !== null) {
+      const token = await getPoToken(candidate.binding);
+      if (!token) continue;
+      url = withGvsPoToken(baseUrl, token);
+    }
+    if (!first) first = { url, name: candidate.name };
+    const served = await servesPastCap(url);
+    if (served === null) return { url, name: candidate.name, served: null };
+    if (served) {
+      if (gvsPreferred.get(context) !== candidate.name) {
+        console.log(`[youtube-bridge] ${videoId} client=${label}: Google serves past the ~1 MB cap with the ${candidate.name}-bound token; using it first from now on`);
+      }
+      if (context && typeof context === 'object') gvsPreferred.set(context, candidate.name);
+      return { url, name: candidate.name, served: true };
+    }
+    console.warn(`[youtube-bridge] ${videoId} client=${label}: the ${candidate.name}-bound token is cut off at ~1 MB`);
+  }
+  return first
+    ? { ...first, served: false }
+    : { url: baseUrl, name: 'none', served: false };
 }
 
 async function resolveTrack(body) {

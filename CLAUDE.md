@@ -241,6 +241,8 @@ token into an otherwise identical URL turns the 403s into 206s, and an open-ende
 then serves the whole remainder in one request. Measured on three videos. **Do not "simplify" these two
 back into one token** — each fixes a different half of playback and neither substitutes for the other.
 
+**The GVS binding did not stay put ([094]).** On 2026-11-04 a signed-in bot (danielBot) was capped at ~1 MB on every video while carrying a fresh video-bound token, and yt-dlp documents the signed-in GVS token as session-bound. So the bridge no longer hard-codes the binding. `chooseGvsUrl` in `server.mjs` tries the candidates from `gvsBindingCandidates` (video, then the session `pot` already on the URL, then visitorData), checks each with a 1 KB range request at `CAP_PROBE_OFFSET`, and remembers the winner for each session. If playback is capped again, read the bridge log for "is cut off at ~1 MB" and "serves past the ~1 MB cap with the …-bound token" before changing the order. Not yet confirmed live which binding wins for a signed-in session.
+
 **The measurement that led there, kept because it is how the symptom reads before the cause is known.**
 Probing resolved URLs directly from the host, a short video (213s, 3.4MB) is served in full — every
 window, non-zero start offsets, an open-ended range, all fine. A long one is not: for a

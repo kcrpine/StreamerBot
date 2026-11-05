@@ -216,6 +216,65 @@ export function withGvsPoToken(streamUrl, token) {
   return `${streamUrl}${streamUrl.includes('?') ? '&' : '?'}pot=${encoded}`;
 }
 
+/**
+ * The bindings to try for the stream URL's token, best guess first.
+ *
+ * [055] measured on 2026-09-21 that a video-bound token lifts the ~1 MB cap and
+ * a session-bound one does not. On 2026-11-04 that stopped being true for a
+ * signed-in bot: danielBot's every video carried a fresh video-bound token and
+ * was still cut off at 962,500–1,181,250 bytes, about a minute in. yt-dlp
+ * documents the signed-in rule the other way round (session-bound). Rather than
+ * swap one hard-coded guess for another, the bridge tries these in order and
+ * keeps the first that Google actually serves past the cap (see
+ * servesPastCap). `binding: null` means "keep the session-bound `pot` YouTube
+ * already put on the URL", which is the session-bound case.
+ *
+ * @param {{videoId: string, sessionBinding?: string, visitorData?: string, preferred?: string}} input
+ * @returns {{name: 'video'|'session'|'visitor', binding: string|null}[]}
+ */
+export function gvsBindingCandidates({ videoId, sessionBinding, visitorData, preferred }) {
+  const all = [];
+  if (videoId) all.push({ name: 'video', binding: videoId });
+  all.push({ name: 'session', binding: null });
+  if (visitorData && visitorData !== sessionBinding) all.push({ name: 'visitor', binding: visitorData });
+  const first = all.findIndex((c) => c.name === preferred);
+  if (first > 0) all.unshift(...all.splice(first, 1));
+  return all;
+}
+
+// Where to ask for a byte when checking the cap: past the highest offset the
+// cap has been seen at (1,181,250 on danielBot) with room to spare.
+export const CAP_PROBE_OFFSET = 1_300_000;
+
+/**
+ * Whether a probe is worth making for this URL, and where.
+ *
+ * A live broadcast is addressed by segment, not bytes ([056]), and a file
+ * shorter than the probe offset cannot show the cap, so neither is probed.
+ *
+ * @param {string} streamUrl
+ * @returns {number|null} the byte to ask for, or null for "do not probe"
+ */
+export function capProbeOffset(streamUrl) {
+  let url;
+  try { url = new URL(streamUrl); } catch { return null; }
+  const q = url.searchParams;
+  if (q.get('live') === '1' || q.get('noclen') === '1') return null;
+  const clen = Number(q.get('clen'));
+  if (!Number.isFinite(clen) || clen <= CAP_PROBE_OFFSET + 1000) return null;
+  return CAP_PROBE_OFFSET;
+}
+
+/**
+ * Read a probe's HTTP status: true served, false capped, null inconclusive.
+ * @param {number} status
+ */
+export function probeVerdict(status) {
+  if (status === 206 || status === 200) return true;
+  if (status === 403) return false;
+  return null;
+}
+
 // Path prefixes under which YouTube puts the video ID as the next segment.
 // /live/ is what "Share" gives for a stream and what every failing request in
 // kuhao's log used; /embed/ and /v/ are the older embed and short-link shapes.
