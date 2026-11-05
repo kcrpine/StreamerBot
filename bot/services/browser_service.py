@@ -137,13 +137,19 @@ class BrowserService(Service):
 
     def _track(self, item: Dict[str, Any]) -> Track:
         kind = item.get("kind", "title")
+        extra = {"id": item.get("id", ""), "kind": kind}
+        # Kept for dla, which finds an artist through a song or album when the
+        # search shows no Artist card (Apple Music only).
+        for key in ("artist", "artist_url"):
+            if item.get(key):
+                extra[key] = item[key]
         return Track(
             service=self.name,
             url=item.get("url", ""),
             name=item.get("title", ""),
             type=TrackType.External,
             engine="browser",
-            extra_info={"id": item.get("id", ""), "kind": kind},
+            extra_info=extra,
         )
 
     def order_results(self, results: List[Dict[str, Any]]) -> List[Dict[str, Any]]:

@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import logging
 import os
+import re
 import shutil
 import tempfile
 import threading
@@ -45,6 +46,58 @@ if TYPE_CHECKING:
     from bot.TeamTalk.structs import User
 
 logger = logging.getLogger(__name__)
+
+
+def _norm(text: str) -> str:
+    """Letters and digits only, case folded: "Celtic  thunder!" == "celticthunder"."""
+    return "".join(ch for ch in (text or "").casefold() if ch.isalnum())
+
+
+def _slug_name(url: str) -> str:
+    """The readable name in an artist link: .../artist/celtic-thunder/123 -> "celtic thunder"."""
+    parts = url.rstrip("/").split("/")
+    return unquote(parts[-2]).replace("-", " ").strip() if len(parts) >= 2 else ""
+
+
+_ARTIST_SEPARATORS = re.compile(r"\s*(?:&|,|\bfeat\.?|\bft\.?|\bwith\b|\bx\b)\s*", re.IGNORECASE)
+_BY = re.compile(r"\bby\s+(.+)$", re.IGNORECASE)
+
+
+def artist_from_results(query: str, tracks) -> Optional[Tuple[str, str]]:
+    """(artist link, artist name) taken from the songs and albums in a search.
+
+    Prefers a result whose artist is the one asked for, by the whole query or
+    by the part after "by"; otherwise the first result that links an artist.
+    The name comes from the result rather than the link where it can, so it is
+    spoken as Apple writes it ("AC/DC", not "Ac Dc").
+    """
+    candidates = []
+    for track in tracks or []:
+        extra = getattr(track, "extra_info", None) or {}
+        url = artist_url(extra.get("artist_url", "") or "")
+        if not url:
+            continue
+        slug = _slug_name(url)
+        parts = [p for p in _ARTIST_SEPARATORS.split(extra.get("artist", "") or "") if p.strip()]
+        name = next((p for p in parts if _norm(p) == _norm(slug)), None)
+        if name is None:
+            name = parts[0] if len(parts) == 1 else slug.title()
+        candidates.append((url, name.strip(), _norm(slug)))
+    if not candidates:
+        return None
+
+    wanted = [_norm(query)]
+    by = _BY.search(query or "")
+    if by:
+        wanted.append(_norm(by.group(1)))
+    for target in wanted:
+        if not target:
+            continue
+        for url, name, slug in candidates:
+            if target in (_norm(name), slug):
+                return url, name
+    url, name, _ = candidates[0]
+    return url, name
 
 
 class AppleMusicDownloader:
@@ -204,6 +257,14 @@ class AppleMusicDownloader:
         A name is searched on Apple Music and the first artist result is taken:
         Apple ranks its own results, and the name goes into dla's question, so a
         wrong match is heard and cancelled before anything downloads.
+
+        Apple shows an Artist card for only some searches: "Celtic Thunder" and
+        "Elvis Presley" both came back as songs and albums alone, so dla said
+        no artist was found while `p` played them. The songs and albums still
+        link their artist, so with no Artist card the artist of a result is
+        used instead: one whose name matches what was asked first (including
+        the part after "by" in "My Gift by Carrie Underwood"), then the top
+        result's own artist.
         """
         query = (query or "").strip()
         link = artist_url(query)
@@ -237,6 +298,18 @@ class AppleMusicDownloader:
             url = artist_url(getattr(track, "url", "") or "")
             if kind == "artist" and url:
                 return url, (track.name or "").strip() or query
+
+        found = artist_from_results(query, tracks)
+        if found:
+            logger.info(
+                f"[am download] dla {query!r}: no Artist card, so using the artist "
+                f"of a song or album: {found[1]!r}"
+            )
+            return found
+        logger.warning(
+            f"[am download] dla {query!r}: no artist in {len(tracks)} search results "
+            f"(kinds: {', '.join(sorted({str((getattr(t, 'extra_info', None) or {}).get('kind')) for t in tracks})) or 'none'})"
+        )
         raise errors.ServiceError(
             self.translator.translate("Apple Music found no artist called {name}.").format(
                 name=query

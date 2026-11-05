@@ -177,6 +177,71 @@ class FindArtistTests(TestCase):
 
         self.assertEqual(downloader.find_artist("coldplay"), (ARTIST, "Coldplay"))
 
+    @staticmethod
+    def linked(kind, url, name, artist, link):
+        """A song or album that links its artist, as the search scrape now records."""
+        return SimpleNamespace(url=url, name=name, extra_info={
+            "kind": kind, "artist": artist, "artist_url": link})
+
+    def test_with_no_artist_card_the_artist_of_a_matching_song_is_used(self):
+        # "Celtic Thunder" on danielBot: songs and albums, no Artist card.
+        thunder = "https://music.apple.com/us/artist/celtic-thunder/273455476"
+        downloader = self.make([
+            self.linked("album", "https://music.apple.com/us/album/x/1", "Christmas",
+                        "Celtic Woman", "https://music.apple.com/us/artist/celtic-woman/1"),
+            self.linked("track", "https://music.apple.com/us/album/y/2?i=3", "Song: Ireland's Call",
+                        "Celtic Thunder", thunder + "?l=en"),
+        ])
+
+        self.assertEqual(downloader.find_artist("celtic thunder"), (thunder, "Celtic Thunder"))
+
+    def test_the_part_after_by_names_the_artist(self):
+        carrie = "https://music.apple.com/us/artist/carrie-underwood/63399334"
+        downloader = self.make([
+            self.linked("album", "https://music.apple.com/us/album/my-gift/1", "Album: My Gift",
+                        "Carrie Underwood", carrie),
+        ])
+
+        self.assertEqual(downloader.find_artist("my Gift by carrie Underwood"),
+                         (carrie, "Carrie Underwood"))
+
+    def test_a_shared_credit_speaks_only_the_linked_artist(self):
+        carrie = "https://music.apple.com/us/artist/carrie-underwood/63399334"
+        downloader = self.make([
+            self.linked("track", "https://music.apple.com/us/album/h/1?i=2", "Song: Hallelujah",
+                        "Carrie Underwood & John Legend", carrie),
+        ])
+
+        self.assertEqual(downloader.find_artist("hallelujah"), (carrie, "Carrie Underwood"))
+
+    def test_with_no_match_the_top_results_artist_is_offered(self):
+        elvis = "https://music.apple.com/us/artist/elvis-presley/197443"
+        downloader = self.make([
+            self.linked("track", "https://music.apple.com/us/album/b/1?i=2", "Song: Blue Christmas",
+                        "Elvis Presley", elvis),
+            self.linked("album", "https://music.apple.com/us/album/c/1", "Album: Other",
+                        "Someone Else", "https://music.apple.com/us/artist/someone-else/5"),
+        ])
+
+        self.assertEqual(downloader.find_artist("blue christmas"), (elvis, "Elvis Presley"))
+
+    def test_an_artist_card_still_wins_over_a_linked_song(self):
+        downloader = self.make([
+            self.linked("track", "https://music.apple.com/us/album/a/1?i=2", "Song: Yellow",
+                        "Other", "https://music.apple.com/us/artist/other/9"),
+            self.result("artist", ARTIST, "Coldplay"),
+        ])
+
+        self.assertEqual(downloader.find_artist("coldplay"), (ARTIST, "Coldplay"))
+
+    def test_results_with_no_artist_links_still_say_none_was_found(self):
+        downloader = self.make([
+            self.result("track", "https://music.apple.com/us/album/a/1?i=2", "Song: Yellow"),
+        ])
+
+        with self.assertRaises(errors.ServiceError):
+            downloader.find_artist("yellow")
+
     def test_a_link_is_used_as_given_without_searching(self):
         downloader = self.make(None)
 
