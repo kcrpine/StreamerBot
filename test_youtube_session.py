@@ -614,3 +614,119 @@ class CommandHelperTests(TestCase):
 
         with self.assertRaises(errors.ServiceError):
             command.youtube_hold_or_run("song", SimpleNamespace(), unavailable)
+
+
+class _FakeElement:
+    def __init__(self, text="", visible=True):
+        self.text, self.visible = text, visible
+
+    def is_visible(self):
+        return self.visible
+
+    def inner_text(self):
+        return self.text
+
+    def fill(self, value):
+        self.filled = value
+
+    def click(self):
+        pass
+
+    def press(self, key):
+        pass
+
+
+class _FakeLocator:
+    def __init__(self, elements):
+        self.elements = elements
+
+    def count(self):
+        return len(self.elements)
+
+    def nth(self, index):
+        return self.elements[index]
+
+    @property
+    def first(self):
+        return self.elements[0]
+
+
+class _FakeSignInPage:
+    """Just enough of a Playwright page to stand in for one Google sign-in step."""
+
+    def __init__(self, url="https://accounts.google.com/v3/signin/identifier", elements=None, body=""):
+        self.url, self.elements, self.body = url, dict(elements or {}), body
+
+    def locator(self, selector):
+        return _FakeLocator(self.elements.get(selector, []))
+
+    def inner_text(self, selector):
+        return self.body
+
+    def goto(self, *args, **kwargs):
+        pass
+
+    def wait_for_timeout(self, ms):
+        pass
+
+
+class GoogleSignInPageTests(TestCase):
+    """Google announces each step's heading in an assertive live region, for
+    screen readers. ash-kuhao's sign-in on 2026-11-22 failed with "Google did
+    not accept that email address: Welcome" because that announcement on the
+    password page was read as an error."""
+
+    def password_page(self):
+        return _FakeSignInPage(
+            url="https://accounts.google.com/v3/signin/challenge/pwd",
+            elements={
+                "h1": [_FakeElement("Welcome")],
+                '[aria-live="assertive"]': [_FakeElement("Welcome")],
+                'input[name="Passwd"]': [_FakeElement()],
+            },
+        )
+
+    def test_the_heading_announcement_is_not_an_error(self):
+        self.assertEqual(YouTubeAdapter()._error_text(self.password_page()), "")
+
+    def test_an_announcement_that_adds_to_the_heading_is_not_an_error_either(self):
+        page = self.password_page()
+        page.elements['[aria-live="assertive"]'] = [_FakeElement("Welcome\n  bot@example.com")]
+        self.assertEqual(YouTubeAdapter()._error_text(page), "")
+
+    def test_a_real_error_is_still_read(self):
+        page = _FakeSignInPage(elements={
+            "h1": [_FakeElement("Sign in")],
+            '[aria-live="assertive"]': [_FakeElement("Couldn't find your Google Account")],
+        })
+        self.assertEqual(YouTubeAdapter()._error_text(page), "Couldn't find your Google Account")
+
+    def test_without_a_heading_live_text_is_still_an_error(self):
+        page = _FakeSignInPage(elements={'[aria-live="assertive"]': [_FakeElement("Enter a valid email")]})
+        self.assertEqual(YouTubeAdapter()._error_text(page), "Enter a valid email")
+
+    def test_the_welcome_page_goes_on_to_the_password(self):
+        page = self.password_page()
+        page.elements['input#identifierId'] = [_FakeElement()]
+        adapter = YouTubeAdapter()
+        adapter._after_password = Mock()
+        job = Mock()
+
+        adapter.login(page, "bot@example.com", "secret", job)
+
+        job.fail.assert_not_called()
+        self.assertEqual(page.elements['input[name="Passwd"]'][0].filled, "secret")
+        adapter._after_password.assert_called_once()
+
+    def test_a_visible_password_box_wins_over_any_live_text(self):
+        page = self.password_page()
+        page.elements["h1"] = [_FakeElement("Hi there")]
+        page.elements['input#identifierId'] = [_FakeElement()]
+        adapter = YouTubeAdapter()
+        adapter._after_password = Mock()
+        job = Mock()
+
+        adapter.login(page, "bot@example.com", "secret", job)
+
+        job.fail.assert_not_called()
+        adapter._after_password.assert_called_once()

@@ -205,7 +205,31 @@ class YouTubeAdapter(WebServiceAdapter):
         except Exception:
             return ""
 
+    def _heading(self, page) -> str:
+        for selector in ("h1", "#headingText"):
+            try:
+                loc = page.locator(selector)
+                if loc.count() and loc.first.is_visible():
+                    return (loc.first.inner_text() or "").strip()
+            except Exception:
+                continue
+        return ""
+
+    @staticmethod
+    def _announces_heading(text: str, heading: str) -> bool:
+        """True when a live region is only saying which page this is.
+
+        Google's sign-in page announces each new step's heading through an
+        assertive live region, for screen readers. On the password page that
+        is "Welcome", and reading it as an error failed every sign-in with
+        "Google did not accept that email address: Welcome".
+        """
+        norm = lambda s: " ".join((s or "").split()).casefold()
+        heading = norm(heading)
+        return bool(heading) and norm(text).startswith(heading)
+
     def _error_text(self, page) -> str:
+        heading = None
         for selector in self.ERROR_SELECTORS:
             try:
                 loc = page.locator(selector)
@@ -213,8 +237,13 @@ class YouTubeAdapter(WebServiceAdapter):
                     candidate = loc.nth(index)
                     if candidate.is_visible():
                         text = (candidate.inner_text() or "").strip()
-                        if text:
-                            return text[:200]
+                        if not text:
+                            continue
+                        if heading is None:
+                            heading = self._heading(page)
+                        if self._announces_heading(text, heading):
+                            continue
+                        return text[:200]
             except Exception:
                 continue
         return ""
@@ -258,15 +287,7 @@ class YouTubeAdapter(WebServiceAdapter):
     }"""
 
     def _approval_prompt(self, page) -> Dict[str, str]:
-        heading = ""
-        for selector in ("h1", "#headingText"):
-            try:
-                loc = page.locator(selector)
-                if loc.count() and loc.first.is_visible():
-                    heading = (loc.first.inner_text() or "").strip()
-                    break
-            except Exception:
-                continue
+        heading = self._heading(page)
         instruction = ""
         try:
             loc = page.locator("main p, #initialView p, form p")
@@ -316,13 +337,15 @@ class YouTubeAdapter(WebServiceAdapter):
         while time.monotonic() < deadline:
             if self._refused(page, job):
                 return
+            # The password box first: once it is showing, Google accepted the
+            # address, whatever else the page is saying.
+            password_box = self._visible(page, self.PASSWORD_SELECTORS, 500)
+            if password_box is not None:
+                break
             error = self._error_text(page)
             if error:
                 job.fail(f"Google did not accept that email address: {error}")
                 return
-            password_box = self._visible(page, self.PASSWORD_SELECTORS, 500)
-            if password_box is not None:
-                break
         if password_box is None:
             logger.warning(f"[youtube] Google did not ask for a password; at {self._where(page)}")
             job.fail(

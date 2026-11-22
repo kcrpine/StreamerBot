@@ -7,6 +7,8 @@ issue or a commit message. Numbering continues across releases. A major version
 
 ## Unreleased
 
+- **[097]** YouTube sign-in no longer fails at Google's password page with "Google did not accept that email address: Welcome". Google's sign-in page tells screen readers the heading of each new step through an assertive live region, which the bot also watched for error messages. So when the password page appeared, its "Welcome" announcement was read as Google rejecting the address, and every sign-in stopped there. Live-region text that only repeats the page's heading is now ignored, and the bot looks for the password box before it looks for errors, so a page that has clearly moved on cannot be mistaken for a refusal. Real errors such as "Couldn't find your Google Account" are still reported. Found on ash-kuhao on 2026-11-22.
+
 ## StreamerBot 2.4.1 (2026-11-05)
 
 - **[096]** Apple Music playback events are now logged. In an album or playlist, Apple's own player moves to the next song by itself, so a song cut off a minute in (danielBot, November 2026) left nothing in the bot's log. The player page now records song changes, state changes, playback errors and stalls. The browser thread reads that record every 5 seconds while it is otherwise idle, because Playwright only delivers page events during a call. Each song change says how far the previous song got and how long it was, and a song left more than 5 seconds before its end is logged as a warning, so a cut-off song can be told from one that finished. This adds logging only: the cause of the skipping is not known yet, and the fix waits on what these lines show.
