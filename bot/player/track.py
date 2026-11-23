@@ -9,6 +9,16 @@ from typing import Any, Dict, Optional, TYPE_CHECKING
 from bot.player.enums import TrackType
 from bot import utils
 
+# Services whose stream addresses belong to the bot's YouTube sign-in.
+YOUTUBE_SERVICES = ("yt", "ytm")
+
+
+def session_generation() -> int:
+    # Imported here: bot.services imports this module while it initialises.
+    from bot.services.youtube_session import session_generation as current
+
+    return current()
+
 if TYPE_CHECKING:
     from bot.services import Service
 
@@ -57,6 +67,9 @@ class Track:
             return
         self._original_track = copy.deepcopy(self)
         service: Service = get_service_by_name(self.service)
+        # Taken before resolving, so a sign-in that changes mid-resolution
+        # counts as newer than this address.
+        generation = session_generation()
         try:
             track = service.get(self._url, extra_info=self.extra_info, process=True)[0]
         except Exception as e:
@@ -70,6 +83,19 @@ class Track:
         self.type = track.type
         self.extra_info = track.extra_info
         self._is_fetched = True
+        if self.service in YOUTUBE_SERVICES:
+            self._session_generation = generation
+
+    def resolved_under_older_sign_in(self) -> bool:
+        """Whether this address was resolved before the bot's YouTube sign-in last changed.
+
+        Such an address is not worth playing: one resolved while signed out
+        stops after about a minute however long the video is, and stays that way
+        after the user signs in. False for anything not resolved from YouTube
+        here, including tracks unpickled from a cache older than this field.
+        """
+        generation = getattr(self, "_session_generation", None)
+        return generation is not None and generation != session_generation()
 
     def refresh_stream(self) -> str:
         """Re-resolve an expired stream URL and return the fresh one.
@@ -107,6 +133,22 @@ class Track:
 
     @property
     def url(self) -> str:
+        if self._is_fetched and self.resolved_under_older_sign_in() and hasattr(self, "_original_track"):
+            # Signed in, signed out or signed in again since this was resolved.
+            # Resolving again is one bridge request; playing the old address
+            # can mean a minute of audio and a skip.
+            logging.info(
+                "[PlaybackTiming] track_url_stale_sign_in "
+                f"track_id={id(self)} service={self.service} track={self._name!r} "
+                "-- resolving again under the current YouTube sign-in"
+            )
+            try:
+                return self.refresh_stream()
+            except Exception as error:
+                logging.warning(f"Re-resolving '{self._name}' under the new sign-in failed: {error}")
+                # Not again on every read of .url: the next play gets a fresh try.
+                self._session_generation = session_generation()
+                return self._url
         if self.type != TrackType.Dynamic or self._is_fetched or self._fetch_failed:
             return self._url
         with self._lock:
@@ -156,7 +198,8 @@ class Track:
             return self
 
     def __bool__(self):
-        if self.service or self.url:
+        # _url, not url: truthiness must never resolve anything.
+        if self.service or self._url:
             return True
         else:
             return False

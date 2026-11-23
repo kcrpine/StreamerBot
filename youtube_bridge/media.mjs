@@ -275,6 +275,45 @@ export function probeVerdict(status) {
   return null;
 }
 
+/**
+ * What youtube.com itself says about a session, from one page request.
+ *
+ * The question is put to youtube.com/account with redirects off, because that
+ * is the page that answers it unambiguously. Measured 2026-11-23 against two
+ * stored sessions, scrambled copies of each and no cookies at all: a live
+ * session gets 200 with ytcfg's LOGGED_IN true and the account's DATASYNC_ID;
+ * an ended one, a forged one and none at all get a 303 to Google's
+ * ServiceLogin. The InnerTube API is no substitute: through youtubei.js every
+ * one of those reads loggedOut, the live session included, because youtubei.js
+ * signs a request only when the cookies hold a plain SAPISID.
+ *
+ * @param {{status: number, location?: string, body?: string}} response
+ * @returns {{state: 'signed_in'|'signed_out'|'unknown', datasyncId: string}}
+ */
+export function signedInVerdict({ status, location = '', body = '' }) {
+  if (status === 200) {
+    const loggedIn = /"LOGGED_IN"\s*:\s*(true|false)/.exec(body);
+    const datasync = /"DATASYNC_ID"\s*:\s*"([^"]*)"/.exec(body);
+    if (loggedIn?.[1] === 'true') return { state: 'signed_in', datasyncId: datasync?.[1] || '' };
+    if (loggedIn?.[1] === 'false') return { state: 'signed_out', datasyncId: '' };
+    return { state: 'unknown', datasyncId: '' };
+  }
+  if (status >= 300 && status < 400) {
+    let host = '';
+    let pathname = '';
+    try {
+      ({ host, pathname } = new URL(location, 'https://www.youtube.com/'));
+    } catch {}
+    if (host === 'accounts.google.com' && /^\/(ServiceLogin|v3\/signin|signin)/.test(pathname)) {
+      return { state: 'signed_out', datasyncId: '' };
+    }
+  }
+  // A consent page, a rate limit, an outage: none of these says anything about
+  // the session, and calling one "signed out" would tell a user to sign in
+  // again for nothing.
+  return { state: 'unknown', datasyncId: '' };
+}
+
 // Path prefixes under which YouTube puts the video ID as the next segment.
 // /live/ is what "Share" gives for a stream and what every failing request in
 // kuhao's log used; /embed/ and /v/ are the older embed and short-link shapes.

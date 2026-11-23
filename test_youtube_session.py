@@ -165,7 +165,12 @@ class FakeClock:
         return self.now
 
 
-def make_keeper(engine=None, hours=6, browser_sign_in=True, clock=None):
+def youtube_says(state="signed_in", **extra):
+    """A stand-in for asking youtube.com through the bridge."""
+    return Mock(return_value={"state": state, "signed_in": state == "signed_in", **extra})
+
+
+def make_keeper(engine=None, hours=6, browser_sign_in=True, clock=None, checker=None):
     config = SimpleNamespace(browser_sign_in=browser_sign_in, session_refresh_hours=hours)
     bot = SimpleNamespace(
         config=SimpleNamespace(services=SimpleNamespace(yt=config)),
@@ -173,7 +178,8 @@ def make_keeper(engine=None, hours=6, browser_sign_in=True, clock=None):
     )
     store = YouTubeSessionStore(os.path.join(tempfile.mkdtemp(), "youtube_auth"))
     return YouTubeSessionKeeper(bot, store=store, engine_getter=lambda: engine,
-                                clock=clock or FakeClock())
+                                clock=clock or FakeClock(),
+                                checker=checker or youtube_says("signed_in"))
 
 
 def signed_in_engine(cookies=None, datasync="account||"):

@@ -177,6 +177,35 @@ class TruncatedStreamEndFileTests(TestCase):
         self.assertIn("played=52.0s", message)
         self.assertIn("track_abandoned", message)
 
+    def test_a_minute_in_on_an_address_from_before_the_sign_in_changed_is_refreshed(self):
+        # captianbubblebot, 2026-11-23: an 84-minute video resolved while the
+        # bot was signed out stopped at 69.5s, and went on stopping there after
+        # the session was imported, because the address was the old one. A
+        # fresh address is exactly what fixes that case, so it is worth the
+        # minute that the usual rule above refuses to spend.
+        player = self._player(played=69.5, duration=5046.6)
+        player.track.resolved_under_older_sign_in = Mock(return_value=True)
+
+        with self.assertLogs("root", level="WARNING") as logged:
+            with patch("bot.player.time.sleep"):
+                player.on_end_file(self._eof())
+
+        player.track.refresh_stream.assert_called_once_with()
+        player._play.assert_called_once_with("https://fresh.test/audio", save_to_recents=False)
+        player._advance_after_end.assert_not_called()
+        self.assertIn("resolved_before_sign_in_changed=True", "\n".join(logged.output))
+
+    def test_a_minute_in_on_an_address_from_the_current_sign_in_is_still_abandoned(self):
+        player = self._player(played=69.5, duration=5046.6)
+        player.track.resolved_under_older_sign_in = Mock(return_value=False)
+
+        with self.assertLogs("root", level="WARNING"):
+            with patch("bot.player.time.sleep"):
+                player.on_end_file(self._eof())
+
+        player.track.refresh_stream.assert_not_called()
+        player._advance_after_end.assert_called_once_with()
+
     def test_eof_at_the_end_of_the_track_advances_as_before(self):
         player = self._player(played=1770.0, duration=1771.0)
 

@@ -62,17 +62,10 @@ class YtService(_Service):
     def initialize(self):
         self._bridge = YouTubeBridge(client="YTMUSIC")
 
-        # Sign-in is optional where YouTube trusts the host's address: anonymous
-        # search and playback work there. From a datacenter address YouTube
-        # refuses anonymous playback, and a browser session is what plays.
-        if self._bridge.is_signed_in():
-            logging.info("YT Service: signed in to YouTube with a browser session.")
-        else:
-            logging.info(
-                "YT Service: not signed in to YouTube. Public videos play where "
-                "YouTube trusts this server's address; on most VPS hosts they will "
-                "not. Send li yt to connect an account."
-            )
+        # Whether the bot is signed in is not decided here. This used to say
+        # "signed in" whenever a cookie file existed, which it went on saying
+        # for days after Google ended a session; the session keeper now asks
+        # YouTube shortly after start-up and logs what it says.
 
         # Run pre-warming in a background thread so the bot connects to TeamTalk immediately
         threading.Thread(target=self._pre_warm, daemon=True, name="YT_PreWarm").start()

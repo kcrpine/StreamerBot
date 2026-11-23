@@ -31,7 +31,12 @@ from enum import Enum
 from typing import TYPE_CHECKING, Any, Callable, Dict, Optional, Tuple
 
 from bot.auth.cookies import CookieFileError, has_google_session, parse_netscape
-from bot.services.youtube_session import SOURCE_BROWSER, SOURCE_IMPORT, YouTubeSessionStore
+from bot.services.youtube_session import (
+    SOURCE_BROWSER,
+    SOURCE_IMPORT,
+    YouTubeSessionStore,
+    session_generation,
+)
 
 if TYPE_CHECKING:
     from bot import Bot
@@ -72,6 +77,19 @@ class RefreshResult(Enum):
     Ended = "ended"            # YouTube says signed out: someone must sign in again
     NoSession = "no_session"   # nothing to refresh
     Unavailable = "unavailable"  # no browser here, or it failed; state unknown
+
+
+class SessionCheck(Enum):
+    """What youtube.com said when asked about the stored session."""
+    SignedIn = "signed_in"
+    Ended = "ended"            # YouTube sends these cookies to Google sign-in
+    NoSession = "no_session"
+    Unknown = "unknown"        # YouTube could not be asked, or did not say
+
+
+# How long one answer from youtube.com stands for. `li` and every portal page
+# ask, and a session does not usually end between two of them.
+VERIFY_MAX_AGE_SECONDS = 300
 
 
 class ImportProblem(Enum):
@@ -165,6 +183,7 @@ class YouTubeSessionKeeper:
         store: Optional[YouTubeSessionStore] = None,
         engine_getter: Optional[Callable[[], Any]] = None,
         clock: Callable[[], float] = time.time,
+        checker: Optional[Callable[[], Dict[str, Any]]] = None,
     ) -> None:
         self.bot = bot
         self.config = bot.config.services.yt
@@ -180,6 +199,11 @@ class YouTubeSessionKeeper:
         self._last_on_demand = 0.0
         self._thread: Optional[threading.Thread] = None
         self._closing = threading.Event()
+        # Asks youtube.com, through the bridge, whether the stored cookies are
+        # signed in. Injected by tests; the bridge otherwise.
+        self._checker = checker
+        self._last_check: Optional[Tuple[float, int, SessionCheck]] = None
+        self._check_lock = threading.Lock()
 
     # -- what is here ------------------------------------------------------
 
@@ -200,7 +224,103 @@ class YouTubeSessionKeeper:
         return hours * 3600
 
     def status(self) -> str:
-        return self.store.status()
+        """connected, expired or disconnected, as YouTube sees it.
+
+        The files only say what was true when they were written: a session Google
+        has ended leaves them exactly as they were. So a session the files call
+        connected is put to youtube.com (at most every few minutes) before it is
+        reported as connected.
+        """
+        stored = self.store.status()
+        if stored != "connected":
+            return stored
+        result = self.verify("status")
+        if result is SessionCheck.Ended:
+            return "expired"
+        if result is SessionCheck.NoSession:
+            return "disconnected"
+        # Unknown: YouTube could not be asked, which says nothing either way, so
+        # the last thing known stands.
+        return "connected"
+
+    def _ask_youtube(self) -> Dict[str, Any]:
+        if self._checker is not None:
+            return self._checker()
+        from bot.services.youtube_bridge import YouTubeBridge
+
+        return YouTubeBridge(client="YTMUSIC").auth_status()
+
+    def verify(self, reason: str, max_age: float = VERIFY_MAX_AGE_SECONDS) -> SessionCheck:
+        """Ask youtube.com whether the stored session is signed in, and act on it.
+
+        A session YouTube sends to Google's sign-in page is marked ended at once:
+        that is the same answer the keep-alive gets from Chrome, so there is no
+        point carrying on as if connected. With Chrome here, a refresh is then
+        started in the background, in case the profile holds a newer session than
+        the file did; it stores it and clears the mark if so.
+        """
+        if not self.store.has_session():
+            return SessionCheck.NoSession
+        if self.store.needs_sign_in():
+            return SessionCheck.Ended
+        generation = session_generation()
+        with self._check_lock:
+            last = self._last_check
+            if last and last[1] == generation and self._clock() - last[0] < max_age:
+                return last[2]
+            try:
+                answer = self._ask_youtube() or {}
+            except Exception as error:  # noqa: BLE001 - an unreachable bridge is "unknown"
+                logger.warning(f"[youtube session] could not ask YouTube whether this bot is signed in ({reason}): {error}")
+                return SessionCheck.Unknown
+            state = answer.get("state")
+            if state == "signed_in":
+                result = SessionCheck.SignedIn
+            elif state == "signed_out":
+                result = SessionCheck.Ended
+            else:
+                # no_session here means the bridge found the file unreadable or
+                # empty while this process can see one: not a verdict on the
+                # session either.
+                result = SessionCheck.Unknown
+            if answer.get("datasync_matches") is False:
+                logger.warning(
+                    "[youtube session] YouTube reports a different DataSync ID from the one "
+                    "stored with these cookies; playback tokens may be ignored until the "
+                    "next refresh stores the right one"
+                )
+            if result is SessionCheck.Unknown:
+                logger.info(
+                    f"[youtube session] YouTube did not say whether this bot is signed in "
+                    f"({reason}): {answer.get('reason') or state or 'no answer'}"
+                )
+                return result
+            self._last_check = (self._clock(), generation, result)
+
+        if result is SessionCheck.SignedIn:
+            if reason != "status":
+                logger.info(f"[youtube session] {self._bot_name()}: YouTube confirms this bot is signed in ({reason})")
+            return result
+
+        self.store.mark_needs_sign_in()
+        logger.warning(
+            f"[youtube session] {self._bot_name()}: YouTube says the stored session has "
+            f"ended ({reason}). Someone must sign in again with li yt."
+        )
+        if self.browser_available and not self.is_refreshing:
+            threading.Thread(
+                target=self._refresh_quietly,
+                args=("youtube.com said the session had ended",),
+                name="YouTubeSessionRecheck",
+                daemon=True,
+            ).start()
+        return result
+
+    def _refresh_quietly(self, reason: str) -> None:
+        try:
+            self.refresh(reason)
+        except Exception as error:  # noqa: BLE001 - background, logged
+            logger.error(f"[youtube session] refresh failed ({reason}): {error}", exc_info=True)
 
     @property
     def is_refreshing(self) -> bool:
@@ -232,8 +352,18 @@ class YouTubeSessionKeeper:
         return self._clock() - checked_at >= interval
 
     def _run(self) -> None:
+        # The start-up line about YouTube used to say "signed in" whenever a
+        # cookie file existed, including for a session Google had ended days
+        # earlier. This asks YouTube instead. It is one page request, so it runs
+        # straight away; it is on this thread so it never delays TeamTalk.
+        if self._closing.wait(5):
+            return
+        try:
+            self.log_start_up_state()
+        except Exception as error:  # noqa: BLE001 - the keeper must not die
+            logger.error(f"[youtube session] start-up check failed: {error}", exc_info=True)
         # Let the bot reach TeamTalk and the browser finish starting first.
-        if self._closing.wait(120):
+        if self._closing.wait(115):
             return
         # A restored bot folder may carry a session waiting to be imported. Done
         # here rather than at start-up for the same reason as everything else in
@@ -251,6 +381,29 @@ class YouTubeSessionKeeper:
                 logger.error(f"[youtube session] scheduled refresh failed: {error}", exc_info=True)
             if self._closing.wait(60):
                 return
+
+    def log_start_up_state(self) -> SessionCheck:
+        ended_before = self.store.needs_sign_in()
+        result = self.verify("start-up")
+        if result is SessionCheck.NoSession:
+            logger.info(
+                "[youtube session] not signed in to YouTube. Public videos play where "
+                "YouTube trusts this server's address; on most VPS hosts they will "
+                "not. Send li yt to connect an account."
+            )
+        elif result is SessionCheck.Ended and ended_before:
+            # verify() has already said so if it found out just now; this is for
+            # a session marked ended before the restart.
+            logger.warning(
+                f"[youtube session] {self._bot_name()}: the YouTube session has ended. "
+                "Someone must sign in again with li yt."
+            )
+        elif result is SessionCheck.Unknown:
+            logger.info(
+                "[youtube session] a YouTube session is stored, but YouTube could not be "
+                "asked whether it is still signed in; the next check will try again"
+            )
+        return result
 
     # -- refreshing --------------------------------------------------------
 
@@ -349,7 +502,7 @@ class YouTubeSessionKeeper:
             ))
             return
         try:
-            self.store.save(exported["cookies"], exported.get("datasync_id", ""), SOURCE_BROWSER)
+            self.store.save(exported["cookies"], exported.get("datasync_id", ""), SOURCE_BROWSER, new_sign_in=True)
         except ValueError:
             job.fail(self.bot.translator.translate(
                 "Google signed in, but YouTube did not recognise the session. Please try again."
@@ -447,7 +600,7 @@ class YouTubeSessionKeeper:
 
         engine = self.engine
         if engine is None:
-            self.store.save(cookies, "", SOURCE_IMPORT)
+            self.store.save(cookies, "", SOURCE_IMPORT, new_sign_in=True)
             logger.info(f"[youtube session] {self._bot_name()} imported a session (no browser to check it with)")
             return True, None
 
@@ -463,14 +616,14 @@ class YouTubeSessionKeeper:
 
         if exported is None:
             # The browser failed, not the session. Store it; the keep-alive checks later.
-            self.store.save(cookies, "", SOURCE_IMPORT)
+            self.store.save(cookies, "", SOURCE_IMPORT, new_sign_in=True)
             return True, None
         if not exported.get("logged_in"):
             return False, ImportProblem.SessionEnded
         try:
-            self.store.save(exported["cookies"], exported.get("datasync_id", ""), SOURCE_IMPORT)
+            self.store.save(exported["cookies"], exported.get("datasync_id", ""), SOURCE_IMPORT, new_sign_in=True)
         except ValueError:
-            self.store.save(cookies, exported.get("datasync_id", ""), SOURCE_IMPORT)
+            self.store.save(cookies, exported.get("datasync_id", ""), SOURCE_IMPORT, new_sign_in=True)
         logger.info(f"[youtube session] {self._bot_name()} imported a session and YouTube confirmed it")
         return True, None
 
@@ -537,6 +690,8 @@ __all__ = [
     "PENDING_IMPORT_NAME",
     "REJECTED_IMPORT_NAME",
     "RefreshResult",
+    "SessionCheck",
+    "VERIFY_MAX_AGE_SECONDS",
     "DownloadSignIn",
     "SignInLost",
     "YouTubeSessionKeeper",

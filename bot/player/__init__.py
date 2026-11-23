@@ -887,11 +887,23 @@ class Player:
         retryable_short = False
         if short is not None:
             played, duration = short
-            retryable_short = played <= SHORT_EOF_RETRY_MAX_PLAYED_SECONDS
+            # Past the first few seconds a fresh address normally fails the same
+            # way (see SHORT_EOF_RETRY_MAX_PLAYED_SECONDS), with one exception:
+            # an address resolved before the YouTube sign-in changed. Resolved
+            # while signed out, it stops at about a minute; resolved again now,
+            # it plays.
+            is_stale = getattr(self.track, "resolved_under_older_sign_in", None)
+            stale_sign_in = (
+                self.track.service in ("yt", "ytm")
+                and callable(is_stale)
+                and is_stale() is True
+            )
+            retryable_short = played <= SHORT_EOF_RETRY_MAX_PLAYED_SECONDS or stale_sign_in
             logging.warning(
                 "[PlaybackTiming] end_file_short_of_duration "
                 f"track={self.track.name!r} played={played:.1f}s "
                 f"duration={duration:.1f}s retrying={retryable_short} "
+                f"resolved_before_sign_in_changed={stale_sign_in} "
                 "-- a failed stream, not a finished track"
             )
         if (

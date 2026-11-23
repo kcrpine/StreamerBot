@@ -11,6 +11,7 @@ import requests
 
 from bot import errors
 from bot.services.stream_proxy import is_live_url
+from bot.services.youtube_session import session_generation
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +25,12 @@ class YouTubeBridge:
         self.bot_id = os.getenv("TTBOT_INSTANCE", "")
         self.client = client
         self.timeout = (5, 30)
-        self._resolve_cache: dict[str, tuple[float, dict[str, Any]]] = {}
+        # video -> (expires at, session generation, resolved). The generation is
+        # part of the entry because an address belongs to the sign-in that
+        # resolved it: one resolved while signed out stops after about a minute
+        # however long it is kept, and once kept it was handed back for the
+        # rest of its hour after the user had signed in again.
+        self._resolve_cache: dict[str, tuple[float, int, dict[str, Any]]] = {}
         self._resolve_cache_lock = threading.Lock()
 
     def _post(self, endpoint: str, timeout: tuple[int, int] | None = None, **payload: Any) -> dict[str, Any]:
@@ -82,33 +88,40 @@ class YouTubeBridge:
     # stopped serving playback to it. The bot now signs in through its own
     # Chrome and writes the session under data/youtube_auth/ itself (see
     # bot/modules/youtube_session_keeper.py); the bridge only reads it, and this
-    # asks whether it found one.
+    # asks YouTube whether those cookies are still signed in.
 
-    def auth_status(self) -> dict[str, Any]:
-        return self._post("/auth/status", timeout=(5, 15))
+    def auth_status(self, fresh: bool = False) -> dict[str, Any]:
+        """youtube.com's answer for this bot's stored session.
+
+        `state` is signed_in, signed_out, no_session or unknown. The bridge
+        sends the stored cookies to youtube.com and reads its reply; a file
+        existing is not taken as an answer (see sessionStatus in server.mjs).
+        """
+        return self._post("/auth/status", timeout=(5, 20), **({"fresh": True} if fresh else {}))
 
     def is_signed_in(self) -> bool:
-        """Never raises: sign-in state is informational, not load-bearing."""
+        """Whether YouTube says so. Never raises: unknown counts as no."""
         try:
-            return bool(self.auth_status().get("signed_in"))
+            return self.auth_status().get("state") == "signed_in"
         except errors.ServiceError:
             return False
 
     def resolve(self, url: str = "", video_id: str = "") -> dict[str, Any]:
         cache_key = video_id or url
         now_ms = time.time() * 1000
+        generation = session_generation()
         if cache_key:
             with self._resolve_cache_lock:
                 cached = self._resolve_cache.get(cache_key)
-                if cached and cached[0] > now_ms:
-                    return cached[1]
+                if cached and cached[0] > now_ms and cached[1] == generation:
+                    return cached[2]
                 self._resolve_cache.pop(cache_key, None)
 
         resolved = self._post("/resolve", url=url or None, video_id=video_id or None)
         expires_at_ms = float(resolved.get("cache_expires_at_ms") or 0)
         if cache_key and expires_at_ms > now_ms:
             with self._resolve_cache_lock:
-                self._resolve_cache[cache_key] = (expires_at_ms, resolved)
+                self._resolve_cache[cache_key] = (expires_at_ms, generation, resolved)
         return resolved
 
     def invalidate(self, url: str = "", video_id: str = "") -> None:

@@ -26,6 +26,7 @@ import hashlib
 import json
 import logging
 import os
+import secrets
 import threading
 import time
 from typing import Any, Dict, List, Optional
@@ -40,6 +41,32 @@ COOKIE_DOMAINS = ("youtube.com", "google.com")
 
 SOURCE_BROWSER = "browser"
 SOURCE_IMPORT = "import"
+
+
+# Which sign-in the bot is on, as a number that changes whenever that does: a
+# new session imported or signed in through the browser, YouTube ending the
+# current one, or a sign-out. A stream address belongs to the session that
+# resolved it, and an address resolved while signed out stays capped at about a
+# minute however long it is kept, so anything holding one compares this number
+# rather than trusting the address. Routine cookie rotation leaves it alone:
+# that is the same sign-in, and its addresses are still good.
+#
+# Per process, which is per bot: each bot is its own container. It starts at a
+# random value rather than zero so that a track pickled by an earlier run, which
+# carries that run's number, cannot match this run's by coincidence.
+_generation = secrets.randbits(48)
+_generation_lock = threading.Lock()
+
+
+def session_generation() -> int:
+    with _generation_lock:
+        return _generation
+
+
+def _new_generation() -> None:
+    global _generation
+    with _generation_lock:
+        _generation += 1
 
 
 def fingerprint(cookies: List[Dict[str, Any]]) -> str:
@@ -96,11 +123,21 @@ class YouTubeSessionStore:
 
     # -- writing -----------------------------------------------------------
 
-    def save(self, cookies: List[Dict[str, Any]], datasync_id: str, source: str) -> bool:
+    def save(
+        self,
+        cookies: List[Dict[str, Any]],
+        datasync_id: str,
+        source: str,
+        new_sign_in: bool = False,
+    ) -> bool:
         """Store a live session. Returns whether anything the bridge reads changed.
 
         Refuses cookies that could not sign a request in, so a refresh that ran
         on a signed-out page can never overwrite a working file with a dead one.
+
+        `new_sign_in` is for an import or a browser sign-in: whatever was stored
+        before, the bot is now on a different sign-in from the one its cached
+        stream addresses were resolved under (see session_generation).
         """
         if not has_google_session(cookies):
             raise ValueError("these cookies carry no Google sign-in")
@@ -125,6 +162,8 @@ class YouTubeSessionStore:
             self._write(self.meta_path, json.dumps(meta))
             if changed:
                 self._write(self.cookies_path, to_netscape(cookies, COOKIE_DOMAINS))
+            if new_sign_in or not old or old.get("needs_sign_in"):
+                _new_generation()
             return bool(changed)
 
     def mark_needs_sign_in(self) -> None:
@@ -132,9 +171,12 @@ class YouTubeSessionStore:
             if not self.has_session():
                 return
             meta = self.meta()
+            already = bool(meta.get("needs_sign_in"))
             meta["needs_sign_in"] = True
             meta["checked_at"] = int(time.time())
             self._write(self.meta_path, json.dumps(meta))
+            if not already:
+                _new_generation()
 
     def mark_checked(self) -> None:
         with self._lock:
@@ -158,6 +200,7 @@ class YouTubeSessionStore:
                 os.remove(os.path.join(self.dir, "credentials.json"))
             except FileNotFoundError:
                 pass
+            _new_generation()
 
     def _ensure_dir(self) -> None:
         os.makedirs(self.dir, mode=0o700, exist_ok=True)

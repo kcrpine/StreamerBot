@@ -17,6 +17,7 @@ import {
   musicItemPayload,
   normalizeSearchKey,
   planPlaybackAttempts,
+  signedInVerdict,
   streamCacheTtlMs
 } from './media.mjs';
 
@@ -44,6 +45,17 @@ process.on('uncaughtException', (error) => {
 
 const SESSION_CACHE_MAX_ENTRIES = 64;
 const sessionCache = new Map();
+// What youtube.com last said about each bot's session, keyed by sessionKey so a
+// new cookie file is asked about afresh. Short, because the answer is what `li`
+// and the portal show, and long enough that several callers in a row (both
+// YouTube services at start-up, a portal page and its redirect) ask once.
+const SIGN_IN_CHECK_TTL_MS = 60_000;
+const SIGN_IN_CHECK_TIMEOUT_MS = 10_000;
+const signInChecks = new Map();
+// The check loads a desktop page; the iPhone agent playback uses is redirected
+// to m.youtube.com, which is a different page with a different ytcfg.
+const SIGN_IN_CHECK_USER_AGENT =
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36';
 let searchSessionPromise = null;
 const RESOLVE_CACHE_MAX_ENTRIES = 1024;
 const resolveCache = new ExpiringLruCache({ maxEntries: RESOLVE_CACHE_MAX_ENTRIES });
@@ -232,10 +244,73 @@ async function getSession(botId) {
   return contextPromise;
 }
 
+/**
+ * Whether YouTube itself considers this bot signed in.
+ *
+ * A cookie file existing says nothing: Google ends sessions on its own
+ * schedule and the file stays exactly as it was. So this asks youtube.com, with
+ * the same cookies playback sends, and reports its answer (see signedInVerdict).
+ * `state` is signed_in, signed_out, no_session, or unknown when YouTube could
+ * not be asked; only signed_in sets `signed_in`.
+ */
 async function sessionStatus(body) {
   const botId = requireBotId(body.bot_id);
   const browserSession = await readBrowserSession(botId);
-  return { status: browserSession ? 'authenticated' : 'signed_out', signed_in: Boolean(browserSession) };
+  if (!browserSession) {
+    return { state: 'no_session', signed_in: false, status: 'signed_out', datasync_matches: null };
+  }
+  const key = sessionKey(botId);
+  const cached = signInChecks.get(key);
+  if (!body.fresh && cached && Date.now() - cached.at < SIGN_IN_CHECK_TTL_MS) return cached.result;
+
+  let verdict;
+  let reason = '';
+  try {
+    const response = await fetch('https://www.youtube.com/account', {
+      headers: {
+        'User-Agent': SIGN_IN_CHECK_USER_AGENT,
+        'Accept-Language': 'en-US,en;q=0.9',
+        Cookie: browserSession.cookie
+      },
+      redirect: 'manual',
+      signal: AbortSignal.timeout(SIGN_IN_CHECK_TIMEOUT_MS)
+    });
+    const text = response.status === 200 ? await response.text() : '';
+    verdict = signedInVerdict({
+      status: response.status,
+      location: response.headers.get('location') || '',
+      body: text
+    });
+    if (verdict.state === 'unknown') reason = `youtube.com answered ${response.status}`;
+  } catch (error) {
+    verdict = { state: 'unknown', datasyncId: '' };
+    reason = error?.message || String(error);
+  }
+
+  // A proof-of-origin token bound to a different account's DataSync ID is
+  // ignored rather than refused, so a mismatch is worth knowing about.
+  const datasyncMatches = verdict.datasyncId && browserSession.datasyncId
+    ? verdict.datasyncId === browserSession.datasyncId
+    : null;
+  const result = {
+    state: verdict.state,
+    signed_in: verdict.state === 'signed_in',
+    status: verdict.state === 'signed_in' ? 'authenticated' : 'signed_out',
+    datasync_matches: datasyncMatches,
+    ...(reason ? { reason } : {})
+  };
+  console.log(
+    `[youtube-bridge] ${botId}: youtube.com says the stored session is ${verdict.state}` +
+    (reason ? ` (${reason})` : '') +
+    (datasyncMatches === false ? '; its DataSync ID differs from the stored one' : '')
+  );
+
+  for (const cachedKey of signInChecks.keys()) {
+    if (cachedKey.startsWith(`${botId}:`)) signInChecks.delete(cachedKey);
+  }
+  // An unknown answer is not kept: the next caller should get to ask again.
+  if (verdict.state !== 'unknown') signInChecks.set(key, { at: Date.now(), result });
+  return result;
 }
 
 async function getSearchSession() {
