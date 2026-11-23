@@ -167,6 +167,19 @@ silently ignored and looks exactly like not being signed in).
   `data/youtube_auth/cookies.txt` (0600) with `session.json` (DataSync ID), reloads youtube.com every
   `services.yt.session_refresh_hours` so Google keeps rotating it, and marks it ended when YouTube's
   own `ytcfg.LOGGED_IN` says so. Cookie expiry dates mean nothing; only that check does.
+- **"Is it signed in" is asked of youtube.com, never of the file system ([101]).** A cookie file
+  survives Google ending the session untouched, and treating "the file exists" as "signed in" left
+  captianbubblebot logging "signed in" days after it was not. The bridge's `/auth/status` sends the
+  stored cookies to `youtube.com/account` with redirects off (`signedInVerdict` in `media.mjs`): 200
+  with `LOGGED_IN` true is signed in, a redirect to Google's ServiceLogin is signed out, anything else
+  is *unknown* and must never be reported as signed out. `keeper.status()`, which `li` and the portal
+  read, asks it. Do not swap this for an InnerTube call through youtubei.js: youtubei.js signs a
+  request only when the cookies hold a plain `SAPISID`, which an imported file can lack, and then
+  every session, live or not, reads `loggedOut`.
+- **A stream address belongs to the sign-in that resolved it ([102]).** One resolved while signed
+  out is capped at ~1 MB however long it is kept. `session_generation()` changes on an import, a
+  browser sign-in, an ended session or a sign-out (not on routine rotation); anything caching a
+  resolved address keys it by that number.
 - The **bridge** only reads those files. Its session cache key includes the cookie file's mtime, so a
   rotation rebuilds that one bot's session and nothing restarts. **Write cookies.txt only when the
   cookies changed** (`fingerprint` ignores expiry) or every refresh throws away the warm session.
