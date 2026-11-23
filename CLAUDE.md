@@ -486,19 +486,24 @@ The order is always `testing` → `main` → `stable`:
 
 `testing` is a branch, not an update channel. No server follows it and `update_channel.sh` has no `testing` option, by the user's choice, so nothing installs from it by itself.
 
-**Never check `testing` out in the main clone on a host running the updater.** `update.sh` runs `git checkout -f -B <channel branch>`, `reset --hard` and `clean -fd` in that clone every five minutes (see "an unpushed commit lives about five minutes" below), so it puts the clone back on `main` and deletes uncommitted work. Use a worktree outside the repository instead. The updater only works in its own directory, so a worktree is out of its reach:
+**Work happens in the repository's own directory, with the updater stopped.** The user chose this on 2026-11-22: one directory, switched to `testing`, rather than a second copy. On a host running the updater, stop it before the first edit and start it again only when the work is pushed and the directory is back on `main`. `update.sh` runs `git checkout -f -B <channel branch>`, `reset --hard` and `clean -fd` in this directory every five minutes (see "an unpushed commit lives about five minutes" below), so with the updater running, a `testing` checkout is switched back to `main` and uncommitted work is deleted.
 
 ```bash
-git worktree add /home/docker-bots/StreamerBot-testing testing   # once per host
-cd /home/docker-bots/StreamerBot-testing
+systemctl stop streamerbot-updater.service      # before the first edit
+git switch testing && git pull --ff-only
+# ... edit, run both halves of the suite, commit, git push origin testing ...
+git switch main
+systemctl start streamerbot-updater.service     # only once nothing is left uncommitted
 ```
 
-Run the suites there exactly as described at the top of this file. The image half mounts `$PWD`, so it tests the worktree's code.
+Stopping the updater does not touch the bots: they keep running the image they have, and switching branches changes no container. While it is stopped, though, the host takes no updates, so starting it again is part of finishing the task, as is saying so when a session ends with it still stopped. Check with `systemctl is-active streamerbot-updater.service`.
 
-**Trying one bot on the testing code.** Build the worktree as a separate image tag, so the updater, which only looks at `streamerbot`, never sees it. Then recreate one test bot on it with the same flags `update.sh`'s `recreate_bot_containers` uses:
+**Do not use a `git worktree` for this.** It was tried first, on 2026-11-22, and pushing from it let the deployment tests' own `git init`, `git config` and `git commit` calls, meant for temporary repositories, land in the real one. They put fixture commits on `testing` and set `core.bare = true`, `core.filemode = true` and a `test` user in the shared `.git/config`, which broke this directory for the updater. A worktree shares that `.git`, so it gives no protection either. Pushes from the repository's own directory ran the same hook without trouble. The exact way the git environment leaked into the tests from a worktree was not pinned down.
+
+**Trying one bot on the testing code.** Build the `testing` checkout as a separate image tag, so the updater, which only looks at `streamerbot`, never sees it. Then recreate one test bot on it with the same flags `update.sh`'s `recreate_bot_containers` uses:
 
 ```bash
-cd /home/docker-bots/StreamerBot-testing
+cd /home/docker-bots/StreamerBot    # on the testing branch
 set -a; . ./project.env; set +a
 docker build --build-arg TTSDK_URL_X86_64="$TTSDK_URL_X86_64" --build-arg TTSDK_URL_ARM64="$TTSDK_URL_ARM64" --build-arg GO_LIBRESPOT_VERSION="$GO_LIBRESPOT_VERSION" --build-arg CACHEBUST="$(date +%s)" --label commit_hash="$(git rev-parse HEAD)" -t streamerbot:testing .
 bot=Chris-Test; d=/home/docker-bots/StreamerBot/bots/$bot
@@ -508,7 +513,7 @@ docker rm -f "$bot" && docker create --name "$bot" --network host -e "TTBOT_INST
 Use a bot meant for testing, such as Chris-Test, and ask before moving a bot someone else uses. Three limits on that live test:
 
 - **The shared YouTube bridge is not covered.** `streamerbot-youtube` serves every bot from the `streamerbot` image, so a change to `youtube_bridge/` cannot be tried on one bot this way. Say so instead of implying it was tested.
-- **It lasts until the next update of `main`.** `recreate_bot_containers` puts every bot back on `streamerbot`. To end the test sooner, run `update.sh`, or recreate the bot the same way with `streamerbot` as the image.
+- **It lasts until the next update of `main`.** `recreate_bot_containers` puts every bot back on `streamerbot`. To end the test sooner, recreate the bot the same way with `streamerbot` as the image. Running `update.sh` by hand also does it, but only once the directory is back on `main`, since it switches whatever is checked out.
 - **Copy those `-e` values from the host, not from here.** They come from the host's settings, and a host with a YouTube or browser proxy sets them; `docker inspect <another bot> --format '{{json .Config.Env}}'` shows the live ones.
 
 **CHANGELOG numbers are taken on `testing`.** An entry is written with its change, on `testing`, and keeps its number through the merge. In the rare case that something is committed straight to `main` (an urgent fix the user has asked for, or a change to documentation only), it takes the next number after the highest on *either* branch, so that the merge cannot produce two entries with the same number.
