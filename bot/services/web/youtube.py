@@ -75,7 +75,16 @@ class YouTubeAdapter(WebServiceAdapter):
         'input[autocomplete="one-time-code"]',
     )
     CODE_NEXT_SELECTORS = ('#totpNext button', '#idvPreregisteredPhoneNext button', 'button:has-text("Next")')
-    ERROR_SELECTORS = ('[aria-live="assertive"]', 'div[jsname="B34EJ"]', '.Ekjuhf')
+    # Field errors first: they belong to one input and say nothing else. The
+    # assertive live region comes last because Google also uses it to announce
+    # each new step's heading, so its text is an error only when it is not a
+    # heading (see _error_text).
+    ERROR_SELECTORS = ('div[jsname="B34EJ"]', '.Ekjuhf', '[aria-live="assertive"]')
+    HEADING_SELECTORS = ("h1", "#headingText")
+    # How long an error must stay on the same address before it counts. Google
+    # animates from one step to the next, and for that moment the page can
+    # show the new step's announcement over the old step's controls.
+    ERROR_SETTLE_MS = 1200
 
     FORM_WAIT_MS = 45000
     STEP_WAIT_MS = 30000
@@ -205,31 +214,62 @@ class YouTubeAdapter(WebServiceAdapter):
         except Exception:
             return ""
 
-    def _heading(self, page) -> str:
-        for selector in ("h1", "#headingText"):
+    def _heading_elements(self, page):
+        for selector in self.HEADING_SELECTORS:
             try:
                 loc = page.locator(selector)
-                if loc.count() and loc.first.is_visible():
-                    return (loc.first.inner_text() or "").strip()
+                for index in range(loc.count()):
+                    yield loc.nth(index)
+            except Exception:
+                continue
+
+    def _heading(self, page) -> str:
+        """The heading of the step on screen.
+
+        Every match is looked at, not just the first. Google's sign-in is one
+        page that keeps earlier steps in the document, hidden, so the first h1
+        is often the "Sign in" of a step that is already gone.
+        """
+        for element in self._heading_elements(page):
+            try:
+                if element.is_visible():
+                    text = (element.inner_text() or "").strip()
+                    if text:
+                        return text
             except Exception:
                 continue
         return ""
 
+    def _headings(self, page) -> List[str]:
+        """Every step heading in the document, shown or not. A live region can
+        announce the next step before that step's heading is visible."""
+        texts = []
+        for element in self._heading_elements(page):
+            try:
+                text = (element.inner_text() or "").strip()
+            except Exception:
+                continue
+            if text:
+                texts.append(text)
+        return texts
+
     @staticmethod
-    def _announces_heading(text: str, heading: str) -> bool:
+    def _announces_heading(text: str, headings) -> bool:
         """True when a live region is only saying which page this is.
 
         Google's sign-in page announces each new step's heading through an
         assertive live region, for screen readers. On the password page that
         is "Welcome", and reading it as an error failed every sign-in with
-        "Google did not accept that email address: Welcome".
+        "Google did not accept that email address: Welcome" ([097], [099]).
         """
+        if isinstance(headings, str):
+            headings = [headings]
         norm = lambda s: " ".join((s or "").split()).casefold()
-        heading = norm(heading)
-        return bool(heading) and norm(text).startswith(heading)
+        said = norm(text)
+        return any(h and said.startswith(h) for h in (norm(h) for h in headings))
 
     def _error_text(self, page) -> str:
-        heading = None
+        headings = None
         for selector in self.ERROR_SELECTORS:
             try:
                 loc = page.locator(selector)
@@ -239,14 +279,27 @@ class YouTubeAdapter(WebServiceAdapter):
                         text = (candidate.inner_text() or "").strip()
                         if not text:
                             continue
-                        if heading is None:
-                            heading = self._heading(page)
-                        if self._announces_heading(text, heading):
+                        if headings is None:
+                            headings = self._headings(page)
+                        if self._announces_heading(text, headings):
                             continue
                         return text[:200]
             except Exception:
                 continue
         return ""
+
+    def _settled_error(self, page) -> str:
+        """An error that is still there, unchanged, on the same address a
+        moment later. Anything shown only while Google moves between steps is
+        not an error about what the bot typed."""
+        first = self._error_text(page)
+        if not first:
+            return ""
+        url = page.url or ""
+        page.wait_for_timeout(self.ERROR_SETTLE_MS)
+        if (page.url or "") != url:
+            return ""
+        return first if self._error_text(page) == first else ""
 
     @staticmethod
     def challenge_kind(url: str) -> str:
@@ -332,18 +385,36 @@ class YouTubeAdapter(WebServiceAdapter):
         email.fill(username)
         self._press(page, self.EMAIL_NEXT_SELECTORS, email)
 
+        # Where the page is decides what it means, not what it says. The
+        # address changes the moment Google accepts the email, before the
+        # password step has finished animating in, so an error is only read
+        # while the page is still on the email step with the email box showing.
         password_box = None
         deadline = time.monotonic() + self.STEP_WAIT_MS / 1000
         while time.monotonic() < deadline:
             if self._refused(page, job):
                 return
-            # The password box first: once it is showing, Google accepted the
-            # address, whatever else the page is saying.
             password_box = self._visible(page, self.PASSWORD_SELECTORS, 500)
             if password_box is not None:
                 break
-            error = self._error_text(page)
-            if error:
+            kind = self.challenge_kind(page.url or "")
+            if kind == "password":
+                continue  # accepted; the password box is still on its way
+            if kind or self._on_youtube(page):
+                # Google skipped the password: a phone prompt or a passkey
+                # first, or an account already signed in. What comes after a
+                # password handles every one of those.
+                logger.info(f"[youtube] Google went on without asking for a password; at {self._where(page)}")
+                self._after_password(page, job)
+                return
+            if self._visible(page, self.EMAIL_SELECTORS, 0) is None:
+                continue  # between steps
+            error = self._settled_error(page)
+            if error and self._visible(page, self.PASSWORD_SELECTORS, 0) is None:
+                logger.warning(
+                    f"[youtube] Google refused the email address; at {self._where(page)}, "
+                    f"heading {self._heading(page)!r}"
+                )
                 job.fail(f"Google did not accept that email address: {error}")
                 return
         if password_box is None:
@@ -391,12 +462,25 @@ class YouTubeAdapter(WebServiceAdapter):
 
             if self._refused(page, job):
                 return
-            error = self._error_text(page)
-            if error and "/challenge/" not in (page.url or ""):
+            kind = self.challenge_kind(page.url or "")
+            # A wrong password is reported on the password step itself, so it
+            # is read there while the box is still showing. It used to be
+            # skipped on every /challenge/ address, which left a mistyped
+            # password to time out as "did not finish signing in".
+            error = ""
+            if kind == "password":
+                if self._visible(page, self.PASSWORD_SELECTORS, 0) is not None:
+                    error = self._settled_error(page)
+            elif not kind and not self._on_youtube(page):
+                error = self._settled_error(page)
+            if error:
+                logger.warning(
+                    f"[youtube] Google refused the sign-in details; at {self._where(page)}, "
+                    f"heading {self._heading(page)!r}"
+                )
                 job.fail(f"Google did not accept those details: {error}")
                 return
 
-            kind = self.challenge_kind(page.url or "")
             if kind == "approve":
                 if not self._wait_for_approval(page, job):
                     return

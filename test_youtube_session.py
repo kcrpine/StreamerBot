@@ -730,3 +730,170 @@ class GoogleSignInPageTests(TestCase):
 
         job.fail.assert_not_called()
         adapter._after_password.assert_called_once()
+
+
+IDENTIFIER_URL = "https://accounts.google.com/v3/signin/identifier"
+PASSWORD_URL = "https://accounts.google.com/v3/signin/challenge/pwd"
+
+
+class _ScriptedSignInPage(_FakeSignInPage):
+    """A sign-in page that changes while the bot waits, as Google's does.
+
+    Google's sign-in is one page: Next updates the address and animates the
+    next step in, and the old step stays in the document, hidden. Every wait
+    moves this page's own clock on, and each scripted step is applied once its
+    time has come, so a thirty second wait costs nothing in a test.
+    """
+
+    def __init__(self, steps, **kwargs):
+        super().__init__(**kwargs)
+        self.now = 0.0
+        self.steps = sorted(steps, key=lambda step: step[0])
+
+    def monotonic(self):
+        return self.now
+
+    def wait_for_timeout(self, ms):
+        self.now += ms / 1000
+        while self.steps and self.steps[0][0] <= self.now:
+            self.steps.pop(0)[1](self)
+
+
+def _welcome_arrives(page):
+    """The moment after Next: the address and the announcement have moved on,
+    the email step is hidden, and the password box is not showing yet."""
+    page.url = PASSWORD_URL
+    page.elements["h1"] = [_FakeElement("Sign in", visible=False), _FakeElement("Welcome", visible=False)]
+    page.elements['[aria-live="assertive"]'] = [_FakeElement("Welcome")]
+    page.elements["input#identifierId"] = [_FakeElement(visible=False)]
+    page.elements["#identifierNext button"] = [_FakeElement(visible=False)]
+
+
+def _password_box_shows(page):
+    page.elements["h1"] = [_FakeElement("Sign in", visible=False), _FakeElement("Welcome")]
+    page.elements['input[name="Passwd"]'] = [_FakeElement()]
+
+
+class GoogleSignInStepTests(TestCase):
+    """kuhao-bot's sign-in on 2026-11-22 still failed with "Google did not
+    accept that email address: Welcome" after [097]. The fix looked only at
+    the first h1, which on Google's one-page sign-in is the hidden "Sign in" of
+    the step already left, and every test used a page that had finished
+    changing. These follow the page through the change. See [099]."""
+
+    def email_page(self, steps):
+        return _ScriptedSignInPage(
+            steps,
+            url=IDENTIFIER_URL,
+            elements={
+                "h1": [_FakeElement("Sign in")],
+                "input#identifierId": [_FakeElement()],
+                # Google's page has one. Without it the bot looks for a button
+                # for a second and a half before pressing Enter, which is long
+                # enough to wait out the very moment these tests are about.
+                "#identifierNext button": [_FakeElement()],
+            },
+        )
+
+    def sign_in(self, page):
+        from unittest.mock import patch
+
+        adapter = YouTubeAdapter()
+        adapter._after_password = Mock()
+        job = Mock()
+        with patch("bot.services.web.youtube.time", SimpleNamespace(monotonic=page.monotonic)):
+            adapter.login(page, "bot@example.com", "secret", job)
+        return adapter, job
+
+    def test_the_first_heading_hidden_does_not_hide_the_one_on_screen(self):
+        page = _FakeSignInPage(elements={
+            "h1": [_FakeElement("Sign in", visible=False), _FakeElement("Welcome")],
+            '[aria-live="assertive"]': [_FakeElement("Welcome")],
+        })
+        adapter = YouTubeAdapter()
+        self.assertEqual(adapter._heading(page), "Welcome")
+        self.assertEqual(adapter._error_text(page), "")
+
+    def test_an_announcement_before_its_heading_shows_is_not_an_error(self):
+        page = _FakeSignInPage(elements={
+            "h1": [_FakeElement("Sign in"), _FakeElement("Welcome", visible=False)],
+            '[aria-live="assertive"]': [_FakeElement("Welcome")],
+        })
+        self.assertEqual(YouTubeAdapter()._error_text(page), "")
+
+    def test_the_moment_between_email_and_password_goes_on_to_the_password(self):
+        page = self.email_page([(0.5, _welcome_arrives), (2.0, _password_box_shows)])
+        adapter, job = self.sign_in(page)
+
+        job.fail.assert_not_called()
+        self.assertEqual(page.elements['input[name="Passwd"]'][0].filled, "secret")
+        adapter._after_password.assert_called_once()
+
+    def test_a_message_that_only_flashes_up_is_not_an_error(self):
+        def flash(page):
+            page.elements['[aria-live="assertive"]'] = [_FakeElement("Checking")]
+
+        def gone(page):
+            page.elements['[aria-live="assertive"]'] = []
+
+        page = self.email_page([(0.5, flash), (1.0, gone), (3.0, _welcome_arrives), (4.0, _password_box_shows)])
+        adapter, job = self.sign_in(page)
+
+        job.fail.assert_not_called()
+        adapter._after_password.assert_called_once()
+
+    def test_an_address_google_cannot_find_is_still_reported(self):
+        def refused(page):
+            page.elements['div[jsname="B34EJ"]'] = [_FakeElement("Couldn't find your Google Account")]
+
+        adapter, job = self.sign_in(self.email_page([(0.5, refused)]))
+
+        job.fail.assert_called_once_with("Google did not accept that email address: Couldn't find your Google Account")
+        adapter._after_password.assert_not_called()
+
+    def test_google_asking_for_a_phone_instead_of_a_password_is_followed(self):
+        def phone(page):
+            page.url = "https://accounts.google.com/v3/signin/challenge/dp"
+            page.elements["input#identifierId"] = [_FakeElement(visible=False)]
+
+        adapter, job = self.sign_in(self.email_page([(0.5, phone)]))
+
+        job.fail.assert_not_called()
+        adapter._after_password.assert_called_once()
+
+    def test_a_wrong_password_is_reported_on_the_password_step(self):
+        from unittest.mock import patch
+
+        page = _ScriptedSignInPage([], url=PASSWORD_URL, elements={
+            "h1": [_FakeElement("Sign in", visible=False), _FakeElement("Welcome")],
+            '[aria-live="assertive"]': [_FakeElement("Welcome")],
+            'input[name="Passwd"]': [_FakeElement()],
+            ".Ekjuhf": [_FakeElement("Wrong password. Try again or click Forgot password to reset it.")],
+        })
+        job = Mock()
+        with patch("bot.services.web.youtube.time", SimpleNamespace(monotonic=page.monotonic)):
+            YouTubeAdapter()._after_password(page, job)
+
+        job.fail.assert_called_once_with(
+            "Google did not accept those details: Wrong password. Try again or click Forgot password to reset it."
+        )
+
+    def test_the_password_step_announcing_itself_is_not_a_wrong_password(self):
+        from unittest.mock import patch
+
+        def signed_in(page):
+            page.url = "https://www.youtube.com/"
+
+        page = _ScriptedSignInPage([(2.0, signed_in)], url=PASSWORD_URL, elements={
+            "h1": [_FakeElement("Sign in", visible=False), _FakeElement("Welcome")],
+            '[aria-live="assertive"]': [_FakeElement("Welcome")],
+            'input[name="Passwd"]': [_FakeElement()],
+        })
+        adapter = YouTubeAdapter()
+        adapter.session_state = Mock(return_value={"logged_in": True, "datasync_id": "x"})
+        job = Mock()
+        with patch("bot.services.web.youtube.time", SimpleNamespace(monotonic=page.monotonic)):
+            adapter._after_password(page, job)
+
+        job.fail.assert_not_called()
+        job.set_state.assert_called_with(job.set_state.call_args[0][0], signed_in=True)
