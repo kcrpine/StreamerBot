@@ -180,6 +180,11 @@ silently ignored and looks exactly like not being signed in).
   out is capped at ~1 MB however long it is kept. `session_generation()` changes on an import, a
   browser sign-in, an ended session or a sign-out (not on routine rotation); anything caching a
   resolved address keys it by that number.
+- **The file goes stale long before the account does ([103]).** Chrome keeps rotating Google's
+  short-lived sign-in cookies; a `cookies.txt` exported from it was measured signing out within
+  about forty minutes while the profile stayed signed in. So the keeper asks youtube.com every ten
+  minutes and, on "signed out", refreshes from Chrome *before* marking anything ended. Do not
+  stretch that interval back to the six-hourly refresh.
 - The **bridge** only reads those files. Its session cache key includes the cookie file's mtime, so a
   rotation rebuilds that one bot's session and nothing restarts. **Write cookies.txt only when the
   cookies changed** (`fingerprint` ignores expiry) or every refresh throws away the warm session.

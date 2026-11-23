@@ -17,6 +17,7 @@ from unittest.mock import Mock, patch
 
 from bot import errors
 from bot.modules.youtube_session_keeper import (
+    PERIODIC_CHECK_SECONDS,
     VERIFY_MAX_AGE_SECONDS,
     SessionCheck,
 )
@@ -104,24 +105,55 @@ class KeeperVerifyTests(TestCase):
         self.assertIn("has ended", "\n".join(logged.output))
         self.assertIn("li yt", "\n".join(logged.output))
 
-    def test_with_chrome_an_ended_session_is_rechecked_in_the_background(self):
-        # The profile can hold a newer session than the file did; a refresh
-        # stores it and clears the mark.
+    def test_with_chrome_a_stale_file_is_refreshed_not_marked_ended(self):
+        # captianbubblebot and private-bot, 2026-11-23: both files read signed
+        # out while both Chrome profiles were still signed in; a refresh from
+        # Chrome signed the files back in.
+        engine = Mock()
+        engine.export_session.return_value = {
+            "logged_in": True, "datasync_id": "account||", "cookies": google_cookies(psidts="new"),
+        }
+        keeper = signed_in_keeper(engine=engine, checker=youtube_says("signed_out"))
+        before = session_generation()
+
+        with self.assertLogs("bot.modules.youtube_session_keeper", level="INFO") as logged:
+            self.assertIs(keeper.verify("periodic"), SessionCheck.SignedIn)
+
+        engine.export_session.assert_called_once_with("yt")
+        self.assertFalse(keeper.store.needs_sign_in())
+        self.assertNotIn("Someone must sign in again", "\n".join(logged.output))
+        # Streams resolved from the stale file were resolved signed out.
+        self.assertNotEqual(session_generation(), before)
+
+    def test_with_chrome_an_ended_session_is_marked_once_chrome_agrees(self):
+        engine = Mock()
+        engine.export_session.return_value = {"logged_in": False}
+        keeper = signed_in_keeper(engine=engine, checker=youtube_says("signed_out"))
+
+        with self.assertLogs("bot.modules.youtube_session_keeper", level="INFO"):
+            self.assertIs(keeper.verify("periodic"), SessionCheck.Ended)
+        self.assertTrue(keeper.store.needs_sign_in())
+
+    def test_status_does_not_wait_for_chrome(self):
+        # li and the portal call status(); a refresh takes ~10 s in Chrome.
         exported = threading.Event()
+        release = threading.Event()
         engine = Mock()
 
         def export_session(service):
             exported.set()
+            release.wait(5)
             return {"logged_in": True, "datasync_id": "account||", "cookies": google_cookies(psidts="new")}
 
         engine.export_session.side_effect = export_session
         keeper = signed_in_keeper(engine=engine, checker=youtube_says("signed_out"))
 
         with self.assertLogs("bot.modules.youtube_session_keeper", level="INFO"):
-            self.assertIs(keeper.verify("test"), SessionCheck.Ended)
+            self.assertEqual(keeper.status(), "connected")
             self.assertTrue(exported.wait(5))
+            self.assertFalse(keeper.store.needs_sign_in())
+            release.set()
             keeper.wait_until_idle(5)
-
         self.assertFalse(keeper.store.needs_sign_in())
 
     def test_unknown_leaves_the_stored_state_and_asks_again_next_time(self):
@@ -195,6 +227,30 @@ class KeeperVerifyTests(TestCase):
         with self.assertLogs("bot.modules.youtube_session_keeper", level="WARNING") as logged:
             self.assertIs(keeper.log_start_up_state(), SessionCheck.Ended)
         self.assertIn("has ended", "\n".join(logged.output))
+        checker.assert_not_called()
+
+
+class PeriodicCheckTests(TestCase):
+    def test_youtube_is_asked_every_few_minutes_not_only_at_the_six_hour_refresh(self):
+        clock = FakeClock()
+        checker = youtube_says("signed_in")
+        keeper = signed_in_keeper(checker=checker, clock=clock)
+
+        with self.assertLogs("bot.modules.youtube_session_keeper", level="INFO"):
+            self.assertIs(keeper.periodic_check(), SessionCheck.SignedIn)
+            self.assertIsNone(keeper.periodic_check())
+            clock.now += PERIODIC_CHECK_SECONDS
+            self.assertIs(keeper.periodic_check(), SessionCheck.SignedIn)
+        self.assertEqual(checker.call_count, 2)
+
+    def test_nothing_is_asked_with_no_session_or_one_already_ended(self):
+        checker = youtube_says("signed_in")
+        keeper = make_keeper(checker=checker)
+        self.assertIsNone(keeper.periodic_check())
+
+        keeper = signed_in_keeper(checker=checker)
+        keeper.store.mark_needs_sign_in()
+        self.assertIsNone(keeper.periodic_check())
         checker.assert_not_called()
 
 
