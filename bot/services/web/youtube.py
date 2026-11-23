@@ -75,6 +75,20 @@ class YouTubeAdapter(WebServiceAdapter):
         'input[autocomplete="one-time-code"]',
     )
     CODE_NEXT_SELECTORS = ('#totpNext button', '#idvPreregisteredPhoneNext button', 'button:has-text("Next")')
+    # The way from a passkey prompt to the password. SIGNIN_URL asks for
+    # hl=en, so the English wording is what the page shows.
+    ANOTHER_WAY_SELECTORS = (
+        'button:has-text("Try another way")',
+        '[role="button"]:has-text("Try another way")',
+        'a:has-text("Try another way")',
+    )
+    CHOOSE_PASSWORD_SELECTORS = (
+        '[role="link"]:has-text("Enter your password")',
+        'li:has-text("Enter your password")',
+        'button:has-text("Enter your password")',
+        '[role="link"]:has-text("Use your password")',
+        'button:has-text("Use your password")',
+    )
     # Field errors first: they belong to one input and say nothing else. The
     # assertive live region comes last because Google also uses it to announce
     # each new step's heading, so its text is an error only when it is not a
@@ -322,6 +336,11 @@ class YouTubeAdapter(WebServiceAdapter):
             return "selection"
         if kind == "pwd":
             return "password"
+        if kind == "pk":
+            # "Use your passkey". Google offers it first, before the password,
+            # to an account that has one ([100]). The bot's Chrome holds no
+            # passkey, but the page links to the password the account still has.
+            return "passkey"
         return "unknown" if kind else ""
 
     NUMBER_JS = """() => {
@@ -400,6 +419,21 @@ class YouTubeAdapter(WebServiceAdapter):
             kind = self.challenge_kind(page.url or "")
             if kind == "password":
                 continue  # accepted; the password box is still on its way
+            if kind in ("passkey", "selection"):
+                password_box = self._choose_password(page)
+                if password_box is not None:
+                    break
+                logger.warning(
+                    f"[youtube] Google offered no way to use the password; at {self._where(page)}, "
+                    f"heading {self._heading(page)!r}"
+                )
+                job.fail(
+                    "Google asked for a passkey, which the bot cannot use, and did not "
+                    "offer the password instead. In the bot account's Google security "
+                    "settings, turn off \"Skip password when possible\" and try again, "
+                    "or import a session from your own browser instead."
+                )
+                return
             if kind or self._on_youtube(page):
                 # Google skipped the password: a phone prompt or a passkey
                 # first, or an account already signed in. What comes after a
@@ -429,6 +463,43 @@ class YouTubeAdapter(WebServiceAdapter):
         self._press(page, self.PASSWORD_NEXT_SELECTORS, password_box)
 
         self._after_password(page, job)
+
+    def _choose_password(self, page):
+        """From a passkey prompt or a list of ways to sign in, get to the
+        password box. Returns the box, or None when Google offers no password.
+
+        The passkey page has a "Try another way" link to the list, and the list
+        has "Enter your password". Each is pressed at most once, so a page that
+        never changes ends this rather than going round in circles.
+        """
+        if self.challenge_kind(page.url or "") == "passkey":
+            link = self._visible(page, self.ANOTHER_WAY_SELECTORS, 5000)
+            if link is None:
+                return None
+            logger.info("[youtube] Google offered a passkey; asking for another way")
+            try:
+                link.click()
+            except Exception:
+                return None
+            # The list, or for some accounts the password step straight away.
+            deadline = time.monotonic() + self.STEP_WAIT_MS / 1000
+            while time.monotonic() < deadline:
+                box = self._visible(page, self.PASSWORD_SELECTORS, 500)
+                if box is not None:
+                    return box
+                if self.challenge_kind(page.url or "") == "selection":
+                    break
+            else:
+                return None
+        choice = self._visible(page, self.CHOOSE_PASSWORD_SELECTORS, 5000)
+        if choice is None:
+            return None
+        logger.info("[youtube] choosing to sign in with the password")
+        try:
+            choice.click()
+        except Exception:
+            return None
+        return self._visible(page, self.PASSWORD_SELECTORS, self.STEP_WAIT_MS)
 
     def _refused(self, page, job) -> bool:
         text = self._page_text(page)
@@ -503,7 +574,7 @@ class YouTubeAdapter(WebServiceAdapter):
             if kind in ("captcha",):
                 job.require_captcha(self._where(page))
                 return
-            if kind in ("selection", "unknown"):
+            if kind in ("selection", "unknown", "passkey"):
                 logger.warning(f"[youtube] Google showed a second step the bot cannot answer; at {self._where(page)}")
                 job.fail(
                     "Google asked for a kind of verification the bot cannot complete. "

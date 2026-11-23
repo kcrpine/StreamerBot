@@ -543,6 +543,7 @@ class ChallengeKindTests(TestCase):
         self.assertEqual(kind("https://accounts.google.com/v3/signin/challenge/ipp"), "code")
         self.assertEqual(kind("https://accounts.google.com/v3/signin/challenge/recaptcha"), "captcha")
         self.assertEqual(kind("https://accounts.google.com/v3/signin/challenge/selection"), "selection")
+        self.assertEqual(kind("https://accounts.google.com/v3/signin/challenge/pk"), "passkey")
         self.assertEqual(kind("https://accounts.google.com/v3/signin/challenge/wat"), "unknown")
         self.assertEqual(kind("https://www.youtube.com/"), "")
 
@@ -897,3 +898,104 @@ class GoogleSignInStepTests(TestCase):
 
         job.fail.assert_not_called()
         job.set_state.assert_called_with(job.set_state.call_args[0][0], signed_in=True)
+
+
+PASSKEY_URL = "https://accounts.google.com/v3/signin/challenge/pk"
+SELECTION_URL = "https://accounts.google.com/v3/signin/challenge/selection"
+ANOTHER_WAY = 'button:has-text("Try another way")'
+ENTER_PASSWORD = '[role="link"]:has-text("Enter your password")'
+
+
+class _Clickable(_FakeElement):
+    """An element whose click changes the page, as Google's links do."""
+
+    def __init__(self, page, on_click, text=""):
+        super().__init__(text)
+        self.page, self.on_click, self.clicks = page, on_click, 0
+
+    def click(self):
+        self.clicks += 1
+        self.on_click(self.page)
+
+
+def _passkey_arrives(page):
+    """What private-bot met on 2026-11-23: Google took the address and asked
+    for a passkey, with no password box anywhere."""
+    page.url = PASSKEY_URL
+    page.elements["h1"] = [_FakeElement("Sign in", visible=False), _FakeElement("Use your passkey")]
+    page.elements['[aria-live="assertive"]'] = [_FakeElement("Use your passkey")]
+    page.elements["input#identifierId"] = [_FakeElement(visible=False)]
+    page.elements["#identifierNext button"] = [_FakeElement(visible=False)]
+    page.elements[ANOTHER_WAY] = [_Clickable(page, _list_of_ways_arrives, "Try another way")]
+
+
+def _list_of_ways_arrives(page):
+    page.url = SELECTION_URL
+    page.elements[ANOTHER_WAY] = []
+    page.elements["h1"] = [_FakeElement("Sign in", visible=False), _FakeElement("Choose how you want to sign in")]
+    page.elements[ENTER_PASSWORD] = [_Clickable(page, _password_step_arrives, "Enter your password")]
+
+
+def _password_step_arrives(page):
+    page.url = PASSWORD_URL
+    page.elements[ENTER_PASSWORD] = []
+    page.elements["h1"] = [_FakeElement("Sign in", visible=False), _FakeElement("Welcome")]
+    page.elements['input[name="Passwd"]'] = [_FakeElement()]
+
+
+class GooglePasskeyTests(TestCase):
+    """private-bot's sign-in on 2026-11-23, the first live try of [099], got
+    past the email and then failed with "Google asked for a kind of
+    verification the bot cannot complete": Google went to its passkey page,
+    which the bot's Chrome cannot answer. The page links to the password the
+    account still has, and the bot now follows that link. See [100]."""
+
+    email_page = GoogleSignInStepTests.email_page
+    sign_in = GoogleSignInStepTests.sign_in
+
+    def test_the_bot_takes_another_way_to_the_password(self):
+        page = self.email_page([(0.5, _passkey_arrives)])
+        adapter, job = self.sign_in(page)
+
+        job.fail.assert_not_called()
+        self.assertEqual(page.elements['input[name="Passwd"]'][0].filled, "secret")
+        adapter._after_password.assert_called_once()
+
+    def test_a_passkey_page_that_goes_straight_to_the_password_works_too(self):
+        def passkey_then_password(page):
+            _passkey_arrives(page)
+            page.elements[ANOTHER_WAY] = [_Clickable(page, _password_step_arrives, "Try another way")]
+
+        page = self.email_page([(0.5, passkey_then_password)])
+        adapter, job = self.sign_in(page)
+
+        job.fail.assert_not_called()
+        self.assertEqual(page.elements['input[name="Passwd"]'][0].filled, "secret")
+        adapter._after_password.assert_called_once()
+
+    def test_a_list_without_a_password_says_how_to_turn_passkeys_off(self):
+        def list_without_password(page):
+            _list_of_ways_arrives(page)
+            page.elements[ENTER_PASSWORD] = []
+
+        def passkey(page):
+            _passkey_arrives(page)
+            page.elements[ANOTHER_WAY] = [_Clickable(page, list_without_password, "Try another way")]
+
+        adapter, job = self.sign_in(self.email_page([(0.5, passkey)]))
+
+        message = job.fail.call_args[0][0]
+        self.assertIn("passkey", message)
+        self.assertIn("Skip password when possible", message)
+        adapter._after_password.assert_not_called()
+
+    def test_another_way_is_pressed_once_not_over_and_over(self):
+        def passkey_that_stays(page):
+            _passkey_arrives(page)
+            page.elements[ANOTHER_WAY] = [_Clickable(page, lambda p: None, "Try another way")]
+
+        page = self.email_page([(0.5, passkey_that_stays)])
+        adapter, job = self.sign_in(page)
+
+        self.assertEqual(page.elements[ANOTHER_WAY][0].clicks, 1)
+        job.fail.assert_called_once()
