@@ -473,6 +473,46 @@ counterpart and skips its drift check silently. Starting work without the plan m
 knowing which phases are done, what each one actually found, or which of its original decisions have
 since been overturned — and several have.
 
+### New code goes to the `testing` branch first, never straight to `main` or `stable`
+
+The user asked for this on 2026-11-22. `main` is the latest channel, and every server on it, this host included, rebuilds and restarts all its bots within five minutes of a push. Pushing straight to `main` therefore tests new code on every user at once. Before this rule, a fix could be released and still fail at the first live try: 2.4.2's sign-in fix ([097]) passed its tests and failed on kuhao-bot within two hours. So work goes to `testing`, is tried there, and only then reaches `main` and, through a release, `stable`.
+
+The order is always `testing` → `main` → `stable`:
+
+1. **Commit and push to `testing`.** CI runs on every branch (`tests.yml` has no branch filter), so a push there gets the full suite, the image build and the in-image rerun, exactly as `main` does. The pre-push hook runs too.
+2. **Try it live where a test is possible** (see below). Say plainly what was tried and what was not.
+3. **Merge into `main` only when the user says to.** `git switch main && git merge --ff-only testing && git push origin main`. If `main` moved meanwhile, merge `testing` into it normally rather than rebasing a pushed branch. Afterwards bring `testing` level again with `git push origin main:testing`, so the two do not drift apart.
+4. **Releasing is unchanged** and starts from `main`: the version question below is asked at the merge into `main`, not on pushes to `testing`, which is never released.
+
+`testing` is a branch, not an update channel. No server follows it and `update_channel.sh` has no `testing` option, by the user's choice, so nothing installs from it by itself.
+
+**Never check `testing` out in the main clone on a host running the updater.** `update.sh` runs `git checkout -f -B <channel branch>`, `reset --hard` and `clean -fd` in that clone every five minutes (see "an unpushed commit lives about five minutes" below), so it puts the clone back on `main` and deletes uncommitted work. Use a worktree outside the repository instead. The updater only works in its own directory, so a worktree is out of its reach:
+
+```bash
+git worktree add /home/docker-bots/StreamerBot-testing testing   # once per host
+cd /home/docker-bots/StreamerBot-testing
+```
+
+Run the suites there exactly as described at the top of this file. The image half mounts `$PWD`, so it tests the worktree's code.
+
+**Trying one bot on the testing code.** Build the worktree as a separate image tag, so the updater, which only looks at `streamerbot`, never sees it. Then recreate one test bot on it with the same flags `update.sh`'s `recreate_bot_containers` uses:
+
+```bash
+cd /home/docker-bots/StreamerBot-testing
+set -a; . ./project.env; set +a
+docker build --build-arg TTSDK_URL_X86_64="$TTSDK_URL_X86_64" --build-arg TTSDK_URL_ARM64="$TTSDK_URL_ARM64" --build-arg GO_LIBRESPOT_VERSION="$GO_LIBRESPOT_VERSION" --build-arg CACHEBUST="$(date +%s)" --label commit_hash="$(git rev-parse HEAD)" -t streamerbot:testing .
+bot=Chris-Test; d=/home/docker-bots/StreamerBot/bots/$bot
+docker rm -f "$bot" && docker create --name "$bot" --network host -e "TTBOT_INSTANCE=$bot" -e "YOUTUBE_BRIDGE_URL=http://127.0.0.1:4417" -e "YOUTUBE_PROXY_URL=" -e "BROWSER_PROXY_URL=" -e "BROWSER_PROXY_SERVICES=" --label role=streamerbot --restart always -v "$d:/home/streamer/StreamerBot/data" streamerbot:testing && docker start "$bot"
+```
+
+Use a bot meant for testing, such as Chris-Test, and ask before moving a bot someone else uses. Three limits on that live test:
+
+- **The shared YouTube bridge is not covered.** `streamerbot-youtube` serves every bot from the `streamerbot` image, so a change to `youtube_bridge/` cannot be tried on one bot this way. Say so instead of implying it was tested.
+- **It lasts until the next update of `main`.** `recreate_bot_containers` puts every bot back on `streamerbot`. To end the test sooner, run `update.sh`, or recreate the bot the same way with `streamerbot` as the image.
+- **Copy those `-e` values from the host, not from here.** They come from the host's settings, and a host with a YouTube or browser proxy sets them; `docker inspect <another bot> --format '{{json .Config.Env}}'` shows the live ones.
+
+**CHANGELOG numbers are taken on `testing`.** An entry is written with its change, on `testing`, and keeps its number through the merge. In the rare case that something is committed straight to `main` (an urgent fix the user has asked for, or a change to documentation only), it takes the next number after the highest on *either* branch, so that the merge cannot produce two entries with the same number.
+
 ### Every push adds a numbered CHANGELOG entry
 
 In the same commit as the work, not at release time when nobody remembers what changed or why.
@@ -498,7 +538,7 @@ with a number in square brackets:
 
 ### Every push asks whether it is a new version
 
-Before every push, ask the user whether it should also be released as a new version, offering the
+Before every push to `main` (which since 2026-11-22 normally means merging `testing` into it; see above), ask the user whether it should also be released as a new version, offering the
 next number: a patch bump (1.0.1 → 1.0.2) for fixes, a minor bump (1.0 → 1.1) for a feature users will
 notice. The user asked for this so new features are not left sitting unreleased. A release is three
 things in the pushed commit and one after it: `app_version` in `bot/app_vars.py`, the CHANGELOG's

@@ -7,6 +7,8 @@ issue or a commit message. Numbering continues across releases. A major version
 
 ## Unreleased
 
+- **[098]** New code now goes to a `testing` branch before it reaches `main` or `stable`. Every server on the latest channel rebuilds and restarts all its bots within five minutes of a push to `main`, so pushing there meant trying new code on every user at once, and a fix could ship and still fail at its first live try, as [097] did. Work is pushed to `testing`, where CI runs the full suite, can be tried on one test bot from a separate image, and is merged into `main` only once it has been checked. `testing` is not an update channel: no server installs from it. CLAUDE.md describes the steps, including why the work lives in a separate worktree. This host's updater resets its own clone to `main` every five minutes, so a `testing` checkout there would not last.
+
 ## StreamerBot 2.4.2 (2026-11-22)
 
 - **[097]** YouTube sign-in no longer fails at Google's password page with "Google did not accept that email address: Welcome". Google's sign-in page tells screen readers the heading of each new step through an assertive live region, which the bot also watched for error messages. So when the password page appeared, its "Welcome" announcement was read as Google rejecting the address, and every sign-in stopped there. Live-region text that only repeats the page's heading is now ignored, and the bot looks for the password box before it looks for errors, so a page that has clearly moved on cannot be mistaken for a refusal. Real errors such as "Couldn't find your Google Account" are still reported. Found on ash-kuhao on 2026-11-22.
