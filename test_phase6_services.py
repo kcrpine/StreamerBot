@@ -281,9 +281,51 @@ class GamdlTests(TestCase):
         self.assertTrue(str(caught.exception).endswith("send: li am"))
 
     def test_an_expired_sign_in_ends_with_the_command_to_send(self):
-        result = SimpleNamespace(returncode=1, stderr="cookie rejected", stdout="")
+        # gamdl 4.1.1's own words for a refused account (gamdl/cli/errors.py).
+        result = SimpleNamespace(
+            returncode=1,
+            stderr="",
+            stdout="Authentication failed (check cookies or wrapper login)",
+        )
 
         self.assertTrue(self.downloader._explain_failure(result).endswith("send: li am"))
+
+    def test_a_rejected_flag_is_not_called_an_expired_sign_in(self):
+        """What gamdl 4.1.1 printed for the bot's 3.8.5 command line. It
+        mentions cookies, and reading it as an expired sign-in sent users to
+        reconnect an account that was fine."""
+        result = SimpleNamespace(
+            returncode=2,
+            stderr="",
+            stdout="Gamdl 4.1.1\n✗ No such option '--cookies-path'.\n"
+                   "✗ Run 'gamdl rip --help' to see available options.",
+        )
+
+        message = self.downloader._explain_failure(result)
+
+        self.assertNotIn("li am", message)
+        self.assertEqual(message, "The download failed.")
+
+    def test_every_failure_logs_what_gamdl_said(self):
+        result = SimpleNamespace(returncode=1, stderr="", stdout="Apple Music rate limit reached")
+
+        with self.assertLogs("bot.services.gamdl_downloader", "ERROR") as logged:
+            self.downloader._explain_failure(result)
+
+        self.assertIn("rate limit reached", "\n".join(logged.output))
+
+    def test_the_command_speaks_gamdl_4(self):
+        command = self.downloader._command("https://music.apple.com/us/album/x/1", "/tmp/w")
+
+        # --no-config belongs to the top-level command, so it comes before rip.
+        self.assertLess(command.index("--no-config"), command.index("rip"))
+        self.assertEqual(command[command.index("--auth-mode") + 1], "cookies")
+        self.assertEqual(command[command.index("--output-dir") + 1], "/tmp/w")
+        # gamdl 4's database would skip a track downloaded before, and every
+        # job starts in an empty folder, so a skip is a download with no files.
+        self.assertIn("--no-database", command)
+        for gone in ("--output-path", "--no-config-file"):
+            self.assertNotIn(gone, command)
 
     def test_a_missing_binary_is_reported_clearly(self):
         with patch.object(GamdlDownloader, "is_available", staticmethod(lambda: False)):
@@ -303,8 +345,8 @@ class GamdlTests(TestCase):
         channel."""
         result = SimpleNamespace(
             returncode=1,
-            stderr="Traceback: /home/streamer/data/secrets/cookies.txt not readable",
-            stdout="",
+            stderr="",
+            stdout="Could not load Apple Music cookies: /home/streamer/data/secrets/cookies.txt",
         )
 
         message = self.downloader._explain_failure(result)
@@ -316,6 +358,24 @@ class GamdlTests(TestCase):
         result = SimpleNamespace(returncode=1, stderr="No active subscription", stdout="")
 
         self.assertIn("subscription", self.downloader._explain_failure(result))
+
+    def test_a_sign_in_message_wrapped_across_lines_is_still_recognised(self):
+        """Measured live on gamdl 4.1.1: its console wraps at about 80 columns."""
+        result = SimpleNamespace(
+            returncode=1,
+            stderr="",
+            stdout="Errors (1):\n  ✗ Session: Apple Music cookies file missing or invalid; "
+                   "supply a valid path \nvia --cookies-path/--device-path or YAML configuration",
+        )
+
+        self.assertTrue(self.downloader._explain_failure(result).endswith("send: li am"))
+
+    def test_media_missing_from_the_storefront_is_named(self):
+        result = SimpleNamespace(
+            returncode=1, stderr="", stdout="Media is unavailable in this storefront"
+        )
+
+        self.assertEqual(self.downloader._explain_failure(result), "Apple Music did not have that.")
 
     def test_archive_names_are_safe_for_any_filesystem(self):
         files = [os.path.join(self.tmp, "AC/DC: Back?In*Black", "01.m4a")]

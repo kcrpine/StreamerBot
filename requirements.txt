@@ -1,7 +1,7 @@
 babel
 beautifulsoup4
 cryptography
-gamdl
+gamdl==4.1.1
 patool
 playwright
 portalocker

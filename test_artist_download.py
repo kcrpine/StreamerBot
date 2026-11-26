@@ -38,10 +38,10 @@ def make_downloader(tmp):
     return GamdlDownloader(cookies, tmp, SimpleNamespace(translate=translate))
 
 
-def fake_gamdl(files, returncode=0, stderr=""):
-    """A subprocess.run that writes files under gamdl's --output-path."""
+def fake_gamdl(files, returncode=0, stderr="", stdout=""):
+    """A subprocess.run that writes files under gamdl's --output-dir."""
     def run(command, **kwargs):
-        work_dir = command[command.index("--output-path") + 1]
+        work_dir = command[command.index("--output-dir") + 1]
         for relative in files:
             path = os.path.join(work_dir, *relative.split("/"))
             os.makedirs(os.path.dirname(path), exist_ok=True)
@@ -49,7 +49,7 @@ def fake_gamdl(files, returncode=0, stderr=""):
                 f.write(b"audio")
         run.command = command
         run.kwargs = kwargs
-        return SimpleNamespace(returncode=returncode, stderr=stderr, stdout="")
+        return SimpleNamespace(returncode=returncode, stderr=stderr, stdout=stdout)
     return run
 
 
@@ -85,6 +85,8 @@ class DownloadArtistTests(TestCase):
         self.assertEqual(command[command.index("--compilation-folder-template") + 1], "{album}")
         self.assertEqual(command[-1], ARTIST)
         self.assertIn("--cookies-path", command)
+        # gamdl 4 wants the artist options on the rip subcommand.
+        self.assertLess(command.index("rip"), command.index("--artist-auto-select"))
 
     def test_the_zip_holds_the_artist_folder_with_a_folder_per_album(self):
         run = fake_gamdl(["Parachutes/01 Don't Panic.m4a", "Parachutes/02 Shiver.m4a",
@@ -128,9 +130,31 @@ class DownloadArtistTests(TestCase):
         self.assertEqual(tracks, 1)
         self.assertTrue(partial)
 
+    def test_an_album_with_one_failed_track_keeps_the_rest(self):
+        """gamdl 4 exits 1 when any track fails; the others are still wanted."""
+        run = fake_gamdl(["Parachutes/01 Don't Panic.m4a", "Parachutes/02 Shiver.m4a"],
+                         returncode=1, stdout="Finished: 2 downloaded, 1 failed")
+        with patch("subprocess.run", run):
+            path, is_archive, tracks = self.downloader.download(
+                "https://music.apple.com/us/album/parachutes/1122782080")
+
+        self.assertTrue(is_archive)
+        self.assertEqual(tracks, 2)
+        self.assertTrue(os.path.isfile(path))
+
+    def test_an_album_with_nothing_downloaded_says_why(self):
+        run = fake_gamdl([], returncode=1,
+                         stdout="Authentication failed (check cookies or wrapper login)")
+        with patch("subprocess.run", run):
+            with self.assertRaises(errors.ServiceError) as caught:
+                self.downloader.download("https://music.apple.com/us/album/parachutes/1122782080")
+
+        self.assertTrue(str(caught.exception).endswith("send: li am"))
+
     def test_an_artist_with_none_of_that_kind_is_said_plainly(self):
-        stderr = "Artist has no media of type (media ID: 471744): Live Albums"
-        with patch("subprocess.run", fake_gamdl([], stderr=stderr)):
+        # gamdl 4.1.1's own words, printed to stdout with exit code 1.
+        stdout = "No supported media found at this URL."
+        with patch("subprocess.run", fake_gamdl([], returncode=1, stdout=stdout)):
             with self.assertRaises(errors.ServiceError) as caught:
                 self.downloader.download_artist(ARTIST, "main-albums", "Coldplay")
 

@@ -44,7 +44,8 @@ DOWNLOAD_TIMEOUT_SECONDS = 1800
 ARTIST_TIMEOUT_SECONDS = 6 * 3600
 
 # The numbers dla's question offers, as gamdl's --artist-auto-select values
-# (checked against gamdl 3.8.5's ArtistMediaType). "all-albums" is Apple's full
+# (checked against gamdl 4.1.1's ARTIST_AUTO_SELECT_NAMES, which are its
+# SelectionKind values without the "artist-" prefix). "all-albums" is Apple's full
 # album list for the artist: singles, EPs, live albums and compilations too.
 ARTIST_SELECTIONS = {
     1: "main-albums",
@@ -298,7 +299,21 @@ class GamdlDownloader:
     # -- downloading -------------------------------------------------------
 
     def _command(self, url: str, work_dir: str) -> List[str]:
-        """Flags verified against gamdl 3.8.5 rather than guessed.
+        """Flags verified against gamdl 4.1.1 rather than guessed.
+
+        requirements.txt pins that version on purpose. gamdl 4.0 moved
+        downloading under a "rip" subcommand and renamed --output-path and
+        --no-config-file. An unpinned image rebuilt on 2026-11-23 picked 4.1.1
+        up, and every download failed with "No such option '--cookies-path'".
+        Because that error mentions cookies, users were told their sign-in had
+        expired.
+
+        --no-config sits before "rip" because it belongs to the top-level
+        command. Without it gamdl writes ~/.gamdl/config.yml on every run.
+        --no-database matters: gamdl 4 keeps an SQLite index of what it has
+        downloaded and skips those tracks next time. Every job here starts in
+        an empty directory, so a skipped track is a download that produces no
+        files.
 
         "aac-web" is chosen deliberately over the higher-quality codecs: the
         others need a Widevine device file this image does not ship, and asking
@@ -307,10 +322,15 @@ class GamdlDownloader:
         """
         return [
             "gamdl",
+            "--no-config",
+            "rip",
+            "--auth-mode", "cookies",
             "--cookies-path", self.cookies_path,
-            "--output-path", work_dir,
+            "--output-dir", work_dir,
             "--song-codec-priority", "aac-web,aac",
-            "--no-config-file",
+            "--no-database",
+            "--no-progress",
+            "--no-lyrics-file",
             url,
         ]
 
@@ -350,15 +370,20 @@ class GamdlDownloader:
             shutil.rmtree(work_dir, ignore_errors=True)
             raise errors.ServiceError(f"The downloader could not run: {error}") from error
 
-        if result.returncode != 0:
-            shutil.rmtree(work_dir, ignore_errors=True)
-            raise errors.ServiceError(self._explain_failure(result))
-
         files = self._collect_audio(work_dir)
         if not files:
             shutil.rmtree(work_dir, ignore_errors=True)
+            if result.returncode != 0:
+                raise errors.ServiceError(self._explain_failure(result))
             raise errors.ServiceError(
                 self.translator.translate("The download produced no audio files.")
+            )
+        if result.returncode != 0:
+            # gamdl 4 exits 1 when any one track failed. The tracks that did
+            # arrive are kept rather than thrown away with the rest.
+            logger.warning(
+                f"[gamdl] download finished with errors: {(result.stdout or '')[-800:]!r} "
+                f"{(result.stderr or '')[-400:]!r}"
             )
         files, self.unconverted = convert_files(files, fmt)
 
@@ -453,16 +478,45 @@ class GamdlDownloader:
 
     @staticmethod
     def _has_no_media(result) -> bool:
+        """gamdl 4.1.1 prints this when an artist has none of the chosen kind."""
         text = ((result.stderr or "") + (result.stdout or "")).lower()
-        return "has no media of type" in text
+        return "no supported media found" in text
+
+    # What gamdl 4.1.1 prints when Apple refuses the account, taken from its
+    # source (gamdl/cli/errors.py and gamdl/api/auth.py). Only these mean the
+    # sign-in is the problem. Matching on the word "cookie" alone told users
+    # their sign-in had expired when gamdl had rejected one of the bot's own
+    # flags, and reconnecting could never fix that.
+    _SIGN_IN_FAILURES = (
+        "authentication failed",
+        "could not load apple music cookies",
+        "media-user-token cookie is missing",
+        "cookies file missing or invalid",
+        "http 401",
+        "http 403",
+    )
+
+    # gamdl refusing how it was called. That is the bot's fault, never the
+    # user's, so it is reported as a plain failure and logged.
+    _USAGE_FAILURES = ("no such option", "usage:", "--help' to see", "invalid value for")
 
     def _explain_failure(self, result) -> str:
         """Turn gamdl's output into one sentence a user can act on.
 
         Never include the raw stderr: it can carry the cookie path and other
-        details that do not belong in a channel.
+        details that do not belong in a channel. It goes to the log instead,
+        every time, because a message that hides gamdl's real error is what
+        made a broken command line look like an expired sign-in.
         """
-        text = ((result.stderr or "") + (result.stdout or "")).lower()
+        logger.error(
+            f"[gamdl] exited with code {result.returncode}: "
+            f"stderr={(result.stderr or '')[-800:]!r} stdout={(result.stdout or '')[-800:]!r}"
+        )
+        # gamdl's console wraps long lines at about 80 columns, so a phrase can
+        # arrive split across two lines. Whitespace is folded before matching.
+        text = " ".join(((result.stderr or "") + " " + (result.stdout or "")).lower().split())
+        if any(marker in text for marker in self._USAGE_FAILURES):
+            return self.translator.translate("The download failed.")
         if self._has_no_media(result):
             return self.translator.translate(
                 "Apple Music lists none of those for this artist."
@@ -471,17 +525,16 @@ class GamdlDownloader:
             return self.translator.translate(
                 "That needs an active Apple Music subscription."
             )
-        if "not found" in text or "404" in text:
-            return self.translator.translate("Apple Music did not have that.")
-        if "widevine" in text or "device" in text and "missing" in text:
-            return self.translator.translate(
-                "That track needs a decryption device file the bot does not have."
-            )
-        if "cookie" in text:
+        if any(marker in text for marker in self._SIGN_IN_FAILURES):
             return self.translator.translate(
                 "The Apple Music sign-in has expired. To connect it again, send: li am"
             )
-        logger.error(f"[gamdl] failed: {(result.stderr or '')[:800]}")
+        if "unavailable in this storefront" in text or "http 404" in text:
+            return self.translator.translate("Apple Music did not have that.")
+        if "widevine" in text or "decryption key" in text:
+            return self.translator.translate(
+                "That track needs a decryption device file the bot does not have."
+            )
         return self.translator.translate("The download failed.")
 
     @staticmethod
