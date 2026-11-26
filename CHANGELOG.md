@@ -7,6 +7,8 @@ issue or a commit message. Numbering continues across releases. A major version
 
 ## Unreleased
 
+- **[106]** An update now gives each bot 5 seconds, up from 1.5, to post its "update is in progress" message before it is stopped. When 2.4.3 went out, nobody in the channel saw the warning, and with only a second and a half between asking for the message and stopping the bot there was little margin for it to reach the channel. The restart itself is otherwise unchanged. The warning still goes out only after the new image has built, so a failed build never announces a restart that does not happen.
+
 - **[105]** The bot's log now says when it has sent its update messages to the channel: "[update] sent the update-in-progress message to channel N" just before an update restarts it, and "[update] sent the back-after-update message to channel N" once it is back. A successful send used to leave nothing in the log, so after the 2.4.3 update, when someone saw no warning in the channel, there was no way to tell whether the bot had sent one. The updater stops each bot about 1.5 seconds after asking it to send the warning. A channel number of 0 in these lines would mean the bot was not in a channel when it sent the message.
 
 ## StreamerBot 2.4.3 (2026-11-26)

@@ -304,8 +304,10 @@ perform_image_rebuild() {
                      touch "$BOTS_ROOT/$name/update_in_progress"
                  fi
              done
-             # Give the bots a brief moment to detect the file and send the warning message
-             sleep 1.5
+             # Give the bots time to see the file and get the warning into the
+             # channel before they are stopped. 1.5 seconds was too short to be
+             # sure the message had gone out (see [106]).
+             sleep 5
          fi
          
          if [ -z "$RUNNING_NAMES" ] && [ -f "$STATE_FILE" ]; then
