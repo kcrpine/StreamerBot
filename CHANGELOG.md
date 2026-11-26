@@ -7,6 +7,8 @@ issue or a commit message. Numbering continues across releases. A major version
 
 ## Unreleased
 
+## StreamerBot 2.4.4 (2026-11-26)
+
 - **[107]** Apple Music downloads no longer fail with "That track needs a decryption device file the bot does not have." After [104], gamdl 4.1.1 signed in and then stopped at every track with "Widevine backend not installed; install gamdl[widevine]". gamdl 3.8.5 always included its Widevine decryption library, but gamdl 4 makes it an optional add-on. requirements.txt now installs , which adds pywidevine, and gamdl uses the default device it ships with, so no device file has to be supplied. Checked in a throwaway container: with the add-on, gamdl 4.1.1 builds its decryption module from that default device, the step that failed on danielBot. A real download through it is not verified yet.
 
 - **[106]** An update now gives each bot 5 seconds, up from 1.5, to post its "update is in progress" message before it is stopped. When 2.4.3 went out, nobody in the channel saw the warning, and with only a second and a half between asking for the message and stopping the bot there was little margin for it to reach the channel. The restart itself is otherwise unchanged. The warning still goes out only after the new image has built, so a failed build never announces a restart that does not happen.
