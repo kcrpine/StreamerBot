@@ -442,6 +442,10 @@ class Bot:
                 time.sleep(2)
                 msg = self.translator.translate("Hello! I'm back and ready for you to stream again. Thank you for your patience!")
                 self.ttclient.send_message(msg, type=2)
+                logging.info(
+                    f"[update] sent the back-after-update message to channel "
+                    f"{self.ttclient.tt.getMyChannelID()}"
+                )
             except Exception as e:
                 logging.error(f"Error sending update success message: {e}")
             try:
@@ -482,6 +486,13 @@ class Bot:
                 try:
                     msg = self.translator.translate("Hello there! It's me, the Streamer Bot, just coming in here to let you know that an update is in progress and I will restart in a few moments to apply it. Thank you!")
                     self.ttclient.send_message(msg, type=2)
+                    # A successful send used to leave no trace, so "nobody saw
+                    # the warning" could not be told apart from "it was never
+                    # sent". The updater stops the bot about 1.5 seconds later.
+                    logging.info(
+                        f"[update] sent the update-in-progress message to channel "
+                        f"{self.ttclient.tt.getMyChannelID()}"
+                    )
                 except Exception as e:
                     logging.error(f"Error sending update warning: {e}")
                 try:
